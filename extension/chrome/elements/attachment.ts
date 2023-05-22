@@ -248,6 +248,7 @@ export class AttachmentDownloadView extends View {
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     // todo: we should call this detection in the main `core/Attachment.treatAs` (e.g. in the context of GmailElementReplacer and InboxActiveThreadModule)
+    // and we'll also be able to minimize the pgp_pubkey block if isOutgoing
     // should be possible after #4906 is done
     if (((this.attachment.msgId && this.attachment.id) || this.attachment.url) && this.attachment.isPublicKey()) {
       // this is encrypted public key - download && decrypt & parse & render

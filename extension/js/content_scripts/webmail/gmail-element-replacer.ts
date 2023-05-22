@@ -194,7 +194,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
-      // todo: const isOutgoing = !!this.sendAs[senderEmail];
       this.messageRenderer
         .processInlineBlocks(
           this.relayManager,

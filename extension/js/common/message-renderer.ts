@@ -240,7 +240,7 @@ export class MessageRenderer {
   };
 
   public isOutgoing = (senderEmail: string | undefined) => {
-    return Boolean(senderEmail && !!this.sendAs[senderEmail]); // todo: remove code duplication
+    return Boolean(senderEmail && !!this.sendAs[senderEmail]);
   };
 
   public processAttachment = async (
@@ -291,7 +291,7 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, (renderModule, frameId) =>
+        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, senderEmail, (renderModule, frameId) =>
           this.processEncryptedMessage(a, renderModule, frameId, senderEmail, messageInfo.isPwdMsgBasedOnMsgSnippet)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
@@ -301,7 +301,7 @@ export class MessageRenderer {
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(senderEmail));
       } else if (treatAs === 'signature') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', messageInfo.printMailInfo, renderModule =>
+        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', messageInfo.printMailInfo, senderEmail, renderModule =>
           this.processSignedMessage(msgId, renderModule, senderEmail)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
@@ -332,7 +332,7 @@ export class MessageRenderer {
     const signerEmail = from ? Str.parseEmail(from).email : undefined;
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndStartProcessing(relayManager, new LoaderContextBindNow(), factory, frameId, messageInfo.printMailInfo, renderModule =>
+        this.relayAndStartProcessing(relayManager, new LoaderContextBindNow(), factory, frameId, messageInfo.printMailInfo, signerEmail, renderModule =>
           this.renderMsgBlock(block, renderModule, signerEmail, messageInfo.isPwdMsgBasedOnMsgSnippet)
         )
       )
@@ -517,6 +517,7 @@ export class MessageRenderer {
     factory: XssSafeFactory,
     frameId: string,
     printMailInfo: PrintMailInfo | undefined,
+    senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ) => {
     const renderModule = relayManager.createRelay(frameId);
@@ -529,7 +530,7 @@ export class MessageRenderer {
         const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
         // todo: how publicKeys and needPassphrase interact?
         for (const armoredPubkey of result.publicKeys ?? []) {
-          appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+          appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
         }
         while (result.needPassphrase) {
           // todo: queue into a dictionary?
@@ -678,11 +679,12 @@ export class MessageRenderer {
     loaderContext: LoaderContextInterface,
     type: MsgBlockType, // for diagnostics
     printMailInfo: PrintMailInfo | undefined,
+    senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
   ) => {
     const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
-    await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, cb);
+    await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string | undefined) => {

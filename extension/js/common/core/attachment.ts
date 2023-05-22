@@ -125,7 +125,7 @@ export class Attachment {
     );
   };
 
-  /** @deprecated attachment and pgp_block frames won't be performing this analysis
+  /** @deprecated should be made private
    *
    */
   public isPublicKey = (): boolean => {

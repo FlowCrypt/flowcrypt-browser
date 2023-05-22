@@ -70,7 +70,7 @@ export class XssSafeFactory {
     } else if (block.type === 'privateKey') {
       return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'));
     } else if (block.type === 'certificate') {
-      return factory.embeddedPubkey(Str.with(block.content));
+      return factory.embeddedPubkey(Str.with(block.content), isOutgoing);
     } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
       return block.attachmentMeta
         ? factory.embeddedAttachment(new Attachment(block.attachmentMeta), block.type === 'encryptedAttachment')

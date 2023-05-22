@@ -1253,7 +1253,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         let inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
         expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
-        expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFrame(['pgp_pubkey.htm'])).isElementVisible('@action-add-contact')).to.be.true;
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
@@ -1273,7 +1273,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
         expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
-        expect((await inboxPage.getFramesUrls(['pgp_pubkey.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFrame(['pgp_pubkey.htm'])).isElementVisible('@action-add-contact')).to.be.true;
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
@@ -1281,6 +1281,27 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           signature: 'signed',
         });
         t.pass();
+      })
+    );
+
+    test(
+      'decrypt - public key is rendered minimized for outgoing messages',
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const threadId = '1869220e0c8f16de';
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        expect((await gmailPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
+        expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
       })
     );
 
