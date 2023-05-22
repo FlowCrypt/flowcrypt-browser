@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Url } from '../../js/common/core/common.js';
+import { Str, Url } from '../../js/common/core/common.js';
 import { Assert } from '../../js/common/assert.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
@@ -39,7 +39,7 @@ export class PgpRenderBlockView extends PgpBaseBlockView {
   };
 
   private handleMessage = (event: MessageEvent<unknown>) => {
-    if (!(new RegExp(`^http(s)?://${GMAIL_PAGE_HOST}$`).test(event.origin) || Env.getExtensionOriginRegExp().test(event.origin))) return;
+    if (!(new RegExp(`^http(s)?://${Str.regexEscape(GMAIL_PAGE_HOST)}$`).test(event.origin) || Env.getExtensionOriginRegExp().test(event.origin))) return;
     const data = event.data as RenderMessage;
     // todo: order better
     if (data?.renderEncryptionStatus) {
