@@ -1253,7 +1253,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         let inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
         expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
-        expect((await inboxPage.getFrame(['pgp_pubkey.htm'])).isElementVisible('@action-add-contact')).to.be.true;
+        expect(await (await inboxPage.getFrame(['pgp_pubkey.htm'])).isElementVisible('@action-add-contact')).to.be.true;
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
@@ -1273,7 +1273,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
         expect((await inboxPage.getFramesUrls(['pgp_render_block.htm'])).length).to.equal(1);
-        expect((await inboxPage.getFrame(['pgp_pubkey.htm'])).isElementVisible('@action-add-contact')).to.be.true;
+        expect(await (await inboxPage.getFrame(['pgp_pubkey.htm'])).isElementVisible('@action-add-contact')).to.be.true;
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_render_block.htm']), {
           content: ['Sent with Proton Mail secure email.'],
