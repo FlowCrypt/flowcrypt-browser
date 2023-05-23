@@ -142,7 +142,7 @@ export class AcctStore extends AbstractStore {
   };
 
   public static getScopes = async (acctEmail: string): Promise<Scopes> => {
-    const accessToken = await this.getAccessTokenUntilAvailable(acctEmail);
+    const accessToken = await InMemoryStore.getUntilAvailable(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
     // const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false,
@@ -175,17 +175,6 @@ export class AcctStore extends AbstractStore {
       }
     }
     return result;
-  };
-
-  private static getAccessTokenUntilAvailable = async (acctEmail: string): Promise<string> => {
-    for (let i = 0; i < 20; i++) {
-      const accessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
-      if (accessToken) {
-        return accessToken;
-      }
-      await Time.sleep(300);
-    }
-    throw new Error('Access Token not available');
   };
 
   private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
