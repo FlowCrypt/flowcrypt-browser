@@ -48,6 +48,10 @@ export class MessageRenderer {
     this.downloader = new Downloader(gmail);
   }
 
+  public static isPwdMsg = (text: string) => {
+    return /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(text);
+  };
+
   /**
    * Replaces inline image CID references with base64 encoded data in sanitized HTML
    * and returns the sanitized HTML along with the inline CID attachments.
@@ -56,7 +60,7 @@ export class MessageRenderer {
    * @param attachments - An array of email attachments.
    * @returns An object containing sanitized HTML and an array of inline CID attachments.
    */
-  public static replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Attachment[] } => {
+  private static replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Attachment[] } => {
     // Array to store inline CID attachments
     const inlineCIDAttachments: Attachment[] = [];
 
@@ -91,7 +95,7 @@ export class MessageRenderer {
     return { sanitizedHtml, inlineCIDAttachments };
   };
 
-  public static getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
+  private static getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
     if (isHtml) {
       return `<div style="white-space: normal"> Encrypted Subject:
                 <b> ${Xss.escape(subject)}</b>
@@ -102,7 +106,7 @@ export class MessageRenderer {
     }
   };
 
-  public static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
+  private static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
     const decryptResult = await decrypt();
     if (!decryptResult.success) {
       return undefined; // note: this internal error results in a wrong "Not Signed" badge
@@ -111,7 +115,7 @@ export class MessageRenderer {
     }
   };
 
-  public static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
+  private static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
@@ -125,19 +129,13 @@ export class MessageRenderer {
     };
   };
 
-  public static renderPgpSignatureCheckResult = async (
+  private static renderPgpSignatureCheckResult = async (
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
+    wasSignerEmailSupplied: boolean,
     retryVerification?: () => Promise<VerifyRes | undefined>
   ) => {
     if (verifyRes?.error) {
-      /* todo: if (not raw) {
-        // Sometimes the signed content is slightly modified when parsed from DOM,
-        // so the message should be re-fetched straight from API to make sure we get the original signed data and verify again
-        this.view.signature.parsedSignature = undefined; // force to re-parse
-        await this.view.decryptModule.initialize(verificationPubs, true);
-        return;
-      } */
       renderModule.renderSignatureStatus(`error verifying signature: ${verifyRes.error}`);
       renderModule.setFrameColor('red');
     } else if (!verifyRes || !verifyRes.signerLongids.length) {
@@ -146,17 +144,18 @@ export class MessageRenderer {
       renderModule.renderSignatureStatus('signed');
     } else if (retryVerification) {
       renderModule.renderVerificationInProgress();
-      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, (await retryVerification()) ?? verifyRes, undefined);
+      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, (await retryVerification()) ?? verifyRes, wasSignerEmailSupplied, undefined);
       return;
+    } else if (!wasSignerEmailSupplied) {
+      // todo: unit-test this case?
+      renderModule.renderSignatureStatus('could not verify signature: missing pubkey, missing sender info');
     } else {
-      // todo: is this situation possible: no sender info in `from`?
-      // renderModule.renderSignatureStatus('could not verify signature: missing pubkey, missing sender info');
       MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes);
     }
     renderModule.setTestState('ready');
   };
 
-  public static renderMissingPubkeyOrBadSignature = (renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void => {
+  private static renderMissingPubkeyOrBadSignature = (renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void => {
     // eslint-disable-next-line no-null/no-null
     if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
       MessageRenderer.renderMissingPubkey(renderModule, verifyRes.signerLongids[0]);
@@ -165,17 +164,13 @@ export class MessageRenderer {
     }
   };
 
-  public static renderMissingPubkey = (renderModule: RenderInterfaceBase, signerLongid: string) => {
+  private static renderMissingPubkey = (renderModule: RenderInterfaceBase, signerLongid: string) => {
     renderModule.renderSignatureStatus(`could not verify signature: missing pubkey ${signerLongid}`);
   };
 
-  public static renderBadSignature = (renderModule: RenderInterfaceBase) => {
+  private static renderBadSignature = (renderModule: RenderInterfaceBase) => {
     renderModule.renderSignatureStatus('bad signature');
     renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
-  };
-
-  public static isPwdMsg = (text: string) => {
-    return /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(text);
   };
 
   private static getVerificationPubs = async (signerEmail: string) => {
@@ -339,8 +334,43 @@ export class MessageRenderer {
     );
   };
 
-  // todo: private
-  public getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
+  public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
+    // todo: retries? exceptions?
+    const msgDownload = this.downloader.msgGetCached(msgId);
+    if (msgDownload.processedFull) {
+      return msgDownload.processedFull;
+    }
+    const fullMsg = await msgDownload.download.full;
+    const mimeContent = MessageRenderer.reconstructMimeContent(fullMsg);
+    const blocks = Mime.processBody(mimeContent);
+    const isBodyEmpty = Mime.isBodyEmpty(mimeContent);
+    // todo: only start `signature` download?
+    // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
+    for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
+      const treatAs = a.treatAs(mimeContent.attachments, isBodyEmpty);
+      if (treatAs === 'plainFile') continue;
+      if (treatAs === 'needChunk') {
+        this.downloader.queueAttachmentChunkDownload(a);
+      } else if (treatAs === 'publicKey') {
+        // we also want a chunk before we replace the attachment in the UI
+        // todo: or simply download in full?
+        this.downloader.queueAttachmentChunkDownload(a);
+      } else {
+        // todo: this.downloader.queueAttachmentDownload(a);
+      }
+    }
+    const from = GmailParser.findHeader(fullMsg, 'from');
+    msgDownload.processedFull = {
+      isBodyEmpty,
+      blocks,
+      messageInfo: await this.getMessageInfo(fullMsg),
+      from,
+      attachments: mimeContent.attachments,
+    };
+    return msgDownload.processedFull;
+  };
+
+  private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
@@ -376,42 +406,6 @@ export class MessageRenderer {
       },
       isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(fullMsg.snippet || ''),
     };
-  };
-
-  public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
-    // todo: retries? exceptions?
-    const msgDownload = this.downloader.msgGetCached(msgId);
-    if (msgDownload.processedFull) {
-      return msgDownload.processedFull;
-    }
-    const fullMsg = await msgDownload.download.full;
-    const mimeContent = MessageRenderer.reconstructMimeContent(fullMsg);
-    const blocks = Mime.processBody(mimeContent);
-    const isBodyEmpty = Mime.isBodyEmpty(mimeContent);
-    // todo: only start `signature` download?
-    // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
-    for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
-      const treatAs = a.treatAs(mimeContent.attachments, isBodyEmpty);
-      if (treatAs === 'plainFile') continue;
-      if (treatAs === 'needChunk') {
-        this.downloader.queueAttachmentChunkDownload(a);
-      } else if (treatAs === 'publicKey') {
-        // we also want a chunk before we replace the attachment in the UI
-        // todo: or simply download in full?
-        this.downloader.queueAttachmentChunkDownload(a);
-      } else {
-        // todo: this.downloader.queueAttachmentDownload(a);
-      }
-    }
-    const from = GmailParser.findHeader(fullMsg, 'from');
-    msgDownload.processedFull = {
-      isBodyEmpty,
-      blocks,
-      messageInfo: await this.getMessageInfo(fullMsg),
-      from,
-      attachments: mimeContent.attachments,
-    };
-    return msgDownload.processedFull;
   };
 
   private decideDecryptedContentFormattingAndRender = async (
@@ -501,8 +495,8 @@ export class MessageRenderer {
         this.getRetryVerification(signerEmail, verify)
       );
     }
-    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml); // todo: quoteModule ?
-    await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, retryVerification);
+    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
+    await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, Boolean(signerEmail), retryVerification);
     if (renderableAttachments.length) {
       renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
@@ -558,9 +552,7 @@ export class MessageRenderer {
   };
 
   // todo: this should be moved to some other class?
-  private getRetryVerification = (signerEmail: string | undefined, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
-    if (!signerEmail) return undefined;
-    const { email } = Str.parseEmail(signerEmail); // todo: we can also store name if contact doesn't exist
+  private getRetryVerification = (email: string | undefined, verify: (verificationPubs: string[]) => Promise<VerifyRes | undefined>) => {
     if (!email) return undefined;
     return async () => {
       const clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
@@ -621,10 +613,7 @@ export class MessageRenderer {
     const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
     const decrypt = (verificationPubs: string[]) => MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs });
     const result = await decrypt(verificationPubs);
-    // from decryptAndRender
-    if (typeof result === 'undefined') {
-      // todo: renderErr(Lang.general.restartBrowserAndTryAgain(!!this.view.fesUrl), undefined);
-    } else if (result.success) {
+    if (result.success) {
       return await this.decideDecryptedContentFormattingAndRender(
         signerEmail,
         verificationPubs,
