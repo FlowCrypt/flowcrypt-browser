@@ -17,3 +17,6 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "openpgp"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "puppeteer"
+        versions:
+          - ">20.1.2, <=20.3.0"
