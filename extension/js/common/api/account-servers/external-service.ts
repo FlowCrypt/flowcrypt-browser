@@ -162,7 +162,7 @@ export class ExternalService extends Api {
   };
 
   private authHdr = async (): Promise<Dict<string>> => {
-    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+    const idToken = await InMemoryStore.getUntilAvailable(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
       return { Authorization: `Bearer ${idToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
     }
