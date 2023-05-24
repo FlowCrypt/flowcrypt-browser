@@ -50,17 +50,17 @@ blocks:
         on_fail:
           commands:
             - |
-              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
-                echo "Uploading debug files as job artifacts..."
-                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-*.html
-              fi
+              for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
+                echo "Uploading debug file $file as job artifact..."
+                artifact push job "$file"
+              done
 
   - name: Live UI Gmail tests
     dependencies: []
     run:
       when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
-      minutes: 30
+      minutes: 45
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
@@ -87,10 +87,10 @@ blocks:
         on_fail:
           commands:
             - |
-              if [ -f build/test/test/debugArtifacts/debugHtmlAttachment-0.html ]; then
-                echo "Uploading debug files as job artifacts..."
-                artifact push job build/test/test/debugArtifacts/debugHtmlAttachment-0.html
-              fi
+              for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
+                echo "Uploading debug file $file as job artifact..."
+                artifact push job "$file"
+              done
 
   - name: Other tests
     dependencies: []

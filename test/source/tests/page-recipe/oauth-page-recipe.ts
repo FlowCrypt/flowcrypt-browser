@@ -117,10 +117,19 @@ export class OauthPageRecipe extends PageRecipe {
         if (acctPassword) {
           await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
-        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.auth0loginBtn));
+        const loginButtons = await oauthPage.target.$$(selectors.auth0loginBtn);
+        await oauthPage.waitForNavigationIfAny(() => loginButtons[loginButtons.length - 1].click());
         await oauthPage.waitAndClick(alreadyLoggedSelector, { delay: 1 });
       }
       await Util.sleep(1);
+      const button = await oauthPage.waitAny('button');
+      const formAction = await button.evaluate(button => (button as HTMLButtonElement).formAction);
+      if (formAction?.includes('confirmaccount?')) {
+        // click on "Continue" on "Verify it's you" screen
+        await button.click();
+        await Util.sleep(2);
+        return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // it should handle the list of accounts
+      }
       await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
