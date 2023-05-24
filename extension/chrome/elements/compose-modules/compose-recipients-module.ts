@@ -634,8 +634,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
    */
   private searchContacts = async (input: JQuery<HTMLElement>): Promise<void> => {
     try {
+      const searchString = String(input.val());
+      if (searchString.includes(',') || searchString.length >= 100) {
+        // https://github.com/FlowCrypt/flowcrypt-browser/issues/5169
+        this.view.errModule.debug(`Skipping searchContacts if the user is pasting multiple recipients or the search string length exceeds 100 characters`);
+        return;
+      }
       this.view.errModule.debug(`searchContacts`);
-      const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
+      const substring = Str.parseEmail(searchString, 'DO-NOT-VALIDATE').email;
       this.view.errModule.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
       if (!substring) {
         this.view.errModule.debug(`searchContacts 1`);
