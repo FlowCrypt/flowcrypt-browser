@@ -17,7 +17,7 @@ export class InMemoryStore extends AbstractStore {
     return (await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key })) ?? undefined;
   };
 
-  public static getUntilAvailable = async (acctEmail: string, key: string, retryCount = 20): Promise<string> => {
+  public static getUntilAvailable = async (acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> => {
     for (let i = 0; i < retryCount; i++) {
       const value = await InMemoryStore.get(acctEmail, key);
       if (value) {
@@ -25,6 +25,6 @@ export class InMemoryStore extends AbstractStore {
       }
       await Time.sleep(300);
     }
-    throw new Error('Value is not available');
+    return undefined;
   };
 }
