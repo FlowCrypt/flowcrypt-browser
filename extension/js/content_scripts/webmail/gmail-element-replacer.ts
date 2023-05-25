@@ -181,7 +181,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         continue;
       }
       if (!from) {
-        from = this.getSenderEmail(this.getMsgBodyEl(msgId));
+        from = this.getFrom(this.getMsgBodyEl(msgId));
       }
       const senderEmail = from ? Str.parseEmail(from).email : undefined;
       const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail }, false);
@@ -438,7 +438,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       console.debug('processAttachments()', attachmentMetas);
     }
     const msgEl = this.getMsgBodyEl(msgId);
-    const senderEmail = this.getSenderEmail(msgEl);
+    const from = this.getFrom(msgEl);
+    const senderEmail = from ? Str.parseEmail(from).email : undefined;
     const loaderContext = new LoaderContextWebmail(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
@@ -527,8 +528,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   };
 
-  private getSenderEmail = (msgEl: HTMLElement | JQueryEl) => {
-    return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
+  private getFrom = (msgEl: HTMLElement | JQueryEl) => {
+    return $(msgEl).closest('.gs').find('span.gD').attr('email')?.toLowerCase();
   };
 
   private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
