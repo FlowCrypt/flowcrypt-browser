@@ -3,14 +3,15 @@
 'use strict';
 
 import { Bm } from './browser/browser-msg.js';
-import { Dict } from './core/common.js';
 import { BindInterface, RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { RenderMessage } from './render-message.js';
 import { RenderRelay } from './render-relay.js';
 
+type FrameEntry = { frameWindow?: Window; readyToReceive?: true; queue: RenderMessage[]; progressText?: string };
+
 export class RelayManager implements RelayManagerInterface, BindInterface {
-  private frames: Dict<{ frameWindow?: Window; readyToReceive?: true; queue: RenderMessage[]; progressText?: string }> = {};
+  private readonly frames = new Map<string, FrameEntry>();
 
   public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
     if (typeof percent === 'undefined') {
@@ -22,7 +23,8 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
   };
 
   public relay = (frameId: string, message: RenderMessage) => {
-    const { frameWindow, readyToReceive, queue } = this.frames[frameId];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const { frameWindow, readyToReceive, queue } = this.frames.get(frameId)!;
     queue.push(message);
     if (readyToReceive && frameWindow) {
       this.flush({ frameWindow, queue });
@@ -30,12 +32,12 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
   };
 
   public createRelay = (frameId: string): RenderInterface => {
-    this.frames[frameId] = { queue: [] }; // can readyToReceive message come earlier? Probably not.
+    this.getOrCreate(frameId);
     return new RenderRelay(this, frameId);
   };
 
   public readyToReceive = (frameId: string) => {
-    const frameData = this.frames[frameId];
+    const frameData = this.getOrCreate(frameId);
     frameData.readyToReceive = true;
     if (frameData.frameWindow) {
       this.flush({ frameWindow: frameData.frameWindow, queue: frameData.queue });
@@ -43,7 +45,8 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
   };
 
   public renderProgressText = (frameId: string, text: string) => {
-    const frameData = this.frames[frameId];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const frameData = this.frames.get(frameId)!;
     frameData.progressText = text;
     this.relay(frameId, { renderText: text });
   };
@@ -51,7 +54,8 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
   public renderProgress = ({ frameId, percent, loaded, total, expectedTransferSize }: Bm.AjaxProgress) => {
     const perc = RelayManager.getPercentage(percent, loaded, total, expectedTransferSize);
     if (typeof perc !== 'undefined') {
-      const { readyToReceive, progressText } = this.frames[frameId];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const { readyToReceive, progressText } = this.frames.get(frameId)!;
       if (readyToReceive && typeof progressText !== 'undefined') {
         this.relay(frameId, { renderText: `${progressText} ${perc}%` });
       }
@@ -59,11 +63,17 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
   };
 
   public bind = (frameId: string, frameWindow: Window) => {
-    const frameData = this.frames[frameId];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const frameData = this.frames.get(frameId)!;
     frameData.frameWindow = frameWindow;
     if (frameData.readyToReceive) {
       this.flush({ frameWindow, queue: frameData.queue });
     }
+  };
+
+  private getOrCreate = (frameId: string): FrameEntry => {
+    const frameEntry = this.frames.get(frameId);
+    return frameEntry ?? { queue: [] };
   };
 
   private flush = ({ frameWindow, queue }: { frameWindow: Window; queue: RenderMessage[] }) => {
