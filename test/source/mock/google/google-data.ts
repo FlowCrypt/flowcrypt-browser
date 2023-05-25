@@ -236,7 +236,7 @@ export class GoogleData {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
-      const fromAddress = fromHeader!.value;
+      const fromAddress = Xss.escape(fromHeader!.value);
       let htmlData: string | undefined;
       let processedParts: GmailMsg$payload$part[] = [];
       if (payload.mimeType === 'text/plain') {
