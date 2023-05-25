@@ -73,7 +73,10 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
 
   private getOrCreate = (frameId: string): FrameEntry => {
     const frameEntry = this.frames.get(frameId);
-    return frameEntry ?? { queue: [] };
+    if (frameEntry) return frameEntry;
+    const newFrameEntry = { queue: [] };
+    this.frames.set(frameId, newFrameEntry);
+    return newFrameEntry;
   };
 
   private flush = ({ frameWindow, queue }: { frameWindow: Window; queue: RenderMessage[] }) => {
