@@ -342,6 +342,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private hasBodyChanged = (msgBody: string) => {
+    console.log(`msgBody: ${msgBody}`);
+    console.log(`lastDraftBody: ${msgBody}`);
     if (msgBody && msgBody !== this.lastDraftBody) {
       this.lastDraftBody = msgBody;
       return true;
