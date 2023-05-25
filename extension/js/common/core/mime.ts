@@ -54,7 +54,7 @@ export type SendableMsgBody = {
 /* eslint-enable @typescript-eslint/naming-convention */
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined; // undefined if format was 'full'
-  blocks: { block: MsgBlock; file?: Attachment }[]; // may be many blocks per file
+  blocks: MsgBlock[]; // may be many blocks per file
 };
 
 export type MimeProccesedFromRawMsg = MimeProccesedMsg & {
@@ -93,7 +93,7 @@ export class Mime {
   };
 
   public static processAttachments = (bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
-    const attachmentBlocks: { block: MsgBlock; file: Attachment }[] = [];
+    const attachmentBlocks: MsgBlock[] = [];
     const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
       let treatAs = file.treatAs(decoded.attachments, Mime.isBodyEmpty(decoded));
@@ -105,26 +105,17 @@ export class Mime {
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
-          attachmentBlocks.push({ block: MsgBlock.fromContent('encryptedMsg', armored), file });
+          attachmentBlocks.push(MsgBlock.fromContent('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         signatureAttachments.push(file);
       } else if (treatAs === 'publicKey') {
-        attachmentBlocks.push(
-          ...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks.map(block => {
-            return { block, file }; // todo: test when more than one
-          })
-        );
+        attachmentBlocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks); // todo: test when more than one
       } else if (treatAs === 'privateKey') {
-        attachmentBlocks.push(
-          ...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks.map(block => {
-            return { block, file }; // todo: test when more than one
-          })
-        );
+        attachmentBlocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks); // todo: test when more than one
       } else if (treatAs === 'encryptedFile') {
-        attachmentBlocks.push({
-          // todo: fromAttachment return complete record?
-          block: MsgBlock.fromAttachment('encryptedAttachment', '', {
+        attachmentBlocks.push(
+          MsgBlock.fromAttachment('encryptedAttachment', '', {
             name: file.name,
             type: file.type,
             length: file.getData().length,
@@ -136,12 +127,11 @@ export class Mime {
             id: file.id,
             msgId: file.id,
             cid: file.cid, */
-          }),
-          file,
-        });
+          })
+        );
       } else if (treatAs === 'plainFile') {
-        attachmentBlocks.push({
-          block: MsgBlock.fromAttachment('plainAttachment', '', {
+        attachmentBlocks.push(
+          MsgBlock.fromAttachment('plainAttachment', '', {
             name: file.name,
             type: file.type,
             length: file.getData().length,
@@ -149,9 +139,8 @@ export class Mime {
             inline: file.inline,
             id: file.id, // todo:
             cid: file.cid, // todo:
-          }),
-          file,
-        });
+          })
+        );
       }
     }
     if (signatureAttachments.length) {
@@ -160,23 +149,17 @@ export class Mime {
       // todo: data may not be present
       if (signatureAttachment.hasData()) {
         const signature = signatureAttachment.getData().toUtfStr();
-        const blocksToRevisit = [...bodyBlocks, ...attachmentBlocks.map(x => x.block)];
-        if (!blocksToRevisit.find(block => ['plainText', 'plainHtml', 'signedMsg'].includes(block.type))) {
+        if (![...bodyBlocks, ...attachmentBlocks].some(block => ['plainText', 'plainHtml', 'signedMsg'].includes(block.type))) {
           // signed an empty message
-          attachmentBlocks.push({ block: new MsgBlock('signedMsg', '', true, signature), file: signatureAttachment });
+          attachmentBlocks.push(new MsgBlock('signedMsg', '', true, signature));
         }
       } else {
-        // debugger;
+        // todo: is this possible while we always load 'raw' for detached signature messages
         throw new Error('No data.');
       }
     }
     return {
-      blocks: [
-        ...bodyBlocks.map(block => {
-          return { block };
-        }),
-        ...attachmentBlocks,
-      ], // todo: check how compose-quote-module works, previous version made 'plainText' and 'plainHtml' invisible if a 'signature' block is present
+      blocks: [...bodyBlocks, ...attachmentBlocks], // todo: check how compose-quote-module works, previous version made 'plainText' and 'plainHtml' invisible if a 'signature' block is present
       // by changing their types to 'signedText' and 'signedHtml' respectively
       rawSignedContent: decoded.rawSignedContent,
     };

@@ -310,13 +310,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
-    const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.block.type));
+    const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.type));
     if (!rawBlock) {
       return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
     }
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-      encryptedData: rawBlock.block.content,
+      encryptedData: rawBlock.content,
       verificationPubs: [],
     });
     if (!decrypted.success) {

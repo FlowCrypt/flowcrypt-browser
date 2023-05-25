@@ -104,14 +104,14 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         decryptedBlockTypes.push('decryptedAttachment');
       }
       const readableBlocks: MsgBlock[] = [];
-      for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.block.type))) {
-        if (['encryptedMsg', 'signedMsg'].includes(block.block.type)) {
+      for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
+        if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
           this.setQuoteLoaderProgress('decrypting...');
-          const decrypted = await this.decryptMessage(block.block.content);
+          const decrypted = await this.decryptMessage(block.content);
           const msgBlocks = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
-          readableBlocks.push(block.block);
+          readableBlocks.push(block);
         }
       }
       const decryptedAndFormatedContent: string[] = [];
@@ -156,7 +156,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return {
         headers,
         text: decryptedAndFormatedContent.join('\n'),
-        isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].block.type === 'signedMsg')),
+        isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles,
       };
     } catch (e) {
