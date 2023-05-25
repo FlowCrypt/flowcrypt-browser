@@ -395,11 +395,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const { attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId);
+          const { attachments, messageInfo, isBodyEmpty } = await this.messageRenderer.msgGetProcessed(msgId);
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', attachments);
           }
-          await this.processAttachments(msgId, attachments, attachmentsContainer, messageInfo, false);
+          await this.processAttachments(msgId, attachments, attachmentsContainer, messageInfo, isBodyEmpty, false);
         } catch (e) {
           if (ApiErr.isAuthErr(e)) {
             this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -424,6 +424,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachmentMetas: Attachment[], // todo: these are not Metas!
     attachmentsContainerInner: JQueryEl,
     messageInfo: MessageInfo,
+    isBodyEmpty: boolean,
     skipGoogleDrive: boolean
   ) => {
     if (this.debug) {
@@ -445,7 +446,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // todo: shouldn't call `treatAs` in too many places ?
       const renderStatus = await this.messageRenderer.processAttachment(
         a,
-        a.treatAs(attachmentMetas, Mime.isBodyTextEmpty(msgEl.text())),
+        a.treatAs(attachmentMetas, isBodyEmpty),
         loaderContext,
         attachmentSel,
         msgId,
@@ -496,7 +497,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           console.info('Missing Google Drive attachments download_url');
         }
       }
-      await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, messageInfo, true);
+      await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, messageInfo, false, true);
     }
   };
 

@@ -4,8 +4,6 @@
 
 import { Str, Url } from '../../js/common/core/common.js';
 import { Assert } from '../../js/common/assert.js';
-import { Ui } from '../../js/common/browser/ui.js';
-import { View } from '../../js/common/view.js';
 import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -16,31 +14,34 @@ import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-mod
 import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
+import { Ui } from '../../js/common/browser/ui.js';
+import { View } from '../../js/common/view.js';
 
 export class PgpBlockView extends View {
-  public readonly debug: boolean;
+  public readonly acctEmail: string; // needed for attachment decryption, probably should be refactored out
   public readonly parentTabId: string;
   public readonly frameId: string;
-  public readonly acctEmail: string; // needed for attachment decryption, probably should be refactored out
 
-  public readonly quoteModule: PgpBlockViewQuoteModule;
-  public readonly renderModule: PgpBlockViewRenderModule;
+  public readonly debug: boolean;
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
+  public readonly quoteModule: PgpBlockViewQuoteModule;
   public readonly errorModule: PgpBlockViewErrorModule;
+  public readonly renderModule: PgpBlockViewRenderModule;
   public readonly printModule = new PgpBlockViewPrintModule();
 
   public constructor() {
     super();
     Ui.event.protect();
-    this.quoteModule = new PgpBlockViewQuoteModule(this);
-    this.renderModule = new PgpBlockViewRenderModule(this);
-    this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
-    this.errorModule = new PgpBlockViewErrorModule(this);
     const uncheckedUrlParams = Url.parse(['frameId', 'parentTabId', 'debug', 'acctEmail']);
-    this.debug = uncheckedUrlParams.debug === true;
+    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+    this.debug = uncheckedUrlParams.debug === true;
+    // modules
+    this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
+    this.quoteModule = new PgpBlockViewQuoteModule(this);
+    this.errorModule = new PgpBlockViewErrorModule(this);
+    this.renderModule = new PgpBlockViewRenderModule(this);
     window.addEventListener('message', this.handleMessage, true); // todo: capture?
     window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
   }
