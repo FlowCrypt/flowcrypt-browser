@@ -12,6 +12,11 @@ export type PrintMailInfo = {
 export type MessageInfo = {
   printMailInfo?: PrintMailInfo;
   isPwdMsgBasedOnMsgSnippet: boolean;
+  from?: {
+    email: string | undefined;
+    name: string | undefined;
+    full: string;
+  };
 };
 
 export type RenderMessage = {

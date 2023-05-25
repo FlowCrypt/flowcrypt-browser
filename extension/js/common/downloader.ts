@@ -15,7 +15,6 @@ export type ProcessedMessage = {
   blocks: MsgBlock[];
   attachments: Attachment[];
   messageInfo: MessageInfo;
-  from?: string;
 };
 
 export interface MessageCacheEntry {

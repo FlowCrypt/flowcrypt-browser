@@ -169,22 +169,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const msgId = this.determineMsgId(emailContainer);
       let blocks: MsgBlock[] = [];
       let messageInfo: MessageInfo | undefined;
-      let from: string | undefined;
       try {
-        ({ messageInfo, from, blocks } = await this.messageRenderer.msgGetProcessed(msgId));
+        ({ messageInfo, blocks } = await this.messageRenderer.msgGetProcessed(msgId));
       } catch (e) {
         // fill with fallback values from the element
         blocks = Mime.processBody({ text: emailContainer.innerText });
+        // todo: print info for offline?
       }
+      const setMessageInfo = messageInfo ?? { isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText) };
       if (blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText')) {
         // only has single block which is plain text
         continue;
       }
-      if (!from) {
-        from = this.getFrom(this.getMsgBodyEl(msgId));
+      if (!setMessageInfo.from) {
+        setMessageInfo.from = this.getFrom(this.getMsgBodyEl(msgId));
       }
-      const senderEmail = from ? Str.parseEmail(from).email : undefined;
-      const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail }, false);
+      const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail: setMessageInfo.from?.email }, false);
       if (!renderedXssSafe) continue;
       $(this.sel.translatePrompt).hide();
       if (this.debug) {
@@ -194,15 +194,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
-      this.messageRenderer
-        .processInlineBlocks(
-          this.relayManager,
-          this.factory,
-          messageInfo ?? { isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText) }, // todo: print info for offline?
-          blocksInFrames,
-          senderEmail
-        )
-        .catch(Catch.reportErr);
+      this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, setMessageInfo, blocksInFrames).catch(Catch.reportErr);
     }
   };
 
@@ -438,8 +430,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       console.debug('processAttachments()', attachmentMetas);
     }
     const msgEl = this.getMsgBodyEl(msgId);
-    const from = this.getFrom(msgEl);
-    const senderEmail = from ? Str.parseEmail(from).email : undefined;
+    if (!messageInfo.from?.email) {
+      messageInfo.from = this.getFrom(msgEl);
+    }
     const loaderContext = new LoaderContextWebmail(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
@@ -456,8 +449,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         loaderContext,
         attachmentSel,
         msgId,
-        messageInfo,
-        senderEmail
+        messageInfo
       );
       if (['hidden', 'tomessage'].includes(renderStatus)) {
         nRenderedAttachments--;
@@ -529,7 +521,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private getFrom = (msgEl: HTMLElement | JQueryEl) => {
-    return $(msgEl).closest('.gs').find('span.gD').attr('email')?.toLowerCase();
+    const from = $(msgEl).closest('.gs').find('span.gD').attr('email')?.toLowerCase();
+    return from ? Str.parseEmail(from) : undefined;
   };
 
   private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {

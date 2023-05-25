@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 import { FactoryReplyParams, XssSafeFactory } from '../../../../js/common/xss-safe-factory.js';
 import { GmailParser, GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { Str, Url, UrlParams } from '../../../../js/common/core/common.js';
+import { Url, UrlParams } from '../../../../js/common/core/common.js';
 
 import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../../../js/common/browser/browser-msg-common-handlers.js';
@@ -146,9 +146,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     const htmlId = this.replyMsgId(message.id);
     try {
       const msg = await this.view.messageRenderer.downloader.msgGetCached(message.id).download.full;
-      const { blocks, isBodyEmpty, messageInfo, from, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
+      const { blocks, isBodyEmpty, messageInfo, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
-      const senderEmail = from ? Str.parseEmail(from).email : undefined;
+      const senderEmail = messageInfo.from?.email;
       const { renderedXssSafe, blocksInFrames } = this.view.messageRenderer.renderMsg({ blocks, senderEmail }, this.view.showOriginal);
       const loaderContext = new LoaderContext(
         this.view.factory,
@@ -157,20 +157,11 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
           .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)))
       );
-      // todo: test else if (this.view.showOriginal) {      r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');}
       for (const a of attachments) {
-        await this.view.messageRenderer.processAttachment(
-          a,
-          a.treatAs(attachments, isBodyEmpty),
-          loaderContext,
-          undefined,
-          message.id,
-          messageInfo,
-          senderEmail
-        );
+        await this.view.messageRenderer.processAttachment(a, a.treatAs(attachments, isBodyEmpty), loaderContext, undefined, message.id, messageInfo);
       }
       const r =
-        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from || 'unknown')} <span style="float:right;">${
+        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(messageInfo.from?.full || 'unknown')} <span style="float:right;">${
           GmailParser.findHeader(msg, 'Date') ?? ''
         } ${exportBtn}</p>` +
         (loaderContext.renderedMessageXssSafe ?? '') +
@@ -179,7 +170,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       loaderContext.completeBinding(this.view.relayManager);
-      this.view.messageRenderer.processInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames, senderEmail).catch(Catch.reportErr);
+      this.view.messageRenderer.processInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames).catch(Catch.reportErr);
       if (exportBtn) {
         $('.action-export').on(
           'click',

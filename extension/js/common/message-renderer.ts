@@ -244,8 +244,7 @@ export class MessageRenderer {
     loaderContext: LoaderContextInterface,
     attachmentSel: JQueryEl | undefined,
     msgId: string, // deprecated
-    messageInfo: MessageInfo,
-    senderEmail?: string
+    messageInfo: MessageInfo
   ): Promise<'shown' | 'hidden' | 'replaced'> => {
     // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
     try {
@@ -286,18 +285,18 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, senderEmail, (renderModule, frameId) =>
-          this.processEncryptedMessage(a, renderModule, frameId, senderEmail, messageInfo.isPwdMsgBasedOnMsgSnippet)
+        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, (renderModule, frameId) =>
+          this.processEncryptedMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'publicKey') {
         // todo - pubkey should be fetched in pgp_pubkey.js
-        return await this.renderPublicKeyFromFile(a, loaderContext, this.isOutgoing(senderEmail), attachmentSel);
+        return await this.renderPublicKeyFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email), attachmentSel);
       } else if (treatAs === 'privateKey') {
-        return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(senderEmail));
+        return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email));
       } else if (treatAs === 'signature') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', messageInfo.printMailInfo, senderEmail, renderModule =>
-          this.processSignedMessage(msgId, renderModule, senderEmail)
+        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.processSignedMessage(msgId, renderModule, messageInfo.from?.email)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else {
@@ -317,18 +316,17 @@ export class MessageRenderer {
     }
   };
 
-  public processInlineBlocks = async (
-    relayManager: RelayManager,
-    factory: XssSafeFactory,
-    messageInfo: MessageInfo,
-    blocks: Dict<MsgBlock>,
-    from?: string // need to unify somehow when we accept `abc <email@address>` and when just `email@address`
-  ) => {
-    const signerEmail = from ? Str.parseEmail(from).email : undefined;
+  public processInlineBlocks = async (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndStartProcessing(relayManager, new LoaderContextBindNow(), factory, frameId, messageInfo.printMailInfo, signerEmail, renderModule =>
-          this.renderMsgBlock(block, renderModule, signerEmail, messageInfo.isPwdMsgBasedOnMsgSnippet)
+        this.relayAndStartProcessing(
+          relayManager,
+          new LoaderContextBindNow(),
+          factory,
+          frameId,
+          messageInfo.printMailInfo,
+          messageInfo.from?.email,
+          renderModule => this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
         )
       )
     );
@@ -359,12 +357,10 @@ export class MessageRenderer {
         // todo: this.downloader.queueAttachmentDownload(a);
       }
     }
-    const from = GmailParser.findHeader(fullMsg, 'from');
     msgDownload.processedFull = {
       isBodyEmpty,
       blocks,
       messageInfo: await this.getMessageInfo(fullMsg),
-      from,
       attachments: mimeContent.attachments,
     };
     return msgDownload.processedFull;
@@ -374,8 +370,10 @@ export class MessageRenderer {
     const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
-    const from = Str.parseEmail(GmailParser.findHeader(fullMsg, 'from') ?? '');
-    const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
+    const fromString = GmailParser.findHeader(fullMsg, 'from');
+    const from = fromString ? Str.parseEmail(fromString) : undefined;
+    const fromEmail = from?.email ?? '';
+    const fromHtml = from?.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${fromEmail}&gt;` : fromEmail;
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const ccString = GmailParser.findHeader(fullMsg, 'cc')
       ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(fullMsg, 'cc')!)}</span><br/>`
@@ -404,6 +402,7 @@ export class MessageRenderer {
       <br/><hr>
     `,
       },
+      from,
       isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(fullMsg.snippet || ''),
     };
   };
