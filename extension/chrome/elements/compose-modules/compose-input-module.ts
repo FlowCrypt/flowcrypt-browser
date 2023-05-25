@@ -29,6 +29,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.scrollIntoView();
     this.handleRTL();
     this.squire.setConfig({ addLinks: this.isRichText() });
+    // Set lastDraftBody to current empty squire content ex: <div><br></div>)
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5184
+    this.view.draftModule.setLastDraftBody(this.squire.getHTML());
     if (this.view.debug) {
       this.insertDebugElements();
     }
