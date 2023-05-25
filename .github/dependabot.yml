@@ -1,6 +1,13 @@
 version: 2
 updates:
 
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "20:00"
+
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
