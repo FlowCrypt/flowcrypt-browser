@@ -10,7 +10,7 @@ jobs:
     name: Check for emails in issue comments
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Scan comment
       id: scan
       uses: FlowCrypt/comment-email-address-alerts@v21
