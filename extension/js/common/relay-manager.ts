@@ -12,6 +12,7 @@ type FrameEntry = { frameWindow?: Window; readyToReceive?: true; queue: RenderMe
 
 export class RelayManager implements RelayManagerInterface, BindInterface {
   private readonly frames = new Map<string, FrameEntry>();
+  private readonly targetOrigin = chrome.runtime.getURL('');
 
   public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
     if (typeof percent === 'undefined') {
@@ -83,7 +84,7 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
     while (true) {
       const message = queue.shift();
       if (message) {
-        frameWindow.postMessage(message, '*'); // todo: targetOrigin
+        frameWindow.postMessage(message, this.targetOrigin); // todo: test in Firefox
         // todo: if ready status, release resources -- callback function?
       } else break;
     }

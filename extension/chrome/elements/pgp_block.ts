@@ -58,7 +58,7 @@ export class PgpBlockView extends View {
   };
 
   private handleMessage = (event: MessageEvent<unknown>) => {
-    if (!(new RegExp(`^http(s)?://${Str.regexEscape(GMAIL_PAGE_HOST)}$`).test(event.origin) || Env.getExtensionOriginRegExp().test(event.origin))) return;
+    if (!(event.origin === Env.getExtensionOrigin() || new RegExp(`^http(s)?://${Str.regexEscape(GMAIL_PAGE_HOST)}$`).test(event.origin))) return;
     const data = event.data as RenderMessage;
     // todo: order better
     if (data?.renderEncryptionStatus) {
