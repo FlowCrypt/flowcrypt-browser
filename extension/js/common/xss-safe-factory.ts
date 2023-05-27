@@ -15,7 +15,6 @@ import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName, WebMailVersion } from './browser/env.js';
 import { Xss } from './platform/xss.js';
-import { SendAsAlias } from './platform/store/acct-store.js';
 import { Buf } from './core/buf.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
@@ -24,7 +23,6 @@ export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draf
 export type FactoryReplyParams = {
   replyMsgId?: string;
   draftId?: string;
-  sendAs?: Dict<SendAsAlias>;
   subject?: string;
   removeAfterClose?: boolean;
 };

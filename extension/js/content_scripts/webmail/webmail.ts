@@ -102,10 +102,6 @@ Catch.try(async () => {
     ) => {
       hijackGmailHotkeys();
       const storage = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
-      if (!storage.sendAs) {
-        storage.sendAs = {};
-        storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
-      }
       injector.btns();
       replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications, relayManager);
       await notifications.showInitial(acctEmail);

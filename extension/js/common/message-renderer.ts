@@ -37,15 +37,17 @@ export type ProccesedMsg = MimeProccesedMsg;
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
+  private readonly sendAsAliases: Set<string>;
   public constructor(
     private readonly acctEmail: string,
     private readonly gmail: Gmail,
     private readonly relayManager: RelayManager,
     private readonly factory: XssSafeFactory,
-    private sendAs: Dict<SendAsAlias>,
+    sendAs: Dict<SendAsAlias> | undefined,
     private debug: boolean = false
   ) {
     this.downloader = new Downloader(gmail);
+    this.sendAsAliases = new Set(sendAs ? Object.keys(sendAs) : [acctEmail]);
   }
 
   public static isPwdMsg = (text: string) => {
@@ -235,7 +237,7 @@ export class MessageRenderer {
   };
 
   public isOutgoing = (senderEmail: string | undefined) => {
-    return Boolean(senderEmail && !!this.sendAs[senderEmail]);
+    return Boolean(senderEmail && this.sendAsAliases.has(senderEmail));
   };
 
   public processAttachment = async (

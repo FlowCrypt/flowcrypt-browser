@@ -71,7 +71,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     private readonly factory: XssSafeFactory,
     private clientConfiguration: ClientConfiguration,
     private acctEmail: string,
-    private readonly sendAs: Dict<SendAsAlias>,
+    sendAs: Dict<SendAsAlias> | undefined,
     private injector: Injector,
     private notifications: Notifications,
     private relayManager: RelayManager
@@ -99,7 +99,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   public reinsertReplyBox = (replyMsgId: string) => {
-    const params: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId };
+    const params: FactoryReplyParams = { replyMsgId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   };
 
@@ -527,7 +527,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    return { sendAs: this.sendAs, replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
+    return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   };
 
   private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
@@ -537,7 +537,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
-    const replyParams: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId: msgId, removeAfterClose: true };
+    const replyParams: FactoryReplyParams = { replyMsgId: msgId, removeAfterClose: true };
     const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(
       replyParams,
       true,
