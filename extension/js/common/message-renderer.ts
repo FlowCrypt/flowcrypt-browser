@@ -13,7 +13,7 @@ import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, VerifyRes } from 
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
-import { MsgBlock, MsgBlockType } from './core/msg-block.js';
+import { MsgBlock } from './core/msg-block.js';
 import { Lang } from './lang.js';
 import { Catch } from './platform/catch.js';
 import { AcctStore } from './platform/store/acct-store.js';
@@ -268,7 +268,7 @@ export class MessageRenderer {
           // if it looks like OpenPGP public key
           treatAs = 'publicKey';
         } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
-          treatAs = 'encryptedMsg'; // todo: signedMsg ?
+          treatAs = 'encryptedMsg';
         } else {
           if (this.debug) {
             console.debug("processAttachment() try -> awaiting done and processed -- doesn't look like OpenPGP");
@@ -292,7 +292,7 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, (renderModule, frameId) =>
-          this.processEncryptedMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
+          this.processCryptoMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'publicKey') {
@@ -301,8 +301,8 @@ export class MessageRenderer {
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email));
       } else if (treatAs === 'signature') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedMsg', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processSignedMessage(msgId, renderModule, messageInfo.from?.email)
+        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.processMessageWithDetachedSignature(msgId, renderModule, messageInfo.from?.email)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else {
@@ -551,8 +551,7 @@ export class MessageRenderer {
     signerEmail: string | undefined,
     isPwdMsgBasedOnMsgSnippet: boolean | undefined
   ) => {
-    // todo: 'signedMsg' also handled here?
-    return await this.renderEncryptedMessage(block.content, renderModule, true, signerEmail, isPwdMsgBasedOnMsgSnippet);
+    return await this.renderCryptoMessage(block.content, renderModule, true, signerEmail, isPwdMsgBasedOnMsgSnippet);
   };
 
   // todo: this should be moved to some other class?
@@ -569,7 +568,7 @@ export class MessageRenderer {
     };
   };
 
-  private renderSignedMessage = async (raw: string, renderModule: RenderInterface, signerEmail: string | undefined) => {
+  private processMessageWithDetachedSignatureFromRaw = async (raw: string, renderModule: RenderInterface, signerEmail: string | undefined) => {
     // ... from PgpBlockViewDecryptModule.initialize
     const mimeMsg = Buf.fromBase64UrlStr(raw);
     const parsed = await Mime.decode(mimeMsg);
@@ -606,7 +605,7 @@ export class MessageRenderer {
     return {};
   };
 
-  private renderEncryptedMessage = async (
+  private renderCryptoMessage = async (
     encryptedData: string | Uint8Array,
     renderModule: RenderInterface,
     fallbackToPlainText: boolean,
@@ -670,7 +669,7 @@ export class MessageRenderer {
 
   private setMsgBodyAndStartProcessing = async (
     loaderContext: LoaderContextInterface,
-    type: MsgBlockType, // for diagnostics
+    type: string, // for diagnostics
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
@@ -680,19 +679,19 @@ export class MessageRenderer {
     await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
-  private processSignedMessage = async (msgId: string, renderModule: RenderInterface, senderEmail: string | undefined) => {
+  private processMessageWithDetachedSignature = async (msgId: string, renderModule: RenderInterface, senderEmail: string | undefined) => {
     try {
       renderModule.renderText('Loading signed message...');
-      const raw = await this.msgGetRaw(msgId);
+      const raw = await this.msgGetRaw(msgId); // todo: not necessary as long as we can extract text and signature attachment from 'full'
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return await this.renderSignedMessage(raw!, renderModule, senderEmail);
+      return await this.processMessageWithDetachedSignatureFromRaw(raw!, renderModule, senderEmail);
     } catch {
       // todo: render error via renderModule
     }
     return {};
   };
 
-  private processEncryptedMessage = async (
+  private processCryptoMessage = async (
     attachment: Attachment,
     renderModule: RenderInterface,
     frameId: string,
@@ -719,7 +718,7 @@ export class MessageRenderer {
         throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
       }
       renderModule.renderText('Decrypting...');
-      return await this.renderEncryptedMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
+      return await this.renderCryptoMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
     } catch {
       // todo: render error via renderModule
     }

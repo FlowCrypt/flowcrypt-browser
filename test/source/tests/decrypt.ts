@@ -342,6 +342,24 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - cleartext signed message detected in an attachment`,
+      testWithBrowser(async (t, browser) => {
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          '1885ded59a2b5a8d',
+          {
+            content: ['Standard message', 'signed inline', 'should easily verify', 'This is email footer'],
+            encryption: 'not encrypted',
+            signature: 'could not verify signature: missing pubkey 06CA553EC2455D70',
+          },
+          authHdr
+        );
+      })
+    );
+
+    test(
       `decrypt - [gpgmail] signed message will get parsed and rendered (though verification fails, enigmail does the same)`,
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');

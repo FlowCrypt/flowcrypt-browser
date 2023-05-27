@@ -238,7 +238,7 @@ export class XssSafeFactory {
   };
 
   public embeddedRenderMsg = (
-    type: MsgBlockType // for diagnostic purposes
+    type: string // for diagnostic purposes
   ) => {
     const { frameId, frameSrc } = this.srcPgpRenderBlockIframe();
     return { frameId, frameXssSafe: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification };
