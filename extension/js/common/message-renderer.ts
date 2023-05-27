@@ -16,7 +16,7 @@ import { MsgBlockParser } from './core/msg-block-parser.js';
 import { MsgBlock, MsgBlockType } from './core/msg-block.js';
 import { Lang } from './lang.js';
 import { Catch } from './platform/catch.js';
-import { AcctStore, SendAsAlias } from './platform/store/acct-store.js';
+import { AcctStore } from './platform/store/acct-store.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
@@ -37,18 +37,22 @@ export type ProccesedMsg = MimeProccesedMsg;
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly sendAsAliases: Set<string>;
-  public constructor(
+  private constructor(
     private readonly acctEmail: string,
     private readonly gmail: Gmail,
     private readonly relayManager: RelayManager,
     private readonly factory: XssSafeFactory,
-    sendAs: Dict<SendAsAlias> | undefined,
+    private readonly sendAsAliases: Set<string>,
+    private readonly fullName?: string,
     private debug: boolean = false
   ) {
     this.downloader = new Downloader(gmail);
-    this.sendAsAliases = new Set(sendAs ? Object.keys(sendAs) : [acctEmail]);
   }
+
+  public static newInstance = async (acctEmail: string, gmail: Gmail, relayManager: RelayManager, factory: XssSafeFactory, debug = false) => {
+    const { sendAs, full_name: fullName } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
+    return new MessageRenderer(acctEmail, gmail, relayManager, factory, new Set(sendAs ? Object.keys(sendAs) : [acctEmail]), fullName, debug);
+  };
 
   public static isPwdMsg = (text: string) => {
     return /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(text);
@@ -369,7 +373,6 @@ export class MessageRenderer {
   };
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
-    const fullName = await AcctStore.get(this.acctEmail, ['full_name']); // todo: cache
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
     const fromString = GmailParser.findHeader(fullMsg, 'from');
@@ -384,7 +387,7 @@ export class MessageRenderer {
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
     return {
       printMailInfo: {
-        userNameAndEmail: `<b>${fullName.full_name}</b> &lt;${this.acctEmail}&gt;`,
+        userNameAndEmail: `<b>${this.fullName ?? ''}</b> &lt;${this.acctEmail}&gt;`,
         html: `
       <hr>
       <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(fullMsg, 'subject') ?? '')}</p>

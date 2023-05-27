@@ -14,8 +14,9 @@ import { Notifications } from '../../common/notifications.js';
 import { Str } from '../../common/core/common.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
-import { AcctStore } from '../../common/platform/store/acct-store.js';
 import { RelayManager } from '../../common/relay-manager.js';
+import { MessageRenderer } from '../../common/message-renderer.js';
+import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
@@ -101,9 +102,9 @@ Catch.try(async () => {
       relayManager: RelayManager
     ) => {
       hijackGmailHotkeys();
-      const storage = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
       injector.btns();
-      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, storage.sendAs, injector, notifications, relayManager);
+      const messageRenderer = await MessageRenderer.newInstance(acctEmail, new Gmail(acctEmail), relayManager, factory);
+      replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, messageRenderer, injector, notifications, relayManager);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {

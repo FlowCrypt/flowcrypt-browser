@@ -10,7 +10,6 @@ import { Attachment } from '../../common/core/attachment.js';
 import { BrowserMsg } from '../../common/browser/browser-msg.js';
 import { Catch } from '../../common/platform/catch.js';
 import { GlobalStore, LocalDraft } from '../../common/platform/store/global-store.js';
-import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Injector } from '../../common/inject.js';
 import { PubLookup } from '../../common/api/pub-lookup.js';
 import { Notifications } from '../../common/notifications.js';
@@ -19,7 +18,6 @@ import { Ui } from '../../common/browser/ui.js';
 import { WebmailCommon } from '../../common/webmail.js';
 import { Xss } from '../../common/platform/xss.js';
 import { ClientConfiguration } from '../../common/client-configuration.js';
-import { SendAsAlias } from '../../common/platform/store/acct-store.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
 import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
@@ -33,7 +31,6 @@ import { MsgBlock } from '../../common/core/msg-block.js';
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
 
-  private gmail: Gmail;
   private recipientHasPgpCache: Dict<boolean> = {};
   // private attachmentDownloads: { attachment: Attachment; result: Promise<GmailRes.GmailAttachment> }[] = [];
   private pubLookup: PubLookup;
@@ -43,7 +40,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
-  private readonly messageRenderer: MessageRenderer;
 
   private sel = {
     // gmail_variant=standard|new
@@ -69,17 +65,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   public constructor(
     private readonly factory: XssSafeFactory,
-    private clientConfiguration: ClientConfiguration,
-    private acctEmail: string,
-    sendAs: Dict<SendAsAlias> | undefined,
-    private injector: Injector,
-    private notifications: Notifications,
-    private relayManager: RelayManager
+    clientConfiguration: ClientConfiguration,
+    private readonly acctEmail: string,
+    private readonly messageRenderer: MessageRenderer,
+    private readonly injector: Injector,
+    private readonly notifications: Notifications,
+    private readonly relayManager: RelayManager
   ) {
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
-    this.gmail = new Gmail(acctEmail);
-    this.messageRenderer = new MessageRenderer(acctEmail, this.gmail, this.relayManager, factory, sendAs);
-    this.pubLookup = new PubLookup(this.clientConfiguration);
+    this.pubLookup = new PubLookup(clientConfiguration);
   }
 
   public getIntervalFunctions = (): Array<IntervalFunction> => {

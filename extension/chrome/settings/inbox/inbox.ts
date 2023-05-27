@@ -21,7 +21,7 @@ import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from '../../../js/common/webmail.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
-import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { RelayManager } from '../../../js/common/relay-manager.js';
 import { MessageRenderer } from '../../../js/common/message-renderer.js';
 import { Env } from '../../../js/common/browser/env.js';
@@ -44,7 +44,7 @@ export class InboxView extends View {
   public webmailCommon!: WebmailCommon;
   public messageRenderer!: MessageRenderer;
   public factory!: XssSafeFactory;
-  public storage!: AcctStoreDict;
+  public picture?: string;
   public tabId!: string;
   public relayManager = new RelayManager();
 
@@ -74,13 +74,13 @@ export class InboxView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
-    this.storage = await AcctStore.get(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
-    this.messageRenderer = new MessageRenderer(this.acctEmail, this.gmail, this.relayManager, this.factory, this.storage.sendAs, this.debug);
+    let emailProvider: 'gmail' | undefined;
+    ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
+    this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
-    const emailProvider = this.storage.email_provider || 'gmail';
     try {
       await Settings.populateAccountsMenu('inbox.htm');
-      if (emailProvider !== 'gmail') {
+      if (emailProvider && emailProvider !== 'gmail') {
         $('body').text('Not supported for ' + emailProvider);
       } else {
         await this.inboxMenuModule.render();

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { GmailRes } from './api/email-provider/gmail/gmail-parser';
+import { GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { Attachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
