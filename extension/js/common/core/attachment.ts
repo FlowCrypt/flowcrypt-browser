@@ -8,7 +8,8 @@ import { Str } from './common.js';
 export type Attachment$treatAs =
   | 'publicKey'
   | 'privateKey'
-  | 'encryptedMsg' // may be signed-only (known as 'signedMsg'), "encrypted" here means that the message is constructed as a whole (decryptable by MsgUtil.decryptMessage)
+  | 'encryptedMsg' /* may be signed-only (known as 'signedMsg' in MsgBlockType) as well, 
+  should probably be renamed to 'cryptoMsg' to not be confused with 'encryptedMsg' in MsgBlockType */
   | 'hidden'
   | 'signature'
   | 'encryptedFile'
@@ -190,7 +191,7 @@ export class Attachment {
     } else if (Attachment.encryptedMsgNames.includes(this.name)) {
       return 'encryptedMsg';
     } else if (this.name === 'message' && isBodyEmpty) {
-      // treat message as cryptoMsg when empty body for the 'message' attachment
+      // treat message as encryptedMsg when empty body for the 'message' attachment
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) {
       // ends with one of .gpg, .pgp, .???.asc, .????.asc

@@ -203,7 +203,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           signature: 'signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
-        await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
+        await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
@@ -222,7 +222,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
-        await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
+        await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
         const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
         await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
