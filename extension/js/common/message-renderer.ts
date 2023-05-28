@@ -682,7 +682,7 @@ export class MessageRenderer {
   private processMessageWithDetachedSignature = async (msgId: string, renderModule: RenderInterface, senderEmail: string | undefined) => {
     try {
       renderModule.renderText('Loading signed message...');
-      const raw = await this.msgGetRaw(msgId); // todo: not necessary as long as we can extract text and signature attachment from 'full'
+      const raw = await this.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return await this.processMessageWithDetachedSignatureFromRaw(raw!, renderModule, senderEmail);
     } catch {
