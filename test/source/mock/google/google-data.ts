@@ -253,11 +253,18 @@ export class GoogleData {
         <div class="aQH">` +
           otherParts
             .map(
-              part => `<span class="aZo">
-              <div><div><div>
+              part => `<span class="aZo" style="display: block; float: left; margin: 0 0 16px 16px; height: 120px; width: 180px; position: relative;">
+                <a
+    target="_blank"
+    role="link"
+    class="aQy e" style="background-color: #f1f1f1; display: inline-block; height: 120px; width: 180px; overflow: hidden; position: relative; z-index: 0;    text-decoration: none;"
+    href="#dummy">
+    <div class="aYv" style="position: relative; height: 85px; text-align: center;"></div>
+    <div class="aYy" style="background-color: #f5f5f5; border-top: 1px solid #e5e5e5; bottom: 0; left: 0; position: absolute; right: 0;">
+    <div><div>
               <span class="aV3">${Xss.escape(part.filename!)}</span>
               </div></div></div>
-              </span>`
+              </a></span>`
             )
             .join('') +
           '</div>';
