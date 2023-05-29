@@ -254,14 +254,10 @@ export class Xss {
    */
   private static sanitizeHrefRegexp = () => {
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
-      if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Xss.HREF_REGEX_CACHE = new RegExp(
-          `^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
-          'i'
-        );
-      } else {
-        Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
-      }
+      Xss.HREF_REGEX_CACHE = new RegExp(
+        `^(?:(http|https|cid):|data:image/|${Str.regexEscape(chrome.runtime.getURL('/'))}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
+        'i'
+      );
     }
     return Xss.HREF_REGEX_CACHE;
   };
