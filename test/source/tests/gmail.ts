@@ -165,7 +165,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'mail.google.com - rendering attachmnents',
+      'mail.google.com - rendering attachments',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
