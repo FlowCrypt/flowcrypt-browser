@@ -216,19 +216,6 @@ export class GoogleData {
     return msgCopy;
   };
 
-  public static getFileParts = (parts: GmailMsg$payload$part[] | undefined, skipParts: GmailMsg$payload$part[]): { filename: string }[] => {
-    if (!parts) return [];
-    return parts
-      .filter(part => part.mimeType !== 'multipart/alternative' && !skipParts.includes(part))
-      .map(part => {
-        if (part.mimeType === 'multipart/mixed') {
-          return GoogleData.getFileParts(part.parts, skipParts);
-        }
-        return [{ filename: part.filename || 'noname' }];
-      })
-      .reduce((a, b) => a.concat(b), []);
-  };
-
   public static getMockGmailPage = async (acct: string, msgId?: string, htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined) => {
     let msgBlock = '';
     let attachmentsBlock = '';
@@ -293,6 +280,19 @@ export class GoogleData {
   ${msgBlock}
   </body></html>
   `;
+  };
+
+  private static getFileParts = (parts: GmailMsg$payload$part[] | undefined, skipParts: GmailMsg$payload$part[]): { filename: string }[] => {
+    if (!parts) return [];
+    return parts
+      .filter(part => part.mimeType !== 'multipart/alternative' && !skipParts.includes(part))
+      .map(part => {
+        if (part.mimeType === 'multipart/mixed') {
+          return GoogleData.getFileParts(part.parts, skipParts);
+        }
+        return [{ filename: part.filename || 'noname' }];
+      })
+      .reduce((a, b) => a.concat(b), []);
   };
 
   private static msgSubject = (m: GmailMsg): string => {
