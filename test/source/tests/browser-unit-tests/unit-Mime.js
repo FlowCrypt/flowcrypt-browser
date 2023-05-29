@@ -281,7 +281,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     `filename*0*="utf-8''%C3%BE"`,
     `filename*0*="utf-8''%C3%BF"`,
     // capital Cyrillic letters
-    ` filename*0*="utf-8''%D0%81%D0%90%D0%91%D0%92%D0%93%D0%94%D0%95;\r\n"` +
+    ` filename*0*="utf-8''%D0%81%D0%90%D0%91%D0%92%D0%93%D0%94%D0%95;"\r\n` +
       ' filename*1*=%D0%96%D0%97%D0%98%D0%99%D0%9A%D0%9B%D0%9C%D0%9D;\r\n' +
       ' filename*2*=%D0%9E%D0%9F%D0%A0%D0%A1%D0%A2%D0%A3%D0%A4%D0%A5;\r\n' +
       ' filename*3*=%D0%A6%D0%A7%D0%A8%D0%A9%D0%AA%D0%AB%D0%AC%D0%AD;\r\n' +
