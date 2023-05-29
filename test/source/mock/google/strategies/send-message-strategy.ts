@@ -455,7 +455,7 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('with files + nonppg')) {
       this.strategy = new PwdOnlyEncryptedWithAttachmentTestStrategy();
-    } else if (subject.includes('Message With Image')) {
+    } else if (subject.includes('Message With Image') || subject.includes('check apostrophe file name encoding')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Test Sending Encrypted PGP/MIME Message')) {
       this.strategy = new PgpEncryptedMessageWithoutAttachmentTestStrategy();

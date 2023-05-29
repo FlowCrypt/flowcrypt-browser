@@ -387,6 +387,11 @@ export class GoogleData {
     return DATA[this.acct].attachments[attachmentId];
   };
 
+  public checkIfAttachmentExists = (attachmentName: string) => {
+    console.log(DATA[this.acct].attachments);
+    return Object.values(DATA[this.acct].attachments).some(attachment => attachment.filename?.includes(attachmentName));
+  };
+
   public getLabels = () => {
     return DATA[this.acct].labels;
   };

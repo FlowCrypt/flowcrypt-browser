@@ -635,6 +635,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - check apostrophe file name encoding',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        const subject = 'check apostrophe file name encoding';
+        const filename = `what's_up?.txt`;
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+        await ComposePageRecipe.fillMsg(composePage, { to: acct }, subject, subject);
+        // Set up the Promise *before* the file chooser is launched
+        const [fileChooser] = await Promise.all([composePage.page.waitForFileChooser(), composePage.waitAndClick('@action-attach-files', { retryErrs: true })]);
+        await fileChooser.accept([`test/samples/${filename}`]);
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await ComposePageRecipe.closed(composePage);
+        const fileExists = (await GoogleData.withInitializedData(acct)).checkIfAttachmentExists(filename);
+        expect(fileExists).to.equal(true);
+      })
+    );
+
+    test(
       'compose - reply - old gmail threadId fmt',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
