@@ -453,6 +453,15 @@ span.pgp_attachment > iframe {
   overflow: hidden;
 }
 
+div.attachment_loader {
+  line-height: 24px;
+}
+
+div.attachment_loader > i {
+  position: relative;
+  top: 6px;
+}
+
 div.reply_message_iframe_container {
   margin-bottom: 0;
   padding-bottom: 0;
