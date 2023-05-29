@@ -446,7 +446,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         msgId,
         messageInfo
       );
-      if (['hidden', 'tomessage'].includes(renderStatus)) {
+      if (renderStatus === 'hidden') {
         nRenderedAttachments--;
       }
       // if (renderStatus === 'shown') attachmentSel.show();
