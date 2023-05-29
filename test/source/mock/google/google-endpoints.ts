@@ -59,7 +59,7 @@ export interface GoogleConfig {
   contacts?: string[];
   othercontacts?: string[];
   aliases?: Dict<MockUserAlias[]>;
-  getMsg?: Dict<{ error: Error } | { msg: GmailMsg }>;
+  getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
 }
 
@@ -226,7 +226,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
           }
           throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
         }
-        const found = config?.getMsg?.[id];
+        const found = config?.getMsg?.[id]?.[format];
         if (found && 'error' in found) throw found.error;
         const msg = found?.msg ? found.msg : data.getMessage(id);
         if (msg) {

@@ -281,6 +281,15 @@ export class MessageRenderer {
           console.debug('processAttachment() try -> awaiting done and processed');
         }
       }
+      if (treatAs === 'signature') {
+        // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
+        const raw = await this.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
+        loaderContext.hideAttachment(attachmentSel);
+        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email)
+        );
+        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+      }
       if (treatAs !== 'plainFile') {
         loaderContext.hideAttachment(attachmentSel);
       }
@@ -300,11 +309,6 @@ export class MessageRenderer {
         return await this.renderPublicKeyFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email), attachmentSel);
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email));
-      } else if (treatAs === 'signature') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processMessageWithDetachedSignature(msgId, renderModule, messageInfo.from?.email)
-        );
-        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else {
         // standard file
         loaderContext.renderPlainAttachment(a, attachmentSel);
@@ -677,18 +681,6 @@ export class MessageRenderer {
     const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
     await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
-  };
-
-  private processMessageWithDetachedSignature = async (msgId: string, renderModule: RenderInterface, senderEmail: string | undefined) => {
-    try {
-      renderModule.renderText('Loading signed message...');
-      const raw = await this.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return await this.processMessageWithDetachedSignatureFromRaw(raw!, renderModule, senderEmail);
-    } catch {
-      // todo: render error via renderModule
-    }
-    return {};
   };
 
   private processCryptoMessage = async (

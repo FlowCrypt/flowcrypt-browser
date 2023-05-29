@@ -5,7 +5,6 @@ import test from 'ava';
 import { Config, TestVariant, Util } from './../util';
 import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { GoogleData } from '../mock/google/google-data';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { TestWithBrowser } from './../test';
@@ -214,7 +213,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         t.mockApi!.configProvider!.config.google = {
           getMsg: {
-            '17b91b7e122902d2': { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) },
+            '17b91b7e122902d2': { full: { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) } },
           },
         };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
@@ -228,6 +227,25 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           authHdr
         );
+      })
+    );
+
+    test(
+      'mail.google.com - failure fetching raw message for detached signature - sets attachment status',
+      testWithBrowser(async (t, browser) => {
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const msgId = '17daefa0eb077da6';
+        t.mockApi!.configProvider!.config.google = {
+          getMsg: {
+            [msgId]: { raw: { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) } },
+          },
+        };
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        // no pgp_block
+        expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
+        await gmailPage.waitForContent('.attachment_loader', 'Categorize: net err');
+        await gmailPage.waitForContent('.aV3', 'OpenPGP_signature');
       })
     );
 
@@ -1588,14 +1606,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const msgId = '175ccd8755eab85f';
-        const data = await GoogleData.withInitializedData(acctEmail);
         // eslint-disable @typescript-eslint/no-non-null-assertion
-        const { id, threadId, historyId, payload } = data.getMessage(msgId)!;
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
           google: {
             getMsg: {
-              [msgId]: { msg: { id, threadId, historyId, payload, raw: 'RSo' } }, // corrupted raw part
+              [msgId]: { raw: { msg: { id: msgId, threadId: msgId, historyId: msgId, raw: 'RSo' } } }, // corrupted raw part
             },
           },
         });
