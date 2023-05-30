@@ -10,7 +10,7 @@ export interface RenderInterfaceBase {
   renderText(text: string): void;
   setFrameColor(color: 'red' | 'green' | 'gray'): void;
   renderEncryptionStatus(status: string): void;
-  renderSignatureStatus(status: string): void; // todo: need to implement "offline error"->"click"->retry scenario
+  renderSignatureStatus(status: string): void;
 }
 
 export interface RenderInterface extends RenderInterfaceBase {
@@ -20,7 +20,6 @@ export interface RenderInterface extends RenderInterfaceBase {
   renderPassphraseNeeded(longids: string[]): void;
   renderErr(errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string): void;
   renderInnerAttachments(attachments: TransferableAttachment[], isEncrypted: boolean): void;
-  setTestState(state: 'ready' | 'working' | 'waiting'): void;
   separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean): void;
   renderVerificationInProgress(): void;
 }

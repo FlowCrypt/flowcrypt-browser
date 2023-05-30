@@ -188,7 +188,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
-      this.messageRenderer.processInlineBlocks(this.relayManager, this.factory, setMessageInfo, blocksInFrames).catch(Catch.reportErr);
+      await this.messageRenderer.startProcessingInlineBlocks(this.relayManager, this.factory, setMessageInfo, blocksInFrames).catch(Catch.reportErr);
     }
   };
 

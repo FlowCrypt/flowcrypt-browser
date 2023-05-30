@@ -170,7 +170,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
       loaderContext.completeBinding(this.view.relayManager);
-      this.view.messageRenderer.processInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames).catch(Catch.reportErr);
+      await this.view.messageRenderer.startProcessingInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames);
       if (exportBtn) {
         $('.action-export').on(
           'click',

@@ -18,9 +18,6 @@ export class RenderRelay implements RenderInterface {
     this.relay({ renderInnerAttachments: { attachments, isEncrypted } });
   };
 
-  public setTestState = (state: 'ready' | 'working' | 'waiting') => {
-    this.relay({ setTestState: state });
-  };
   public resizePgpBlockFrame = () => {
     this.relay({ resizePgpBlockFrame: true });
   };

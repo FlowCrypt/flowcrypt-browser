@@ -9,5 +9,5 @@ export interface RelayManagerInterface {
 }
 
 export interface BindInterface {
-  bind(frameId: string, frameWindow: Window): void;
+  bind(frameId: string, reference: { frameWindow: Window; frameElement: HTMLIFrameElement }): void;
 }

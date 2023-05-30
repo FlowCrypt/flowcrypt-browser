@@ -29,7 +29,7 @@ export interface LoaderContextInterface extends LoaderContextBindInterface {
 export const bindNow = (frameId: string, binder: BindInterface) => {
   const embeddedReference = XssSafeFactory.getEmbeddedMsg(frameId);
   if (embeddedReference) {
-    binder.bind(frameId, embeddedReference.frameWindow);
+    binder.bind(frameId, embeddedReference);
   } else {
     Catch.report('Unexpected: unable to reference a newly created message frame');
   }

@@ -98,8 +98,8 @@ export class PgpBlockView extends View {
     if (data?.clearErrorStatus) {
       this.renderModule.clearErrorStatus();
     }
-    if (data?.setTestState) {
-      Ui.setTestState(data.setTestState);
+    if (data?.done) {
+      Ui.setTestState('ready');
     }
     if (data?.printMailInfo) {
       Xss.sanitizeRender('.print_user_email', data.printMailInfo.userNameAndEmail);

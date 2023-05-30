@@ -20,7 +20,7 @@ export type MessageInfo = {
 };
 
 export type RenderMessage = {
-  setTestState?: 'ready' | 'working' | 'waiting';
+  done?: true;
   resizePgpBlockFrame?: true;
   separateQuotedContentAndRenderText?: { decryptedContent: string; isHtml: boolean };
   renderText?: string;

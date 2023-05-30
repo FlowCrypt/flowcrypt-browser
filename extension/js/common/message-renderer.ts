@@ -158,7 +158,6 @@ export class MessageRenderer {
     } else {
       MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes);
     }
-    renderModule.setTestState('ready');
   };
 
   private static renderMissingPubkeyOrBadSignature = (renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void => {
@@ -326,7 +325,7 @@ export class MessageRenderer {
     }
   };
 
-  public processInlineBlocks = async (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
+  public startProcessingInlineBlocks = async (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
         this.relayAndStartProcessing(
@@ -509,7 +508,6 @@ export class MessageRenderer {
       renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
     renderModule.resizePgpBlockFrame();
-    renderModule.setTestState('ready');
     return isEncrypted ? { publicKeys } : {};
   };
 
@@ -521,32 +519,38 @@ export class MessageRenderer {
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
-  ) => {
-    const renderModule = relayManager.createRelay(frameId);
+  ): Promise<{ processor: Promise<unknown> }> => {
+    const { renderModule, cancellation } = relayManager.createRelay(frameId);
     loaderContext.bind(frameId, relayManager);
     if (printMailInfo) {
       renderModule.setPrintMailInfo(printMailInfo);
     }
-    cb(renderModule, frameId)
+    const processor = cb(renderModule, frameId)
       .then(async result => {
         const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
         // todo: how publicKeys and needPassphrase interact?
         for (const armoredPubkey of result.publicKeys ?? []) {
           appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
         }
-        while (result.needPassphrase) {
-          // todo: queue into a dictionary?
-          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase);
+        while (result.needPassphrase && !cancellation.cancel) {
+          // if we need passphrase, we have to be able to re-try decryption indefinitely on button presses,
+          // so we can only release resources when the frame is detached
+          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, cancellation);
+          if (cancellation.cancel) {
+            if (this.debug) {
+              console.debug('Destination frame was detached -- stopping processing');
+            }
+            break;
+          }
           renderModule.clearErrorStatus();
           renderModule.renderText('Decrypting...');
           result = await cb(renderModule, frameId);
+          // I guess, no additional publicKeys will appear here for display...
         }
-        // todo: wait for renderModule completion: the queue has been actually flushed,
-        // and then remove the frame from relayManager.frames
-        // Something like:
-        // await relayManager.waitForCompletion(renderModule)
       })
+      .finally(() => relayManager.done(frameId))
       .catch(Catch.reportErr);
+    return { processor };
   };
 
   private renderMsgBlock = async (
@@ -677,10 +681,10 @@ export class MessageRenderer {
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
-  ) => {
+  ): Promise<{ processor: Promise<unknown> }> => {
     const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
-    await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
+    return await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processCryptoMessage = async (
