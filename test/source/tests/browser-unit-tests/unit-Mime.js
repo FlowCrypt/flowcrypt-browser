@@ -280,6 +280,9 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     `filename*0*="utf-8''%C3%BD"`,
     `filename*0*="utf-8''%C3%BE"`,
     `filename*0*="utf-8''%C3%BF"`,
+    // what's?_up.txt
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5150
+    `filename*0*="utf-8''what's%3F_up.txt"`,
     // capital Cyrillic letters
     ` filename*0*="utf-8''%D0%81%D0%90%D0%91%D0%92%D0%93%D0%94%D0%95";\r\n` +
       ' filename*1*=%D0%96%D0%97%D0%98%D0%99%D0%9A%D0%9B%D0%9C%D0%9D;\r\n' +
@@ -291,6 +294,8 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
   var filenames = [...Array(31).keys()].map(i => String.fromCharCode(i + 1));
   // 33..255
   filenames = filenames.concat([...Array(223).keys()].map(i => String.fromCharCode(i + 33)));
+  // what's?_up.txt
+  filenames.push(`what's?_up.txt`);
   // capital Cyrillic letters
   filenames.push('\u0401' + String.fromCharCode(...[...Array(32).keys()].map(i => i + 0x410)));
   const attachments = filenames.map(name => new Attachment({ name: name, type: 'text/plain', data: new Uint8Array([80, 81]) }));
