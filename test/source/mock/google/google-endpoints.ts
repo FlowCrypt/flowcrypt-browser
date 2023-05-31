@@ -41,7 +41,7 @@ const allowedRecipients: Array<string> = [
   'sender@domain.com',
   'invalid@example.com',
   'timeout@example.com',
-  'flowcrypt.test.key.new.manual@gmail.com',
+  'flowcrypt.test.key.new.manual.1@gmail.com',
 ];
 
 export type MockUserAlias = {

@@ -30,7 +30,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'compose - own key expired - update and retry',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
+        const acctEmail = 'flowcrypt.test.key.new.manual.0@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
@@ -94,7 +94,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - create key - with backup to inbox',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
+        const acctEmail = 'flowcrypt.test.key.new.manual.1@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
@@ -112,7 +112,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - create key - choose no backup',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
+        const acctEmail = 'flowcrypt.test.key.new.manual.2@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
@@ -130,7 +130,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - create key - backup as file - submit pubkey',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.new.manual@gmail.com';
+        const acctEmail = 'flowcrypt.test.key.new.manual.3@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
