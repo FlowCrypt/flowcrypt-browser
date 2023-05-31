@@ -1404,7 +1404,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - hide reply all option button for signle recipient',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const appendUrl = 'threadId=182263bf9f105adf&skipClickPrompt=___cu_false___&replyMsgId=182263bf9f105adf';
+        const appendUrl = 'threadId=188722a157fd54a8&skipClickPrompt=___cu_false___&replyMsgId=188722a157fd54a8';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
           hasReplyPrompt: true,

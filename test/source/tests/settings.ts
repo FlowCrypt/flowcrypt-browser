@@ -808,8 +808,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
         // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
-        await checkIfFileDownloadsCorrectly(t, browser, '1821bf879a6f71e0', "what's_up_.txt");
-        await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', "_what_'s_up%25253F.txt.pgp"); // todo: #5150, should be "what's_up%253F.txt.pgp"
+        await checkIfFileDownloadsCorrectly(t, browser, '188721aebb71c16c', "what's_up_.txt");
+        await checkIfFileDownloadsCorrectly(t, browser, '188722a157fd54a8', `what's_up%253F.txt`);
         // should not strip .gpg or .pgp extension when downloading original file after unsuccesssful decryption
         // // Check if bad pgp attachment file got downloaded with original file name
         await checkIfFileDownloadsCorrectly(t, browser, '18610f7f4ae8da0a', 'test.bat.pgp');
