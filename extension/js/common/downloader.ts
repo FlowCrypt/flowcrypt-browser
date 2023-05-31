@@ -28,13 +28,6 @@ export class Downloader {
 
   public constructor(private readonly gmail: Gmail) {}
 
-  /* 
-  private queueAttachmentDownload = (a: Attachment) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.attachmentDownloads.push({ attachment: a, result: this.gmail.attachmentGet(a.msgId!, a.id!) });
-  };
-  */
-
   public queueAttachmentChunkDownload = (a: Attachment) => {
     if (a.hasData()) {
       return { attachment: a, result: Promise.resolve(a.getData()) };

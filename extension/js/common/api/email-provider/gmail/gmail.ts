@@ -222,16 +222,17 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     });
   };
 
-  public fetchAttachments = async (attachments: Attachment[], progressCb?: ProgressCb) => {
-    if (!attachments.length) {
+  public fetchAttachmentsMissingData = async (attachments: Attachment[], progressCb?: ProgressCb) => {
+    const attachmentsMissingData = attachments.filter(a => !a.hasData());
+    if (!attachmentsMissingData.length) {
       return;
     }
     let lastProgressPercent = -1;
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
-    const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+    const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(
-      attachments.map((a, index) =>
+      attachmentsMissingData.map((a, index) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.attachmentGet(a.msgId!, a.id!, {
           download: (_, loaded) => {
@@ -249,11 +250,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       )
     );
     for (const i of responses.keys()) {
-      attachments[i].setData(responses[i].data);
+      attachmentsMissingData[i].setData(responses[i].data);
     }
   };
 
-  public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransderSize: number) => { download: ProgressCb } | ProgressDestFrame) => {
+  public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransferSize: number) => { download: ProgressCb } | ProgressDestFrame) => {
     const expectedTransferSize = a.length * 1.33; // todo: remove code duplication
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const response = await this.attachmentGet(a.msgId!, a.id!, progressFunction(expectedTransferSize));
@@ -327,7 +328,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     for (const msg of msgs) {
       attachments.push(...GmailParser.findAttachments(msg, msg.id));
     }
-    await this.fetchAttachments(attachments);
+    await this.fetchAttachmentsMissingData(attachments);
     const { keys: foundBackupKeys } = await KeyUtil.readMany(Buf.fromUtfStr(attachments.map(a => a.getData().toUtfStr()).join('\n')));
     const backups = await Promise.all(foundBackupKeys.map(k => KeyUtil.keyInfoObj(k)));
     const imported = await KeyStore.get(this.acctEmail);

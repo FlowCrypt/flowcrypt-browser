@@ -722,26 +722,23 @@ export class MessageRenderer {
   };
 
   private renderPublicKeyFromFile = async (
-    attachmentMeta: Attachment,
+    attachment: Attachment,
     loaderContext: LoaderContextInterface,
     isOutgoing: boolean,
     attachmentSel: JQueryEl | undefined
   ): Promise<'shown' | 'hidden'> => {
-    // let downloadedAttachment: GmailRes.GmailAttachment;
     try {
-      // todo: how is different -- downloader.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.gmail.fetchAttachments([attachmentMeta]);
+      await this.gmail.fetchAttachmentsMissingData([attachment]);
     } catch (e) {
-      loaderContext.renderPlainAttachment(attachmentMeta, undefined, 'Please reload page');
+      loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page');
       return 'shown';
     }
-    const openpgpType = MsgUtil.type({ data: attachmentMeta.getData().subarray(0, 1000) });
+    const openpgpType = MsgUtil.type({ data: attachment.getData().subarray(0, 1000) });
     if (openpgpType?.type === 'publicKey') {
-      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachmentMeta.getData().toUtfStr(), isOutgoing), 'after');
+      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachment.getData().toUtfStr(), isOutgoing), 'after');
       return 'hidden';
     } else if (openpgpType?.type !== 'encryptedAttachment') {
-      loaderContext.renderPlainAttachment(attachmentMeta, attachmentSel, 'Unknown Public Key Format');
+      loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Unknown Public Key Format');
       return 'shown';
     } else {
       // todo: renderEncryptedAttachment
@@ -749,21 +746,14 @@ export class MessageRenderer {
     }
   };
 
-  private renderBackupFromFile = async (
-    attachmentMeta: Attachment,
-    loaderContext: LoaderContextInterface,
-    isOutgoing: boolean
-  ): Promise<'shown' | 'hidden'> => {
+  private renderBackupFromFile = async (attachment: Attachment, loaderContext: LoaderContextInterface, isOutgoing: boolean): Promise<'shown' | 'hidden'> => {
     // let downloadedAttachment: GmailRes.GmailAttachment;
     try {
-      // todo: fetch from queue
-      // todo: how is different -- downloader.attachmentGet(attachmentMeta.msgId!, attachmentMeta.id!); // .id! is present when fetched from api
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.gmail.fetchAttachments([attachmentMeta]);
-      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachmentMeta.getData().toUtfStr(), isOutgoing), 'append');
+      await this.gmail.fetchAttachmentsMissingData([attachment]);
+      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachment.getData().toUtfStr(), isOutgoing), 'append');
       return 'hidden';
     } catch (e) {
-      loaderContext.renderPlainAttachment(attachmentMeta, undefined, 'Please reload page');
+      loaderContext.renderPlainAttachment(attachment, undefined, 'Please reload page'); // todo: unit-test, provide attachmentSel?
       return 'shown';
     }
   };
