@@ -307,7 +307,7 @@ export class MessageRenderer {
         // todo - pubkey should be fetched in pgp_pubkey.js
         return await this.renderPublicKeyFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email), attachmentSel);
       } else if (treatAs === 'privateKey') {
-        return await this.renderBackupFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email));
+        return await this.renderBackupFromFile(a, loaderContext, attachmentSel);
       } else {
         // standard file
         loaderContext.renderPlainAttachment(a, attachmentSel);
@@ -746,14 +746,17 @@ export class MessageRenderer {
     }
   };
 
-  private renderBackupFromFile = async (attachment: Attachment, loaderContext: LoaderContextInterface, isOutgoing: boolean): Promise<'shown' | 'hidden'> => {
-    // let downloadedAttachment: GmailRes.GmailAttachment;
+  private renderBackupFromFile = async (
+    attachment: Attachment,
+    loaderContext: LoaderContextInterface,
+    attachmentSel: JQueryEl | undefined
+  ): Promise<'shown' | 'hidden'> => {
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);
-      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachment.getData().toUtfStr(), isOutgoing), 'append');
+      loaderContext.setMsgBody(this.factory.embeddedBackup(attachment.getData().toUtfStr()), 'append');
       return 'hidden';
     } catch (e) {
-      loaderContext.renderPlainAttachment(attachment, undefined, 'Please reload page'); // todo: unit-test, provide attachmentSel?
+      loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page'); // todo: unit-test
       return 'shown';
     }
   };
