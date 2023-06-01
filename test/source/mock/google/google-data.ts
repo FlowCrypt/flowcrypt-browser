@@ -230,7 +230,7 @@ export class GoogleData {
         const textData = Buf.fromBase64Str(payload.body!.data!).toUtfStr();
         htmlData = GoogleData.htmlFromText(textData);
       } else {
-        ({ htmlData, processedParts } = GoogleData.getHtmlDataToDisplay(payload.parts!) ?? { htmlData: undefined, processedParts: [] });
+        ({ htmlData, processedParts } = GoogleData.getHtmlDataToDisplay(payload) ?? { htmlData: undefined, processedParts: [] });
       }
       const updatedHtmlData = htmlRenderer ? htmlRenderer(msgId, htmlData) : htmlData;
       const otherParts = GoogleData.getFileParts(payload.parts, processedParts);
@@ -312,25 +312,31 @@ export class GoogleData {
     );
   };
 
-  private static getHtmlDataToDisplay = (parts: GmailMsg$payload$part[]): { htmlData: string; processedParts: GmailMsg$payload$part[] } | undefined => {
-    const htmlPart = parts.find(part => part.mimeType === 'text/html');
-    const textPart = parts.find(part => part.mimeType === 'text/plain');
-    const processedParts = [htmlPart, textPart].filter(Boolean) as GmailMsg$payload$part[];
+  private static getHtmlDataToDisplay = (
+    partsContainer: GmailMsg$payload | GmailMsg$payload$part
+  ): { htmlData: string; processedParts: GmailMsg$payload$part[] } | undefined => {
+    const htmlPart = partsContainer.parts?.find(part => part.mimeType === 'text/html');
+    const textPart = partsContainer.parts?.find(part => part.mimeType === 'text/plain');
     if (htmlPart) {
+      const processedParts = [htmlPart];
+      if (partsContainer.mimeType === 'multipart/alternative' && textPart) {
+        // consume both html and text
+        processedParts.push(textPart);
+      }
       return { htmlData: Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr(), processedParts };
     } else if (typeof textPart?.body?.data !== 'undefined') {
       const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
-      return { htmlData: GoogleData.htmlFromText(textData), processedParts };
+      return { htmlData: GoogleData.htmlFromText(textData), processedParts: [textPart] };
     }
     // search inside multipart/alternative
-    const alternativePart = parts.find(part => part.mimeType === 'multipart/alternative');
+    const alternativePart = partsContainer.parts?.find(part => part.mimeType === 'multipart/alternative');
     if (alternativePart) {
-      return GoogleData.getHtmlDataToDisplay(alternativePart.parts!);
+      return GoogleData.getHtmlDataToDisplay(alternativePart);
     }
     // search inside multipart/mixed
-    const mixedPart = parts.find(part => part.mimeType === 'multipart/mixed');
+    const mixedPart = partsContainer.parts?.find(part => part.mimeType === 'multipart/mixed');
     if (mixedPart) {
-      return GoogleData.getHtmlDataToDisplay(mixedPart.parts!);
+      return GoogleData.getHtmlDataToDisplay(mixedPart);
     }
     return undefined;
   };
