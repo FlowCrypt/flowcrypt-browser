@@ -67,12 +67,11 @@ export class PgpBlockViewAttachmentsModule {
           await this.decryptAndSaveAttachmentToDownloads(attachment);
         } else {
           Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
-          attachment.setData(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await Api.download(attachment.url!, (perc, load, total) =>
-              this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)
-            )
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const buf = await Api.download(attachment.url!, (perc, load, total) =>
+            this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)
           );
+          if (!attachment.hasData()) attachment.setData(buf); // there may be some sort of a race
           await Ui.delay(100); // give browser time to render
           $(target).find('.progress').text('');
           await this.decryptAndSaveAttachmentToDownloads(attachment);
