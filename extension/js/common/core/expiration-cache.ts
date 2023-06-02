@@ -3,13 +3,13 @@
 /**
  * Cache, keeping entries for limited duration
  */
-export class ExpirationCache {
-  private cache: { [key: string]: { value: string; expiration: number } } = {};
+export class ExpirationCache<T> {
+  private cache: { [key: string]: { value: T; expiration: number } } = {};
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   public constructor(public EXPIRATION_TICKS: number) {}
 
-  public set = (key: string, value?: string, expiration?: number) => {
+  public set = (key: string, value?: T, expiration?: number) => {
     if (value) {
       this.cache[key] = { value, expiration: expiration || Date.now() + this.EXPIRATION_TICKS };
     } else {
@@ -17,7 +17,7 @@ export class ExpirationCache {
     }
   };
 
-  public get = (key: string): string | undefined => {
+  public get = (key: string): T | undefined => {
     const found = this.cache[key];
     if (found) {
       if (found.expiration > Date.now()) {

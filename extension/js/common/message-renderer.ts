@@ -369,6 +369,10 @@ export class MessageRenderer {
     return msgDownload.processedFull;
   };
 
+  public deleteExpired = (): void => {
+    this.downloader.deleteExpired();
+  };
+
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';

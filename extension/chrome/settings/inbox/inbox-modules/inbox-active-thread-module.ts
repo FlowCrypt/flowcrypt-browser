@@ -101,6 +101,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
     }
+    this.view.messageRenderer.deleteExpired();
   };
 
   public setHandlers = () => {

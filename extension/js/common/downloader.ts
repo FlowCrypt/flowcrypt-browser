@@ -6,7 +6,7 @@ import { GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { Attachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
-import { Dict } from './core/common.js';
+import { ExpirationCache } from './core/expiration-cache.js';
 import { MsgBlock } from './core/msg-block.js';
 import { MessageInfo } from './render-message.js';
 
@@ -23,10 +23,15 @@ export interface MessageCacheEntry {
 }
 
 export class Downloader {
-  private chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[] = [];
-  private messages: Dict<MessageCacheEntry> = {};
+  private readonly chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[] = [];
+  private readonly messages = new ExpirationCache<MessageCacheEntry>(24 * 60 * 60 * 1000); // 24 hours
 
   public constructor(private readonly gmail: Gmail) {}
+
+  public deleteExpired = (): void => {
+    this.messages.deleteExpired();
+    // todo: this.chunkDownloads
+  };
 
   public queueAttachmentChunkDownload = (a: Attachment) => {
     if (a.hasData()) {
@@ -43,10 +48,11 @@ export class Downloader {
 
   public msgGetCached = (msgId: string): MessageCacheEntry => {
     // todo: retries? exceptions?
-    let msgDownload = this.messages[msgId];
+    let msgDownload = this.messages.get(msgId);
     if (!msgDownload) {
-      this.messages[msgId] = { download: { full: this.gmail.msgGet(msgId, 'full') } };
-      msgDownload = this.messages[msgId];
+      const newEntry = { download: { full: this.gmail.msgGet(msgId, 'full') } };
+      this.messages.set(msgId, newEntry);
+      msgDownload = newEntry;
     }
     return msgDownload;
   };
