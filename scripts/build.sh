@@ -76,9 +76,13 @@ STREAMS_FILES=$OUTDIR/lib/streams/*
 # patch isUint8Array until https://github.com/openpgpjs/web-stream-tools/pull/23 is resolved
 ISUINT8ARRAY_REGEX1="s/(\s*)return\x20Uint8Array\.prototype\.isPrototypeOf\(input\);/\1return\x20Uint8Array\.prototype\.isPrototypeOf\(input\)\x20\|\|\x20globalThis\.Uint8Array\.prototype\.isPrototypeOf\(input\);/g"
 
+# the following patches are until https://github.com/openpgpjs/openpgpjs/issues/1648 is fixed
+
 # this patch handles patterns like (n instanceof Uint8Array) or (arguments[i] instanceof Uint8Array)
-# todo: there is also one place left unhandled: return a instanceof Uint8Array;
+# to replace them with (\1 instanceof Uint8Array || \1 instanceof globalThis.Uint8Array)
 ISUINT8ARRAY_REGEX2="s/\(([^\(\)\x20]+)\x20instanceof\x20Uint8Array\)/\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\)/g"
+# this patch handles pattern like \x20n instanceof Uint8Array;
+ISUINT8ARRAY_REGEX3="s/\x20([^\(\)\x20]+)\x20instanceof\x20Uint8Array;/\x20\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\);/g"
 
 OPENPGP_FILE=$OUTDIR/lib/openpgp.js
 if [[ "$OSTYPE" =~ ^darwin ]]; then # macOS needs additional parameter for backup files
@@ -86,11 +90,13 @@ if [[ "$OSTYPE" =~ ^darwin ]]; then # macOS needs additional parameter for backu
   sed -i '' -E $ISUINT8ARRAY_REGEX1 $STREAMS_FILES
   sed -i '' -E $ISUINT8ARRAY_REGEX1 $OPENPGP_FILE
   sed -i '' -E $ISUINT8ARRAY_REGEX2 $OPENPGP_FILE
+  sed -i '' -E $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
 else
   sed -i -E $STREAMS_REGEX $STREAMS_FILES
   sed -i -E $ISUINT8ARRAY_REGEX1 $STREAMS_FILES
   sed -i -E $ISUINT8ARRAY_REGEX1 $OPENPGP_FILE
   sed -i -E $ISUINT8ARRAY_REGEX2 $OPENPGP_FILE
+  sed -i -E $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
 fi
 
 # bundle web-stream-tools as Stream var for the content script
