@@ -123,7 +123,6 @@ const makeMockBuild = (sourceBuildType: string) => {
         /const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g,
         `const $1 = '${MOCK_HOST[sourceBuildType]}';`
       )
-      .replace(/const (GMAIL_PAGE_HOST) = [^;]+;/g, `const $1 = '${mockGmailPageHost}';`)
       .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
       .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
       .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/keys-openpgp-org/';`)

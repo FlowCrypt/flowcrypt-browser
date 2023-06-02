@@ -28,7 +28,7 @@ import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
 import { Downloader, ProcessedMessage } from './downloader.js';
-import { JQueryEl, LoaderContextBindInterface, LoaderContextBindNow, LoaderContextInterface } from './loader-context-interface.js';
+import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
@@ -328,14 +328,8 @@ export class MessageRenderer {
   public startProcessingInlineBlocks = async (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndStartProcessing(
-          relayManager,
-          new LoaderContextBindNow(),
-          factory,
-          frameId,
-          messageInfo.printMailInfo,
-          messageInfo.from?.email,
-          renderModule => this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
+        this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
         )
       )
     );
@@ -513,7 +507,6 @@ export class MessageRenderer {
 
   private relayAndStartProcessing = async (
     relayManager: RelayManager,
-    loaderContext: LoaderContextBindInterface,
     factory: XssSafeFactory,
     frameId: string,
     printMailInfo: PrintMailInfo | undefined,
@@ -521,13 +514,12 @@ export class MessageRenderer {
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ): Promise<{ processor: Promise<unknown> }> => {
     const { renderModule, cancellation } = relayManager.createRelay(frameId);
-    loaderContext.bind(frameId, relayManager);
     if (printMailInfo) {
       renderModule.setPrintMailInfo(printMailInfo);
     }
     const processor = cb(renderModule, frameId)
       .then(async result => {
-        const appendAfter = $(`iframe#${frameId}`); // todo: late binding? won't work
+        const appendAfter = $(`iframe#${frameId}`); // todo: review inbox-active-thread -- may fail
         // todo: how publicKeys and needPassphrase interact?
         for (const armoredPubkey of result.publicKeys ?? []) {
           appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
@@ -684,7 +676,7 @@ export class MessageRenderer {
   ): Promise<{ processor: Promise<unknown> }> => {
     const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
-    return await this.relayAndStartProcessing(this.relayManager, loaderContext, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
+    return await this.relayAndStartProcessing(this.relayManager, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processCryptoMessage = async (

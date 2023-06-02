@@ -18,6 +18,7 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { Time } from './time.js';
+import { RenderMessageWithFrameId } from '../render-message.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -251,6 +252,7 @@ export class BrowserMsg {
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
     ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => BrowserMsg.sendCatch(dest, 'ajax_progress', bm),
+    pgpBlockRender: (dest: Bm.Dest, bm: RenderMessageWithFrameId) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
   };
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};

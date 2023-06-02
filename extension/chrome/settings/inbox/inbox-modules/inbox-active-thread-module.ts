@@ -18,17 +18,10 @@ import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
 import { Browser } from '../../../../js/common/browser/browser.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
-import { LoaderContextInterface, bindNow } from '../../../../js/common/loader-context-interface.js';
-import { BindInterface } from '../../../../js/common/relay-manager-interface.js';
+import { LoaderContextInterface } from '../../../../js/common/loader-context-interface.js';
 
 class LoaderContext implements LoaderContextInterface {
-  private frameIdsToBind: string[] = [];
-
   public constructor(public readonly factory: XssSafeFactory, public renderedMessageXssSafe: string | undefined, public renderedAttachments: string[]) {}
-
-  public bind = (frameId: string) => {
-    this.frameIdsToBind.push(frameId);
-  };
 
   public renderPlainAttachment = (a: Attachment) => {
     // todo: render error argument
@@ -50,14 +43,6 @@ class LoaderContext implements LoaderContextInterface {
 
   public hideAttachment = () => {
     // not applicable
-  };
-
-  public completeBinding = (binder: BindInterface) => {
-    while (true) {
-      const frameId = this.frameIdsToBind.shift();
-      if (!frameId) break;
-      bindNow(frameId, binder);
-    }
   };
 }
 
@@ -169,7 +154,6 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           ? `<div class="attachments" data-test="container-attachments">${loaderContext.renderedAttachments.join('')}</div>`
           : '');
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
-      loaderContext.completeBinding(this.view.relayManager);
       await this.view.messageRenderer.startProcessingInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames);
       if (exportBtn) {
         $('.action-export').on(

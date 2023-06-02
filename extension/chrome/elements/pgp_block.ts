@@ -2,13 +2,11 @@
 
 'use strict';
 
-import { Str, Url } from '../../js/common/core/common.js';
+import { Url } from '../../js/common/core/common.js';
 import { Assert } from '../../js/common/assert.js';
-import { RenderMessage } from '../../js/common/render-message.js';
+import { RenderMessage, RenderMessageWithFrameId } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { GMAIL_PAGE_HOST } from '../../js/common/core/const.js';
-import { Env } from '../../js/common/browser/env.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
 import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
@@ -16,6 +14,7 @@ import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-mod
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
+import { Bm } from '../../js/common/browser/browser-msg.js';
 
 export class PgpBlockView extends View {
   public readonly acctEmail: string; // needed for attachment decryption, probably should be refactored out
@@ -42,7 +41,16 @@ export class PgpBlockView extends View {
     this.quoteModule = new PgpBlockViewQuoteModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.renderModule = new PgpBlockViewRenderModule(this);
-    window.addEventListener('message', this.handleMessage, true); // todo: capture?
+    chrome.runtime.onMessage.addListener((message: Bm.Raw) => {
+      if (message.name === 'pgp_block_render') {
+        const msg = message.data.bm as RenderMessageWithFrameId;
+        if (msg.frameId === this.frameId) {
+          this.processMessage(msg);
+          return true;
+        }
+      }
+      return false;
+    });
     window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
   }
 
@@ -57,9 +65,7 @@ export class PgpBlockView extends View {
     );
   };
 
-  private handleMessage = (event: MessageEvent<unknown>) => {
-    if (!(event.origin === Env.getExtensionOrigin() || new RegExp(`^http(s)?://${Str.regexEscape(GMAIL_PAGE_HOST)}$`).test(event.origin))) return;
-    const data = event.data as RenderMessage;
+  private processMessage = (data: RenderMessage) => {
     // todo: order better
     if (data?.renderEncryptionStatus) {
       this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);

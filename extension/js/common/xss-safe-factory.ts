@@ -90,20 +90,6 @@ export class XssSafeFactory {
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
 
-  public static getEmbeddedMsg = (frameId: string): { frameElement: HTMLIFrameElement; frameWindow: Window } | undefined => {
-    // const iframe = document.getElementById(frameId) as HTMLIFrameElement;
-    const frameElement = $(`iframe#${frameId}`)
-      .filter(function () {
-        return this.offsetHeight > 0; // filter visible, there may be invisible leftovers
-      })
-      .get(0) as HTMLIFrameElement;
-    if (frameElement?.contentWindow) {
-      return { frameElement, frameWindow: frameElement.contentWindow };
-    }
-    Catch.report('Unable to find iframe by frameId=' + frameId);
-    return undefined;
-  };
-
   public srcImg = (relPath: string) => {
     return this.extUrl(`img/${relPath}`);
   };

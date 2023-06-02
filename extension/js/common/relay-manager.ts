@@ -2,26 +2,23 @@
 
 'use strict';
 
-import { Bm } from './browser/browser-msg.js';
+import { Bm, BrowserMsg } from './browser/browser-msg.js';
 import { PromiseCancellation } from './core/common.js';
-import { BindInterface, RelayManagerInterface } from './relay-manager-interface.js';
+import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
-import { RenderMessage } from './render-message.js';
+import { RenderMessage, RenderMessageWithFrameId } from './render-message.js';
 import { RenderRelay } from './render-relay.js';
 
 type FrameEntry = {
-  frameWindow?: Window;
   readyToReceive?: true;
   queue: RenderMessage[];
   cancellation: PromiseCancellation;
   progressText?: string;
 };
 
-export class RelayManager implements RelayManagerInterface, BindInterface {
+export class RelayManager implements RelayManagerInterface {
   private static readonly completionMessage: RenderMessage = { done: true };
   private readonly frames = new Map<string, FrameEntry>();
-  private readonly frameElementsMap = new Map<Node, string>();
-  private readonly targetOrigin = chrome.runtime.getURL('');
 
   public constructor(private debug: boolean = false) {
     const framesObserver = new MutationObserver(async mutationsList => {
@@ -49,8 +46,8 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
     const frameData = this.frames.get(frameId);
     if (frameData) {
       frameData.queue.push(message);
-      if (frameData.readyToReceive && frameData.frameWindow) {
-        this.flush({ frameId, frameWindow: frameData.frameWindow, queue: frameData.queue });
+      if (frameData.readyToReceive) {
+        this.flush({ frameId, queue: frameData.queue });
       }
     }
   };
@@ -67,9 +64,7 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
   public readyToReceive = (frameId: string) => {
     const frameData = this.getOrCreate(frameId);
     frameData.readyToReceive = true;
-    if (frameData.frameWindow) {
-      this.flush({ frameId, frameWindow: frameData.frameWindow, queue: frameData.queue });
-    }
+    this.flush({ frameId, queue: frameData.queue });
   };
 
   public renderProgressText = (frameId: string, text: string) => {
@@ -90,23 +85,18 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
     }
   };
 
-  public bind = (frameId: string, { frameElement, frameWindow }: { frameElement: HTMLIFrameElement; frameWindow: Window }) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const frameData = this.frames.get(frameId)!;
-    frameData.frameWindow = frameWindow;
-    this.frameElementsMap.set(frameElement, frameId);
-    if (frameData.readyToReceive) {
-      this.flush({ frameId, frameWindow, queue: frameData.queue });
-    }
-  };
-
   private dropRemovedNodes = (removedNode: Node) => {
-    const frameId = this.frameElementsMap.get(removedNode);
+    let frameId: string | undefined;
+    if (removedNode.nodeType === Node.ELEMENT_NODE) {
+      const element = removedNode as HTMLElement;
+      if (element.tagName === 'IFRAME') {
+        frameId = element.id;
+      }
+    }
     if (frameId) {
       if (this.debug) {
         console.debug('releasing resources connected to frameId=', frameId);
       }
-      this.frameElementsMap.delete(removedNode);
       const frameData = this.frames.get(frameId);
       if (frameData) {
         frameData.cancellation.cancel = true;
@@ -127,13 +117,17 @@ export class RelayManager implements RelayManagerInterface, BindInterface {
     return newFrameEntry;
   };
 
-  private flush = ({ frameId, frameWindow, queue }: { frameId: string; frameWindow: Window; queue: RenderMessage[] }) => {
+  private flush = ({ frameId, queue }: { frameId: string; queue: RenderMessage[] }) => {
     while (true) {
       const message = queue.shift();
       if (message) {
-        frameWindow.postMessage(message, this.targetOrigin);
+        const msg: RenderMessageWithFrameId = { ...message, frameId };
+        BrowserMsg.send.pgpBlockRender(
+          'broadcast', // todo: own tabId?
+          msg
+        );
         if (message === RelayManager.completionMessage) {
-          this.frames.delete(frameId); // todo: also delete related this.frameElementsMap entry?
+          this.frames.delete(frameId);
         }
       } else break;
     }

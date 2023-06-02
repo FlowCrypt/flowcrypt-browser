@@ -3,8 +3,7 @@
 'use strict';
 
 import { Attachment } from '../../common/core/attachment.js';
-import { JQueryEl, LoaderContextInterface, bindNow } from '../../common/loader-context-interface.js';
-import { BindInterface } from '../../common/relay-manager-interface.js';
+import { JQueryEl, LoaderContextInterface } from '../../common/loader-context-interface.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 
 export class LoaderContextWebmail implements LoaderContextInterface {
@@ -67,13 +66,10 @@ export class LoaderContextWebmail implements LoaderContextInterface {
     return '<div class="message_inner_body evaluated">' + htmlContent + '</div>';
   };
 
-  public bind = (frameId: string, binder: BindInterface) => {
-    bindNow(frameId, binder);
-  };
-
   public renderPlainAttachment = (a: Attachment, attachmentSel?: JQueryEl, error?: string) => {
     // simply show existing attachment
     if (!attachmentSel) {
+      // todo: do we need this clause?
       this.attachmentsContainerInner
         .show()
         .addClass('attachment_processed')

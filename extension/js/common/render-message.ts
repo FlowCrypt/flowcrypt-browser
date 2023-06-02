@@ -38,3 +38,7 @@ export type RenderMessage = {
   printMailInfo?: PrintMailInfo;
   renderAsRegularContent?: string;
 };
+
+export type RenderMessageWithFrameId = {
+  frameId: string;
+} & RenderMessage;

@@ -7,7 +7,3 @@ import { RenderMessage } from './render-message.js';
 export interface RelayManagerInterface {
   relay(frameId: string, message: RenderMessage, dontEnqueue?: boolean): void;
 }
-
-export interface BindInterface {
-  bind(frameId: string, reference: { frameWindow: Window; frameElement: HTMLIFrameElement }): void;
-}
