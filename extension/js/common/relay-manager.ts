@@ -6,7 +6,7 @@ import { Bm, BrowserMsg } from './browser/browser-msg.js';
 import { PromiseCancellation } from './core/common.js';
 import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
-import { RenderMessage, RenderMessageWithFrameId } from './render-message.js';
+import { RenderMessage } from './render-message.js';
 import { RenderRelay } from './render-relay.js';
 
 type FrameEntry = {
@@ -121,10 +121,9 @@ export class RelayManager implements RelayManagerInterface {
     while (true) {
       const message = queue.shift();
       if (message) {
-        const msg: RenderMessageWithFrameId = { ...message, frameId };
         BrowserMsg.send.pgpBlockRender(
           'broadcast', // todo: own tabId?
-          msg
+          { ...message, frameId }
         );
         if (message === RelayManager.completionMessage) {
           this.frames.delete(frameId);
