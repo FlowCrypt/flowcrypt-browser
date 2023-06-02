@@ -23,27 +23,29 @@ export interface MessageCacheEntry {
 }
 
 export class Downloader {
-  private readonly chunkDownloads: { attachment: Attachment; result: Promise<Buf> }[] = [];
-  private readonly messages = new ExpirationCache<MessageCacheEntry>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly chunkDownloads = new ExpirationCache<Attachment, Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
+  private readonly messages = new ExpirationCache<string, MessageCacheEntry>(24 * 60 * 60 * 1000); // 24 hours
 
   public constructor(private readonly gmail: Gmail) {}
 
   public deleteExpired = (): void => {
     this.messages.deleteExpired();
-    // todo: this.chunkDownloads
+    this.chunkDownloads.deleteExpired(attachment => {
+      return attachment.hasData();
+    });
   };
 
-  public queueAttachmentChunkDownload = (a: Attachment) => {
+  public queueAttachmentChunkDownload = (a: Attachment): { result: Promise<Buf> } => {
     if (a.hasData()) {
-      return { attachment: a, result: Promise.resolve(a.getData()) };
+      return { result: Promise.resolve(a.getData()) };
     }
-    let download = this.chunkDownloads.find(d => d.attachment === a);
+    let download = this.chunkDownloads.get(a);
     if (!download) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      download = { attachment: a, result: this.gmail.attachmentGetChunk(a.msgId!, a.id!) };
-      this.chunkDownloads.push(download);
+      download = this.gmail.attachmentGetChunk(a.msgId!, a.id!);
+      this.chunkDownloads.set(a, download);
     }
-    return download;
+    return { result: download };
   };
 
   public msgGetCached = (msgId: string): MessageCacheEntry => {
