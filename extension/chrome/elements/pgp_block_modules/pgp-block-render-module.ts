@@ -178,10 +178,11 @@ export class PgpBlockViewRenderModule {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
+    const contentWithLink = linkifyHtml(htmlContent);
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
-      $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized
+      $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(contentWithLink)); // xss-sanitized
       Xss.appendRemoteImagesToContainer();
       $('#pgp_block .remote_image_container img').on(
         'load',
@@ -189,7 +190,7 @@ export class PgpBlockViewRenderModule {
       );
     } else {
       // rendering our own ui
-      Xss.sanitizeRender('#pgp_block', htmlContent);
+      Xss.sanitizeRender('#pgp_block', contentWithLink);
     }
     if (isErr) {
       $('.action_show_raw_pgp_block').on(
