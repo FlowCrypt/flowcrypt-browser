@@ -231,7 +231,7 @@ export class MessageRenderer {
       if (showOriginal) {
         r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
       } else if (['signedMsg', 'encryptedMsg'].includes(block.type)) {
-        const { frameId, frameXssSafe } = this.factory.embeddedRenderMsg(block.type);
+        const { frameId, frameXssSafe } = this.factory.embeddedMsg(block.type);
         r += frameXssSafe;
         blocksInFrames[frameId] = block;
       } else {
@@ -681,7 +681,7 @@ export class MessageRenderer {
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
   ): Promise<{ processor: Promise<unknown> }> => {
-    const { frameId, frameXssSafe } = loaderContext.factory.embeddedRenderMsg(type);
+    const { frameId, frameXssSafe } = loaderContext.factory.embeddedMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
     return await this.relayAndStartProcessing(this.relayManager, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
   };

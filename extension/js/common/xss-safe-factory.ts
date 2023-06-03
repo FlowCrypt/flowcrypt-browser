@@ -10,7 +10,7 @@ import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
-import { MsgBlock, MsgBlockType } from './core/msg-block.js';
+import { MsgBlock } from './core/msg-block.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName, WebMailVersion } from './browser/env.js';
@@ -136,18 +136,7 @@ export class XssSafeFactory {
     );
   };
 
-  public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), {
-      frameId: this.newId(),
-      message,
-      msgId,
-      senderEmail,
-      isOutgoing,
-      signature,
-    });
-  };
-
-  public srcPgpRenderBlockIframe = () => {
+  public srcPgpBlockIframe = () => {
     const frameId = this.newId();
     return {
       frameId,
@@ -219,14 +208,10 @@ export class XssSafeFactory {
     });
   };
 
-  public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
-    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
-  };
-
-  public embeddedRenderMsg = (
+  public embeddedMsg = (
     type: string // for diagnostic purposes
   ) => {
-    const { frameId, frameSrc } = this.srcPgpRenderBlockIframe();
+    const { frameId, frameSrc } = this.srcPgpBlockIframe();
     return { frameId, frameXssSafe: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification };
   };
 
