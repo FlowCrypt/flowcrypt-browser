@@ -1094,19 +1094,20 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - thunderbird - signed text is recognized',
       testWithBrowser(async (t, browser) => {
-        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
-        const threadId = '17dad75e63e47f97';
-        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        const msgId = '17dad75e63e47f97';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${msgId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
-        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), {
+        const expectedMessage = {
           content: ['1234'],
           encryption: 'not encrypted',
           signature: 'signed',
-        });
-        // todo: check gmail mock
+        };
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), expectedMessage);
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, msgId, expectedMessage, authHdr);
       })
     );
 
