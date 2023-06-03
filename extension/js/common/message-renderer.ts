@@ -11,7 +11,7 @@ import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
 import { KeyUtil } from './core/crypto/key.js';
 import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
-import { Mime, MimeContent, MimeProccesedMsg } from './core/mime.js';
+import { Mime, MessageBody, MimeProccesedMsg } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
 import { MsgBlock } from './core/msg-block.js';
 import { Lang } from './lang.js';
@@ -66,9 +66,9 @@ export class MessageRenderer {
    * @param attachments - An array of email attachments.
    * @returns An object containing sanitized HTML and an array of inline CID attachments.
    */
-  private static replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Attachment[] } => {
-    // Array to store inline CID attachments
-    const inlineCIDAttachments: Attachment[] = [];
+  private static replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Set<Attachment> } => {
+    // Set to store inline CID attachments
+    const inlineCIDAttachments = new Set<Attachment>();
 
     // Define the hook function for DOMPurify to process image elements after sanitizing attributes
     const processImageElements = (node: Element | null) => {
@@ -85,7 +85,7 @@ export class MessageRenderer {
 
         // Replace the src attribute with a base64 encoded string
         if (contentIdAttachment) {
-          inlineCIDAttachments.push(contentIdAttachment);
+          inlineCIDAttachments.add(contentIdAttachment);
           node.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
         }
       }
@@ -121,16 +121,18 @@ export class MessageRenderer {
     }
   };
 
-  private static reconstructMimeContent = (gmailMsg: GmailRes.GmailMsg): MimeContent => {
+  // attachments returned by this method are missing data, so they need to be fetched
+  private static getMessageBodyAndAttachments = (gmailMsg: GmailRes.GmailMsg): { body: MessageBody; attachments: Attachment[] } => {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
     // todo: do we need to strip?
     const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
-    // reconstructed MIME content
     return {
-      text,
-      html,
+      body: {
+        text,
+        html,
+      },
       attachments,
     };
   };
@@ -342,29 +344,29 @@ export class MessageRenderer {
       return msgDownload.processedFull;
     }
     const fullMsg = await msgDownload.download.full;
-    const mimeContent = MessageRenderer.reconstructMimeContent(fullMsg);
-    const blocks = Mime.processBody(mimeContent);
-    const isBodyEmpty = Mime.isBodyEmpty(mimeContent);
-    // todo: only start `signature` download?
-    // start download of all attachments that are not plainFile, for 'needChunk' -- chunked download
-    for (const a of mimeContent.attachments.filter(a => !a.hasData())) {
-      const treatAs = a.treatAs(mimeContent.attachments, isBodyEmpty);
+    const { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
+    const blocks = Mime.processBody(body);
+    const isBodyEmpty = Mime.isBodyEmpty(body);
+    // todo: start download of all attachments that are not plainFile, when the cache is implemented?
+    // start chunk downloads for 'needChunk' attachments
+    for (const a of attachments.filter(a => !a.hasData())) {
+      const treatAs = a.treatAs(attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
         this.downloader.queueAttachmentChunkDownload(a);
       } else if (treatAs === 'publicKey') {
-        // we also want a chunk before we replace the attachment in the UI
-        // todo: or simply download in full?
+        // we also want a chunk before we replace the publicKey-looking attachment in the UI
+        // todo: or simply queue full attachment download?
         this.downloader.queueAttachmentChunkDownload(a);
       } else {
-        // todo: this.downloader.queueAttachmentDownload(a);
+        // todo: queue full attachment download, when the cache is implemented?
       }
     }
     msgDownload.processedFull = {
       isBodyEmpty,
       blocks,
       messageInfo: await this.getMessageInfo(fullMsg),
-      attachments: mimeContent.attachments,
+      attachments,
     };
     return msgDownload.processedFull;
   };
@@ -450,7 +452,7 @@ export class MessageRenderer {
     } else {
       renderModule.renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
-      let inlineCIDAttachments: Attachment[] = [];
+      let inlineCIDAttachments = new Set<Attachment>();
       if (typeof decoded.html !== 'undefined') {
         ({ sanitizedHtml: decryptedContent, inlineCIDAttachments } = MessageRenderer.replaceInlineImageCIDs(decoded.html, decoded.attachments));
         isHtml = true;
@@ -472,14 +474,15 @@ export class MessageRenderer {
           publicKeys.push(attachment.getData().toUtfStr());
         } else if (decoded.rawSignedContent && attachment.treatAs(decoded.attachments) === 'signature') {
           signedContentInDecryptedData = { rawSignedContent: decoded.rawSignedContent, signature: attachment };
-        } else if (!inlineCIDAttachments.some(inlineAttachment => inlineAttachment.cid === attachment.cid)) {
+        } else if (inlineCIDAttachments.has(attachment)) {
+          // this attachment has been processed into an inline image
+        } else {
           renderableAttachments.push(
             Attachment.toTransferableAttachment({
               name: attachment.name,
               type: attachment.type,
               length: attachment.getData().length,
               data: attachment.getData(),
-              cid: attachment.cid, // todo: do we need it?
             })
           );
         }

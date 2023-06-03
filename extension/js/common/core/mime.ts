@@ -23,13 +23,13 @@ const Iso88592 = requireIso88592();
 type AddressHeader = { address: string; name: string };
 type MimeContentHeader = string | AddressHeader[];
 
-export type MimeContentBody = {
+export type MessageBody = {
   html?: string;
   text?: string;
 };
 
-export type MimeContent = MimeContentBody & {
-  attachments: Attachment[];
+export type MimeContent = MessageBody & {
+  attachments: Attachment[]; // attachments in MimeContent are parsed from a raw MIME message and always have data
   rawSignedContent?: string;
   subject?: string;
 };
@@ -51,7 +51,7 @@ export type SendableMsgBody = {
   'text/html'?: string;
   'pkcs7/buf'?: Buf; // DER-encoded PKCS#7 message
 };
-/* eslint-enable @typescript-eslint/naming-convention */
+
 export type MimeProccesedMsg = {
   rawSignedContent: string | undefined; // undefined if format was 'full'
   blocks: MsgBlock[]; // may be many blocks per file
@@ -64,7 +64,7 @@ export type MimeProccesedFromRawMsg = MimeProccesedMsg & {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
-  public static processBody = (decoded: MimeContentBody): MsgBlock[] => {
+  public static processBody = (decoded: MessageBody): MsgBlock[] => {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text), true).blocks;
@@ -84,7 +84,7 @@ export class Mime {
     return blocks;
   };
 
-  public static isBodyEmpty = ({ text, html }: MimeContent) => {
+  public static isBodyEmpty = ({ text, html }: MessageBody) => {
     return Mime.isBodyTextEmpty(text) && Mime.isBodyTextEmpty(html);
   };
 
@@ -98,8 +98,9 @@ export class Mime {
     for (const file of decoded.attachments) {
       let treatAs = file.treatAs(decoded.attachments, Mime.isBodyEmpty(decoded));
       if (['needChunk', 'maybePgp'].includes(treatAs)) {
-        // don't want to reference MsgUtil and OpenPGP.js here, so
-        // todo: think about refactoring this
+        // todo: attachments from MimeContent always have data set, so we can perform whatever analysis is needed,
+        // but we don't want to reference MsgUtil and OpenPGP.js from this class,
+        // so we need to move this method to MessageRenderer
         treatAs = 'encryptedMsg'; // publicKey?
       }
       if (treatAs === 'encryptedMsg') {
@@ -120,13 +121,6 @@ export class Mime {
             type: file.type,
             length: file.getData().length,
             data: file.getData(),
-            /*
-            todo: do we need this?
-            length: file.hasData() ? file.getData().length : undefined,
-            data: file.hasData() ? file.getData() : undefined,
-            id: file.id,
-            msgId: file.id,
-            cid: file.cid, */
           })
         );
       } else if (treatAs === 'plainFile') {
@@ -137,8 +131,7 @@ export class Mime {
             length: file.getData().length,
             data: file.getData(),
             inline: file.inline,
-            id: file.id, // todo:
-            cid: file.cid, // todo:
+            cid: file.cid,
           })
         );
       }
@@ -176,15 +169,6 @@ export class Mime {
       headers: decoded.headers,
       ...Mime.processDecoded(decoded),
     };
-  };
-
-  public static isPlainImgAttachment = (b: MsgBlock) => {
-    return (
-      b.type === 'plainAttachment' &&
-      b.attachmentMeta &&
-      b.attachmentMeta.type &&
-      ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attachmentMeta.type)
-    );
   };
 
   public static resemblesMsg = (msg: Uint8Array | string) => {

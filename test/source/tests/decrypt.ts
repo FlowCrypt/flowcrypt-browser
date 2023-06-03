@@ -996,7 +996,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - display email with cid image correctly',
       testWithBrowser(async (t, browser) => {
         const threadId = '186eed032659ad4f';
-        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -1005,6 +1005,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const replyFrame = await inboxPage.getFrame(['compose.htm']);
         await replyFrame.waitAndClick('@action-forward');
         await replyFrame.waitForContent('@input-body', 'googlelogo_color_272x92dp.png'); // check if forwarded content contains cid image name
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        const pgpBlockFromGmailPage = await gmailPage.getFrame(['pgp_block.htm']);
+        await pgpBlockFromGmailPage.waitForSelTestState('ready');
+        await pgpBlockFromGmailPage.checkIfImageIsDisplayedCorrectly('#pgp_block img');
       })
     );
 
