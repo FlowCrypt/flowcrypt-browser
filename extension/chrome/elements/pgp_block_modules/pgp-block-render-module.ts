@@ -126,4 +126,11 @@ export class PgpBlockViewRenderModule {
       .addClass(status === 'signed' ? 'green_label' : 'red_label')
       .text(status);
   };
+
+  public renderSignatureOffline = () => {
+    this.renderSignatureStatus('error verifying signature: offline, click to retry').on(
+      'click',
+      this.view.setHandler(() => window.parent.postMessage({ retry: this.view.frameId }, '*'))
+    );
+  };
 }

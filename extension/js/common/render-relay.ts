@@ -6,8 +6,11 @@ import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { PrintMailInfo, RenderMessage } from './render-message.js';
 import { TransferableAttachment } from './core/attachment.js';
+import { PromiseCancellation } from './core/common.js';
 
 export class RenderRelay implements RenderInterface {
+  public readonly cancellation: PromiseCancellation = { cancel: false };
+  private retry?: () => void;
   public constructor(private relayManager: RelayManagerInterface, private frameId: string) {}
 
   public renderErr = (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string | undefined) => {
@@ -60,6 +63,19 @@ export class RenderRelay implements RenderInterface {
 
   public renderAsRegularContent = (content: string) => {
     this.relay({ renderAsRegularContent: content });
+  };
+
+  public renderSignatureOffline = (retry: () => void) => {
+    this.retry = retry;
+    this.relay({ renderSignatureOffline: true });
+  };
+
+  public executeRetry = () => {
+    const retry = this.retry;
+    if (retry) {
+      this.retry = undefined;
+      retry();
+    }
   };
 
   private relay = (message: RenderMessage) => {

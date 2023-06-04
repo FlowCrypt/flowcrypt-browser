@@ -152,7 +152,29 @@ export class MessageRenderer {
       renderModule.renderSignatureStatus('signed');
     } else if (retryVerification) {
       renderModule.renderVerificationInProgress();
-      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, (await retryVerification()) ?? verifyRes, wasSignerEmailSupplied, undefined);
+      let retryVerificationAgain: (() => Promise<VerifyRes | undefined>) | undefined;
+      try {
+        verifyRes = (await retryVerification()) ?? verifyRes; // [fetch pubkeys] and verify again
+      } catch (e) {
+        if (ApiErr.isSignificant(e)) {
+          Catch.reportErr(e);
+          renderModule.renderSignatureStatus(`error verifying signature: ${e}`);
+          return;
+        } else {
+          const continuationPromise = new Promise<void>(resolve => renderModule.renderSignatureOffline(resolve));
+          // todo: we can make a helper method to await a Promise or a cancellation flag,
+          // but we'd better make `cancel` a Promise as well
+          const createTimeoutPromise = () =>
+            new Promise<'timeout'>(resolve => {
+              Catch.setHandledTimeout(() => resolve('timeout'), 1000);
+            });
+          while ((await Promise.race([continuationPromise, createTimeoutPromise()])) === 'timeout') {
+            if (renderModule.cancellation.cancel) return;
+          }
+          retryVerificationAgain = retryVerification;
+        }
+      }
+      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, verifyRes, wasSignerEmailSupplied, retryVerificationAgain);
       return;
     } else if (!wasSignerEmailSupplied) {
       // todo: unit-test this case?
@@ -520,7 +542,7 @@ export class MessageRenderer {
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
   ): Promise<{ processor: Promise<unknown> }> => {
-    const { renderModule, cancellation } = relayManager.createRelay(frameId);
+    const renderModule = relayManager.createRelay(frameId);
     if (printMailInfo) {
       renderModule.setPrintMailInfo(printMailInfo);
     }
@@ -531,15 +553,15 @@ export class MessageRenderer {
         for (const armoredPubkey of result.publicKeys ?? []) {
           appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
         }
-        while (result.needPassphrase && !cancellation.cancel) {
+        while (result.needPassphrase && !renderModule.cancellation.cancel) {
           // if we need passphrase, we have to be able to re-try decryption indefinitely on button presses,
           // so we can only release resources when the frame is detached
-          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, cancellation);
-          if (cancellation.cancel) {
+          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, renderModule.cancellation);
+          if (renderModule.cancellation.cancel) {
             if (this.debug) {
               console.debug('Destination frame was detached -- stopping processing');
             }
-            break;
+            return;
           }
           renderModule.clearErrorStatus();
           renderModule.renderText('Decrypting...');
@@ -600,6 +622,9 @@ export class MessageRenderer {
             this.getRetryVerification(signerEmail, verify)
           );
         } catch (e) {
+          // todo: network errors shouldn't pass to this point
+          // so an exception here would be an unexpected failure,
+          // need to handle it properly
           console.log(e);
         }
       }

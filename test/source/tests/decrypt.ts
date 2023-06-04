@@ -1112,6 +1112,50 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - timeout when looking up pubkey - inbox',
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = {
+          returnError: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST),
+        };
+        const msgId = '17dad75e63e47f97';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${msgId}`);
+        const pgpFrame = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpFrame.waitForContent('@pgp-signature', 'error verifying signature: offline, click to retry');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
+        await pgpFrame.waitAndClick('@pgp-signature');
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['1234'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+        await inboxPage.close();
+      })
+    );
+
+    test(
+      'decrypt - timeout when looking up pubkey - gmail',
+      testWithBrowser(async (t, browser) => {
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = {
+          returnError: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST),
+        };
+        const msgId = '17dad75e63e47f97';
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const pgpFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await pgpFrame.waitForContent('@pgp-signature', 'error verifying signature: offline, click to retry');
+        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
+        await pgpFrame.waitAndClick('@pgp-signature');
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), {
+          content: ['1234'],
+          encryption: 'not encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
       'verification - message text is rendered prior to pubkey fetching',
       testWithBrowser(async (t, browser) => {
         const msgId = '17dad75e63e47f97';

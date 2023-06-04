@@ -35,6 +35,7 @@ export type RenderMessage = {
   renderPassphraseNeeded?: string[]; // longids
   renderErr?: { errBoxContent: string; renderRawMsg: string | undefined; errMsg?: string };
   clearErrorStatus?: true;
+  renderSignatureOffline?: true;
   printMailInfo?: PrintMailInfo;
   renderAsRegularContent?: string;
 };

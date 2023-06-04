@@ -3,7 +3,6 @@
 'use strict';
 
 import { Bm, BrowserMsg } from './browser/browser-msg.js';
-import { PromiseCancellation } from './core/common.js';
 import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { RenderMessage } from './render-message.js';
@@ -12,8 +11,8 @@ import { RenderRelay } from './render-relay.js';
 type FrameEntry = {
   readyToReceive?: true;
   queue: RenderMessage[];
-  cancellation: PromiseCancellation;
   progressText?: string;
+  relay?: RenderRelay;
 };
 
 export class RelayManager implements RelayManagerInterface {
@@ -52,19 +51,25 @@ export class RelayManager implements RelayManagerInterface {
     }
   };
 
-  public createRelay = (frameId: string): { renderModule: RenderInterface; cancellation: PromiseCancellation } => {
+  public createRelay = (frameId: string): RenderInterface => {
     const frameData = this.getOrCreate(frameId);
-    return { renderModule: new RenderRelay(this, frameId), cancellation: frameData.cancellation };
+    const relay = new RenderRelay(this, frameId);
+    frameData.relay = relay;
+    return relay;
   };
 
   public done = (frameId: string) => {
     this.relay(frameId, RelayManager.completionMessage);
   };
 
-  public readyToReceive = (frameId: string) => {
-    const frameData = this.getOrCreate(frameId);
-    frameData.readyToReceive = true;
-    this.flush({ frameId, queue: frameData.queue });
+  public handleMessageFromFrame = (data: unknown) => {
+    const typedData = data as { readyToReceive?: string; retry?: string } | undefined;
+    if (typeof typedData?.readyToReceive === 'string') {
+      this.readyToReceive(typedData.readyToReceive);
+    }
+    if (typeof typedData?.retry === 'string') {
+      this.retry(typedData.retry);
+    }
   };
 
   public renderProgressText = (frameId: string, text: string) => {
@@ -99,7 +104,7 @@ export class RelayManager implements RelayManagerInterface {
       }
       const frameData = this.frames.get(frameId);
       if (frameData) {
-        frameData.cancellation.cancel = true;
+        if (frameData.relay?.cancellation) frameData.relay.cancellation.cancel = true;
         this.frames.delete(frameId);
       }
     } else {
@@ -130,5 +135,16 @@ export class RelayManager implements RelayManagerInterface {
         }
       } else break;
     }
+  };
+
+  private readyToReceive = (frameId: string) => {
+    const frameData = this.getOrCreate(frameId);
+    frameData.readyToReceive = true;
+    this.flush({ frameId, queue: frameData.queue });
+  };
+
+  private retry = (frameId: string) => {
+    const frameData = this.frames.get(frameId);
+    frameData?.relay?.executeRetry();
   };
 }

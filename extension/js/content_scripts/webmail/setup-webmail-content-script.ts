@@ -431,8 +431,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
       window.addEventListener('message', e => {
-        if (e.origin === Env.getExtensionOrigin() && typeof e.data?.readyToReceive === 'string') {
-          relayManager.readyToReceive(e.data.readyToReceive);
+        if (e.origin === Env.getExtensionOrigin()) {
+          relayManager.handleMessageFromFrame(e.data);
         }
       });
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);

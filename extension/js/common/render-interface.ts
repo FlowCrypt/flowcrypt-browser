@@ -3,6 +3,7 @@
 'use strict';
 
 import { TransferableAttachment } from './core/attachment.js';
+import { PromiseCancellation } from './core/common.js';
 import { PrintMailInfo } from './render-message.js';
 
 export interface RenderInterfaceBase {
@@ -14,6 +15,7 @@ export interface RenderInterfaceBase {
 }
 
 export interface RenderInterface extends RenderInterfaceBase {
+  cancellation: PromiseCancellation;
   renderAsRegularContent(content: string): void;
   setPrintMailInfo(info: PrintMailInfo): void;
   clearErrorStatus(): void;
@@ -22,4 +24,5 @@ export interface RenderInterface extends RenderInterfaceBase {
   renderInnerAttachments(attachments: TransferableAttachment[], isEncrypted: boolean): void;
   separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean): void;
   renderVerificationInProgress(): void;
+  renderSignatureOffline(retry: () => void): void;
 }

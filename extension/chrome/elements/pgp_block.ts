@@ -71,10 +71,10 @@ export class PgpBlockView extends View {
       this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);
     }
     if (data?.renderVerificationInProgress) {
-      $('#pgp_signature').addClass('gray_label').text('verifying signature...');
+      $('#pgp_signature').removeClass('green_label red_label').addClass('gray_label').text('verifying signature...');
     }
     if (data?.renderSignatureStatus) {
-      this.renderModule.renderSignatureStatus(data.renderSignatureStatus); // todo: "offline"->click->reload?
+      this.renderModule.renderSignatureStatus(data.renderSignatureStatus);
     }
     if (data?.renderText) {
       this.renderModule.renderText(data.renderText);
@@ -113,6 +113,9 @@ export class PgpBlockView extends View {
     }
     if (data?.renderAsRegularContent) {
       this.renderModule.renderAsRegularContent(data.renderAsRegularContent);
+    }
+    if (data?.renderSignatureOffline) {
+      this.renderModule.renderSignatureOffline();
     }
   };
 }

@@ -256,6 +256,7 @@ export class BrowserRecipe {
     const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
     const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
     if (m.signature) {
+      // todo: check color, 'signed' should have 'green_label' class without 'red_label', others should have 'red_label' class
       if (sigBadgeContent !== m.signature) {
         t.log(`found sig content:${sigBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);

@@ -64,8 +64,8 @@ export class InboxView extends View {
     this.inboxActiveThreadModule = new InboxActiveThreadModule(this);
     this.inboxListThreadsModule = new InboxListThreadsModule(this);
     window.addEventListener('message', e => {
-      if (e.origin === Env.getExtensionOrigin() && typeof e.data?.readyToReceive === 'string') {
-        this.relayManager.readyToReceive(e.data.readyToReceive);
+      if (e.origin === Env.getExtensionOrigin()) {
+        this.relayManager.handleMessageFromFrame(e.data);
       }
     });
   }
