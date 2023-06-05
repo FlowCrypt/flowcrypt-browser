@@ -32,7 +32,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
 
   private recipientHasPgpCache: Dict<boolean> = {};
-  // private attachmentDownloads: { attachment: Attachment; result: Promise<GmailRes.GmailAttachment> }[] = [];
   private pubLookup: PubLookup;
   private webmailCommon: WebmailCommon;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;

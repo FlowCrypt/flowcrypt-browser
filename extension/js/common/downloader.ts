@@ -19,7 +19,7 @@ export type ProcessedMessage = {
 
 export interface MessageCacheEntry {
   download: { full: Promise<GmailRes.GmailMsg>; raw?: Promise<GmailRes.GmailMsg> };
-  processedFull?: ProcessedMessage;
+  processed?: ProcessedMessage;
 }
 
 export class Downloader {

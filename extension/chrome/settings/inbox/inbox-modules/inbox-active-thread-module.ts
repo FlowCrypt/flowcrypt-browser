@@ -21,7 +21,7 @@ import { Attachment } from '../../../../js/common/core/attachment.js';
 import { LoaderContextInterface } from '../../../../js/common/loader-context-interface.js';
 
 class LoaderContext implements LoaderContextInterface {
-  public constructor(public readonly factory: XssSafeFactory, public renderedMessageXssSafe: string | undefined, public renderedAttachments: string[]) {}
+  public constructor(private readonly factory: XssSafeFactory, public renderedMessageXssSafe: string | undefined, public renderedAttachments: string[]) {}
 
   public renderPlainAttachment = (a: Attachment) => {
     // todo: render error argument

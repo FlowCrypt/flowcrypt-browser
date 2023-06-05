@@ -18,13 +18,13 @@ export type Attachment$treatAs =
   | 'needChunk'
   | 'maybePgp';
 type ContentTransferEncoding = '7bit' | 'quoted-printable' | 'base64';
-export type AttachmentId = { id: string; msgId: string } | { url: string };
+export type AttachmentId = { id: string; msgId: string } | { url: string }; // a way to extract data
 export type AttachmentProperties = {
-  length?: number;
-  name?: string;
   type?: string;
-  treatAs?: Attachment$treatAs;
+  name?: string;
+  length?: number;
   inline?: boolean;
+  treatAs?: Attachment$treatAs;
   cid?: string;
   contentDescription?: string;
   contentTransferEncoding?: ContentTransferEncoding;
@@ -36,6 +36,8 @@ export type FcAttachmentLinkData = { name: string; type: string; size: number };
 export type TransferableAttachment = (AttachmentId | { data: /* base64 see #2587 */ string }) & AttachmentProperties;
 
 export class Attachment {
+  // Regex to trigger message download and processing based on attachment file names
+  // todo: it'd be better to compile this regex based on the data we have in `treatAs` method
   public static readonly webmailNamePattern =
     /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(OpenPGP_signature(.asc)?)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
   public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];

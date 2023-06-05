@@ -362,8 +362,8 @@ export class MessageRenderer {
   public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
     // todo: retries? exceptions?
     const msgDownload = this.downloader.msgGetCached(msgId);
-    if (msgDownload.processedFull) {
-      return msgDownload.processedFull;
+    if (msgDownload.processed) {
+      return msgDownload.processed;
     }
     const fullMsg = await msgDownload.download.full;
     const { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
@@ -384,13 +384,13 @@ export class MessageRenderer {
         // todo: queue full attachment download, when the cache is implemented?
       }
     }
-    msgDownload.processedFull = {
+    msgDownload.processed = {
       isBodyEmpty,
       blocks,
       messageInfo: await this.getMessageInfo(fullMsg),
       attachments,
     };
-    return msgDownload.processedFull;
+    return msgDownload.processed;
   };
 
   public deleteExpired = (): void => {
@@ -706,9 +706,9 @@ export class MessageRenderer {
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
   ): Promise<{ processor: Promise<unknown> }> => {
-    const { frameId, frameXssSafe } = loaderContext.factory.embeddedMsg(type);
+    const { frameId, frameXssSafe } = this.factory.embeddedMsg(type);
     loaderContext.setMsgBody(frameXssSafe, 'set');
-    return await this.relayAndStartProcessing(this.relayManager, loaderContext.factory, frameId, printMailInfo, senderEmail, cb);
+    return await this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processCryptoMessage = async (
