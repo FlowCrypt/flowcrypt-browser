@@ -64,7 +64,8 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       this.view.displayBlock('thread', Xss.escape(subject));
       let threadHasPgpBlock = false;
       for (const m of thread.messages) {
-        threadHasPgpBlock ||= await this.renderMsg(m);
+        const pgpFlag = await this.renderMsg(m);
+        threadHasPgpBlock ||= pgpFlag;
       }
       if (threadHasPgpBlock || this.view.showOriginal) {
         $('.action_see_original_message').css('display', 'inline-block');
