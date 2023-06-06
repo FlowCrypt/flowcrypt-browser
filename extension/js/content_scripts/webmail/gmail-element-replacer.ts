@@ -415,14 +415,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private processAttachments = async (
     msgId: string,
-    attachmentMetas: Attachment[], // todo: these are not Metas!
+    attachments: Attachment[],
     attachmentsContainerInner: JQueryEl,
     messageInfo: MessageInfo,
     isBodyEmpty: boolean,
     skipGoogleDrive: boolean
   ) => {
     if (this.debug) {
-      console.debug('processAttachments()', attachmentMetas);
+      console.debug('processAttachments()', attachments);
     }
     const msgEl = this.getMsgBodyEl(msgId);
     if (!messageInfo.from?.email) {
@@ -431,8 +431,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const loaderContext = new LoaderContextWebmail(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
-    let nRenderedAttachments = attachmentMetas.length;
-    for (const a of attachmentMetas) {
+    let nRenderedAttachments = attachments.length;
+    for (const a of attachments) {
       const attachmentSel = this.filterAttachments(
         attachmentsContainerInner.children().not('.attachment_processed'),
         new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)
@@ -440,7 +440,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // todo: shouldn't call `treatAs` in too many places ?
       const renderStatus = await this.messageRenderer.processAttachment(
         a,
-        a.treatAs(attachmentMetas, isBodyEmpty),
+        a.treatAs(attachments, isBodyEmpty),
         loaderContext,
         attachmentSel,
         msgId,
@@ -451,7 +451,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       // if (renderStatus === 'shown') attachmentSel.show();
     }
-    if (nRenderedAttachments !== attachmentMetas.length) {
+    if (nRenderedAttachments !== attachments.length) {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
       $(this.sel.attachmentsButtons).hide();
     }
