@@ -66,7 +66,7 @@ export class PgpBlockView extends View {
   };
 
   private processMessage = (data: RenderMessage) => {
-    // todo: order better
+    // messages aren't merged when queueing, so the order is arbitrary
     if (data?.renderEncryptionStatus) {
       this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);
     }
