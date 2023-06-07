@@ -48,14 +48,6 @@ If you wish, you can also use the `run_firefox` script (`npm run run_firefox`) i
 
 Printing debug data to test logs can be accomplished using a [special Debug class](https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7).
 
-### Note for Mac OS users
-
-In order for `npm run-script build` to work, you need to do the following steps:
-
-1. Upgrade the `bash` shell to version 4 or higher and set the new version as the default. Reference: [www.shell-tips.com/mac/upgrade-bash/](https://www.shell-tips.com/mac/upgrade-bash/)
-
-2. Install the GNU `cp` utility and make it the default. Reference: [stackoverflow.com/a/40431200/3049064](https://stackoverflow.com/a/40431200/3049064)
-
 ## Other guides
 
 - [FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
