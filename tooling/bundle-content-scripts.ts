@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'fs';
 
 import { getFilesInDir } from './utils/tooling-utils';
 
@@ -28,6 +28,9 @@ const buildContentScript = (srcFilePaths: string[], outFileName: string) => {
   writeFileSync(`${OUT_DIR}/${outFileName}`, contentScriptBundle);
 };
 
+if (existsSync(OUT_DIR)) {
+  rmSync(OUT_DIR, { recursive: true });
+}
 mkdirSync(OUT_DIR);
 
 // webmail
