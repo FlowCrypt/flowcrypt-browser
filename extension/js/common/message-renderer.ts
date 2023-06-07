@@ -30,7 +30,7 @@ import * as DOMPurify from 'dompurify';
 import { Downloader, ProcessedMessage } from './downloader.js';
 import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
-import { ApiErr, AjaxErr } from './api/shared/api-error.js';
+import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
 
 export type ProccesedMsg = MimeProccesedMsg;
@@ -284,10 +284,10 @@ export class MessageRenderer {
         if (this.debug) {
           console.debug('processAttachment() try -> awaiting chunk + awaiting type');
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const data = await this.downloader.queueAttachmentChunkDownload(a).result;
+        const data = await this.downloader.waitForAttachmentChunkDownload(a);
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
+          // todo: how can we have a single helper method? and convert unarmored pubkey to armored if needed
           // if it looks like OpenPGP public key
           treatAs = 'publicKey';
         } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
@@ -338,7 +338,7 @@ export class MessageRenderer {
         return 'shown';
       }
     } catch (e) {
-      if (!ApiErr.isSignificant(e) || (e instanceof AjaxErr && e.status === 200)) {
+      if (ApiErr.isNetErr(e)) {
         loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
         return 'shown';
       } else {
@@ -757,11 +757,14 @@ export class MessageRenderer {
       loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page');
       return 'shown';
     }
-    const openpgpType = MsgUtil.type({ data: attachment.getData().subarray(0, 1000) });
+    const data = attachment.getData();
+    const openpgpType = MsgUtil.type({ data });
     if (openpgpType?.type === 'publicKey') {
-      loaderContext.setMsgBody(this.factory.embeddedPubkey(attachment.getData().toUtfStr(), isOutgoing), 'after');
+      // todo: do we need to armor if not openpgpType.armored?
+      loaderContext.setMsgBody(this.factory.embeddedPubkey(data.toUtfStr(), isOutgoing), 'after');
       return 'hidden';
-    } else if (openpgpType?.type !== 'encryptedAttachment') {
+    } else if (openpgpType && ['signedMsg', 'encryptedMsg'].includes(openpgpType.type)) {
+      // todo: think about moving this fallback to the upper-level handler somehow
       loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Unknown Public Key Format');
       return 'shown';
     } else {

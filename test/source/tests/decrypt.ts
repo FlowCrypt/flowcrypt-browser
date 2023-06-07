@@ -1165,6 +1165,35 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - failure retrieving chunk download - next request will try anew',
+      testWithBrowser(async (t, browser) => {
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        t.mockApi!.configProvider!.config.google = {
+          getAttachment: {
+            'ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwfhKWlCUqnXbZtBdwjPQqN9omCqn-0-r4JBy6amb0ogGz9jZL9q11Z_iUJzxr_X0MlJj0cw-3EYCFKPDrpfVVQZ-28Ajhd35CkI3Z93s3FU4BUKHROZR1qdEPOoQM63k1IOPTfL9c7ES-W8EaOKxB-k0n0frlXqpTJgv-AHAi9NEAaq-ghluobPc4JiSjgkK7_0MkykEm4oZfBSHSuzG94c3HWeYNJw4bcWFHiKRln7bB8nq5JTJe546Zg2MoVkMuc7K6a0cUwGd9mdAUAPqPyq1ENIQ9bGFK7ozlDezHHZYP8rOTEL3QBx6rEE-aaGT2MEQyWPtsp8Zgt42prnUjysPDe-uVs-pl31UpIDhf':
+              new HttpClientErr('RequestTimeout', Status.BAD_REQUEST),
+          },
+        };
+        const msgId = '1885ded59a2b5a8d';
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
+        await gmailPage.waitForContent('.attachment_loader', 'Categorize: unknown err'); // 'RequestTimeout' responseText gets lost in chunk downloader
+        t.mockApi!.configProvider!.config.google = {};
+        await gmailPage.target.$$eval('.evaluated', elems => {
+          for (const el of elems) {
+            el.classList.remove('evaluated');
+          }
+        }); // trigger processing
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), {
+          content: ['Standard message'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: missing pubkey 06CA553EC2455D70',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
       'verification - message text is rendered prior to pubkey fetching',
       testWithBrowser(async (t, browser) => {
         const msgId = '17dad75e63e47f97';

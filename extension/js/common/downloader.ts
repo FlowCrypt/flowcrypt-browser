@@ -48,6 +48,15 @@ export class Downloader {
     return { result: download };
   };
 
+  public waitForAttachmentChunkDownload = async (a: Attachment) => {
+    if (a.hasData()) return a.getData();
+    return this.queueAttachmentChunkDownload(a).result.catch(e => {
+      // remove from cache immediately
+      this.chunkDownloads.set(a, undefined);
+      return Promise.reject(e);
+    });
+  };
+
   public msgGetCached = (msgId: string): MessageCacheEntry => {
     // todo: retries? exceptions?
     let msgDownload = this.messages.get(msgId);

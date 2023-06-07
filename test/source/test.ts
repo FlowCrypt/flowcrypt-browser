@@ -152,6 +152,12 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
         e.message !== 'Some keys could not be parsed' &&
         !e.message.match(/BrowserMsg\(ajax\) Bad Request: 400 when GET-ing https:\/\/localhost:\d+\/flowcrypt-email-key-manager/)
     )
+    // below for test "decrypt - failure retrieving chunk download - next request will try anew"
+    .filter(
+      e =>
+        e.message ===
+        'BrowserMsg(ajaxGmailAttachmentGetChunk) (no status text): 400 when GET-ing https://localhost:32831/gmail/v1/users/me/messages/1885ded59a2b5a8d/attachments/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf'
+    )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
