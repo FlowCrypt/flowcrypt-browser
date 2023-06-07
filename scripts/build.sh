@@ -112,7 +112,7 @@ main() {
   ISUINT8ARRAY_REGEX="s/(\s*)return\x20Uint8Array\.prototype\.isPrototypeOf\(input\);/\1return\x20Uint8Array\.prototype\.isPrototypeOf\(input\)\x20\|\|\x20globalThis\.Uint8Array\.prototype\.isPrototypeOf\(input\);/g"
   OPENPGP_FILE=$OUTPUT_DIRECTORY/lib/openpgp.js
 
-  apply_regex_replace "$STREAMS_REGEX" $STREAMS_FILES
+  apply_regex_replace $STREAMS_REGEX $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX $OPENPGP_FILE
 
