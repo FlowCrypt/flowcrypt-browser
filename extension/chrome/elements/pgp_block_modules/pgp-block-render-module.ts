@@ -178,7 +178,7 @@ export class PgpBlockViewRenderModule {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
-    const contentWithLink = linkifyHtml(htmlContent);
+    const contentWithLink = Xss.convertHtmlEntities(linkifyHtml(htmlContent));
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
