@@ -9,7 +9,7 @@ import { Attachment, Attachment$treatAs, TransferableAttachment } from './core/a
 import { Buf } from './core/buf.js';
 import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
 import { KeyUtil } from './core/crypto/key.js';
-import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, VerifyRes } from './core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, PgpMsgTypeResult, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Mime, MessageBody, MimeProccesedMsg } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
@@ -288,9 +288,10 @@ export class MessageRenderer {
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // todo: how can we have a single helper method? and convert unarmored pubkey to armored if needed
-          // if it looks like OpenPGP public key
           treatAs = 'publicKey';
-        } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
+        } else if (treatAs === 'publicKey' && openpgpType?.type === 'encryptedMsg') {
+          treatAs = 'encryptedFile';
+        } else if (treatAs !== 'publicKey' && openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
           treatAs = 'encryptedMsg';
         } else {
           if (this.debug) {
@@ -318,7 +319,20 @@ export class MessageRenderer {
       }
       if (treatAs === 'hidden') {
         return 'hidden';
-      } else if (treatAs === 'encryptedFile') {
+      }
+      if (treatAs === 'publicKey') {
+        const { armoredPubkey, openpgpType } = await this.preparePubkey(a);
+        if (armoredPubkey) {
+          loaderContext.setMsgBody(this.factory.embeddedPubkey(armoredPubkey, this.isOutgoing(messageInfo.from?.email)), 'after');
+          return 'hidden';
+        } else if (openpgpType?.type === 'encryptedMsg') {
+          treatAs = 'encryptedFile'; // fall back to ordinary encrypted attachment
+        } else {
+          loaderContext.renderPlainAttachment(a, attachmentSel, 'Unknown Public Key Format');
+          return 'shown';
+        }
+      }
+      if (treatAs === 'encryptedFile') {
         // actual encrypted attachment - show it
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
@@ -327,9 +341,6 @@ export class MessageRenderer {
           this.processCryptoMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
-      } else if (treatAs === 'publicKey') {
-        // todo - pubkey should be fetched in pgp_pubkey.js
-        return await this.renderPublicKeyFromFile(a, loaderContext, this.isOutgoing(messageInfo.from?.email), attachmentSel);
       } else if (treatAs === 'privateKey') {
         return await this.renderBackupFromFile(a, loaderContext, attachmentSel);
       } else {
@@ -745,32 +756,15 @@ export class MessageRenderer {
     return {};
   };
 
-  private renderPublicKeyFromFile = async (
-    attachment: Attachment,
-    loaderContext: LoaderContextInterface,
-    isOutgoing: boolean,
-    attachmentSel: JQueryEl | undefined
-  ): Promise<'shown' | 'hidden'> => {
-    try {
-      await this.gmail.fetchAttachmentsMissingData([attachment]);
-    } catch (e) {
-      loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page');
-      return 'shown';
-    }
+  private preparePubkey = async (attachment: Attachment): Promise<{ armoredPubkey?: string; openpgpType: PgpMsgTypeResult }> => {
+    await this.gmail.fetchAttachmentsMissingData([attachment]);
     const data = attachment.getData();
     const openpgpType = MsgUtil.type({ data });
-    if (openpgpType?.type === 'publicKey') {
+    if (openpgpType?.type === 'publicKey' && openpgpType.armored) {
       // todo: do we need to armor if not openpgpType.armored?
-      loaderContext.setMsgBody(this.factory.embeddedPubkey(data.toUtfStr(), isOutgoing), 'after');
-      return 'hidden';
-    } else if (openpgpType && ['signedMsg', 'encryptedMsg'].includes(openpgpType.type)) {
-      // todo: think about moving this fallback to the upper-level handler somehow
-      loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Unknown Public Key Format');
-      return 'shown';
-    } else {
-      // todo: renderEncryptedAttachment
-      return 'hidden'; // todo: return 'shown'
+      return { armoredPubkey: data.toUtfStr(), openpgpType };
     }
+    return { openpgpType };
   };
 
   private renderBackupFromFile = async (
