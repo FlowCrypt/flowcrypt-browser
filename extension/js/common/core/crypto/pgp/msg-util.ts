@@ -2,7 +2,7 @@
 
 'use strict';
 import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../key.js';
-import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
+import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
 import { opgp } from './openpgpjs-custom.js';
@@ -95,7 +95,7 @@ export type VerifyRes = {
   isErrFatal?: boolean;
   content?: Buf;
 };
-export type PgpMsgTypeResult = { armored: boolean; type: MsgBlockType } | undefined;
+export type PgpMsgTypeResult = { armored: boolean; type: ReplaceableMsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean; receivers: number }; // eslint-disable-line @typescript-eslint/naming-convention
 export enum DecryptErrTypes {
