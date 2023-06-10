@@ -60,7 +60,7 @@ export interface GoogleConfig {
   othercontacts?: string[];
   aliases?: Dict<MockUserAlias[]>;
   getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
-  getAttachment?: Dict<Error>;
+  getAttachment?: Dict<{ error: Error } | { data: string }>;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
 }
 
@@ -221,8 +221,9 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         }
         const data = await GoogleData.withInitializedData(acct);
         if (req.url?.includes('/attachments/')) {
-          const foundAttError = config?.getAttachment?.[id];
-          if (foundAttError) throw foundAttError;
+          const foundAtt = config?.getAttachment?.[id];
+          if (foundAtt && 'error' in foundAtt) throw foundAtt.error;
+          if (foundAtt?.data) return { data: foundAtt.data };
           const attachment = data.getAttachment(id);
           if (attachment) {
             return { data: attachment.data }; // Note: data (or quoted) field must be last in serialized JSON
