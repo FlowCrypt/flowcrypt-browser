@@ -11,7 +11,7 @@ import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
 import { KeyUtil } from './core/crypto/key.js';
 import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, PgpMsgTypeResult, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
-import { Mime, MessageBody, MimeProccesedMsg } from './core/mime.js';
+import { Mime, MessageBody } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
 import { MsgBlock } from './core/msg-block.js';
 import { Lang } from './lang.js';
@@ -27,16 +27,24 @@ import { MessageInfo, PrintMailInfo } from './render-message.js';
 import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
-import { Downloader, ProcessedMessage } from './downloader.js';
+import { Downloader } from './downloader.js';
 import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
+import { ExpirationCache } from './core/expiration-cache.js';
 
-export type ProccesedMsg = MimeProccesedMsg;
+type ProcessedMessage = {
+  isBodyEmpty: boolean;
+  blocks: MsgBlock[];
+  attachments: Attachment[];
+  messageInfo: MessageInfo;
+};
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
+  private readonly processedMessages = new ExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
+
   private constructor(
     private readonly acctEmail: string,
     private readonly gmail: Gmail,
@@ -307,7 +315,7 @@ export class MessageRenderer {
       }
       if (treatAs === 'signature') {
         // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
-        const raw = await this.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
+        const raw = await this.downloader.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
         loaderContext.hideAttachment(attachmentSel);
         await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
           this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email)
@@ -370,13 +378,23 @@ export class MessageRenderer {
     );
   };
 
+  public deleteExpired = (): void => {
+    this.processedMessages.deleteExpired();
+    this.downloader.deleteExpired();
+  };
+
   public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
-    // todo: retries? exceptions?
-    const msgDownload = this.downloader.msgGetCached(msgId);
-    if (msgDownload.processed) {
-      return msgDownload.processed;
+    let processed = this.processedMessages.get(msgId);
+    if (!processed) {
+      processed = (async () => {
+        return this.processFull(await this.downloader.msgGetFull(msgId));
+      })();
+      this.processedMessages.set(msgId, processed);
     }
-    const fullMsg = await msgDownload.download.full;
+    return this.processedMessages.await(msgId, processed);
+  };
+
+  private processFull = async (fullMsg: GmailRes.GmailMsg): Promise<ProcessedMessage> => {
     const { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
     const blocks = Mime.processBody(body);
     const isBodyEmpty = Mime.isBodyEmpty(body);
@@ -395,17 +413,12 @@ export class MessageRenderer {
         // todo: queue full attachment download, when the cache is implemented?
       }
     }
-    msgDownload.processed = {
+    return {
       isBodyEmpty,
       blocks,
       messageInfo: await this.getMessageInfo(fullMsg),
       attachments,
     };
-    return msgDownload.processed;
-  };
-
-  public deleteExpired = (): void => {
-    this.downloader.deleteExpired();
   };
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
@@ -780,13 +793,5 @@ export class MessageRenderer {
       loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page'); // todo: unit-test
       return 'shown';
     }
-  };
-
-  private msgGetRaw = async (msgId: string): Promise<string> => {
-    const msgDownload = this.downloader.msgGetCached(msgId).download;
-    if (!msgDownload.raw) {
-      msgDownload.raw = this.gmail.msgGet(msgId, 'raw');
-    }
-    return (await msgDownload.raw).raw || '';
   };
 }

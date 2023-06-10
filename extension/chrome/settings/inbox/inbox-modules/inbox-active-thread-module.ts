@@ -132,7 +132,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
   private renderMsg = async (message: GmailRes.GmailMsg): Promise<boolean> => {
     const htmlId = this.replyMsgId(message.id);
     try {
-      const msg = await this.view.messageRenderer.downloader.msgGetCached(message.id).download.full;
+      const msg = await this.view.messageRenderer.downloader.msgGetFull(message.id);
       const { blocks, isBodyEmpty, messageInfo, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const senderEmail = messageInfo.from?.email;

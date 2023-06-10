@@ -41,4 +41,15 @@ export class ExpirationCache<K, V> {
       this.cache.delete(key);
     }
   };
+
+  // await the value if it's a promise and remove from cache in case of exception
+  // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
+  public await = async (key: K, value: V): Promise<V> => {
+    try {
+      return await value;
+    } catch (e) {
+      if (this.cache.get(key) === value) this.set(key); // remove faulty record
+      return Promise.reject(e);
+    }
+  };
 }
