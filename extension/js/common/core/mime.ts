@@ -98,9 +98,10 @@ export class Mime {
     for (const file of decoded.attachments) {
       let treatAs = file.treatAs(decoded.attachments, Mime.isBodyEmpty(decoded));
       if (['needChunk', 'maybePgp'].includes(treatAs)) {
-        // todo: attachments from MimeContent always have data set, so we can perform whatever analysis is needed,
+        // todo: attachments from MimeContent always have data set (so 'needChunk' should never happen),
+        // and we can perform whatever analysis is needed based on the actual data,
         // but we don't want to reference MsgUtil and OpenPGP.js from this class,
-        // so we need to move this method to MessageRenderer
+        // so I suggest to move this method to MessageRenderer for further refactoring
         treatAs = 'encryptedMsg'; // publicKey?
       }
       if (treatAs === 'encryptedMsg') {
