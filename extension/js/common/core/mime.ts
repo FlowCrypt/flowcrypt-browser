@@ -57,10 +57,6 @@ export type MimeProccesedMsg = {
   blocks: MsgBlock[]; // may be many blocks per file
 };
 
-export type MimeProccesedFromRawMsg = MimeProccesedMsg & {
-  headers: Dict<MimeContentHeader>;
-};
-
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
@@ -139,17 +135,11 @@ export class Mime {
     }
     if (signatureAttachments.length) {
       // todo: if multiple signatures, figure out which fits what
-      const signatureAttachment = signatureAttachments[0];
-      // todo: data may not be present
-      if (signatureAttachment.hasData()) {
-        const signature = signatureAttachment.getData().toUtfStr();
-        if (![...bodyBlocks, ...attachmentBlocks].some(block => ['plainText', 'plainHtml', 'signedMsg'].includes(block.type))) {
-          // signed an empty message
-          attachmentBlocks.push(new MsgBlock('signedMsg', '', true, signature));
-        }
-      } else {
-        // todo: is this possible while we always load 'raw' for detached signature messages
-        throw new Error('No data.');
+      // attachments from MimeContent always have data set
+      const signature = signatureAttachments[0].getData().toUtfStr();
+      if (![...bodyBlocks, ...attachmentBlocks].some(block => ['plainText', 'plainHtml', 'signedMsg'].includes(block.type))) {
+        // signed an empty message
+        attachmentBlocks.push(new MsgBlock('signedMsg', '', true, signature));
       }
     }
     return {
@@ -164,12 +154,9 @@ export class Mime {
     return Mime.processAttachments(bodyBlocks, decoded);
   };
 
-  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedFromRawMsg> => {
+  public static process = async (mimeMsg: Uint8Array) => {
     const decoded = await Mime.decode(mimeMsg);
-    return {
-      headers: decoded.headers,
-      ...Mime.processDecoded(decoded),
-    };
+    return Mime.processDecoded(decoded);
   };
 
   public static resemblesMsg = (msg: Uint8Array | string) => {

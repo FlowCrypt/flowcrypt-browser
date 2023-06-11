@@ -214,8 +214,7 @@ export class MessageRenderer {
     const email = Str.parseEmail(signerEmail).email;
     if (!email) return [];
     const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, email))?.sortedPubkeys ?? [];
-    // todo: we don't actually need parsed pubs here because we're going to pass them to the background page
-    // maybe we can have a method in ContactStore to extract armored keys
+    // todo: we're armoring pubkeys here to pass them to MsgUtil. Perhaps, we can optimize this
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
   };
 
