@@ -2743,6 +2743,23 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       t.pass();
     });
 
+    test(`[unit][ExpirationCache.await] removes rejected promises from cache`, async t => {
+      const cache = new ExpirationCache<string, Promise<string>>(24 * 60 * 60 * 1000); // 24 hours
+      const rejectionPromise = Promise.reject(Error('test-error'));
+      cache.set('test-key', rejectionPromise);
+      await t.throwsAsync(() => cache.await('test-key', rejectionPromise) as Promise<Promise<string>>, {
+        instanceOf: Error,
+        message: 'test-error',
+      });
+      expect(cache.get('test-key')).to.be.an('undefined'); // next call simply returns undefined
+      const fulfilledPromise = Promise.resolve('new-test-value');
+      cache.set('test-key', fulfilledPromise);
+      // good value is returned indefinitely
+      expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
+      expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
+      expect(cache.get('test-key')).to.equal(fulfilledPromise);
+    });
+
     test(`[unit][Str] splitAlphanumericExtended returns all parts extendec till the end of the original string`, async t => {
       expect(Str.splitAlphanumericExtended('part1.part2@part3.part4')).to.eql(['part1.part2@part3.part4', 'part2@part3.part4', 'part3.part4', 'part4']);
       t.pass();
