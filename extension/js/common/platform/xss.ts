@@ -243,12 +243,6 @@ export class Xss {
     el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
   };
 
-  public static convertHtmlEntities = (htmlString: string) => {
-    const tempElement = document.createElement('textarea');
-    tempElement.innerHTML = htmlString; // xss-none
-    return tempElement.value;
-  };
-
   private static throwIfNotSupported = () => {
     if (!DOMPurify.isSupported) {
       throw new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.');
