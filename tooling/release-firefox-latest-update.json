@@ -3,9 +3,9 @@
     "firefox@cryptup.io": {
       "updates": [
         {
-          "version": "8.4.7",
-          "update_link": "https://s3-us-west-2.amazonaws.com/cryptup-release/firefox/cryptup-io-firefox-8.4.7.xpi",
-          "update_hash": "sha256:16de949f8a3f532478c00a986ba4ecbf3889418b4336a79671e84df56f9c59c4",
+          "version": "8.4.8",
+          "update_link": "https://s3-us-west-2.amazonaws.com/cryptup-release/firefox/cryptup-io-firefox-8.4.8.xpi",
+          "update_hash": "sha256:dd0b2edc79a4a6d33190c12ab9454de97d5af2f27e4a6a2437fc9f59da2b5288",
           "applications": {
             "gecko": {
               "strict_min_version": "60.0"
