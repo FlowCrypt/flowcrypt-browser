@@ -143,8 +143,7 @@ export class Mime {
       }
     }
     return {
-      blocks: [...bodyBlocks, ...attachmentBlocks], // todo: check how compose-quote-module works, previous version made 'plainText' and 'plainHtml' invisible if a 'signature' block is present
-      // by changing their types to 'signedText' and 'signedHtml' respectively
+      blocks: [...bodyBlocks, ...attachmentBlocks],
       rawSignedContent: decoded.rawSignedContent,
     };
   };
