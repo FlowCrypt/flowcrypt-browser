@@ -122,6 +122,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - #5004 cryptup_reply div not hidden issue`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '188b01fa672f55c8';
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        // Check if the cryptup_reply div is not displayed.
+        await pgpBlock.verifyContentIsNotPresentContinuously('@pgp-block-content', 'class="cryptup_reply" cryptup-data=', 3);
+      })
+    );
+
+    test(
       'decrypt - encrypted text inside "message" attachment is correctly decrypted',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
