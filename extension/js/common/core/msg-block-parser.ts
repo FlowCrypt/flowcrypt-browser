@@ -142,10 +142,8 @@ export class MsgBlockParser {
 
   public static extractFcReplyToken = (decryptedContent: string): unknown | undefined => {
     const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
-    console.log(fcTokenElement);
     if (fcTokenElement.length) {
       const fcData = fcTokenElement.attr('cryptup-data');
-      console.log(fcData);
       if (fcData) {
         return Str.htmlAttrDecode(fcData);
       }
