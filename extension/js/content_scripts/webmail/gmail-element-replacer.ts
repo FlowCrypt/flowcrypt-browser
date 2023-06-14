@@ -166,6 +166,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       try {
         ({ messageInfo, blocks } = await this.messageRenderer.msgGetProcessed(msgId));
       } catch (e) {
+        this.handleException(e);
         // fill with fallback values from the element
         blocks = Mime.processBody({ text: emailContainer.innerText });
         // todo: print info for offline?
@@ -395,17 +396,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
           await this.processAttachments(msgId, attachments, attachmentsContainer, messageInfo, isBodyEmpty, false);
         } catch (e) {
-          if (ApiErr.isAuthErr(e)) {
-            this.notifications.showAuthPopupNeeded(this.acctEmail);
-            $(newPgpAttachments).find('.attachment_loader').text('Auth needed');
-          } else if (ApiErr.isNetErr(e)) {
-            $(newPgpAttachments).find('.attachment_loader').text('Network error');
-          } else {
-            if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
-              Catch.reportErr(e);
-            }
-            $(newPgpAttachments).find('.attachment_loader').text('Failed to load');
-          }
+          this.handleException(e, $(newPgpAttachments).find('.attachment_loader'));
         }
       } else {
         $(newPgpAttachments).prepend(this.factory.embeddedAttachmentStatus('Unknown message id')); // xss-safe-factory
@@ -613,6 +604,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
         }
       }
+    }
+  };
+
+  // loaderEl is a loader reference in case we're processing an attachment
+  // todo: we could also re-use a common method like this in Inbox
+  private handleException = (e: unknown, loaderEl?: JQueryEl) => {
+    if (ApiErr.isAuthErr(e)) {
+      this.notifications.showAuthPopupNeeded(this.acctEmail);
+      loaderEl?.text('Auth needed');
+    } else if (ApiErr.isNetErr(e)) {
+      loaderEl?.text('Network error');
+    } else {
+      if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
+        Catch.reportErr(e);
+      }
+      loaderEl?.text('Failed to load');
+      // todo: show somenotification if this error happened when replacing armored blocks?
     }
   };
 
