@@ -85,6 +85,7 @@ export class Xss {
     return DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
+      ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
@@ -144,14 +145,7 @@ export class Xss {
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }
     });
-    /* eslint-disable @typescript-eslint/naming-convention */
-    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
-      ADD_ATTR: Xss.ADD_ATTR,
-      FORBID_ATTR: Xss.FORBID_ATTR,
-      ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
-    });
-    /* eslint-enable @typescript-eslint/naming-convention */
+    const cleanHtml = Xss.htmlSanitize(dirtyHtml);
     DOMPurify.removeAllHooks();
     return cleanHtml;
   };
