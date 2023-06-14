@@ -7,20 +7,32 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyUtil, Key } from '../../../js/common/core/crypto/key.js';
+import { Str, Url } from '../../../js/common/core/common.js';
+import { PubLookup } from '../../../js/common/api/pub-lookup.js';
+import { ClientConfiguration } from '../../../js/common/client-configuration.js';
+import { Assert } from '../../../js/common/assert.js';
 
 View.run(
   class CompatibilityView extends View {
+    public readonly acctEmail: string;
+    public clientConfiguration!: ClientConfiguration;
+    public pubLookup!: PubLookup;
     private testIndex = 0;
 
     public constructor() {
       super();
+      Ui.event.protect();
+      const uncheckedUrlParams = Url.parse(['acctEmail']);
+      this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     }
 
     public render = async () => {
-      // No need
+      this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+      this.pubLookup = new PubLookup(this.clientConfiguration);
     };
 
     public setHandlers = () => {
+      $('.action_load_public_key').on('click', this.setHandlerPrevent('double', this.actionLoadPublicKey));
       $('.action_test_key').on('click', this.setHandlerPrevent('double', this.actionTestKeyHandler));
       $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
     };
@@ -53,6 +65,21 @@ View.run(
         for (const entry of results) {
           this.appendResult(`${kn} ${entry[0]}: ${entry[1]}`);
         }
+      }
+    };
+
+    private actionLoadPublicKey = async () => {
+      const emailString = String($('.input_email').val());
+      if (Str.isEmailValid(emailString)) {
+        const { pubkeys } = await this.pubLookup.lookupEmail(emailString);
+        if (!pubkeys.length) {
+          await Ui.modal.info(`No public key found for: ${emailString}`);
+          return;
+        }
+        $('.input_key').val(pubkeys[0]);
+      } else {
+        await Ui.modal.error('This email is invalid, please check for typos.');
+        $('.input_email').focus();
       }
     };
 
