@@ -85,7 +85,7 @@ export class Xss {
     return DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
-      ALLOWED_TAGS: tagCheck ? Xss.ALLOWED_HTML_TAGS : undefined,
+      ...(tagCheck && { ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS }),
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
