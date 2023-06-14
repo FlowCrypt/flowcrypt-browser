@@ -251,6 +251,29 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'mail.google.com - "auth needed" notification is shown when processing armored blocks',
+      testWithBrowser(async (t, browser) => {
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const msgId = '17b91b7e122902d2';
+        t.mockApi!.configProvider!.config.google = {
+          getMsg: {
+            [msgId]: { full: { error: new HttpClientErr('RequestTimeout', Status.UNAUTHORIZED) } },
+          },
+        };
+        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        // Check reconnect auth notification
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
+        await gmailPage.waitAll('iframe');
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), {
+          content: ['this should decrypt even offline'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
+        await gmailPage.close();
+      })
+    );
+
+    test(
       'mail.google.com - failure fetching raw message for detached signature - sets attachment status',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
