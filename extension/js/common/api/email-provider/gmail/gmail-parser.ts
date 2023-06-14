@@ -10,7 +10,7 @@ import { Buf } from '../../../core/buf.js';
 import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
 
-export const FLOWCRYPT_REPLY_EMAIL_ADDRESSES = ['replies@flowcrypt.com', 'robot@flowcrypt.com'];
+export const FLOWCRYPT_REPLY_EMAIL_ADDRESSES = ['replies@flowcrypt.com', 'robot@flowcrypt.com', 'tests.only@flowcrypt.dev'];
 
 export namespace GmailRes {
   // responses

@@ -178,7 +178,19 @@ export class PgpBlockViewRenderModule {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
     }
-    const contentWithLink = linkifyHtml(htmlContent);
+
+    let contentWithLink = linkifyHtml(htmlContent);
+
+    // Temporary workaround for an issue where 'cryptup_reply' divs are not being hidden when replying to all
+    // messages from the FES. The root cause is that FES currently returns the body of
+    // password message replies as 'text/plain', which does not hide the divs as intended.
+    // This workaround can be safely removed once the FES is updated to return the body of message replies as 'text/html'.
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5004
+    const regEx = /&lt;div[^&]*class="[^"]*cryptup_reply[^"]*"[^&]*&gt;&lt;\/div&gt;/g;
+    contentWithLink = contentWithLink.replace(regEx, match => {
+      return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    });
+
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
@@ -356,7 +368,7 @@ export class PgpBlockViewRenderModule {
     DOMPurify.addHook('afterSanitizeAttributes', processImageElements);
 
     // Sanitize the HTML and remove the DOMPurify hooks
-    const sanitizedHtml = DOMPurify.sanitize(html);
+    const sanitizedHtml = Xss.htmlSanitize(html);
     DOMPurify.removeAllHooks();
 
     return { sanitizedHtml, inlineCIDAttachments };
