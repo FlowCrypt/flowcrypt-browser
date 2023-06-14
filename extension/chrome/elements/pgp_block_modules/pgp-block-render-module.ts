@@ -368,7 +368,7 @@ export class PgpBlockViewRenderModule {
     DOMPurify.addHook('afterSanitizeAttributes', processImageElements);
 
     // Sanitize the HTML and remove the DOMPurify hooks
-    const sanitizedHtml = DOMPurify.sanitize(html);
+    const sanitizedHtml = Xss.htmlSanitize(html);
     DOMPurify.removeAllHooks();
 
     return { sanitizedHtml, inlineCIDAttachments };
