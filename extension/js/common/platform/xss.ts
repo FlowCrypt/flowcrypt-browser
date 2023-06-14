@@ -178,6 +178,9 @@ export class Xss {
     const blockStart = `CU_BS_${random}`;
     const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
+    // Preserve newlines inside of <pre> tags.
+    // Source of regex: https://stackoverflow.com/a/51511112/21789573
+    html = html.replace(/\n(?=((?!<\/pre).)*?(<pre|$))/sg, br);
     html = html.replace(/\n/g, '');
     html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
     html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockStart);
