@@ -12,7 +12,15 @@
 
   <body class="pgp_neutral">
     <div id="pgp_block" class="pgp_pubkey" data-test="container-pgp-pubkey">
-      <div class="line hide_if_compact_and_not_error result">
+      <div class="line error_container hidden">
+        <div class="error_info">
+          <span data-test="error-introduce-label">This OpenPGP key is not usable.</span>
+          <input class="input_error_email" disabled data-test="error-email-input" />
+        </div>
+
+        <button class="button gray action_show_full">View Key</button>
+      </div>
+      <div class="line result hide_if_compact hide_if_error">
         <a href="#" class="action_show_full hide_if_compact">Details</a>
       </div>
       <div class="line fingerprints hide_if_compact">Fingerprint: <span class="fingerprint good"></span></div>
