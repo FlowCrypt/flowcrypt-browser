@@ -54,7 +54,7 @@ View.run(
       this.firstParsedPublicKey = this.parsedPublicKeys ? this.parsedPublicKeys[0] : undefined;
       $('.pubkey').text(this.armoredPubkey);
       if (this.compact) {
-        $('.hide_if_compact').remove();
+        $('.hide_if_compact').hide();
         $('body').css({ border: 'none', padding: 0 });
         $('.line').removeClass('line');
       }
@@ -73,9 +73,6 @@ View.run(
         ) {
           this.showKeyNotUsableError();
         } else {
-          if (this.compact) {
-            $('.hide_if_compact_and_not_error').remove();
-          }
           let emailText = '';
           if (this.parsedPublicKeys.length === 1) {
             const email = this.firstParsedPublicKey.emails[0];
@@ -170,8 +167,15 @@ View.run(
     };
 
     private showKeyNotUsableError = () => {
+      $('.error_container').removeClass('hidden');
+      $('.hide_if_error').hide();
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
-      $('#pgp_block.pgp_pubkey .result').prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
+      const email = this.firstParsedPublicKey?.emails[0];
+      if (email) {
+        $('.error_container .input_error_email').val(`${this.firstParsedPublicKey?.emails[0]}`);
+      } else {
+        $('.error_container .input_error_email').hide();
+      }
       $('.pubkey').addClass('bad');
     };
 
@@ -211,8 +215,8 @@ View.run(
     };
 
     private showFullKeyHandler = (showFullBtn: HTMLElement) => {
-      $(showFullBtn).css('display', 'none');
-      $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
+      $(showFullBtn).hide();
+      $('pre.pubkey, .line.fingerprints, .line.add_contact').show();
       this.sendResizeMsg();
     };
   }
