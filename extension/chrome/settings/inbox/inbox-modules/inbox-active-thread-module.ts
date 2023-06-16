@@ -133,7 +133,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     const htmlId = this.replyMsgId(message.id);
     try {
       const msg = await this.view.messageRenderer.downloader.msgGetFull(message.id);
-      const { blocks, isBodyEmpty, messageInfo, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
+      const { blocks, body, messageInfo, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const senderEmail = messageInfo.from?.email;
       const { renderedXssSafe, blocksInFrames } = this.view.messageRenderer.renderMsg({ blocks, senderEmail }, this.view.showOriginal);
@@ -145,7 +145,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
           .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)))
       );
       for (const a of attachments) {
-        await this.view.messageRenderer.processAttachment(a, a.treatAs(attachments, isBodyEmpty), loaderContext, undefined, message.id, messageInfo);
+        await this.view.messageRenderer.processAttachment(a, body, attachments, loaderContext, undefined, message.id, messageInfo);
       }
       const r =
         `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(messageInfo.from?.full || 'unknown')} <span style="float:right;">${

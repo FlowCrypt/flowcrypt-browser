@@ -110,14 +110,6 @@ export enum DecryptErrTypes {
   other = 'other',
 }
 
-export class FormatError extends Error {
-  public data: string;
-  public constructor(message: string, data: string) {
-    super(message);
-    this.data = data;
-  }
-}
-
 export class MsgUtil {
   public static type: PgpMsgMethod.Type = ({ data }) => {
     if (!data || !data.length) {
@@ -172,7 +164,17 @@ export class MsgUtil {
 
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText, verificationPubs }) => {
     const message = await opgp.createMessage({ text: Str.with(plaintext) });
-    await message.appendSignature(sigText);
+    try {
+      await message.appendSignature(sigText);
+    } catch (formatErr) {
+      return {
+        match: null, // eslint-disable-line no-null/no-null
+        signerLongids: [],
+        suppliedLongids: [],
+        error: String(formatErr).replace('Error: ', ''),
+        isErrFatal: true,
+      };
+    }
     return await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
   };
 

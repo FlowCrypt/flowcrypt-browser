@@ -1097,6 +1097,25 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - verifyDetached displays error on corrupted signature attachment',
+      testWithBrowser(async (t, browser) => {
+        const msgId = '18024d53a24b19fe';
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          msgId,
+          {
+            content: ['テストです\nテスト'],
+            signature: 'error verifying signature: Ascii armor integrity check failed',
+            encryption: 'not encrypted',
+          },
+          authHdr
+        );
+      })
+    );
+
+    test(
       "decrypt - thunderbird - signedMsg verifyDetached doesn't duplicate PGP key section",
       testWithBrowser(async (t, browser) => {
         const threadId = '17dad75e63e47f97';

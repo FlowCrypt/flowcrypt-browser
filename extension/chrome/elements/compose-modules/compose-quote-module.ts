@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { FormatError, MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -160,9 +160,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         decryptedFiles,
       };
     } catch (e) {
-      if (e instanceof FormatError) {
-        Xss.sanitizeAppend(this.view.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
-      } else if (ApiErr.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         // todo: retry
       } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });

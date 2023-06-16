@@ -5,11 +5,11 @@
 import { GmailParser, GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { PubLookup } from './api/pub-lookup.js';
 import { ClientConfiguration } from './client-configuration.js';
-import { Attachment, Attachment$treatAs, TransferableAttachment } from './core/attachment.js';
+import { Attachment, TransferableAttachment } from './core/attachment.js';
 import { Buf } from './core/buf.js';
 import { CID_PATTERN, Dict, Str, Value } from './core/common.js';
 import { KeyUtil } from './core/crypto/key.js';
-import { DecryptErrTypes, DecryptResult, FormatError, MsgUtil, PgpMsgTypeResult, VerifyRes } from './core/crypto/pgp/msg-util.js';
+import { DecryptErrTypes, DecryptResult, MsgUtil, PgpMsgTypeResult, VerifyRes } from './core/crypto/pgp/msg-util.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Mime, MessageBody } from './core/mime.js';
 import { MsgBlockParser } from './core/msg-block-parser.js';
@@ -35,7 +35,7 @@ import { isCustomerUrlFesUsed } from './helpers.js';
 import { ExpirationCache } from './core/expiration-cache.js';
 
 type ProcessedMessage = {
-  isBodyEmpty: boolean;
+  body: MessageBody;
   blocks: MsgBlock[];
   attachments: Attachment[];
   messageInfo: MessageInfo;
@@ -207,7 +207,7 @@ export class MessageRenderer {
 
   private static renderBadSignature = (renderModule: RenderInterfaceBase) => {
     renderModule.renderSignatureStatus('bad signature');
-    renderModule.setFrameColor('red'); // todo: in what other cases should we set the frame red?
+    renderModule.setFrameColor('red');
   };
 
   private static getVerificationPubs = async (signerEmail: string) => {
@@ -276,17 +276,18 @@ export class MessageRenderer {
 
   public processAttachment = async (
     a: Attachment,
-    treatAs: Attachment$treatAs,
+    body: MessageBody,
+    attachments: Attachment[],
     loaderContext: LoaderContextInterface,
     attachmentSel: JQueryEl | undefined,
-    msgId: string, // deprecated
-    messageInfo: MessageInfo
+    msgId: string, // for PGP/MIME signed messages
+    messageInfo: MessageInfo,
+    skipSignatureAttachment?: boolean
   ): Promise<'shown' | 'hidden' | 'replaced'> => {
     // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
     try {
+      let treatAs = a.treatAs(attachments, !skipSignatureAttachment && Mime.isBodyEmpty(body));
       if (['needChunk', 'maybePgp', 'publicKey'].includes(treatAs)) {
-        // todo: this isn't the best way to do this
-        // todo: move into a handler
         // Inspect a chunk
         if (this.debug) {
           console.debug('processAttachment() try -> awaiting chunk + awaiting type');
@@ -294,7 +295,7 @@ export class MessageRenderer {
         const data = await this.downloader.waitForAttachmentChunkDownload(a);
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
-          // todo: how can we have a single helper method? and convert unarmored pubkey to armored if needed
+          // todo: publicKey attachment can't be too big, so we could do preparePubkey() call (checking file length) right here
           treatAs = 'publicKey';
         } else if (treatAs === 'publicKey' && openpgpType?.type === 'encryptedMsg') {
           treatAs = 'encryptedFile';
@@ -313,13 +314,17 @@ export class MessageRenderer {
         }
       }
       if (treatAs === 'signature') {
-        // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
-        const raw = await this.downloader.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
-        loaderContext.hideAttachment(attachmentSel);
-        await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email)
-        );
-        return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+        if (skipSignatureAttachment) {
+          treatAs = 'plainFile';
+        } else {
+          // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
+          const raw = await this.downloader.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
+          loaderContext.hideAttachment(attachmentSel);
+          await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+            this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email, body)
+          );
+          return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
+        }
       }
       if (treatAs !== 'plainFile') {
         loaderContext.hideAttachment(attachmentSel);
@@ -413,7 +418,7 @@ export class MessageRenderer {
       }
     }
     return {
-      isBodyEmpty,
+      body,
       blocks,
       messageInfo: await this.getMessageInfo(fullMsg),
       attachments,
@@ -620,43 +625,51 @@ export class MessageRenderer {
     };
   };
 
-  private processMessageWithDetachedSignatureFromRaw = async (raw: string, renderModule: RenderInterface, signerEmail: string | undefined) => {
+  private processMessageWithDetachedSignatureFromRaw = async (
+    raw: string,
+    renderModule: RenderInterface,
+    signerEmail: string | undefined,
+    body: MessageBody
+  ) => {
     // ... from PgpBlockViewDecryptModule.initialize
     const mimeMsg = Buf.fromBase64UrlStr(raw);
     const parsed = await Mime.decode(mimeMsg);
-    if (parsed && typeof parsed.rawSignedContent === 'string') {
+    if (!parsed || typeof parsed.rawSignedContent !== 'string') {
+      renderModule.renderErr(
+        'Error: could not properly parse signed message',
+        parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
+        'parse error'
+      );
+    } else {
       const signatureAttachment = parsed.attachments.find(a => a.treatAs(parsed.attachments) === 'signature'); // todo: more than one signature candidate?
       if (signatureAttachment) {
         const parsedSignature = signatureAttachment.getData().toUtfStr();
         // ... from PgpBlockViewDecryptModule.decryptAndRender
         const sigText = parsedSignature.replace('\n=3D', '\n=');
-        const encryptedData = parsed.rawSignedContent;
+        const plaintext = parsed.rawSignedContent;
         try {
           const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
-          const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext: encryptedData, sigText, verificationPubs });
+          const verify = async (verificationPubs: string[]) => await MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs });
           const signatureResult = await verify(verificationPubs);
           return await this.decideDecryptedContentFormattingAndRender(
             signerEmail,
             verificationPubs,
-            encryptedData,
+            plaintext,
             false,
             signatureResult,
             renderModule,
             this.getRetryVerification(signerEmail, verify)
           );
         } catch (e) {
-          // todo: network errors shouldn't pass to this point
-          // so an exception here would be an unexpected failure,
-          // need to handle it properly
-          console.log(e);
+          // network errors shouldn't pass to this point
+          // so an exception here would be an unexpected failure
+          if (ApiErr.isSignificant(e)) {
+            Catch.reportErr(e);
+          }
+          renderModule.renderErr(Xss.escape(String(e)), body.html || body.text); // instead of raw MIME, show some readable text
         }
       }
     }
-    renderModule.renderErr(
-      'Error: could not properly parse signed message',
-      parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr(),
-      'parse error'
-    );
     return {};
   };
 
@@ -757,13 +770,15 @@ export class MessageRenderer {
       // const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
       const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
       if (!armoredMsg) {
-        // todo:
-        throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
+        renderModule.renderErr('Problem extracting armored message', attachment.getData().toUtfStr());
+      } else {
+        renderModule.renderText('Decrypting...');
+        return await this.renderCryptoMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
       }
-      renderModule.renderText('Decrypting...');
-      return await this.renderCryptoMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
-    } catch {
-      // todo: render error via renderModule
+    } catch (e) {
+      // todo: re-fetch attachment on error?
+      if (ApiErr.isSignificant(e)) Catch.reportErr(e);
+      renderModule.renderErr(Xss.escape(String(e)), attachment.hasData() ? attachment.getData().toUtfStr() : undefined);
     }
     return {};
   };

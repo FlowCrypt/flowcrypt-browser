@@ -25,7 +25,7 @@ import { RelayManager } from '../../common/relay-manager.js';
 import { MessageInfo } from '../../common/render-message.js';
 import { LoaderContextWebmail } from './loader-context.js';
 import { JQueryEl } from '../../common/loader-context-interface.js';
-import { Mime } from '../../common/core/mime.js';
+import { MessageBody, Mime } from '../../common/core/mime.js';
 import { MsgBlock } from '../../common/core/msg-block.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
@@ -390,11 +390,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet may take some time');
           }
-          const { attachments, messageInfo, isBodyEmpty } = await this.messageRenderer.msgGetProcessed(msgId);
+          const { attachments, messageInfo, body } = await this.messageRenderer.msgGetProcessed(msgId);
           if (this.debug) {
             console.debug('processNewPgpAttachments() -> msgGet done -> processAttachments', attachments);
           }
-          await this.processAttachments(msgId, attachments, attachmentsContainer, messageInfo, isBodyEmpty, false);
+          await this.processAttachments(msgId, attachments, attachmentsContainer, messageInfo, body, false);
         } catch (e) {
           this.handleException(e, $(newPgpAttachments).find('.attachment_loader'));
         }
@@ -409,7 +409,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachments: Attachment[],
     attachmentsContainerInner: JQueryEl,
     messageInfo: MessageInfo,
-    isBodyEmpty: boolean,
+    body: MessageBody,
     skipGoogleDrive: boolean
   ) => {
     if (this.debug) {
@@ -428,14 +428,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         attachmentsContainerInner.children().not('.attachment_processed'),
         new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)
       ).first();
-      // todo: shouldn't call `treatAs` in too many places ?
       const renderStatus = await this.messageRenderer.processAttachment(
         a,
-        a.treatAs(attachments, isBodyEmpty),
+        body,
+        attachments,
         loaderContext,
         attachmentSel,
         msgId,
-        messageInfo
+        messageInfo,
+        skipGoogleDrive
       );
       if (renderStatus === 'hidden') {
         nRenderedAttachments--;
@@ -482,7 +483,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           console.info('Missing Google Drive attachments download_url');
         }
       }
-      await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, messageInfo, false, true);
+      await this.processAttachments(msgId, googleDriveAttachments, attachmentsContainerInner, messageInfo, {}, true);
     }
   };
 
@@ -615,6 +616,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       loaderEl?.text('Auth needed');
     } else if (ApiErr.isNetErr(e)) {
       loaderEl?.text('Network error');
+      // todo:    } else if (ApiErr.isInPrivateMode(e)) {
+      //      this.notifications.show(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`);
     } else {
       if (!ApiErr.isServerErr(e) && !ApiErr.isMailOrAcctDisabledOrPolicy(e) && !ApiErr.isNotFound(e)) {
         Catch.reportErr(e);
