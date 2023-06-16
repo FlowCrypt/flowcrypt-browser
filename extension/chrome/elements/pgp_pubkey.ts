@@ -172,9 +172,9 @@ View.run(
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
       const email = this.firstParsedPublicKey?.emails[0];
       if (email) {
-        $('.error_container .input_email').val(`${this.firstParsedPublicKey?.emails[0]}`);
+        $('.error_container .input_error_email').val(`${this.firstParsedPublicKey?.emails[0]}`);
       } else {
-        $('.error_container .input_email').hide();
+        $('.error_container .input_error_email').hide();
       }
       $('.pubkey').addClass('bad');
     };
