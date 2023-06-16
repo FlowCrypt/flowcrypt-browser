@@ -327,6 +327,30 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - #5147 check contact key import error',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        const [fileChooser] = await Promise.all([
+          settingsPage.page.waitForFileChooser(),
+          contactsFrame.waitAndClick('@action-attach-files', { retryErrs: true }),
+        ]);
+        await fileChooser.accept(['test/samples/openpgp/pub_keys_5_good_1_unsupported.txt']);
+        await Util.sleep(1);
+        await contactsFrame.waitAll('iframe');
+        const framesUrls = await contactsFrame.getFramesUrls(['pgp_pubkey.htm']);
+        const firstFrameId = framesUrls[0].match(/frameId=.*?&/s)![0];
+        const errorFrame = await contactsFrame.getFrame(['pgp_pubkey.htm', firstFrameId]);
+        await errorFrame.waitForContent('@error-introduce-label', 'This OpenPGP key is not usable.');
+        await errorFrame.waitForInputValue('@error-email-input', 'dsa@flowcrypt.test');
+      })
+    );
+    test(
       'settings - remove public keys from contact',
       testWithBrowser(async (t, browser) => {
         t.mockApi!.configProvider = new ConfigurationProvider({
