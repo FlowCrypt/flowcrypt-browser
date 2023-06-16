@@ -47,7 +47,7 @@ export class Xss {
     'colgroup',
     'col',
   ];
-  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint'];
+  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
@@ -79,12 +79,13 @@ export class Xss {
    * Typically we will only use this method for internally generated content,
    * content that we already believe is safe but want to have a second layer of defense.
    */
-  public static htmlSanitize = (dirtyHtml: string): string => {
+  public static htmlSanitize = (dirtyHtml: string, tagCheck = false): string => {
     Xss.throwIfNotSupported();
     /* eslint-disable @typescript-eslint/naming-convention */
     return DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
+      ...(tagCheck && { ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS }),
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
@@ -144,14 +145,7 @@ export class Xss {
         (node as Element).setAttribute('rel', 'noopener noreferrer');
       }
     });
-    /* eslint-disable @typescript-eslint/naming-convention */
-    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
-      ADD_ATTR: Xss.ADD_ATTR,
-      FORBID_ATTR: Xss.FORBID_ATTR,
-      ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
-    });
-    /* eslint-enable @typescript-eslint/naming-convention */
+    const cleanHtml = Xss.htmlSanitize(dirtyHtml, true);
     DOMPurify.removeAllHooks();
     return cleanHtml;
   };
