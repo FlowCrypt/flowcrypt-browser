@@ -415,6 +415,7 @@ export class MessageRenderer {
         this.downloader.queueAttachmentChunkDownload(a);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
+        // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
       }
     }
     return {
@@ -597,8 +598,12 @@ export class MessageRenderer {
           // I guess, no additional publicKeys will appear here for display...
         }
       })
-      .finally(() => relayManager.done(frameId))
-      .catch(Catch.reportErr);
+      .catch(e => {
+        // normally no exceptions come to this point so let's report it
+        Catch.reportErr(e);
+        renderModule.renderErr(Xss.escape(String(e)), undefined);
+      })
+      .finally(() => relayManager.done(frameId));
     return { processor };
   };
 
@@ -756,7 +761,8 @@ export class MessageRenderer {
   ) => {
     try {
       if (!attachment.hasData()) {
-        // todo: common cache, load control?
+        // todo: implement cache similar to chunk downloads
+        // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
         this.relayManager.renderProgressText(frameId, 'Retrieving message...');
         await this.gmail.fetchAttachment(attachment, expectedTransferSize => {
           return {
@@ -776,7 +782,7 @@ export class MessageRenderer {
         return await this.renderCryptoMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
       }
     } catch (e) {
-      // todo: re-fetch attachment on error?
+      // todo: provide 'retry' button on isNetErr to re-fetch the attachment and continue processing?
       if (ApiErr.isSignificant(e)) Catch.reportErr(e);
       renderModule.renderErr(Xss.escape(String(e)), attachment.hasData() ? attachment.getData().toUtfStr() : undefined);
     }
