@@ -23,7 +23,7 @@ import { ContactStore } from '../../common/platform/store/contact-store.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
 import { RelayManager } from '../../common/relay-manager.js';
 import { MessageInfo } from '../../common/render-message.js';
-import { LoaderContextWebmail } from './loader-context.js';
+import { GmailLoaderContext } from './gmail-loader-context.js';
 import { JQueryEl } from '../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../common/core/mime.js';
 import { MsgBlock } from '../../common/core/msg-block.js';
@@ -185,7 +185,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
       }
-      LoaderContextWebmail.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
@@ -419,7 +419,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!messageInfo.from?.email) {
       messageInfo.from = this.getFrom(msgEl);
     }
-    const loaderContext = new LoaderContextWebmail(this.factory, msgEl, attachmentsContainerInner);
+    const loaderContext = new GmailLoaderContext(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachments.length;
@@ -441,7 +441,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (renderStatus === 'hidden') {
         nRenderedAttachments--;
       }
-      // if (renderStatus === 'shown') attachmentSel.show();
     }
     if (nRenderedAttachments !== attachments.length) {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.

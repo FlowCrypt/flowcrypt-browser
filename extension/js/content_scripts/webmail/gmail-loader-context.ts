@@ -6,7 +6,7 @@ import { Attachment } from '../../common/core/attachment.js';
 import { JQueryEl, LoaderContextInterface } from '../../common/loader-context-interface.js';
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 
-export class LoaderContextWebmail implements LoaderContextInterface {
+export class GmailLoaderContext implements LoaderContextInterface {
   public constructor(private readonly factory: XssSafeFactory, public msgEl: JQueryEl, private readonly attachmentsContainerInner: JQueryEl) {}
 
   /* eslint-disable @typescript-eslint/naming-convention */
@@ -90,7 +90,7 @@ export class LoaderContextWebmail implements LoaderContextInterface {
   };
 
   public setMsgBody = (frameXssSafe: string, method: 'set' | 'append' | 'after') => {
-    this.msgEl = LoaderContextWebmail.updateMsgBodyEl_DANGEROUSLY(this.msgEl, method, frameXssSafe); // xss-safe-factory
+    this.msgEl = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(this.msgEl, method, frameXssSafe); // xss-safe-factory
   };
 
   public hideAttachment = (attachmentEl: JQueryEl) => {
