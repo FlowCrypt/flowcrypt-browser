@@ -441,7 +441,7 @@ export class MessageRenderer {
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
     return {
       printMailInfo: {
-        userNameAndEmail: `<b>${this.fullName ?? ''}</b> &lt;${this.acctEmail}&gt;`,
+        userNameAndEmail: `<b>${Xss.escape(this.fullName ?? '')}</b> &lt;${Xss.escape(this.acctEmail)}&gt;`,
         html: `
       <hr>
       <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(fullMsg, 'subject') ?? '')}</p>
