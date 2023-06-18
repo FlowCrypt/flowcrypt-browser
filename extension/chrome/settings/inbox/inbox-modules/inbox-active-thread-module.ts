@@ -47,7 +47,7 @@ class LoaderContext implements LoaderContextInterface {
     if (method === 'set') {
       this.renderedMessageXssSafe = newHtmlContent_MUST_BE_XSS_SAFE; // xss-safe-value
     } else {
-      // todo: how append should differ from after?
+      // todo: we may implement the difference between 'append' and 'after'
       this.renderedAttachmentsXssSafe.unshift(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
     }
   };

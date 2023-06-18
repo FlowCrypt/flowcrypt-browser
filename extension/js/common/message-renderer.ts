@@ -350,7 +350,7 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, (renderModule, frameId) =>
-          this.processCryptoMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
+          this.processCryptoMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -376,7 +376,7 @@ export class MessageRenderer {
     await Promise.all(
       Object.entries(blocks).map(([frameId, block]) =>
         this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet)
+          this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         )
       )
     );
@@ -439,12 +439,14 @@ export class MessageRenderer {
       : '';
     const bccString = GmailParser.findHeader(fullMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(fullMsg, 'bcc')!)}</span><br/>` : '';
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    const plainSubject = GmailParser.findHeader(fullMsg, 'subject');
     return {
+      plainSubject,
       printMailInfo: {
         userNameAndEmail: `<b>${Xss.escape(this.fullName ?? '')}</b> &lt;${Xss.escape(this.acctEmail)}&gt;`,
         html: `
       <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(fullMsg, 'subject') ?? '')}</p>
+      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(plainSubject ?? '')}</p>
       <hr>
       <br/>
       <div>
@@ -473,8 +475,8 @@ export class MessageRenderer {
     isEncrypted: boolean,
     sigResult: VerifyRes | undefined,
     renderModule: RenderInterface,
-    retryVerification?: () => Promise<VerifyRes | undefined>,
-    plainSubject?: string
+    retryVerification: (() => Promise<VerifyRes | undefined>) | undefined,
+    plainSubject: string | undefined
   ): Promise<{ publicKeys?: string[] }> => {
     if (isEncrypted) {
       renderModule.renderEncryptionStatus('encrypted');
@@ -551,7 +553,8 @@ export class MessageRenderer {
         isEncrypted,
         newSigResult,
         renderModule,
-        this.getRetryVerification(signerEmail, verify)
+        this.getRetryVerification(signerEmail, verify),
+        plainSubject
       );
     }
     renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
@@ -611,9 +614,10 @@ export class MessageRenderer {
     block: MsgBlock,
     renderModule: RenderInterface,
     signerEmail: string | undefined,
-    isPwdMsgBasedOnMsgSnippet: boolean | undefined
+    isPwdMsgBasedOnMsgSnippet: boolean | undefined,
+    plainSubject: string | undefined
   ) => {
-    return await this.renderCryptoMessage(block.content, renderModule, true, signerEmail, isPwdMsgBasedOnMsgSnippet);
+    return await this.renderCryptoMessage(block.content, renderModule, true, signerEmail, isPwdMsgBasedOnMsgSnippet, plainSubject);
   };
 
   // todo: this should be moved to some other class?
@@ -663,7 +667,8 @@ export class MessageRenderer {
             false,
             signatureResult,
             renderModule,
-            this.getRetryVerification(signerEmail, verify)
+            this.getRetryVerification(signerEmail, verify),
+            undefined
           );
         } catch (e) {
           // network errors shouldn't pass to this point
@@ -683,7 +688,8 @@ export class MessageRenderer {
     renderModule: RenderInterface,
     fallbackToPlainText: boolean,
     signerEmail: string | undefined,
-    isPwdMsgBasedOnMsgSnippet: boolean | undefined
+    isPwdMsgBasedOnMsgSnippet: boolean | undefined,
+    plainSubject: string | undefined
   ): Promise<{ publicKeys?: string[]; needPassphrase?: string[] }> => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail); // todo: cache
     const verificationPubs = signerEmail ? await MessageRenderer.getVerificationPubs(signerEmail) : [];
@@ -697,7 +703,8 @@ export class MessageRenderer {
         !!result.isEncrypted,
         result.signature,
         renderModule,
-        this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs)))
+        this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs))),
+        plainSubject
       );
     } else if (result.error.type === DecryptErrTypes.format) {
       if (fallbackToPlainText) {
@@ -757,7 +764,8 @@ export class MessageRenderer {
     renderModule: RenderInterface,
     frameId: string,
     senderEmail: string | undefined,
-    isPwdMsgBasedOnMsgSnippet?: boolean
+    isPwdMsgBasedOnMsgSnippet: boolean | undefined,
+    plainSubject: string | undefined
   ) => {
     try {
       if (!attachment.hasData()) {
@@ -772,14 +780,12 @@ export class MessageRenderer {
           };
         });
       }
-      // todo: probaby subject isn't relevant in attachment-based decryption?
-      // const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
       const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
       if (!armoredMsg) {
         renderModule.renderErr('Problem extracting armored message', attachment.getData().toUtfStr());
       } else {
         renderModule.renderText('Decrypting...');
-        return await this.renderCryptoMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet);
+        return await this.renderCryptoMessage(armoredMsg, renderModule, false, senderEmail, isPwdMsgBasedOnMsgSnippet, plainSubject);
       }
     } catch (e) {
       // todo: provide 'retry' button on isNetErr to re-fetch the attachment and continue processing?
