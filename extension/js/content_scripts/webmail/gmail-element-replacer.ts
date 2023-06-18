@@ -171,7 +171,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         blocks = Mime.processBody({ text: emailContainer.innerText });
         // todo: print info for offline?
       }
-      const setMessageInfo = messageInfo ?? { isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText) };
+      const setMessageInfo = messageInfo ?? {
+        isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText),
+        plainSubject: undefined, // todo: take from this.sel.subject?
+      };
       if (blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText')) {
         // only has single block which is plain text
         continue;

@@ -17,6 +17,7 @@ export type MessageInfo = {
     name: string | undefined;
     full: string;
   };
+  plainSubject: string | undefined; // todo: cover by unit tests
 };
 
 export type RenderMessage = {
