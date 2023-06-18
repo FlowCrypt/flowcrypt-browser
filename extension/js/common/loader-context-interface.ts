@@ -14,5 +14,11 @@ export interface LoaderContextInterface {
 
   hideAttachment(attachmentSel?: JQueryEl): void;
 
-  setMsgBody(frameXssSafe: string, method: 'set' | 'append' | 'after'): void;
+  /**
+   * XSS WARNING
+   *
+   * newHtmlContent must be XSS safe
+   */
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  setMsgBody_DANGEROUSLY(newHtmlContent_MUST_BE_XSS_SAFE: string, method: 'set' | 'append' | 'after'): void; // xss-dangerous-function
 }

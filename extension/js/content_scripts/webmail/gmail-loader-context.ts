@@ -13,7 +13,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
   /**
    * XSS WARNING
    *
-   * new_html_content must be XSS safe
+   * newHtmlContent must be XSS safe
    */
   // prettier-ignore
   public static updateMsgBodyEl_DANGEROUSLY( // xss-dangerous-function
@@ -89,8 +89,16 @@ export class GmailLoaderContext implements LoaderContextInterface {
     this.attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
   };
 
-  public setMsgBody = (frameXssSafe: string, method: 'set' | 'append' | 'after') => {
-    this.msgEl = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(this.msgEl, method, frameXssSafe); // xss-safe-factory
+  /* eslint-disable @typescript-eslint/naming-convention */
+  /**
+   * XSS WARNING
+   *
+   * newHtmlContent must be XSS safe
+   */
+  // prettier-ignore
+  public setMsgBody_DANGEROUSLY = (newHtmlContent_MUST_BE_XSS_SAFE: string, method: 'set' | 'append' | 'after') => { // xss-dangerous-function
+    /* eslint-enable @typescript-eslint/naming-convention */
+    this.msgEl = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(this.msgEl, method, newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
   };
 
   public hideAttachment = (attachmentEl: JQueryEl) => {

@@ -212,7 +212,7 @@ export class XssSafeFactory {
     type: string // for diagnostic purposes
   ) => {
     const { frameId, frameSrc } = this.srcPgpBlockIframe();
-    return { frameId, frameXssSafe: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification };
+    return { frameId, frameXssSafe: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification }; // xss-safe-factory
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {

@@ -179,7 +179,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (!setMessageInfo.from) {
         setMessageInfo.from = this.getFrom(this.getMsgBodyEl(msgId));
       }
-      const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail: setMessageInfo.from?.email }, false);
+      const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail: setMessageInfo.from?.email }, false); // xss-safe-value
       if (!renderedXssSafe) continue;
       $(this.sel.translatePrompt).hide();
       if (this.debug) {
@@ -523,7 +523,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
     const replyParams: FactoryReplyParams = { replyMsgId: msgId, removeAfterClose: true };
-    const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(
+    const secureReplyBoxXssSafe = /* xss-safe-factory */ `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(
       replyParams,
       true,
       true
@@ -582,7 +582,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
-            const secureReplyBoxXssSafe = `
+            const secureReplyBoxXssSafe = /* xss-safe-factory */ `
               <div class="remove_borders reply_message_iframe_container">
                 ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
               </div>

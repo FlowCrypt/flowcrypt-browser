@@ -21,24 +21,57 @@ import { Attachment } from '../../../../js/common/core/attachment.js';
 import { LoaderContextInterface } from '../../../../js/common/loader-context-interface.js';
 
 class LoaderContext implements LoaderContextInterface {
-  public constructor(private readonly factory: XssSafeFactory, public renderedMessageXssSafe: string | undefined, public renderedAttachments: string[]) {}
+  private renderedMessageXssSafe: string | undefined; // xss-none
+  private renderedAttachmentsXssSafe: string[] = []; // xss-none
+
+  public constructor(private readonly factory: XssSafeFactory) {}
 
   public renderPlainAttachment = (a: Attachment) => {
     // todo: render error argument
-    this.renderedAttachments.push(this.factory.embeddedAttachment(a, false));
+    this.renderedAttachmentsXssSafe.push(this.factory.embeddedAttachment(a, false)); // xss-safe-factory
   };
 
   public prependEncryptedAttachment = (a: Attachment) => {
-    this.renderedAttachments.unshift(this.factory.embeddedAttachment(a, true));
+    this.renderedAttachmentsXssSafe.unshift(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
   };
 
-  public setMsgBody = (xssSafe: string, method: 'set' | 'append' | 'after') => {
+  /* eslint-disable @typescript-eslint/naming-convention */
+  /**
+   * XSS WARNING
+   *
+   * newHtmlContent must be XSS safe
+   */
+  // prettier-ignore
+  public setMsgBody_DANGEROUSLY = (newHtmlContent_MUST_BE_XSS_SAFE: string, method: 'set' | 'append' | 'after') => { // xss-dangerous-function
+    /* eslint-enable @typescript-eslint/naming-convention */
     if (method === 'set') {
-      this.renderedMessageXssSafe = xssSafe;
+      this.renderedMessageXssSafe = newHtmlContent_MUST_BE_XSS_SAFE; // xss-safe-value
     } else {
       // todo: how append should differ from after?
-      this.renderedAttachments.unshift(xssSafe);
+      this.renderedAttachmentsXssSafe.unshift(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
     }
+  };
+
+  public getRenderedMessageXssSafe = (): string => {
+    return this.renderedMessageXssSafe || '';
+  };
+
+  public getRenderedAttachmentsXssSafe = (): string => {
+    return this.renderedAttachmentsXssSafe.length
+      ? `<div class="attachments" data-test="container-attachments">${this.renderedAttachmentsXssSafe.join('')}</div>`
+      : '';
+  };
+
+  /* eslint-disable @typescript-eslint/naming-convention */
+  /**
+   * XSS WARNING
+   *
+   * newHtmlContents must be XSS safe
+   */
+  // prettier-ignore
+  public setRenderedAttachments_DANGEROUSLY = (newHtmlContents_MUST_BE_XSS_SAFE: string[]) => { // xss-dangerous-function
+    /* eslint-enable @typescript-eslint/naming-convention */
+    this.renderedAttachmentsXssSafe = newHtmlContents_MUST_BE_XSS_SAFE; // xss-safe-value
   };
 
   public hideAttachment = () => {
@@ -134,28 +167,26 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     try {
       const msg = await this.view.messageRenderer.downloader.msgGetFull(message.id);
       const { blocks, body, messageInfo, attachments } = await this.view.messageRenderer.msgGetProcessed(message.id);
-      const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const senderEmail = messageInfo.from?.email;
-      const { renderedXssSafe, blocksInFrames } = this.view.messageRenderer.renderMsg({ blocks, senderEmail }, this.view.showOriginal);
-      const loaderContext = new LoaderContext(
-        this.view.factory,
-        renderedXssSafe,
-        blocks
-          .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
-          .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)))
-      );
+      const { renderedXssSafe, blocksInFrames } = this.view.messageRenderer.renderMsg({ blocks, senderEmail }, this.view.showOriginal); // xss-safe-factory
+      const loaderContext = new LoaderContext(this.view.factory);
+      // not doing this in the constructor to track XSS safety
+      const renderedAttachmentsXssSafe = /* xss-safe-factory */ blocks
+        .filter(block => block.attachmentMeta && ['encryptedAttachment', 'plainAttachment'].includes(block.type))
+        .map(block => XssSafeFactory.renderableMsgBlock(this.view.factory, block, this.view.messageRenderer.isOutgoing(senderEmail)));
+      loaderContext.setRenderedAttachments_DANGEROUSLY(renderedAttachmentsXssSafe); // xss-safe-factory
+      loaderContext.setMsgBody_DANGEROUSLY(renderedXssSafe, 'set'); // xss-safe-value
       for (const a of attachments) {
         await this.view.messageRenderer.processAttachment(a, body, attachments, loaderContext, undefined, message.id, messageInfo);
       }
+      const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const r =
         `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(messageInfo.from?.full || 'unknown')} <span style="float:right;">${
           GmailParser.findHeader(msg, 'Date') ?? ''
-        } ${exportBtn}</p>` +
-        (loaderContext.renderedMessageXssSafe ?? '') +
-        (loaderContext.renderedAttachments.length
-          ? `<div class="attachments" data-test="container-attachments">${loaderContext.renderedAttachments.join('')}</div>`
-          : '');
-      $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-factory
+        } ${exportBtn}</p>` + // xss-direct
+        loaderContext.getRenderedMessageXssSafe() +
+        loaderContext.getRenderedAttachmentsXssSafe();
+      $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-value
       await this.view.messageRenderer.startProcessingInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames);
       if (exportBtn) {
         $('.action-export').on(

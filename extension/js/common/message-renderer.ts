@@ -134,7 +134,9 @@ export class MessageRenderer {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
-    // todo: do we need to strip?
+    // stripping HTML tags here for safety in the way extractArmoredBlock used to do, should we?
+    // note: MimeContent.html returned from Mime.decode (when processing a raw MIME-message) isn't stripped
+    // so there is another stripping that takes place later when rendering in XssSafeFactory.renderableMsgBlock
     const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
     return {
       body: {
@@ -252,22 +254,20 @@ export class MessageRenderer {
   public renderMsg = ({ senderEmail, blocks }: { blocks: MsgBlock[]; senderEmail?: string }, showOriginal: boolean) => {
     const isOutgoing = this.isOutgoing(senderEmail);
     const blocksInFrames: Dict<MsgBlock> = {};
-    let r = '';
+    let renderedXssSafe = ''; // xss-direct
     for (const block of blocks) {
-      if (r) {
-        r += '<br><br>';
-      }
+      if (renderedXssSafe) renderedXssSafe += '<br><br>'; // xss-direct
       if (showOriginal) {
-        r += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>');
+        renderedXssSafe += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>'); // xss-escaped
       } else if (['signedMsg', 'encryptedMsg'].includes(block.type)) {
-        const { frameId, frameXssSafe } = this.factory.embeddedMsg(block.type);
-        r += frameXssSafe;
+        const { frameId, frameXssSafe } = this.factory.embeddedMsg(block.type); // xss-safe-factory
+        renderedXssSafe += frameXssSafe; // xss-safe-value
         blocksInFrames[frameId] = block;
       } else {
-        r += XssSafeFactory.renderableMsgBlock(this.factory, block, isOutgoing);
+        renderedXssSafe += XssSafeFactory.renderableMsgBlock(this.factory, block, isOutgoing); // xss-safe-factory
       }
     }
-    return { renderedXssSafe: r, isOutgoing, blocksInFrames };
+    return { renderedXssSafe, isOutgoing, blocksInFrames }; // xss-safe-value
   };
 
   public isOutgoing = (senderEmail: string | undefined) => {
@@ -318,7 +318,7 @@ export class MessageRenderer {
           treatAs = 'plainFile';
         } else {
           // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
-          const raw = await this.downloader.msgGetRaw(msgId); // todo: can we try to restore the content attachment from 'full'?
+          const raw = await this.downloader.msgGetRaw(msgId);
           loaderContext.hideAttachment(attachmentSel);
           await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
             this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email, body)
@@ -335,7 +335,7 @@ export class MessageRenderer {
       if (treatAs === 'publicKey') {
         const { armoredPubkey, openpgpType } = await this.preparePubkey(a);
         if (armoredPubkey) {
-          loaderContext.setMsgBody(this.factory.embeddedPubkey(armoredPubkey, this.isOutgoing(messageInfo.from?.email)), 'after');
+          loaderContext.setMsgBody_DANGEROUSLY(this.factory.embeddedPubkey(armoredPubkey, this.isOutgoing(messageInfo.from?.email)), 'after'); // xss-safe-factory
           return 'hidden';
         } else if (openpgpType?.type === 'encryptedMsg') {
           treatAs = 'encryptedFile'; // fall back to ordinary encrypted attachment
@@ -747,8 +747,8 @@ export class MessageRenderer {
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
   ): Promise<{ processor: Promise<unknown> }> => {
-    const { frameId, frameXssSafe } = this.factory.embeddedMsg(type);
-    loaderContext.setMsgBody(frameXssSafe, 'set');
+    const { frameId, frameXssSafe } = this.factory.embeddedMsg(type); // xss-safe-factory
+    loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, 'set'); // xss-safe-value
     return await this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
@@ -807,7 +807,7 @@ export class MessageRenderer {
   ): Promise<'shown' | 'hidden'> => {
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);
-      loaderContext.setMsgBody(this.factory.embeddedBackup(attachment.getData().toUtfStr()), 'append');
+      loaderContext.setMsgBody_DANGEROUSLY(this.factory.embeddedBackup(attachment.getData().toUtfStr()), 'append'); // xss-safe-factory
       return 'hidden';
     } catch (e) {
       loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page'); // todo: unit-test
