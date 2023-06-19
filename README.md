@@ -29,14 +29,14 @@ After executing the build command, you can find your built project in the `build
 
 > ℹ️ Note: The `build` folder also contains other versions of the browser extension.
 
-To load the extension in Google Chrome, please follow these steps:
+✔️ To load the extension in Google Chrome, please follow these steps:
 
 1. Open your Chrome browser and navigate to `chrome://extensions/`.
 2. If it isn't already enabled, toggle on the **Developer mode**. The switch button is located at the top-right corner.
 3. Click on the **Load unpacked** button.
 4. Browse to the `flowcrypt-browser/build` folder and select the appropriate project version, either `chrome-consumer` or `chrome-enterprise`.
 
-Similarly, to load the extension in Firefox, please follow these steps:
+✔️ To load the extension in Firefox, please follow these steps:
 
 1. Open your Firefox browser and navigate to `about:debugging`.
 2. Click on the **This Firefox** tab.
