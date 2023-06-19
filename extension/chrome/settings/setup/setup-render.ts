@@ -189,9 +189,9 @@ export class SetupRenderModule {
       }
     });
     if (emailAliases.length > 0) {
-      $('.container_for_import_key_email_alias').css('visibility', 'visible');
+      $('.also_submit_alias_key_view').show();
     }
-    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false });
   };
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
