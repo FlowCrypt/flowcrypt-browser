@@ -13,9 +13,9 @@ We develop the project in TypeScript. However, since browsers only understand Ja
 1. Navigate to the project folder and install the tooling by running the following commands:
 
 ```bash
-# Navigate to the appropriate folder
+# 1. Navigate to the appropriate folder
 $ cd some/folder/flowcrypt-browser
-# Install the tooling
+# 2. Install the tooling
 $ npm install
 ```
 
@@ -33,14 +33,14 @@ To load the extension in Google Chrome, please follow these steps:
 
 1. Open your Chrome browser and navigate to `chrome://extensions/`.
 2. If it isn't already enabled, toggle on the **Developer mode**. The switch button is located at the top-right corner.
-3. Click on the `Load unpacked` button.
+3. Click on the **Load unpacked** button.
 4. Browse to the `flowcrypt-browser/build` folder and select the appropriate project version, either `chrome-consumer` or `chrome-enterprise`.
 
 Similarly, to load the extension in Firefox, please follow these steps:
 
 1. Open your Firefox browser and navigate to `about:debugging`.
-2. Click on the `This Firefox` tab.
-3. Click on the `Load Temporary Add-on` button located at the top-right corner.
+2. Click on the **This Firefox** tab.
+3. Click on the **Load Temporary Add-on** button located at the top-right corner.
 4. Browse to the `flowcrypt-browser/build` folder, open the `firefox-consumer` project version folder, and select the `manifest.json` file.
 
 If you wish, you can also use the `run_firefox` script (`npm run run_firefox`) included in the `package.json` file to run the Firefox extension in a separate instance without interfering with the production extension installed in your browser.
