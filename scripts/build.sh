@@ -109,7 +109,7 @@ main() {
   STREAMS_REGEX="s/'\.\/(streams|util|writer|reader|node-conversions)'/'\.\/\1\.js'/g"
   STREAMS_FILES=$OUTPUT_DIRECTORY/lib/streams/*
   OPENPGP_FILE=$OUTPUT_DIRECTORY/lib/openpgp.js
-  
+
   # patch isUint8Array until https://github.com/openpgpjs/web-stream-tools/pull/23 is resolved
   ISUINT8ARRAY_REGEX1="s/(\s*)return\x20Uint8Array\.prototype\.isPrototypeOf\(input\);/\1return\x20Uint8Array\.prototype\.isPrototypeOf\(input\)\x20\|\|\x20globalThis\.Uint8Array\.prototype\.isPrototypeOf\(input\);/g"
 
@@ -117,10 +117,10 @@ main() {
 
   # this patch handles patterns like (n instanceof Uint8Array) or (arguments[i] instanceof Uint8Array)
   # to replace them with (\1 instanceof Uint8Array || \1 instanceof globalThis.Uint8Array)
-  ISUINT8ARRAY_REGEX2="s/\(([^\(\)\x20]+)\x20instanceof\x20Uint8Array\)/\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\)/g"
+  ISUINT8ARRAY_REGEX2="s/\(([^\(\)\x20]+?)\x20instanceof\x20Uint8Array\)/\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\)/g"
   # this patch handles pattern like \x20n instanceof Uint8Array;
-  ISUINT8ARRAY_REGEX3="s/\x20([^\(\)\x20]+)\x20instanceof\x20Uint8Array;/\x20\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\);/g"
-  
+  ISUINT8ARRAY_REGEX3="s/\x20([^\(\)\x20]+?)\x20instanceof\x20Uint8Array;/\x20\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\);/g"
+
   apply_regex_replace $STREAMS_REGEX $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $OPENPGP_FILE
