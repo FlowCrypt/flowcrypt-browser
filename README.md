@@ -1,4 +1,4 @@
-# 🌐 FlowCrypt Browser Extension (Encrypt email with PGP)
+# 🌐 FlowCrypt Browser Extension (Encrypt Gmail with PGP)
 
 | 👋 Try our extension                                                                                                           |
 |:-------------------------------------------------------------------------------------------------------------------------------|
