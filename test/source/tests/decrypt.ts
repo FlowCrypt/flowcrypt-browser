@@ -123,22 +123,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const threadId = '187085b874fb727c';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const expectedContent = 'flowcrypt-browser issue #5029 test email';
+        const expectedMessage = {
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: missing pubkey ADAC279C95093207',
+          content: ['flowcrypt-browser issue #5029 test email'],
+        };
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
-        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
-          encryption: 'not encrypted',
-          content: [expectedContent],
-        });
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), expectedMessage);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
-        await gmailPage.waitAll('iframe');
-        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), {
-          encryption: 'not encrypted',
-          content: [expectedContent],
-        });
-        await gmailPage.close();
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, expectedMessage, authHdr);
       })
     );
 
