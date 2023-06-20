@@ -519,8 +519,9 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
+      const page = 'page' in this.target ? this.target.page() : this.target;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
-      await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await (page as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
       } else {

@@ -3,7 +3,7 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
+import { ChunkedCb, ProgressCb, EmailProviderContact, ProgressDestFrame } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GMAIL_GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
@@ -15,13 +15,9 @@ import { Buf } from '../../../core/buf.js';
 import { Catch } from '../../../platform/catch.js';
 import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
-import { FormatError } from '../../../core/crypto/pgp/msg-util.js';
 import { Google } from './google.js';
 import { GoogleAuth } from './google-auth.js';
-import { Mime } from '../../../core/mime.js';
-import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 import { SendableMsg } from '../sendable-msg.js';
-import { Xss } from '../../../platform/xss.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
@@ -123,15 +119,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'GET', `labels`, {});
   };
 
-  public attachmentGet = async (msgId: string, attId: string, progressCb?: ProgressCb): Promise<GmailRes.GmailAttachment> => {
+  public attachmentGet = async (msgId: string, attId: string, progress: { download: ProgressCb } | ProgressDestFrame): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string; size: number; data: string };
-    const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(
-      this.acctEmail,
-      'GET',
-      `messages/${msgId}/attachments/${attId}`,
-      {},
-      { download: progressCb }
-    );
+    const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(this.acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, progress);
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
   };
 
@@ -232,33 +222,43 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     });
   };
 
-  public fetchAttachments = async (attachments: Attachment[], progressCb?: ProgressCb) => {
-    if (!attachments.length) {
+  public fetchAttachmentsMissingData = async (attachments: Attachment[], progressCb?: ProgressCb) => {
+    const attachmentsMissingData = attachments.filter(a => !a.hasData());
+    if (!attachmentsMissingData.length) {
       return;
     }
     let lastProgressPercent = -1;
     const loadedAr: Array<number> = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
-    const total = attachments.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+    const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(
-      attachments.map((a, index) =>
+      attachmentsMissingData.map((a, index) =>
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.attachmentGet(a.msgId!, a.id!, (_, loaded) => {
-          if (progressCb) {
-            loadedAr[index] = loaded || 0;
-            const totalLoaded = loadedAr.reduce((a, b) => a + b);
-            const progressPercent = Math.round((totalLoaded * 100) / total);
-            if (progressPercent !== lastProgressPercent) {
-              lastProgressPercent = progressPercent;
-              progressCb(progressPercent, totalLoaded, total);
+        this.attachmentGet(a.msgId!, a.id!, {
+          download: (_, loaded) => {
+            if (progressCb) {
+              loadedAr[index] = loaded || 0;
+              const totalLoaded = loadedAr.reduce((a, b) => a + b);
+              const progressPercent = Math.round((totalLoaded * 100) / total);
+              if (progressPercent !== lastProgressPercent) {
+                lastProgressPercent = progressPercent;
+                progressCb(progressPercent, totalLoaded, total);
+              }
             }
-          }
+          },
         })
       )
     );
     for (const i of responses.keys()) {
-      attachments[i].setData(responses[i].data);
+      attachmentsMissingData[i].setData(responses[i].data);
     }
+  };
+
+  public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransferSize: number) => { download: ProgressCb } | ProgressDestFrame) => {
+    const expectedTransferSize = a.length * 1.33; // todo: remove code duplication
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const response = await this.attachmentGet(a.msgId!, a.id!, progressFunction(expectedTransferSize));
+    a.setData(response.data);
   };
 
   /**
@@ -307,72 +307,6 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     await this.apiGmailLoopThroughEmailsToCompileContacts(needles, gmailQuery, chunkedCb);
   };
 
-  /**
-   * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
-   * As MsgBlockParser detects incomplete encryptedMsg etc. and they get through, we're handling them too
-   */
-  public extractArmoredBlock = async (
-    msgId: string,
-    format: GmailResponseFormat,
-    progressCb?: ProgressCb
-  ): Promise<{ armored: string; plaintext?: string; subject?: string; isPwdMsg: boolean }> => {
-    // only track progress in this call if we are getting RAW mime,
-    // because these tend to be big, while 'full' and 'metadata' are tiny
-    // since we often do full + get attachments below, the user would see 100% after the first short request,
-    // and then again 0% when attachments start downloading, which would be confusing
-    const gmailMsg = await this.msgGet(msgId, format, format === 'raw' ? progressCb : undefined);
-    const isPwdMsg = /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(gmailMsg.snippet || '');
-    const subject = gmailMsg.payload ? GmailParser.findHeader(gmailMsg.payload, 'subject') : undefined;
-    if (format === 'full') {
-      const bodies = GmailParser.findBodies(gmailMsg);
-      const attachments = GmailParser.findAttachments(gmailMsg);
-      const textBody = Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr();
-      const fromTextBody = PgpArmor.clip(textBody);
-      if (fromTextBody) {
-        return { armored: fromTextBody, subject, isPwdMsg };
-      }
-      const htmlBody = Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n');
-      const fromHtmlBody = PgpArmor.clip(htmlBody);
-      if (fromHtmlBody) {
-        return { armored: fromHtmlBody, subject, isPwdMsg };
-      }
-      for (const attachment of attachments) {
-        if (attachment.treatAs(attachments, !!textBody) === 'encryptedMsg') {
-          await this.fetchAttachments([attachment], progressCb);
-          const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
-          if (!armoredMsg) {
-            throw new FormatError('Problem extracting armored message', attachment.getData().toUtfStr());
-          }
-          return { armored: armoredMsg, subject, isPwdMsg };
-        }
-      }
-      const plaintext = PgpArmor.clipIncomplete(textBody) || PgpArmor.clipIncomplete(htmlBody);
-      if (plaintext) {
-        return { armored: '', plaintext, subject, isPwdMsg };
-      }
-      throw new FormatError('Armored message not found', textBody || htmlBody);
-    } else {
-      // format === raw
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
-      const decoded = await Mime.decode(mimeMsg);
-      if (decoded.text !== undefined) {
-        const armoredMsg = PgpArmor.clip(decoded.text);
-        if (armoredMsg) {
-          return { armored: armoredMsg, subject, isPwdMsg };
-        }
-        // todo - the message might be in attachments
-        const plaintext = PgpArmor.clipIncomplete(decoded.text);
-        if (plaintext) {
-          return { armored: '', plaintext, subject, isPwdMsg };
-        }
-        throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
-      } else {
-        throw new FormatError('No text in parsed raw mime', mimeMsg.toUtfStr());
-      }
-    }
-  };
-
   public fetchAcctAliases = async (): Promise<GmailRes.GmailAliases> => {
     const res = (await Google.gmailCall<GmailRes.GmailAliases>(this.acctEmail, 'GET', 'settings/sendAs', {})) as GmailRes.GmailAliases;
     for (const sendAs of res.sendAs) {
@@ -392,9 +326,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const msgs = await this.msgsGet(msgIds, 'full');
     const attachments: Attachment[] = [];
     for (const msg of msgs) {
-      attachments.push(...GmailParser.findAttachments(msg));
+      attachments.push(...GmailParser.findAttachments(msg, msg.id));
     }
-    await this.fetchAttachments(attachments);
+    await this.fetchAttachmentsMissingData(attachments);
     const { keys: foundBackupKeys } = await KeyUtil.readMany(Buf.fromUtfStr(attachments.map(a => a.getData().toUtfStr()).join('\n')));
     const backups = await Promise.all(foundBackupKeys.map(k => KeyUtil.keyInfoObj(k)));
     const imported = await KeyStore.get(this.acctEmail);

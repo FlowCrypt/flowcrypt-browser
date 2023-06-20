@@ -21,7 +21,10 @@ import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from '../../../js/common/webmail.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
-import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { RelayManager } from '../../../js/common/relay-manager.js';
+import { MessageRenderer } from '../../../js/common/message-renderer.js';
+import { Env } from '../../../js/common/browser/env.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -39,9 +42,11 @@ export class InboxView extends View {
 
   public injector!: Injector;
   public webmailCommon!: WebmailCommon;
+  public messageRenderer!: MessageRenderer;
   public factory!: XssSafeFactory;
-  public storage!: AcctStoreDict;
+  public picture?: string;
   public tabId!: string;
+  public relayManager!: RelayManager;
 
   public constructor() {
     super();
@@ -51,12 +56,18 @@ export class InboxView extends View {
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
+    this.relayManager = new RelayManager(this.debug);
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
     this.inboxNotificationModule = new InboxNotificationModule(this);
     this.inboxActiveThreadModule = new InboxActiveThreadModule(this);
     this.inboxListThreadsModule = new InboxListThreadsModule(this);
+    window.addEventListener('message', e => {
+      if (e.origin === Env.getExtensionOrigin()) {
+        this.relayManager.handleMessageFromFrame(e.data);
+      }
+    });
   }
 
   public render = async () => {
@@ -64,12 +75,13 @@ export class InboxView extends View {
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
-    this.storage = await AcctStore.get(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
+    let emailProvider: 'gmail' | undefined;
+    ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
+    this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
-    const emailProvider = this.storage.email_provider || 'gmail';
     try {
       await Settings.populateAccountsMenu('inbox.htm');
-      if (emailProvider !== 'gmail') {
+      if (emailProvider && emailProvider !== 'gmail') {
         $('body').text('Not supported for ' + emailProvider);
       } else {
         await this.inboxMenuModule.render();

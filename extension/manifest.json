@@ -42,7 +42,22 @@
     {
       "matches": ["https://mail.google.com/*"],
       "css": ["/css/webmail.css", "/css/sweetalert2.css"],
-      "js": ["/lib/purify.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/lib/sweetalert2.js", "/lib/streams_web.js", "/js/content_scripts/webmail_bundle.js"]
+      "js": [
+        "/lib/purify.js",
+        "/lib/jquery.min.js",
+        "/lib/openpgp.js",
+        "/lib/sweetalert2.js",
+        "/lib/streams_web.js",
+        "/lib/emailjs/punycode.js",
+        "/lib/iso-8859-2.js",
+        "/lib/emailjs/emailjs-stringencoding.js",
+        "/lib/emailjs/emailjs-mime-codec.js",
+        "/lib/emailjs/emailjs-mime-types.js",
+        "/lib/emailjs/emailjs-addressparser.js",
+        "/lib/emailjs/emailjs-mime-builder.js",
+        "/lib/emailjs/emailjs-mime-parser.js",
+        "/js/content_scripts/webmail_bundle.js"
+      ]
     },
     {
       "matches": ["https://www.google.com/robots.txt*"],

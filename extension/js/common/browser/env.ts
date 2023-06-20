@@ -5,6 +5,8 @@
 
 'use strict';
 
+import { Url } from '../core/common.js';
+
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 
@@ -18,6 +20,11 @@ export class Env {
       }
     }
     return undefined;
+  };
+
+  public static getExtensionOrigin = () => {
+    const url = chrome.runtime.getURL('');
+    return Url.removeTrailingSlash(url);
   };
 
   public static isContentScript = () => {

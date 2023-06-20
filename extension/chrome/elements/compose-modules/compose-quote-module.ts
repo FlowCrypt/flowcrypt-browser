@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { FormatError, MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -123,29 +123,31 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
-        } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
-          if (block.attachmentMeta?.data) {
-            let attachmentMeta: { content: Buf; filename?: string } | undefined;
-            if (block.type === 'encryptedAttachment') {
-              this.setQuoteLoaderProgress('decrypting...');
-              const result = await MsgUtil.decryptMessage({
-                kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-                encryptedData: block.attachmentMeta.data,
-                verificationPubs: [], // todo: #4158 signature verification of attachments
-              });
-              if (result.success) {
-                attachmentMeta = { content: result.content, filename: result.filename };
-              }
-            } else {
-              attachmentMeta = {
-                content: Buf.fromUint8(block.attachmentMeta.data),
-                filename: block.attachmentMeta.name,
-              };
+        } else if (
+          block.attachmentMeta &&
+          'data' in block.attachmentMeta &&
+          ['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)
+        ) {
+          let attachmentMeta: { content: Buf; filename?: string } | undefined;
+          if (block.type === 'encryptedAttachment') {
+            this.setQuoteLoaderProgress('decrypting...');
+            const result = await MsgUtil.decryptMessage({
+              kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
+              encryptedData: block.attachmentMeta.data,
+              verificationPubs: [], // todo: #4158 signature verification of attachments
+            });
+            if (result.success) {
+              attachmentMeta = { content: result.content, filename: result.filename };
             }
-            if (attachmentMeta) {
-              const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
-              decryptedFiles.push(file);
-            }
+          } else {
+            attachmentMeta = {
+              content: Buf.fromUint8(block.attachmentMeta.data),
+              filename: block.attachmentMeta.name,
+            };
+          }
+          if (attachmentMeta) {
+            const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
+            decryptedFiles.push(file);
           }
         } else {
           decryptedAndFormatedContent.push(stringContent);
@@ -158,9 +160,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         decryptedFiles,
       };
     } catch (e) {
-      if (e instanceof FormatError) {
-        Xss.sanitizeAppend(this.view.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
-      } else if (ApiErr.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         // todo: retry
       } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });

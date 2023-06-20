@@ -6,6 +6,7 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
+import { Url } from '../../core/common.js';
 
 export class Sks extends Api {
   private static MR_VERSION_1 = 'info:1:';
@@ -13,7 +14,7 @@ export class Sks extends Api {
 
   public constructor(url: string) {
     super();
-    this.url = url.replace(/\/$/, ''); // remove trailing space
+    this.url = Url.removeTrailingSlash(url);
   }
 
   /**

@@ -1,0 +1,80 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "15f7fcb7fabc7511",
+    "threadId": "15f7fcb7fabc7511",
+    "labelIds": [
+      "Label_17",
+      "IMPORTANT",
+      "STARRED",
+      "Label_3",
+      "CATEGORY_PERSONAL",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- Charset: utf-8 Version: GnuPG v2 hQIMA0taL/zmLZUBAQ//RO4wLVr52Zf0v6/fa19/noJFsFLIEqsWkX3OPOZfiRew tcI17dq5u854lbuXwSELEAUkhX0NJ2ZM+jNPRyW4dqhcuFBebBXN10/pzBaG+nKi",
+    "payload": {
+      "partId": "",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+        {
+          "name": "X-Gm-Message-State",
+          "value": "AMCzsaU9vkCt3G0OQkWukzGyeozyKVL+YaGn4UCf994KxLSIox7PmP9r m91Xndv+3hZSjwvowIz53KCGETEe"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "Subject",
+          "value": "[enigmail] encrypted inline"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 2 Nov 2017 19:52:42 -0700"
+        },
+        {
+          "name": "User-Agent",
+          "value": "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Thunderbird/52.4.0"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "name": "Content-Transfer-Encoding",
+          "value": "quoted-printable"
+        },
+        {
+          "name": "Content-Language",
+          "value": "en-US"
+        }
+      ],
+      "body": {
+        "size": 1716,
+        "data": "DQotLS0tLUJFR0lOIFBHUCBNRVNTQUdFLS0tLS0NCkNoYXJzZXQ6IHV0Zi04DQpWZXJzaW9uOiBHbnVQRyB2Mg0KDQpoUUlNQTB0YUwvem1MWlVCQVEvL1JPNHdMVnI1MlpmMHY2L2ZhMTkvbm9KRnNGTElFcXNXa1gzT1BPWmZpUmV3DQp0Y0kxN2RxNXU4NTRsYnVYd1NFTEVBVWtoWDBOSjJaTStqTlBSeVc0ZHFoY3VGQmViQlhOMTAvcHpCYUcrbktpDQpDSzNCNG1BaHFZZUZBelZlSW5GUzlNUGJwMStYemN5UG0va1BzMm94SVNrNENVR2FGQ2xTVEdGVWRSamR3Vnl0DQowNkJFVng0bzBkdnUwZW01TzRzYm1BcUFpY3RMOUtjN2MrQllSbXZJQkJhdDJ4a0p0b09peDNIbUpCY05SMHczDQpBUXhvQjFwS2tienFPdHdlT2hjUDlvcFN2TzhHWHgrOXZYelNpODhQSjR1TUtPU0ZVYnRLR2F2TXlYWWtLcElzDQpOL2hZaUs0TDBCOC9xY0pTNkxzTTI2bzBrWnNWTWc5cHorQkszWnNwQXlxM1FuTVJHYVZlenpyQStlQTIvR3o4DQpvdTVDVTB0QlhNTGJ1QlBqOHFXQkJnYURKeldCSnlROVZSTnd4MU9FNHlXTitSLzVIMzhmeTZaL0JqOE5pdWVXDQpiU1ZWaFhWZHdQellvRzZXZzA2Q1VTL3V5alRVdFVrR0d5N25vaWk2MTBYTHNPaGZPY3NCY1lPRXdGdVE5RlluDQpuOXgycU1mbzcxY3VXd3REY3hkVUJmR3NvWnpKa24xYXVENlhmSHJKWTVmdXgwSmkrYXYrbmtXdGdSc3UyL0plDQpCRUZpa3VCWUZaeGpXT2lBckdHeWJ6blZaWEU4bThvZ1pXWU1seVFZeWJTaHMrY3RwKzRXeDVvTldCUDRFMEpiDQpUM3FXNkdYU3JlUC9FQ2ZaTlVnZ1BnT05VWW04WUtUWm9XZ3dMK3N4eURsTDZzblpNaWRQNEZyQzM1Qm52UStGDQpBZ3dEbHVBT2xLWFFvNXNCRC85aDZONEtXbEw0MWUwakhKWC8yS2JQWGcxL2NVL1c0dXJkRnhteC9IdTF5OVkvDQpKOVZLWXhuZTNId0piOUJ4TnU2ZzFRSmlyR1NMK040ZEgvYmFSOUJsMDF1UGRSNktaZzA2bHlnV2VWUklNUE8rDQoyeXRsYTlHeDlsditHOGJYTTFhZE5WYkNlUlgvSUx2VTEzU000ck8yZUh2Wm9kQlEvWXlhUWZVT2M1OWlkTkh4DQphWFNEVDE5L2lCVkI2N1h4cS90NEo1bjh4V3QwYjBnQjZwRXpBRG5KOTJpSzFzbzdpdmlTeFdibjBsZDRFOWpmDQpjemFsRkNaQmIySGxxbHQ3cVV5T1F2cVBJdzVZUjVSMjRvNFRGZHRxOER6akxkTmZhejhlSWxIanVoL3J2cHJxDQp4QmhkcWdXRk1jMlY4Yk9QSWtRU21ZZlZRWFBMV2ZsbldWME1IdW9vN1JnVzMzeEQyQVNQS0hwVVgxYnI2NUM0DQpoc3ExZTNSMzJ0WGNPTy9iaDlTb0pLajd2TCtOUDYxUVlrYXJtaDMweWg1WXhOY0pWMzNsa21aLzRBdkY4ZlJhDQplZVRRZEhLZHZKdGdtTWdXdVJTZVIxektTSWFkdnlsR1pvdHFUSTY2MnBmbS96R2pkVmo4Z0pXdmNONFhuQXFJDQprdGczbXBJOG1SUzZ5ekRMY2JXSStxRmtjQWtCZmtLM0hUdzlLcWo1OTZqUXVXYmQwOE9SbTZOeEgyTDQ3QlpFDQpmVjRPaVRtNW1KRm4yZVJha3JTOVVtWWhWa3ZMOWpJVFh3aHFNeTFNajcycXhaVm54NFBTbm44d2dNdDBKZDA0DQozNlFLd3Ntc2w0b2F4QkF0OTVRUVZ1NWEzVVFhOFAvMnZUZGluS2FMVjl2b1FkRlc1bGNPVVBWTzk1NW1zOUp3DQpBUkxJbTI5cHRCa1ZLNk4zZnF1RVFRdHNzUjRadDk3SEs0TzdsL1lpbFJhNW05aVFGYVBJcWFzSEhKYVZ4aEtNDQpaazN6ZlRUTlI4dDMvbW9hU2JvNDViWFFrNFZnbXV4MUFUck5jS2p5SVJpTnFQUnoydGJKSWMySDA1bmFpanNiDQp5VHUzczdDblNFQ01XRjI4M3MyRHRnPT0NCj1sM1dQDQotLS0tLUVORCBQR1AgTUVTU0FHRS0tLS0tDQoNCg0K"
+      }
+    },
+    "sizeEstimate": 6935,
+    "historyId": "1406044",
+    "internalDate": "1509677562000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "15f7fcb7fabc7511",
+    "threadId": "15f7fcb7fabc7511",
+    "labelIds": ["Label_17", "IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL", "INBOX"],
+    "snippet": "-----BEGIN PGP MESSAGE----- Charset: utf-8 Version: GnuPG v2 hQIMA0taL/zmLZUBAQ//RO4wLVr52Zf0v6/fa19/noJFsFLIEqsWkX3OPOZfiRew tcI17dq5u854lbuXwSELEAUkhX0NJ2ZM+jNPRyW4dqhcuFBebBXN10/pzBaG+nKi",
+    "sizeEstimate": 6935,
+    "historyId": "1406044",
+    "internalDate": "1509677562000"
+  }
+}
