@@ -53,12 +53,13 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     this.changeOptionImage(option);
   };
 
-  private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
+  private toggleVisible = (event: JQuery.TriggeredEvent<HTMLElement>) => {
     event.stopPropagation();
     const replyContainer = $('.reply-container');
     replyContainer.toggleClass('popover-opened');
     const popoverClickHandler = this.view.setHandler((elem, event) => {
-      if (!this.view.S.cached('reply_options_container')[0].contains(event.relatedTarget)) {
+      const ev = event as JQuery.BlurEvent<HTMLElement>;
+      if (!this.view.S.cached('reply_options_container')[0].contains(ev.relatedTarget as HTMLElement)) {
         replyContainer.removeClass('popover-opened');
         $('body').off('click', popoverClickHandler);
       }

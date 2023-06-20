@@ -49,7 +49,7 @@ export class BackupUi {
     this.onBackedUpFinished = options.onBackedUpFinished;
     const htmlUrl = '/chrome/elements/shared/backup.template.htm';
     const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
-    Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0), sanitized); // xss-sanitized
+    Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0) as Element, sanitized); // xss-sanitized
     this.gmail = new Gmail(this.acctEmail);
     this.statusModule = new BackupUiStatusModule(this);
     this.manualModule = new BackupUiManualModule(this);
@@ -58,7 +58,7 @@ export class BackupUi {
     this.setBackupHandlers();
   };
 
-  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
+  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
   };
 

@@ -15,7 +15,7 @@ import { ComposeView } from '../compose.js';
 import { Lang } from '../../../js/common/lang.js';
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
-  public squire = new window.Squire(this.view.S.cached('input_text').get(0));
+  public squire = new window.Squire(this.view.S.cached('input_text').get(0) as HTMLElement);
 
   public setHandlers = () => {
     this.view.S.cached('add_intro').on(
@@ -217,6 +217,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire.addEventListener('cursor', () => {
       try {
         const inputText = this.view.S.cached('input_text').get(0);
+        if (!inputText) {
+          return;
+        }
         const offsetBottom = this.squire.getCursorPosition().bottom - inputText.getBoundingClientRect().top;
         const editorRootHeight = this.view.S.cached('input_text').height() || 0;
         if (offsetBottom > editorRootHeight) {
