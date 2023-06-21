@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Api, ProgressCbs, ReqMethod } from '../../shared/api.js';
+import { Api, ProgressCbs, ProgressDestFrame, ReqMethod } from '../../shared/api.js';
 import { Dict, Str } from '../../../core/common.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
@@ -20,12 +20,12 @@ export class Google {
     method: ReqMethod,
     path: string,
     params: Dict<Serializable> | string | undefined,
-    progress?: ProgressCbs,
+    progress?: ProgressCbs | ProgressDestFrame,
     contentType?: string
   ): Promise<RT> => {
     progress = progress || {};
     let data, url;
-    if (typeof progress.upload === 'function') {
+    if ('upload' in progress) {
       url = `${GMAIL_GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
       data = params;
     } else {
@@ -39,8 +39,10 @@ export class Google {
     contentType = contentType || 'application/json; charset=UTF-8';
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    const xhr = Api.getAjaxProgressXhrFactory(progress);
-    const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
+    const context =
+      'frameId' in progress ? { frameId: progress.frameId, expectedTransferSize: progress.expectedTransferSize, tabId: progress.tabId } : undefined;
+    const xhr = Api.getAjaxProgressXhrFactory('download' in progress || 'upload' in progress ? progress : {});
+    const request = { xhr, context, url, method, data, headers, crossDomain: true, contentType, async: true };
     return (await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request)) as RT;
   };
 
@@ -93,11 +95,11 @@ export class Google {
     // todo - this could probably be achieved with emailjs-mime-builder
     const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);
     let body = '';
-    for (const type of Object.keys(parts)) {
+    for (const [type, content] of Object.entries(parts)) {
       body += '--' + boundary + '\n';
       body += 'Content-Type: ' + type + '\n';
       if (type.includes('json')) {
-        body += '\n' + parts[type] + '\n\n';
+        body += '\n' + content + '\n\n';
       } else {
         body += 'Content-Transfer-Encoding: base64\n';
         body += '\n' + btoa(parts[type]) + '\n\n';

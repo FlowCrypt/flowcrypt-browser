@@ -24,6 +24,7 @@ import { AcctStore } from '../../common/platform/store/acct-store.js';
 import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { RelayManager } from '../../common/relay-manager.js';
 
 export type WebmailVariantObject = {
   newDataLayer: undefined | boolean;
@@ -44,7 +45,8 @@ type WebmailSpecificInfo = {
     inject: Injector,
     notifications: Notifications,
     factory: XssSafeFactory,
-    notifyMurdered: () => void
+    notifyMurdered: () => void,
+    relayManager: RelayManager
   ) => Promise<void>;
 };
 export interface WebmailElementReplacer {
@@ -152,6 +154,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     inject: Injector,
     factory: XssSafeFactory,
     notifications: Notifications,
+    relayManager: RelayManager,
     ppEvent: { entered?: boolean }
   ) => {
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
@@ -197,16 +200,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
       webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
-    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
-      const traverseUpLevels = (traverseUp as number) || 0;
-      let appendAfter = $(`iframe#${afterFrameId}`);
-      for (let i = 0; i < traverseUpLevels; i++) {
-        appendAfter = appendAfter.parent();
-      }
-      for (const armoredPubkey of publicKeys) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-      }
-    });
     BrowserMsg.addListener('close_dialog', async () => {
       Swal.close();
     });
@@ -240,6 +233,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
+    });
+    BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
+      relayManager.renderProgress(progress);
     });
     BrowserMsg.listen(tabId);
   };
@@ -424,7 +420,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
-      browserMsgListen(acctEmail, tabId, inject, factory, notifications, ppEvent);
+      const relayManager = new RelayManager();
+      browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       await startPullingKeysFromEkm(
         acctEmail,
@@ -433,7 +430,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered);
+      window.addEventListener('message', e => {
+        if (e.origin === Env.getExtensionOrigin()) {
+          relayManager.handleMessageFromFrame(e.data);
+        }
+      });
+      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);

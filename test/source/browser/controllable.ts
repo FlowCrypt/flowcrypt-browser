@@ -457,6 +457,20 @@ abstract class ControllableBase {
     );
   };
 
+  public verifyContentIsNotPresentContinuously = async (selector: string, expectedText: string, timeoutSec = 10) => {
+    await this.waitAll(selector);
+    const start = Date.now();
+    let actualText: string | undefined;
+    let round = 1;
+    while (Date.now() - start < timeoutSec * 1000) {
+      actualText = await this.read(selector, true);
+      if (actualText?.includes(expectedText)) {
+        throw new Error(`selector ${selector} contained "${expectedText}" for ${round}th attemp, last content:${actualText}`);
+      }
+      round += 1;
+    }
+  };
+
   public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number; appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
     if (sleep) {
       await Util.sleep(sleep);
@@ -505,8 +519,9 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
+      const page = 'page' in this.target ? this.target.page() : this.target;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
-      await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await (page as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
       } else {

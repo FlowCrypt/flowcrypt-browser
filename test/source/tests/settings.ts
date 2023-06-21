@@ -20,10 +20,10 @@ import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { BrowserHandle } from '../browser';
+import { BrowserHandle, ControllablePage } from '../browser';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
-import { singlePubKeyAttesterConfig, somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
+import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
 import { emailKeyIndex } from '../core/common';
 import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
@@ -35,10 +35,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my own emails show as contacts',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const comtactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -54,10 +51,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - attester shows my emails',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
@@ -86,6 +80,22 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
               },
             },
           },
+          google: {
+            aliases: {
+              [email]: [
+                {
+                  sendAsEmail: mismatchEmail,
+                  displayName: 'Test mismatch',
+                  replyToAddress: mismatchEmail,
+                  signature: '',
+                  isDefault: false,
+                  isPrimary: false,
+                  treatAsAlias: false,
+                  verificationStatus: 'accepted',
+                },
+              ],
+            },
+          },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, email);
         await SetupPageRecipe.manualEnter(
@@ -109,10 +119,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - verify key presense 1pp1',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'button');
       })
@@ -121,10 +128,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - test pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.wrong.passphrase').passphrase, false);
         await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
@@ -134,10 +138,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - clarify passphrase prompt text',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -176,10 +177,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - feedback form',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await settingsPage.waitAndClick('@action-open-modules-help');
         await settingsPage.waitAll('@dialog');
@@ -193,10 +191,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - view contact public key',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -226,10 +221,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - update contact public key',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const recipientEmail = 'has.older.key.on.attester@recipient.com';
         // add a newer expired key manually
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
@@ -273,13 +265,28 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - import public key which contains null users',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.nullUserPubKey);
+        await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame.waitForInputValue('@input-email', 'demo@example.com');
+        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+      })
+    );
+    test(
       'settings - import revoked key fails but the revocation info is saved',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const revocationBefore = await dbPage.page.evaluate(async () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -317,6 +324,30 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           return revocation;
         });
         expect(revocationAfter).not.to.be.an('undefined'); // revocation is saved in the database
+      })
+    );
+    test(
+      'settings - #5147 check contact key import error',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        const [fileChooser] = await Promise.all([
+          settingsPage.page.waitForFileChooser(),
+          contactsFrame.waitAndClick('@action-attach-files', { retryErrs: true }),
+        ]);
+        await fileChooser.accept(['test/samples/openpgp/pub_keys_5_good_1_unsupported.txt']);
+        await Util.sleep(1);
+        await contactsFrame.waitAll('iframe');
+        const framesUrls = await contactsFrame.getFramesUrls(['pgp_pubkey.htm']);
+        const firstFrameId = framesUrls[0].match(/frameId=.*?&/s)![0];
+        const errorFrame = await contactsFrame.getFrame(['pgp_pubkey.htm', firstFrameId]);
+        await errorFrame.waitForContent('@error-introduce-label', 'This OpenPGP key is not usable.');
+        await errorFrame.waitForInputValue('@error-email-input', 'dsa@flowcrypt.test');
       })
     );
     test(
@@ -454,10 +485,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - primary + secondary',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'link', 0);
         await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.2pp1', 'link', 1);
@@ -467,10 +495,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - remove key',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.ready(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -672,11 +697,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - Catch.reportErr reports an error',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const experimentalFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
@@ -687,11 +708,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(
           t,
           `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
@@ -729,11 +746,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - attachment previews with entering pass phrase',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
         const k = Config.key('flowcrypt.compatibility.1pp1');
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
@@ -752,33 +765,56 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - inbox - show original',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '15f7f5e966792203'; // signed inline
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
+
+        // switch to original
+        await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        // expect no pgp blocks
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
+        expect(await inboxPage.read('@message-line')).to.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE DECRYPTED');
+
+        // switch back to decrypted
+        await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
+      })
+    );
+    test(
       'settings - pgp/mime preview and download attachment',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        const downloadedAttachmentFilename = `${__dirname}/7 years.jpeg`;
-        Util.deleteFileIfExists(downloadedAttachmentFilename);
-        const inboxPage = await browser.newExtensionPage(
-          t,
-          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`
-        );
-        const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
-        // check if download is awailable
-        await pgpBlockFrame.waitAll('.download-attachment');
-        // and preview
-        await pgpBlockFrame.waitAndClick('.preview-attachment');
-        const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
-        await (inboxPage.target as any) // eslint-disable-line no-underscore-dangle
-          ._client()
-          .send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
-        await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
-        await Util.sleep(1);
-        expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true;
-        Util.deleteFileIfExists(downloadedAttachmentFilename);
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const checkPage = async (page: ControllablePage) => {
+          const pgpBlockFrame = await page.getFrame(['pgp_block.htm']);
+          // check if download is awailable
+          await pgpBlockFrame.waitAll('.download-attachment');
+          // and preview
+          await pgpBlockFrame.waitAndClick('.preview-attachment');
+          const attachmentPreviewImage = await page.getFrame(['attachment_preview.htm']);
+          await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+          const downloadedFiles = await attachmentPreviewImage.awaitDownloadTriggeredByClicking(() =>
+            attachmentPreviewImage.waitAndClick('@attachment-preview-download')
+          );
+          expect(Object.keys(downloadedFiles)).contains('7 years.jpeg');
+          await page.close();
+        };
+        const msgId = '16e8b01f136c3d28';
+        await checkPage(await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
+        await checkPage(await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${msgId}`));
       })
     );
     const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {
@@ -793,15 +829,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - check if downloaded attachment name is correct',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
         // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
-        await checkIfFileDownloadsCorrectly(t, browser, '1821bf879a6f71e0', "what's_up_.txt");
-        await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', "what's_up%253F.txt.pgp");
+        await checkIfFileDownloadsCorrectly(t, browser, '188721aebb71c16c', "what's_up_.txt");
+        await checkIfFileDownloadsCorrectly(t, browser, '188722a157fd54a8', `what's_up%253F.txt`);
         // should not strip .gpg or .pgp extension when downloading original file after unsuccesssful decryption
         // // Check if bad pgp attachment file got downloaded with original file name
         await checkIfFileDownloadsCorrectly(t, browser, '18610f7f4ae8da0a', 'test.bat.pgp');
@@ -810,11 +842,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - add unprotected key',
       testWithBrowser(async (t, browser) => {
-        const acct = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         await SettingsPageRecipe.addKeyTest(
           t,
           browser,
@@ -828,11 +856,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - add unprotected s/mime key',
       testWithBrowser(async (t, browser) => {
-        const acct = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const unprotectedPrvKey = fs.readFileSync('test/samples/smime/human-unprotected-pem.txt', 'utf8');
         await SettingsPageRecipe.addKeyTest(
           t,
@@ -847,11 +871,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - error modal when page parameter invalid',
       testWithBrowser(async (t, browser) => {
-        const acct = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acct, somePubkey),
-        });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const invalidParamModalPage = await browser.newExtensionPage(t, `chrome/settings/index.htm?acctEmail=ci.tests.gmail@flowcrypt.test&page=invalid`);
         await Util.sleep(3);
         await invalidParamModalPage.waitForContent('.swal2-html-container', 'An unexpected value was found for the page parameter');

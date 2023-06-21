@@ -12,7 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
+import { Mime, MimeContentWithHeaders, MimeProccesedMsg } from '../../../js/common/core/mime.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
@@ -29,7 +29,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private currentlySavingDraft = false;
   private disableSendingDrafts = false;
   private saveDraftInterval?: number;
-  private lastDraftBody?: string;
+  private lastDraftBody = '';
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
   private localDraftPrefix = 'local-draft-';
@@ -116,6 +116,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         }
       }
     }
+  };
+
+  public setLastDraftBody = (draftBody: string): void => {
+    this.lastDraftBody = draftBody;
   };
 
   public draftSave = async (forceSave = false): Promise<void> => {
@@ -294,12 +298,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   };
 
-  private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
+  private fillAndRenderDraftHeaders = async (decoded: MimeContentWithHeaders) => {
     this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
     if (decoded.from) {
       this.view.S.now('input_from').val(decoded.from);
     }
     if (decoded.subject) {
+      this.lastDraftSubject = decoded.subject;
       this.view.S.cached('input_subject').val(decoded.subject);
     }
   };
@@ -337,11 +342,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private hasBodyChanged = (msgBody: string) => {
-    if (this.lastDraftBody === undefined) {
-      // first check
-      this.lastDraftBody = msgBody;
-      return false;
-    }
     if (msgBody && msgBody !== this.lastDraftBody) {
       this.lastDraftBody = msgBody;
       return true;
@@ -362,15 +362,15 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
-    const promptText = `<div style="font-size: 18px">Waiting for pass phrase to open draft...</div>`;
     if (this.view.isReplyBox) {
-      Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
+      const promptHtml = `<div class="draft-passphrase-container"><a class="action_open_passphrase_dialog" href="#">Enter passphrase</a> to open this draft.</div>`;
+      Xss.sanitizeRender(this.view.S.cached('prompt'), promptHtml).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
     } else {
       Xss.sanitizeRender(
         this.view.S.cached('prompt'),
         `
-        ${promptText}
+        <div style="font-size: 18px">Waiting for pass phrase to open draft...</div>
         <div class="mt-20">
           <button href="#" data-test="action-open-passphrase-dialog" class="button long green action_open_passphrase_dialog">Enter pass phrase</button>
           <button href="#" class="button gray action_close">close</button>

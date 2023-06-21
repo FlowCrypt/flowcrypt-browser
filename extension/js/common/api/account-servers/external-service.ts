@@ -26,6 +26,7 @@ export namespace FesRes {
   };
   export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
+  export type HelpFeedback = { sent: boolean };
 }
 
 /**
@@ -99,6 +100,10 @@ export class ExternalService extends Api {
     await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
   };
 
+  public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
+    return await this.request<FesRes.HelpFeedback>('POST', `/api/${this.apiVersion}/account/feedback`, {}, { email, message });
+  };
+
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
     await this.request<void>(
       'POST',
@@ -157,7 +162,7 @@ export class ExternalService extends Api {
   };
 
   private authHdr = async (): Promise<Dict<string>> => {
-    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+    const idToken = await InMemoryStore.getUntilAvailable(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
       return { Authorization: `Bearer ${idToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
     }

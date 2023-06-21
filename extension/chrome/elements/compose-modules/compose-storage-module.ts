@@ -157,7 +157,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
    */
-  public updateLocalPubkeysFromRemote = async (storedPubkeys: PubkeyInfo[], email: string, name?: string): Promise<void> => {
+  public updateLocalPubkeysFromRemote = async (storedPubkeys: PubkeyInfo[], email: string, name?: string): Promise<boolean> => {
     if (!email) {
       throw Error('Empty email');
     }
@@ -168,6 +168,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
       if (await compareAndSavePubkeysToStorage({ email, name }, lookupResult.pubkeys, storedPubkeys)) {
         await this.view.recipientsModule.reRenderRecipientFor(email);
       }
+      return lookupResult.pubkeys.length > 0;
     } catch (e) {
       if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
         Catch.reportErr(e);

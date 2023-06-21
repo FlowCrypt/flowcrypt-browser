@@ -10,7 +10,7 @@ import { Buf } from '../../../core/buf.js';
 import { RecipientType } from '../../shared/api.js';
 import { ReplyParams } from '../email-provider-api.js';
 
-export const FLOWCRYPT_REPLY_EMAIL_ADDRESSES = ['replies@flowcrypt.com', 'robot@flowcrypt.com'];
+export const FLOWCRYPT_REPLY_EMAIL_ADDRESSES = ['replies@flowcrypt.com', 'robot@flowcrypt.com', 'tests.only@flowcrypt.dev'];
 
 export namespace GmailRes {
   // responses
@@ -141,14 +141,14 @@ export class GmailParser {
 
   public static findAttachments = (
     msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
+    internalMsgId: string,
     internalResults: Attachment[] = [],
-    internalMsgId?: string,
     { pgpEncryptedIndex }: { pgpEncryptedIndex?: number } = {}
   ) => {
     if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
       internalMsgId = (msgOrPayloadOrPart as GmailRes.GmailMsg).id;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      GmailParser.findAttachments((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalResults, internalMsgId);
+      GmailParser.findAttachments((msgOrPayloadOrPart as GmailRes.GmailMsg).payload!, internalMsgId, internalResults);
     }
     if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload;
@@ -159,7 +159,7 @@ export class GmailParser {
         parts.length === 2 && contentType?.value?.startsWith('multipart/encrypted;') && contentType.value.includes('protocol="application/pgp-encrypted"')
       );
       for (const [i, part] of parts.entries()) {
-        GmailParser.findAttachments(part, internalResults, internalMsgId, {
+        GmailParser.findAttachments(part, internalMsgId, internalResults, {
           pgpEncryptedIndex: pgpEncrypted ? i : undefined,
         });
       }

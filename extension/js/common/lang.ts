@@ -130,10 +130,6 @@ export const Lang = {
     contactForSupportSubsentence,
     contactForSupportSentence: (isCustomerUrlFesUsed = false) => contactForSupportSubsentence(isCustomerUrlFesUsed, 'for support.'),
     writeMeToFixIt: (isCustomerUrlFesUsed: boolean) => contactForSupportSubsentence(isCustomerUrlFesUsed, 'to fix it.'),
-    restartBrowserAndTryAgain: (isCustomerUrlFesUsed: boolean) =>
-      `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(
-        isCustomerUrlFesUsed
-      )}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
   },
   passphraseRequired: {

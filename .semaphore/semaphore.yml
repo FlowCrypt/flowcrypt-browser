@@ -3,7 +3,7 @@ name: Flowcrypt Node Core Tests
 agent:
   machine:
     type: e1-standard-8
-    os_image: ubuntu1804
+    os_image: ubuntu2004
 auto_cancel:
   running:
     when: branch != 'master'
@@ -14,7 +14,7 @@ blocks:
   - name: Mock UI Tests
     dependencies: []
     execution_time_limit:
-      minutes: 30
+      minutes: 45
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
@@ -23,8 +23,6 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - nvm use 16
-          - nvm alias default 16
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
@@ -62,7 +60,7 @@ blocks:
     run:
       when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
-      minutes: 50
+      minutes: 45
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
@@ -71,8 +69,6 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - nvm use 16
-          - nvm alias default 16
           - npm install -g npm@8.11.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
@@ -109,8 +105,6 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - nvm use 16
-          - nvm alias default 16
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install

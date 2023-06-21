@@ -2,114 +2,121 @@
 
 'use strict';
 
-import { Str, Url } from '../../js/common/core/common.js';
+import { Url } from '../../js/common/core/common.js';
 import { Assert } from '../../js/common/assert.js';
-import { Buf } from '../../js/common/core/buf.js';
-import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
-import { Lang } from '../../js/common/lang.js';
+import { RenderMessage, RenderMessageWithFrameId } from '../../js/common/render-message.js';
+import { Attachment } from '../../js/common/core/attachment.js';
+import { Xss } from '../../js/common/platform/xss.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
-import { PgpBlockViewDecryptModule } from './pgp_block_modules/pgp-block-decrypt-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
+import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
-import { PgpBlockViewSignatureModule } from './pgp_block_modules/pgp-block-signature-module.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
-import { PubLookup } from '../../js/common/api/pub-lookup.js';
-import { ClientConfiguration } from '../../js/common/client-configuration.js';
-import { AcctStore } from '../../js/common/platform/store/acct-store.js';
-import { ContactStore } from '../../js/common/platform/store/contact-store.js';
-import { KeyUtil } from '../../js/common/core/crypto/key.js';
+import { Bm } from '../../js/common/browser/browser-msg.js';
 
 export class PgpBlockView extends View {
-  public readonly acctEmail: string;
+  public readonly acctEmail: string; // needed for attachment decryption, probably should be refactored out
   public readonly parentTabId: string;
   public readonly frameId: string;
-  public readonly isOutgoing: boolean;
-  public readonly senderEmail: string;
-  public readonly msgId: string | undefined;
-  public readonly encryptedMsgUrlParam: Buf | undefined;
-  public readonly signature?: {
-    // when parsedSignature is undefined, decryptModule will try to fetch the message
-    parsedSignature?: string;
-  };
-
-  public gmail: Gmail;
-  public clientConfiguration!: ClientConfiguration;
-  public pubLookup!: PubLookup;
 
   public readonly debug: boolean;
   public readonly attachmentsModule: PgpBlockViewAttachmentsModule;
-  public readonly signatureModule: PgpBlockViewSignatureModule;
   public readonly quoteModule: PgpBlockViewQuoteModule;
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
-  public readonly decryptModule: PgpBlockViewDecryptModule;
-
-  public fesUrl?: string;
+  public readonly printModule = new PgpBlockViewPrintModule();
 
   public constructor() {
     super();
     Ui.event.protect();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'signature', 'debug']);
+    const uncheckedUrlParams = Url.parse(['frameId', 'parentTabId', 'debug', 'acctEmail']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-    this.isOutgoing = uncheckedUrlParams.isOutgoing === true;
     this.debug = uncheckedUrlParams.debug === true;
-    const senderEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'senderEmail');
-    this.senderEmail = Str.parseEmail(senderEmail).email || '';
-    this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    if (/\.\.|\\|\//.test(decodeURI(this.msgId || ''))) {
-      throw new Error('API path traversal forbidden');
-    }
-    this.encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
-    if (uncheckedUrlParams.signature === true) {
-      this.signature = { parsedSignature: undefined }; // decryptModule will try to fetch the message
-    } else if (uncheckedUrlParams.signature) {
-      this.signature = { parsedSignature: String(uncheckedUrlParams.signature) };
-    }
-    this.gmail = new Gmail(this.acctEmail);
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
-    this.signatureModule = new PgpBlockViewSignatureModule(this);
     this.quoteModule = new PgpBlockViewQuoteModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.renderModule = new PgpBlockViewRenderModule(this);
-    this.decryptModule = new PgpBlockViewDecryptModule(this);
+    chrome.runtime.onMessage.addListener((message: Bm.Raw) => {
+      if (message.name === 'pgp_block_render') {
+        const msg = message.data.bm as RenderMessageWithFrameId;
+        if (msg.frameId === this.frameId) {
+          this.processMessage(msg);
+          return true;
+        }
+      }
+      return false;
+    });
+    window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
   }
 
-  public getExpectedSignerEmail = () => {
-    // We always attempt to verify all signatures as "signed by sender", with public keys of the sender.
-    // That way, signature spoofing attacks are prevented: if Joe manages to spoof a sending address
-    // of Jane (send an email from Jane address), then we expect Jane to be this signer: we look up
-    // keys recorded for Jane and the signature either succeeds or fails to verify.
-    // If it fails (that pubkey which Joe used is not recorded for Jane), it will show an error.
-    return this.senderEmail;
-  };
-
   public render = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'fesUrl']);
-    this.fesUrl = storage.fesUrl;
-    this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
-    this.pubLookup = new PubLookup(this.clientConfiguration);
-    await this.renderModule.initPrintView();
-    if (storage.setup_done) {
-      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.getExpectedSignerEmail()))?.sortedPubkeys ?? [];
-      // todo: we don't actually need parsed pubs here because we're going to pass them to the backgorund page
-      // maybe we can have a method in ContactStore to extract armored keys
-      const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-      await this.decryptModule.initialize(verificationPubs, false);
-    } else {
-      await this.errorModule.renderErr(Lang.pgpBlock.refreshWindow, this.encryptedMsgUrlParam ? this.encryptedMsgUrlParam.toUtfStr() : undefined);
-    }
+    //
   };
 
   public setHandlers = () => {
     $('.pgp_print_button').on(
       'click',
-      this.setHandler(() => this.renderModule.printPGPBlock())
+      this.setHandler(() => this.printModule.printPGPBlock())
     );
+  };
+
+  private processMessage = (data: RenderMessage) => {
+    // messages aren't merged when queueing, so the order is arbitrary
+    if (data?.renderEncryptionStatus) {
+      this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);
+    }
+    if (data?.renderVerificationInProgress) {
+      $('#pgp_signature').removeClass('green_label red_label').addClass('gray_label').text('verifying signature...');
+    }
+    if (data?.renderSignatureStatus) {
+      this.renderModule.renderSignatureStatus(data.renderSignatureStatus);
+    }
+    if (data?.renderText) {
+      this.renderModule.renderText(data.renderText);
+    }
+    if (data?.resizePgpBlockFrame) {
+      this.renderModule.resizePgpBlockFrame();
+    }
+    if (data?.separateQuotedContentAndRenderText) {
+      this.quoteModule.separateQuotedContentAndRenderText(
+        data.separateQuotedContentAndRenderText.decryptedContent,
+        data.separateQuotedContentAndRenderText.isHtml
+      );
+    }
+    if (data?.setFrameColor) {
+      this.renderModule.setFrameColor(data.setFrameColor);
+    }
+    if (data?.renderInnerAttachments) {
+      const attachments = data.renderInnerAttachments.attachments.map(Attachment.fromTransferableAttachment);
+      this.attachmentsModule.renderInnerAttachments(attachments, data.renderInnerAttachments.isEncrypted);
+    }
+    if (data?.renderErr) {
+      this.errorModule.renderErr(data.renderErr.errBoxContent, data.renderErr.renderRawMsg, data.renderErr.errMsg);
+    }
+    if (data?.renderPassphraseNeeded) {
+      this.renderModule.renderPassphraseNeeded(data.renderPassphraseNeeded);
+    }
+    if (data?.clearErrorStatus) {
+      this.renderModule.clearErrorStatus();
+    }
+    if (data?.done) {
+      Ui.setTestState('ready');
+    }
+    if (data?.printMailInfo) {
+      Xss.sanitizeRender('.print_user_email', data.printMailInfo.userNameAndEmail);
+      this.printModule.printMailInfoHtml = data.printMailInfo.html;
+    }
+    if (data?.renderAsRegularContent) {
+      this.renderModule.renderAsRegularContent(data.renderAsRegularContent);
+    }
+    if (data?.renderSignatureOffline) {
+      this.renderModule.renderSignatureOffline();
+    }
   };
 }
 

@@ -87,7 +87,7 @@ Catch.try(async () => {
     const fetchableAttachments: Attachment[] = [];
     const skippedAttachments: Attachment[] = [];
     for (const msg of messages) {
-      for (const attachment of GmailParser.findAttachments(msg)) {
+      for (const attachment of GmailParser.findAttachments(msg, msg.id)) {
         if (attachment.length > 1024 * 1024 * 7) {
           // over 7 mb - attachment too big
           skippedAttachments.push(
@@ -102,7 +102,7 @@ Catch.try(async () => {
         }
       }
     }
-    await gmail.fetchAttachments(fetchableAttachments, percent => print(`Percent attachments done: ${percent}`));
+    await gmail.fetchAttachmentsMissingData(fetchableAttachments, percent => print(`Percent attachments done: ${percent}`));
     const attachments: { [id: string]: { data: string; size: number } } = {};
     for (const attachment of fetchableAttachments.concat(skippedAttachments)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

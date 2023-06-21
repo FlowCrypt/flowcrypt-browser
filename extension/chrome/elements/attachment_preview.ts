@@ -36,11 +36,9 @@ View.run(
       try {
         Xss.sanitizeRender(this.attachmentPreviewContainer, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
         this.attachment = new Attachment({
+          ...this.attachmentId,
           name: this.origNameBasedOnFilename,
           type: this.type,
-          msgId: this.msgId,
-          id: this.id,
-          url: this.url,
         });
         await this.downloadDataIfNeeded();
         const result = this.isEncrypted ? await this.decrypt() : this.attachment.getData();

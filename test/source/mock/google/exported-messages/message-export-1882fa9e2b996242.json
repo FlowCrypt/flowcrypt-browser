@@ -1,0 +1,92 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "1882fa9e2b996242",
+    "threadId": "1882fa9e2b996242",
+    "labelIds": ["IMPORTANT", "SENT", "INBOX"],
+    "snippet": "-----BEGIN PGP MESSAGE----- yMCxATvCy8zAxHhitbJOfXrcEcbTKkkMIOCRmpOTr6NQkpFZrABEiQolqcUlCrmpxcWJ6alchw5U sjAwMjEoiymyhJfeapohyXRUYeazxTBjWJkSeOtDWJnBRnFxCsDEv33mYDjmdsuGPyx68g7tMwe3 tqlevvUo5EIap+",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/alternative",
+      "filename": "",
+      "headers": [
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 18 May 2023 19:20:42 +0300"
+        },
+        {
+          "name": "Subject",
+          "value": "SHA1 test inline"
+        },
+        {
+          "name": "From",
+          "value": "sha1@sign.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/alternative; boundary=\"0000000000009dfa5f05fbfa2faa\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain; charset=\"UTF-8\""
+            }
+          ],
+          "body": {
+            "size": 575,
+            "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNCnlNQ3hBVHZDeTh6QXhIaGl0YkpPZlhyY0VjYlRLa2tNSU9DUm1wT1RyNk5Ra3BGWnJBQkVpUW9scWNVbENybXB4Y1dKNmFsY2h3NVUNCnNqQXdNakVvaXlteWhKZmVhcG9oeVhSVVllYXp4VEJqV0prU2VPdERXSm5CUm5GeENzREV2MzNtWURqbWRzdUdQeXg2OGc3dE13ZTMNCnRxbGV2dlVvNUVJYXArd21abTZtUlhjT0dCcGx2SnkxbWZ1cTFwbHJ0MDhxczk3WTJ6dEIrL1hidXlHM0lyNDh1N0kzcG1EK1RXYWUNCldTZDVkMjZRWVhjdXVzYXVjMFh5L2ZTMS9GWGJQSmFZSGxDZU1DZm5ockY5ZDJqeUgzM1YrZXI2cjNsUzVpL21jaE9LZmZwZ2xrdFQNCmQ2WjM2Ly9Nc21jek4wMFdkNjB0OVQrcXlMejBUNC9VRzJZOWxnZjM2N2YzZCtrWVBFMExTN21YdUZtamxQWGZ3MG5LeVZzU2VGaXUNCjNkdXorVmZ6VTNIVlo2NUw0eGM1UEJZd1dMbHNoZGNHOTRWVHQyb0szY3VMQzV6dXkvM2tzMHN3MStNR3ptS3RqTWVKcnFYcGgrOHANCjVXNUptSEwyOHFhcmJRdnYrNzFWM25pNm9kazhaMk5EYmFuMnkxa0ENCj1SdXluDQotLS0tLUVORCBQR1AgTUVTU0FHRS0tLS0tDQo="
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "text/html",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/html; charset=\"UTF-8\""
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "quoted-printable"
+            }
+          ],
+          "body": {
+            "size": 1266,
+            "data": "PGRpdiBkaXI9Imx0ciI-PGRpdiBzdHlsZT0iY29sb3I6cmdiKDAsMCwwKTtmb250LWZhbWlseTomcXVvdDtEcm9pZCBTYW5zIE1vbm8mcXVvdDssJnF1b3Q7bW9ub3NwYWNlJnF1b3Q7LG1vbm9zcGFjZTtmb250LXNpemU6MTRweDtsaW5lLWhlaWdodDoxOXB4O3doaXRlLXNwYWNlOnByZSI-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPi0tLS0tQkVHSU4gUEdQIE1FU1NBR0UtLS0tLTwvc3Bhbj48L2Rpdj48YnI-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPnlNQ3hBVHZDeTh6QXhIaGl0YkpPZlhyY0VjYlRLa2tNSU9DUm1wT1RyNk5Ra3BGWnJBQkVpUW9scWNVbENybXB4Y1dKNmFsY2h3NVU8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPnNqQXdNakVvaXlteWhKZmVhcG9oeVhSVVllYXp4VEJqV0prU2VPdERXSm5CUm5GeENzREV2MzNtWURqbWRzdUdQeXg2OGc3dE13ZTM8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPnRxbGV2dlVvNUVJYXArd21abTZtUlhjT0dCcGx2SnkxbWZ1cTFwbHJ0MDhxczk3WTJ6dEIrL1hidXlHM0lyNDh1N0kzcG1EK1RXYWU8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPldTZDVkMjZRWVhjdXVzYXVjMFh5L2ZTMS9GWGJQSmFZSGxDZU1DZm5ockY5ZDJqeUgzM1YrZXI2cjNsUzVpL21jaE9LZmZwZ2xrdFQ8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPmQ2WjM2Ly9Nc21jek4wMFdkNjB0OVQrcXlMejBUNC9VRzJZOWxnZjM2N2YzZCtrWVBFMExTN21YdUZtamxQWGZ3MG5LeVZzU2VGaXU8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPjNkdXorVmZ6VTNIVlo2NUw0eGM1UEJZd1dMbHNoZGNHOTRWVHQyb0szY3VMQzV6dXkvM2tzMHN3MStNR3ptS3RqTWVKcnFYcGgrOHA8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPjVXNUptSEwyOHFhcmJRdnYrNzFWM25pNm9kazhaMk5EYmFuMnkxa0E8L3NwYW4-PC9kaXY-PGRpdj48c3BhbiBzdHlsZT0iY29sb3I6cmdiKDE2MywyMSwyMSkiPj1SdXluPC9zcGFuPjwvZGl2PjxkaXY-PHNwYW4gc3R5bGU9ImNvbG9yOnJnYigxNjMsMjEsMjEpIj4tLS0tLUVORCBQR1AgTUVTU0FHRS0tLS0tPC9zcGFuPjwvZGl2PjwvZGl2PjwvZGl2Pg0K"
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 2501,
+    "historyId": "2634857",
+    "internalDate": "1684426842000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "1882fa9e2b996242",
+    "threadId": "1882fa9e2b996242",
+    "labelIds": ["IMPORTANT", "SENT", "INBOX"],
+    "snippet": "-----BEGIN PGP MESSAGE----- yMCxATvCy8zAxHhitbJOfXrcEcbTKkkMIOCRmpOTr6NQkpFZrABEiQolqcUlCrmpxcWJ6alchw5U sjAwMjEoiymyhJfeapohyXRUYeazxTBjWJkSeOtDWJnBRnFxCsDEv33mYDjmdsuGPyx68g7tMwe3 tqlevvUo5EIap+",
+    "sizeEstimate": 2501,
+    "historyId": "2634857",
+    "internalDate": "1684426842000"
+  }
+}

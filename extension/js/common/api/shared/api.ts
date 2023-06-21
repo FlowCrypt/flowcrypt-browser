@@ -25,6 +25,8 @@ type RawAjaxErr = {
   status?: number;
   statusText?: string;
 };
+export type ProgressDestFrame = { frameId: string; expectedTransferSize: number; tabId?: string };
+export type ApiCallContext = ProgressDestFrame | undefined;
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
@@ -58,7 +60,7 @@ export class Api {
     });
   };
 
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<unknown | JQuery.jqXHR<unknown>> => {
+  public static ajax = async (req: JQuery.AjaxSettings<ApiCallContext>, stack: string): Promise<unknown | JQuery.jqXHR<unknown>> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -104,8 +106,8 @@ export class Api {
     }
   };
 
-  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
-    if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
+  public static getAjaxProgressXhrFactory = (progressCbs: ProgressCbs | undefined): (() => XMLHttpRequest) | undefined => {
+    if (Env.isContentScript() || !progressCbs || !(progressCbs.upload || progressCbs.download)) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts
       // additionally no need to create this if there are no progressCbs defined
@@ -191,7 +193,7 @@ export class Api {
     } else {
       throw new Error('unknown format:' + String(fmt));
     }
-    const req: JQueryAjaxSettings = {
+    const req: JQuery.AjaxSettings<ApiCallContext> = {
       xhr: Api.getAjaxProgressXhrFactory(progress),
       url: url + path,
       method,

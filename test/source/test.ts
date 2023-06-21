@@ -11,7 +11,6 @@ import { Util, getParsedCliParams } from './util';
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
-import { reportedErrors } from './mock/backend/backend-endpoints';
 import { defineComposeTests } from './tests/compose';
 import { defineContentScriptTests } from './tests/content-script';
 import { defineDecryptTests } from './tests/decrypt';
@@ -22,6 +21,7 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
+import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -35,8 +35,8 @@ const consts = {
   // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(4),
-  TIMEOUT_ALL_RETRIES: minutes(45), // this has to suffer waiting for semaphore between retries, thus almost the same as below
-  TIMEOUT_OVERALL: minutes(50),
+  TIMEOUT_ALL_RETRIES: minutes(55), // this has to suffer waiting for semaphore between retries, thus almost the same as below
+  TIMEOUT_OVERALL: minutes(60),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
@@ -152,6 +152,13 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
         e.message !== 'Some keys could not be parsed' &&
         !e.message.match(/BrowserMsg\(ajax\) Bad Request: 400 when GET-ing https:\/\/localhost:\d+\/flowcrypt-email-key-manager/)
     )
+    // below for test "decrypt - failure retrieving chunk download - next request will try anew"
+    .filter(
+      e =>
+        !/BrowserMsg\(ajaxGmailAttachmentGetChunk\) \(no status text\): 400 when GET-ing https:\/\/localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
+          e.message
+        )
+    )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
@@ -160,7 +167,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for "test allows to retry public key search when attester returns error"
     .filter(
-      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester.return.error@flowcrypt.test/)
+      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/)
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
