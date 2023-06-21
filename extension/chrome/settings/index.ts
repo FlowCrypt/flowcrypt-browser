@@ -244,7 +244,7 @@ View.run(
       Ui.activateModalPageLinkTags();
     };
 
-    private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+    private accountsMenuKeydownHandler = (e: JQuery.TriggeredEvent<HTMLElement>): void => {
       const currentActive = this.altAccounts.find(':focus');
       const accounts = this.altAccounts.find('a');
       if (e.key === 'Escape') {

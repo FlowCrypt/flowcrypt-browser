@@ -147,7 +147,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
     });
     BrowserMsg.addListener('scroll_to_bottom_of_conversation', async () => {
       const scrollableEl = $('.thread').get(0);
-      scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
+      if (scrollableEl) {
+        scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
+      }
     });
     BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
       const traverseUpLevels = traverseUp || 0;
