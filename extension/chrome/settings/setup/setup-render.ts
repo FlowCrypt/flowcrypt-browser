@@ -12,6 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import * as $ from 'jquery';
 
 export class SetupRenderModule {
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];

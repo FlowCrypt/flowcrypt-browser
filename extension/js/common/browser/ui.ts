@@ -10,7 +10,8 @@ import { Xss } from '../platform/xss.js';
 import { Bm, BrowserMsg } from './browser-msg.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
-type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
+
+type ProvidedEventHandler = (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>;
 
 export interface ConfirmationResultTracker {
   getParentTabId: () => string;
@@ -74,7 +75,7 @@ export class Ui {
       });
     },
     handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
-      return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
+      return function uiEventHandle(this: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) {
         try {
           const r = cb.bind(originalThis)(this, event) as void | Promise<void>;
           if (typeof r === 'object' && typeof r.catch === 'function') {
@@ -419,7 +420,7 @@ export class Ui {
   };
 
   public static escape = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
         callback();
@@ -427,8 +428,8 @@ export class Ui {
     };
   };
 
-  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => {
+  public static tab = (callback: (e: JQuery.Event) => void) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
         callback(e);
@@ -436,8 +437,8 @@ export class Ui {
     };
   };
 
-  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => {
+  public static shiftTab = (callback: (e: JQuery.Event) => void) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
         callback(e);
@@ -446,7 +447,7 @@ export class Ui {
   };
 
   public static enter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
         callback();
@@ -455,7 +456,7 @@ export class Ui {
   };
 
   public static ctrlEnter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (
         (e.metaKey || e.ctrlKey) &&

@@ -42,7 +42,7 @@ export abstract class View {
     View.setTestViewStateLoaded();
   };
 
-  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
+  public setHandler = (cb: (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
   };
 
@@ -55,7 +55,7 @@ export abstract class View {
   };
 
   public setEnterHandlerThatClicks = (selector: string) => {
-    return (event: JQuery.Event<HTMLElement, null>) => {
+    return (event: JQuery.Event) => {
       if (event.which === 13) {
         $(selector).trigger('click');
       }
