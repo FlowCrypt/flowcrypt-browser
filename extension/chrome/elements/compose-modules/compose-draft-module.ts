@@ -12,7 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
+import { Mime, MimeContentWithHeaders, MimeProccesedMsg } from '../../../js/common/core/mime.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
@@ -298,7 +298,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   };
 
-  private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
+  private fillAndRenderDraftHeaders = async (decoded: MimeContentWithHeaders) => {
     this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
     if (decoded.from) {
       this.view.S.now('input_from').val(decoded.from);

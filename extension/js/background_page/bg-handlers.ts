@@ -4,7 +4,7 @@
 
 import { Api } from '../common/api/shared/api.js';
 import { BgUtils } from './bgutils.js';
-import { Bm } from '../common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
@@ -29,7 +29,27 @@ export class BgHandlers {
     return await dbFunc(db, ...request.args);
   };
 
-  public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
+  public static ajaxHandler = async (r: Bm.Ajax, sender: Bm.Sender): Promise<Bm.Res.Ajax> => {
+    if (r.req.context?.frameId) {
+      // progress updates were requested via messages
+      let dest = r.req.context.tabId;
+      if (typeof dest === 'undefined') {
+        // detect tabId from sender
+        if (sender !== 'background') {
+          if (typeof sender?.tab?.id !== 'undefined') {
+            dest = `${sender.tab.id}:0`;
+          }
+        }
+      }
+      if (typeof dest !== 'undefined') {
+        const destination = dest;
+        const frameId = r.req.context.frameId;
+        const expectedTransferSize = r.req.context.expectedTransferSize;
+        r.req.xhr = Api.getAjaxProgressXhrFactory({
+          download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, frameId }),
+        });
+      }
+    }
     return await Api.ajax(r.req, r.stack);
   };
 

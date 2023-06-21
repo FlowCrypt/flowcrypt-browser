@@ -216,35 +216,42 @@ export class GoogleData {
     return msgCopy;
   };
 
-  public static getMockGmailPage = async (acct: string, msgId?: string) => {
+  public static getMockGmailPage = async (acct: string, msgId?: string, htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined) => {
     let msgBlock = '';
     let attachmentsBlock = '';
     if (msgId) {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
-      const fromAddress = fromHeader.value!;
-      let htmlData: string;
-      const htmlPart = payload.parts!.find(part => part.mimeType === 'text/html');
-      if (htmlPart) {
-        htmlData = Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr();
+      const fromAddress = Xss.escape(fromHeader!.value);
+      let htmlData: string | undefined;
+      let processedParts: GmailMsg$payload$part[] = [];
+      if (payload.mimeType === 'text/plain') {
+        const textData = Buf.fromBase64Str(payload.body!.data!).toUtfStr();
+        htmlData = GoogleData.htmlFromText(textData);
       } else {
-        const textPart = payload.parts!.find(part => part.mimeType === 'text/plain')!;
-        const textData = Buf.fromBase64Str(textPart.body!.data!).toUtfStr();
-        htmlData = Xss.escape(textData);
+        ({ htmlData, processedParts } = GoogleData.getHtmlDataToDisplay(payload) ?? { htmlData: undefined, processedParts: [] });
       }
-      const otherParts = payload.parts!.filter(part => !['text/plain', 'text/html'].includes(part.mimeType!));
+      const updatedHtmlData = htmlRenderer ? htmlRenderer(msgId, htmlData) : htmlData;
+      const otherParts = GoogleData.getFileParts(payload.parts, processedParts);
       if (otherParts.length) {
         attachmentsBlock =
           `<div class="ho"><span class="aVW"><span>${otherParts.length}</span> Attachments</span></div>
         <div class="aQH">` +
           otherParts
             .map(
-              part => `<span class="aZo">
-              <div><div><div>
+              part => `<span class="aZo" style="display: block; float: left; margin: 0 0 16px 16px; height: 120px; width: 180px; position: relative;">
+                <a
+    target="_blank"
+    role="link"
+    class="aQy e" style="background-color: #f1f1f1; display: inline-block; height: 120px; width: 180px; overflow: hidden; position: relative; z-index: 0;    text-decoration: none;"
+    href="#dummy">
+    <div class="aYv" style="position: relative; height: 85px; text-align: center;"></div>
+    <div class="aYy" style="background-color: #f5f5f5; border-top: 1px solid #e5e5e5; bottom: 0; left: 0; position: absolute; right: 0;">
+    <div><div>
               <span class="aV3">${Xss.escape(part.filename!)}</span>
               </div></div></div>
-              </span>`
+              </a></span>`
             )
             .join('') +
           '</div>';
@@ -253,7 +260,7 @@ export class GoogleData {
       msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
     <div class="gs">
       <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
-      <div class="a3s">${htmlData}</div>
+      <div class="a3s">${updatedHtmlData ?? ''}</div>
       ${attachmentsBlock}
     </div>
   </div>
@@ -275,6 +282,19 @@ export class GoogleData {
   `;
   };
 
+  private static getFileParts = (parts: GmailMsg$payload$part[] | undefined, skipParts: GmailMsg$payload$part[]): { filename: string }[] => {
+    if (!parts) return [];
+    return parts
+      .filter(part => part.mimeType !== 'multipart/alternative' && !skipParts.includes(part))
+      .map(part => {
+        if (part.mimeType === 'multipart/mixed') {
+          return GoogleData.getFileParts(part.parts, skipParts);
+        }
+        return [{ filename: part.filename || 'noname' }];
+      })
+      .reduce((a, b) => a.concat(b), []);
+  };
+
   private static msgSubject = (m: GmailMsg): string => {
     const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
     return (subjectHeader && subjectHeader.value) || '';
@@ -292,10 +312,44 @@ export class GoogleData {
     );
   };
 
+  private static getHtmlDataToDisplay = (
+    partsContainer: GmailMsg$payload | GmailMsg$payload$part
+  ): { htmlData: string; processedParts: GmailMsg$payload$part[] } | undefined => {
+    const htmlPart = partsContainer.parts?.find(part => part.mimeType === 'text/html');
+    const textPart = partsContainer.parts?.find(part => part.mimeType === 'text/plain');
+    if (htmlPart) {
+      const processedParts = [htmlPart];
+      if (partsContainer.mimeType === 'multipart/alternative' && textPart) {
+        // consume both html and text
+        processedParts.push(textPart);
+      }
+      return { htmlData: Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr(), processedParts };
+    } else if (typeof textPart?.body?.data !== 'undefined') {
+      const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
+      return { htmlData: GoogleData.htmlFromText(textData), processedParts: [textPart] };
+    }
+    // search inside multipart/alternative
+    const alternativePart = partsContainer.parts?.find(part => part.mimeType === 'multipart/alternative');
+    if (alternativePart) {
+      return GoogleData.getHtmlDataToDisplay(alternativePart);
+    }
+    // search inside multipart/mixed
+    const mixedPart = partsContainer.parts?.find(part => part.mimeType === 'multipart/mixed');
+    if (mixedPart) {
+      return GoogleData.getHtmlDataToDisplay(mixedPart);
+    }
+    return undefined;
+  };
+
+  private static htmlFromText = (textData: string): string => {
+    return Xss.escape(textData).replace(/\n/g, '<br>') + '<br><br>';
+  };
+
   public storeSentMessage = (parseResult: ParseMsgResult, id: string): string => {
     let bodyContentAtt: { data: string; size: number; filename?: string; id: string } | undefined;
-    const parsedMail = parseResult.mimeMsg;
-    for (const attachment of parsedMail.attachments || []) {
+    const { html, text, attachments, from, subject, messageId } = parseResult.mimeMsg;
+    const parts: GmailMsg$payload$part[] = [];
+    for (const [index, attachment] of attachments.entries()) {
       const attId = Util.lousyRandom();
       const gmailAtt = {
         data: attachment.content.toString('base64'),
@@ -307,15 +361,35 @@ export class GoogleData {
       if (attachment.filename === 'encrypted.asc') {
         bodyContentAtt = gmailAtt;
       }
+      parts.push({
+        partId: index.toString(),
+        mimeType: attachment.contentType,
+        filename: attachment.filename,
+        body: {
+          attachmentId: attId,
+          size: attachment.size,
+        },
+      });
     }
     let body: GmailMsg$payload$body;
-    const htmlOrText = parsedMail.html || parsedMail.text;
-    if (htmlOrText) {
-      body = { data: htmlOrText, size: htmlOrText.length };
+    let mimeType: string | undefined;
+    if (html) {
+      body = { data: Buf.fromUtfStr(html).toBase64Str(), size: html.length };
+      mimeType = 'text/html';
+    } else if (text) {
+      body = { data: Buf.fromUtfStr(text).toBase64Str(), size: text.length };
+      mimeType = 'text/plain';
     } else if (bodyContentAtt) {
       body = { attachmentId: bodyContentAtt.id, size: bodyContentAtt.size };
     } else {
       throw new Error('MOCK storeSentMessage: no parsedMail body, no appropriate bodyContentAtt');
+    }
+    const headers = [
+      { name: 'Subject', value: subject || '' },
+      { name: 'Message-ID', value: messageId || '' },
+    ];
+    if (from) {
+      headers.push({ name: 'From', value: from.text });
     }
     const barebonesGmailMsg: GmailMsg = {
       // todo - could be improved - very barebones
@@ -324,11 +398,10 @@ export class GoogleData {
       historyId: '',
       labelIds: ['SENT' as GmailMsg$labelId],
       payload: {
-        headers: [
-          { name: 'Subject', value: parsedMail.subject || '' },
-          { name: 'Message-ID', value: parsedMail.messageId || '' },
-        ],
+        mimeType,
+        headers,
         body,
+        parts,
       },
       raw: parseResult.base64,
     };

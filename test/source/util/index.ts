@@ -46,10 +46,6 @@ export type TestMessage = {
   error?: string;
 };
 
-export type TestMessageWithParams = TestMessage & {
-  params: string;
-};
-
 export type TestKeyInfo = {
   title: string;
   passphrase: string;

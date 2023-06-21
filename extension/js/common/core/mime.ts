@@ -22,17 +22,24 @@ const Iso88592 = requireIso88592();
 
 type AddressHeader = { address: string; name: string };
 type MimeContentHeader = string | AddressHeader[];
-export type MimeContent = {
-  headers: Dict<MimeContentHeader>;
-  attachments: Attachment[];
-  rawSignedContent?: string;
-  subject?: string;
+
+export type MessageBody = {
   html?: string;
   text?: string;
-  from?: string;
+};
+
+export type MimeContent = MessageBody & {
+  attachments: Attachment[]; // attachments in MimeContent are parsed from a raw MIME message and always have data
+  rawSignedContent?: string;
+  subject?: string;
+};
+
+export type MimeContentWithHeaders = MimeContent & {
+  headers: Dict<MimeContentHeader>;
   to: string[];
   cc: string[];
   bcc: string[];
+  from?: string;
 };
 
 export type MimeEncodeType = 'pgpMimeEncrypted' | 'pgpMimeSigned' | 'smimeEncrypted' | 'smimeSigned' | undefined;
@@ -44,21 +51,19 @@ export type SendableMsgBody = {
   'text/html'?: string;
   'pkcs7/buf'?: Buf; // DER-encoded PKCS#7 message
 };
-/* eslint-enable @typescript-eslint/naming-convention */
+
 export type MimeProccesedMsg = {
-  rawSignedContent: string | undefined;
-  headers: Dict<MimeContentHeader>;
-  blocks: MsgBlock[];
-  from: string | undefined;
-  to: string[];
+  rawSignedContent: string | undefined; // undefined if format was 'full'
+  blocks: MsgBlock[]; // may be many blocks per file
 };
+
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
-  public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
+  public static processBody = (decoded: MessageBody): MsgBlock[] => {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
-      const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text)).blocks;
+      const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text), true).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
       if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
@@ -72,23 +77,42 @@ export class Mime {
     } else if (decoded.html) {
       blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
+    return blocks;
+  };
+
+  public static isBodyEmpty = ({ text, html }: MessageBody) => {
+    return Mime.isBodyTextEmpty(text) && Mime.isBodyTextEmpty(html);
+  };
+
+  public static isBodyTextEmpty = (text: string | undefined) => {
+    return !(text && !/^(\r)?(\n)?$/.test(text));
+  };
+
+  public static processAttachments = (bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
+    const attachmentBlocks: MsgBlock[] = [];
     const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
-      const isBodyEmpty = decoded.text === '' || decoded.text === '\n';
-      const treatAs = file.treatAs(decoded.attachments, isBodyEmpty);
+      let treatAs = file.treatAs(decoded.attachments, Mime.isBodyEmpty(decoded));
+      if (['needChunk', 'maybePgp'].includes(treatAs)) {
+        // todo: attachments from MimeContent always have data set (so 'needChunk' should never happen),
+        // and we can perform whatever analysis is needed based on the actual data,
+        // but we don't want to reference MsgUtil and OpenPGP.js from this class,
+        // so I suggest to move this method to MessageRenderer for further refactoring
+        treatAs = 'encryptedMsg'; // publicKey?
+      }
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
         if (armored) {
-          blocks.push(MsgBlock.fromContent('encryptedMsg', armored));
+          attachmentBlocks.push(MsgBlock.fromContent('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         signatureAttachments.push(file);
       } else if (treatAs === 'publicKey') {
-        blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
+        attachmentBlocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks); // todo: test when more than one
       } else if (treatAs === 'privateKey') {
-        blocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr()).blocks);
+        attachmentBlocks.push(...MsgBlockParser.detectBlocks(file.getData().toUtfStr(), true).blocks); // todo: test when more than one
       } else if (treatAs === 'encryptedFile') {
-        blocks.push(
+        attachmentBlocks.push(
           MsgBlock.fromAttachment('encryptedAttachment', '', {
             name: file.name,
             type: file.type,
@@ -97,7 +121,7 @@ export class Mime {
           })
         );
       } else if (treatAs === 'plainFile') {
-        blocks.push(
+        attachmentBlocks.push(
           MsgBlock.fromAttachment('plainAttachment', '', {
             name: file.name,
             type: file.type,
@@ -111,39 +135,27 @@ export class Mime {
     }
     if (signatureAttachments.length) {
       // todo: if multiple signatures, figure out which fits what
+      // attachments from MimeContent always have data set
       const signature = signatureAttachments[0].getData().toUtfStr();
-      for (const block of blocks) {
-        if (block.type === 'plainText') {
-          block.type = 'signedText';
-          block.signature = signature;
-        } else if (block.type === 'plainHtml') {
-          block.type = 'signedHtml';
-          block.signature = signature;
-        }
-      }
-      if (!blocks.find(block => ['plainText', 'plainHtml', 'signedMsg', 'signedHtml', 'signedText'].includes(block.type))) {
+      if (![...bodyBlocks, ...attachmentBlocks].some(block => ['plainText', 'plainHtml', 'signedMsg'].includes(block.type))) {
         // signed an empty message
-        blocks.push(new MsgBlock('signedMsg', '', true, signature));
+        attachmentBlocks.push(new MsgBlock('signedMsg', '', true, signature));
       }
     }
     return {
-      headers: decoded.headers,
-      blocks,
-      from: decoded.from,
-      to: decoded.to,
+      blocks: [...bodyBlocks, ...attachmentBlocks],
       rawSignedContent: decoded.rawSignedContent,
     };
   };
 
-  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
-    const decoded = await Mime.decode(mimeMsg);
-    return Mime.processDecoded(decoded);
+  public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
+    const bodyBlocks = Mime.processBody(decoded);
+    return Mime.processAttachments(bodyBlocks, decoded);
   };
 
-  public static replyHeaders = (parsedMimeMsg: MimeContent) => {
-    const msgId = String(parsedMimeMsg.headers['message-id'] || '');
-    const refs = String(parsedMimeMsg.headers['in-reply-to'] || '');
-    return { 'in-reply-to': msgId, references: refs + ' ' + msgId };
+  public static process = async (mimeMsg: Uint8Array) => {
+    const decoded = await Mime.decode(mimeMsg);
+    return Mime.processDecoded(decoded);
   };
 
   public static resemblesMsg = (msg: Uint8Array | string) => {
@@ -168,8 +180,8 @@ export class Mime {
     return contentType.index === 0;
   };
 
-  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContent> => {
-    let mimeContent: MimeContent = {
+  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContentWithHeaders> => {
+    let mimeContent: MimeContentWithHeaders = {
       attachments: [],
       headers: {},
       subject: undefined,
@@ -329,7 +341,7 @@ export class Mime {
     return pgpMimeSigned;
   };
 
-  private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
+  private static headerGetAddress = (parsedMimeMsg: MimeContentWithHeaders, headersNames: Array<SendingType | 'from'>) => {
     const result: { to: string[]; cc: string[]; bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>

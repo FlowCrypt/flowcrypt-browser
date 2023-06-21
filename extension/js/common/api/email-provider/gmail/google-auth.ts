@@ -5,7 +5,7 @@
 import { Str, Url } from '../../../core/common.js';
 import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
-import { Api } from './../../shared/api.js';
+import { Api, ApiCallContext } from './../../shared/api.js';
 
 import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
@@ -122,7 +122,7 @@ export class GoogleAuth {
     );
   };
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<unknown> => {
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings<ApiCallContext>): Promise<unknown> => {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {

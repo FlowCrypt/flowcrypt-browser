@@ -3,7 +3,7 @@
 'use strict';
 
 import { Api, ReqMethod } from './../shared/api.js';
-import { Dict } from '../../core/common.js';
+import { Dict, Url } from '../../core/common.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
 
@@ -12,7 +12,7 @@ export class KeyManager extends Api {
 
   public constructor(url: string) {
     super();
-    this.url = url.replace(/\/$/, ''); // remove trailing space
+    this.url = Url.removeTrailingSlash(url);
   }
 
   public getPrivateKeys = async (idToken: string): Promise<LoadPrvRes> => {

@@ -5,28 +5,41 @@
 import { Buf } from './buf.js';
 import { Str } from './common.js';
 
-type Attachment$treatAs = 'publicKey' | 'privateKey' | 'encryptedMsg' | 'hidden' | 'signature' | 'encryptedFile' | 'plainFile' | 'inlineImage';
+export type Attachment$treatAs =
+  | 'publicKey'
+  | 'privateKey'
+  | 'encryptedMsg' /* may be signed-only (known as 'signedMsg' in MsgBlockType) as well, 
+  should probably be renamed to 'cryptoMsg' to not be confused with 'encryptedMsg' in MsgBlockType */
+  | 'hidden'
+  | 'signature'
+  | 'encryptedFile'
+  | 'plainFile'
+  | 'inlineImage'
+  | 'needChunk'
+  | 'maybePgp';
 type ContentTransferEncoding = '7bit' | 'quoted-printable' | 'base64';
-export type AttachmentMeta = {
-  data?: Uint8Array;
+export type AttachmentId = { id: string; msgId: string } | { url: string }; // a way to extract data
+export type AttachmentProperties = {
   type?: string;
   name?: string;
   length?: number;
-  url?: string;
   inline?: boolean;
-  id?: string;
-  msgId?: string;
   treatAs?: Attachment$treatAs;
   cid?: string;
   contentDescription?: string;
   contentTransferEncoding?: ContentTransferEncoding;
 };
+export type AttachmentMeta = (AttachmentId | { data: Uint8Array }) & AttachmentProperties;
 
 export type FcAttachmentLinkData = { name: string; type: string; size: number };
 
+export type TransferableAttachment = (AttachmentId | { data: /* base64 see #2587 */ string }) & AttachmentProperties;
+
 export class Attachment {
+  // Regex to trigger message download and processing based on attachment file names
+  // todo: it'd be better to compile this regex based on the data we have in `treatAs` method
   public static readonly webmailNamePattern =
-    /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
+    /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(OpenPGP_signature(.asc)?)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
   public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
 
   public length = NaN;
@@ -43,29 +56,23 @@ export class Attachment {
   private bytes: Uint8Array | undefined;
   private treatAsValue: Attachment$treatAs | undefined; // this field is to disable on-the-fly detection by this.treatAs()
 
-  public constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription, contentTransferEncoding }: AttachmentMeta) {
-    if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
-      throw new Error('Attachment: one of data|url|id has to be set');
-    }
-    if (id && !msgId) {
-      throw new Error('Attachment: if id is set, msgId must be set too');
-    }
-    if (data) {
-      this.bytes = data;
-      this.length = data.length;
+  public constructor(attachmentMeta: AttachmentMeta) {
+    if ('data' in attachmentMeta) {
+      this.bytes = attachmentMeta.data;
+      this.length = attachmentMeta.data.length;
     } else {
-      this.length = Number(length);
+      this.length = Number(attachmentMeta.length);
     }
-    this.name = name || '';
-    this.type = type || 'application/octet-stream';
-    this.url = url || undefined;
-    this.inline = !!inline;
-    this.id = id || undefined;
-    this.msgId = msgId || undefined;
-    this.treatAsValue = treatAs || undefined;
-    this.cid = cid || undefined;
-    this.contentDescription = contentDescription || undefined;
-    this.contentTransferEncoding = contentTransferEncoding || undefined;
+    this.name = attachmentMeta.name || '';
+    this.type = attachmentMeta.type || 'application/octet-stream';
+    this.url = 'url' in attachmentMeta ? attachmentMeta.url : undefined;
+    this.inline = !!attachmentMeta.inline;
+    this.id = 'id' in attachmentMeta ? attachmentMeta.id : undefined;
+    this.msgId = 'msgId' in attachmentMeta ? attachmentMeta.msgId : undefined;
+    this.treatAsValue = attachmentMeta.treatAs;
+    this.cid = attachmentMeta.cid;
+    this.contentDescription = attachmentMeta.contentDescription;
+    this.contentTransferEncoding = attachmentMeta.contentTransferEncoding;
   }
 
   public static treatAsForPgpEncryptedAttachments = (mimeType: string | undefined, pgpEncryptedIndex: number | undefined) => {
@@ -101,6 +108,29 @@ export class Attachment {
     return `f_${Str.sloppyRandom(30)}@flowcrypt`;
   };
 
+  public static toTransferableAttachment = (attachmentMeta: AttachmentMeta): TransferableAttachment => {
+    return 'data' in attachmentMeta
+      ? {
+          ...attachmentMeta,
+          data: Buf.fromUint8(attachmentMeta.data).toBase64Str(), // should we better convert to url?
+        }
+      : attachmentMeta;
+  };
+
+  public static fromTransferableAttachment = (t: TransferableAttachment): Attachment => {
+    return new Attachment(
+      'data' in t
+        ? {
+            ...t,
+            data: Buf.fromBase64Str(t.data),
+          }
+        : t
+    );
+  };
+
+  /** @deprecated should be made private
+   *
+   */
   public isPublicKey = (): boolean => {
     if (this.treatAsValue) {
       return this.treatAsValue === 'publicKey';
@@ -173,9 +203,13 @@ export class Attachment {
       return 'publicKey';
     } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc)$/g)) {
       return 'privateKey';
-    } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
-      return 'encryptedMsg';
     } else {
+      // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
+      const isAmbiguousAscFile = /\.asc$/.test(this.name); // ambiguous .asc name
+      const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
+      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile)) {
+        return this.hasData() ? 'maybePgp' : 'needChunk';
+      }
       return 'plainFile';
     }
   };

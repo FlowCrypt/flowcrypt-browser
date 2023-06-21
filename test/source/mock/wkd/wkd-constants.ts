@@ -92,24 +92,6 @@ nmusEeYtrrMytL4oUohBVZk=
 -----END PGP PUBLIC KEY BLOCK-----
 `;
 
-// only.on.wkd@signing.test
-export const onlyOnWkdPubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
-Version: FlowCrypt Email Encryption 8.3.2
-Comment: Seamlessly send and receive encrypted email
-
-xjMEYwSypBYJKwYBBAHaRw8BAQdAemcNzRPSZIEa5LnljFUCjpDaYKE+NIzb
-8/HdulmYTlbNH1Rlc3QgPG9ubHkub24ud2tkQHNpZ25pbmcudGVzdD7CjwQQ
-FgoAIAUCYwSypAYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJEPtcd1B2
-gxxRFiEELyOUpuDorKxUIF1D+1x3UHaDHFG6bQD/QhRpAMQf0XNWcICs4yGj
-buOprbmk1jbXveNvjM3xm68A/Rw4xKpYTcBwvnnFk8DRk8UUd1Tyby9nCUM5
-Rxyj75IKzjgEYwSypBIKKwYBBAGXVQEFAQEHQAeZ33tlMW1POXw7duxkZreg
-+m8aHebGrIWdoAt0GSUMAwEIB8J4BBgWCAAJBQJjBLKkAhsMACEJEPtcd1B2
-gxxRFiEELyOUpuDorKxUIF1D+1x3UHaDHFH9AAD8DbMt2efR80LWUse6Zj9L
-wWzzLlqxcoNz8vHQegOJcwgA/1YymI8CeDGKXCmext6mL6295e5tjUySwItc
-lU5tXucF
-=zRyT
------END PGP PUBLIC KEY BLOCK-----`;
-
 /*
 // use for signing or decryption when defining tests
 const onlyOnWkdPrv = `-----BEGIN PGP PRIVATE KEY BLOCK-----

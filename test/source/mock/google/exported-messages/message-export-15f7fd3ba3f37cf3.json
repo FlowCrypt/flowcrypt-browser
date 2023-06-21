@@ -1,0 +1,125 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "15f7fd3ba3f37cf3",
+    "threadId": "15f7fd3ba3f37cf3",
+    "labelIds": [
+      "Label_17",
+      "IMPORTANT",
+      "STARRED",
+      "Label_3",
+      "CATEGORY_PERSONAL",
+      "Label_4",
+      "INBOX"
+    ],
+    "snippet": "",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/encrypted",
+      "filename": "",
+      "headers": [
+        {
+          "name": "X-Gm-Message-State",
+          "value": "AMCzsaXJgc3mefFxateCLQYptuBMVOZ4fh6PUIFRw1lEiVDQt/Fl51CV ENzcJNCxaDl1Sqvp5dwNXthnbH66"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "Subject",
+          "value": "[enigmail] encrypted+signed PGP/MIME"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 2 Nov 2017 20:01:41 -0700"
+        },
+        {
+          "name": "User-Agent",
+          "value": "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Thunderbird/52.4.0"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/encrypted; protocol=\"application/pgp-encrypted\"; boundary=\"H2AmhlIW7oAFHfcmukpDpEd1f6QdrFED5\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "application/pgp-encrypted",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/pgp-encrypted"
+            },
+            {
+              "name": "Content-Description",
+              "value": "PGP/MIME version identification"
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ_CxJsNjFWOK3LuGZUd4ov1tt3sMEWvH5JfoQX9qGaPwGycuPXIMfYOFe41deBBdK3x6lgzZHJBNxHiZjFKRa0ZALcqWBzPBEkNiB2yIZ-PXGcIZBeReZ4f1knicXsL03yjkVfYY5lVb2kTQ12ypu9xlDsj5mQ3e27Ee4Bo1nWIP4gR4bp0g-jgS0McFi8NEhULCkvqDE84IoYdyNFnP0QPU7tC65Z_IH5F5u15fiPlhpYtMIhxJxzGmiXNiByRV6ykp38yFlPLNLNHWBZCuOy_7Pe9ZxZM71dBvXWF6ToIQmfaYl-F_c8_0bkVdEA1weUpmHhAvFGJ4hZEQ9AVNQSm6CR03mymrp2YAzOq2YcYNHrow6fFvG4j4y4",
+            "size": 12
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "application/octet-stream",
+          "filename": "encrypted.asc",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream; name=\"encrypted.asc\""
+            },
+            {
+              "name": "Content-Description",
+              "value": "OpenPGP encrypted message"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "inline; filename=\"encrypted.asc\""
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ_OEr3mZHLHkK7tsButwfhCTjjspi3QtJPzeWkOIiyd_AJvj5YgCBckucdcclPg63sVkny3VKDsKZIXQ4IsaunagImnZlXZVkAPNr1q-ZruMyBMDymcvM39n4t9c3KjzmoU10sDQVfs8ixTp0TpXqmcq9eRJZ0QAtZG_3fVa0otn_k0wAXm3L4NV7Ht6QMQ4qgKTYJEJY3F0YUkAYCmqP6y_FlIj5d_LCoWrecJdzxx1LWm4E6aBhBjxTJjpFRdWfSLG0nSNS8VI7p_4l44Lk4J3e-Prfb17bKAByXfcF9jUl4bLIkCiRwMmcRhl2ePmRGAPtUROgWIHKwTVRiKm0Nd2zw7qOK4_0vQOVvzm3jUXaskKnDra7LQ4fM",
+            "size": 3050
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 8587,
+    "historyId": "1405999",
+    "internalDate": "1509678101000"
+  },
+  "attachments": {
+    "ANGjdJ_CxJsNjFWOK3LuGZUd4ov1tt3sMEWvH5JfoQX9qGaPwGycuPXIMfYOFe41deBBdK3x6lgzZHJBNxHiZjFKRa0ZALcqWBzPBEkNiB2yIZ-PXGcIZBeReZ4f1knicXsL03yjkVfYY5lVb2kTQ12ypu9xlDsj5mQ3e27Ee4Bo1nWIP4gR4bp0g-jgS0McFi8NEhULCkvqDE84IoYdyNFnP0QPU7tC65Z_IH5F5u15fiPlhpYtMIhxJxzGmiXNiByRV6ykp38yFlPLNLNHWBZCuOy_7Pe9ZxZM71dBvXWF6ToIQmfaYl-F_c8_0bkVdEA1weUpmHhAvFGJ4hZEQ9AVNQSm6CR03mymrp2YAzOq2YcYNHrow6fFvG4j4y4": {
+      "data": "VmVyc2lvbjogMQ0K",
+      "size": 12
+    },
+    "ANGjdJ_OEr3mZHLHkK7tsButwfhCTjjspi3QtJPzeWkOIiyd_AJvj5YgCBckucdcclPg63sVkny3VKDsKZIXQ4IsaunagImnZlXZVkAPNr1q-ZruMyBMDymcvM39n4t9c3KjzmoU10sDQVfs8ixTp0TpXqmcq9eRJZ0QAtZG_3fVa0otn_k0wAXm3L4NV7Ht6QMQ4qgKTYJEJY3F0YUkAYCmqP6y_FlIj5d_LCoWrecJdzxx1LWm4E6aBhBjxTJjpFRdWfSLG0nSNS8VI7p_4l44Lk4J3e-Prfb17bKAByXfcF9jUl4bLIkCiRwMmcRhl2ePmRGAPtUROgWIHKwTVRiKm0Nd2zw7qOK4_0vQOVvzm3jUXaskKnDra7LQ4fM": {
+      "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQpWZXJzaW9uOiBHbnVQRyB2Mg0KDQpoUUlNQTB0YUwvem1MWlVCQVEvL2ViNDBBbXNSOGRqWkFOaTYzY0N4NHNrMlRJbE5hdVo5T2RucU1FYklJN3NCDQpZb0svMEtEUm5INUkwY05md3BGY21Ya1VoclNMS3RuMCtmeUNyeHJ4by9RWlpPOGZENzhPcVV1M1p3QzNoRlBtDQpPaUxseDlvSTQ4aGozSHJ3LzRDVThGUXRib01BL3FQUExxdGpuSUpMREhRaVpheUNGNlhub2tITkY0Q2ozd3FuDQo0K0duOEFha1VHc0FyN2lVeUlrWisvcFIwVmJQU2dlakZnZGR1OEg5Mjk2bzIxTVIvdEIrRk43REsvTDdmYTY5DQpEWnlMTGRHcDV2UEhVQjNHaWtBdVMvcG95Z2dSYytsU1VhNFQ2anRqVVNBVUd0T1VXdFJnQkZMQWVldUhvc2tYDQo2dHc1QTdPeURCVEd5UVNXSVJiMUo1TjdQNWRYclUvdnQ5N3BRaHJWZ1JYeGZiZXEwT0xrTG05Rzk4dGhFKy9HDQptd3c1Q1ErWk5mUk1vdVB6QkRQVDA1MFRHQjIzSk1UeFR4OG8zYlBMYi9VQ21CMlFodGI5MFhOY1VpeVUzZ3lKDQpQbmtJOTFmS0dmdFQ2YkcvOWxrNzZSdXNabkVxV2hORXN2WFM4S0Y1OXBqM0VhMWNWZW93d1FacS81N0M2cFdRDQpOU0tNUUpJMFczVkNDeXJ4TVhiZWRxYlhmVnVJK21PWXQ0K3lSS3AwbVBXY2VkNGQ1blY2TzhxSUNyZnIzL2trDQpuZDdWdFdxUkw3bkRUYmNQV1pOU1BPUC9ESGo1eVo0dytjcStyT2o1QXRqUnNiV0l0M05SL3BvK2h5eXUzekhEDQpNNEdrdFhxUHh0RFpsMkhzVEM2Z2MwMENGUDh6cVRLcW5EcFFSWitLbDZ4ZnZlbVBRTG16NHBucnpFeUVzYlNGDQpBZ3dEbHVBT2xLWFFvNXNCRC85RU9iTXREYlducXRScElJWVhwM2VzNDdGUEJLZ1I1T3VjL2NydGYzSzluMTY4DQpNcDdLL3R0MUpzckNuTzRvM29qaUlLNk80MElpbHFuaEJOM2hGWWNSUEoybFcyamVmSnZLTzFrc2ppMXE3azZIDQpkbVR6K2pFM21vdytQQW43RCt5MUNWZ1RwdnkrTmcyRG8vNlVSMGRueTRNbTdsWmhIMmwyc0NUSDZGRlhza0JWDQozSXpBd1NPTnR3a3hwdlQ3K01xY3E3azlENVA1aFpUUHVpcDhjaytJRnIvRUtVYUptOGZBblRjYmY1dFJxZ2VwDQpjK1Z5NFF4S1h1NkdnVERId1l3SEx6VmJpUEQ4R0c1Y0FwYnBuOGMrbmZLcWdqR3VhMHp5WWwwRlVkMDIza1p5DQo5YzRXZWJpODNOVk1aRG04LzVTQ0h2Vkp0aUtKYTBicXV4eTFhQk81bkxseHhuSU02SDNvQjFVclFwaWo1b0MxDQprdGFXMDhyd0JTa0RIbmFGTGZXOGJ4ZHlBa2pzaWJhaHZJVzNlcElLNWFMb09pRGtoTUloa0thQnZCT09TVmV0DQpPMDRYSmF1RzJyQWVZRjlKRlY4RnhleE9uY1hCU1pmQkZXSGplTjNiK2NyaUt1RDQxRndMeDFuSWtWSVpZZDZhDQpZWHh2Ynk3aktUTzQrOFh5KzZRdURGUEttVUlSYlNaWjA3bjhENlpzSnp3Y1U0TUlCQ3RoTTMyMG9JRm5EOVc0DQpxNmRrNTZKbWErcldzTGJRb3FoNEkxckoya0ozeVQxalFXQnVBd0xXejVIemRvbXoxUTlpZitTRGxReTlzamwrDQpPK3pLQjM0dmNxZmV0M3diQTQ0UDNST2htYW5CYTFUT29CRyt3a2hoOHh1c0h5SmQ1YVU2QWJ1RW9pNlhydExxDQpBUzMxRjlOVm5Fam5DeWtyQlpJajJCNVRsQzFtVDB5RU5SeUNrcUV2bUJXVmpNL3hmaVcydkJwbUVqLzdySS8zDQpwMGVRYWJieVZTSFhuZ3owSWxBY2gvY1Y4d3A1OHRYa1ZVcFd6bjZHVTBCMUtDeHVjN0Z5UGNkQUFUaE56WlAwDQpSRWh1SVJnakpTUitqNG9rSGdKaEtueGZ2SXhxbHJuS1lOeUdXRXZ2TDYxRDJuQmlSbENQR2wzOENNU2xUOGVQDQo4N2hVMmtzMkk5enR2NGw5WjlPYjYzOW5ZRkJMUTVVbGVzVWdRTkQ2ZCtmSHFrM21kQzZIem0ya0hIQmR1amdsDQpGdWo2NmVHcmZnSHdjTkN0UWlOa1lYY2doNlRtY0lNdkZnT2lFMVB5RTN2NngwNE43STcxY0ZnVU5rb2VvNGtlDQo0ampPZ0dKSkhSRG9mV3ZUR3ZUNEp0Q25vcUxQYWhRV3F0UitCTk1ZNXBoRkVWdHNmdU1ORDZmSlRrellFRHBRDQpCVk0zTm11a1BhdzZMSWpsTjFFbW9lU1gyQmxlcXZ2RElrOXJBdDNpZWtPbGlvWUtxdmsrN3hqUzJPOW90V1g2DQoxNW1IV1J4NjJFdDRSU0FydlJKZEdpVVA2VVRMcUdkODlJbDU3NHBvUVhCTUJEZmtUdmYrRVF3Z3BlYjhXRWhhDQordEZJMmFUTWozbWxnc2tFVVhTeHRPMFpCN2FPUmZDUWl5MkprZjM2cHVFZkh3T3kwbDVZblFzaFhhL3lKQ1FSDQpDSWM0SDhkblN1UWxrZ1JuU09ET25ZR3FwU3FmVS83K01jTTJuYTFqaHNWTFg2TVB6U3I2Yk9TQjNRd1RiR1RrDQpMZE84OWREM2RuTWVIbVZqYUtUZzV3bzZpN2sxRVJFMVVtMmdITWxydFc1OEFaTjRLUEFCcDA3QlhnVjRIN1A5DQpya0lCUDQyY2ZrUG9VTkpYZDBCQ0dFaU9nNC9OY1RqU2cxL3ZXdUF2bVdFTjI4c0FCZk84MWQ3dWNHWnR0MUpzDQp1eUhwVm11bW9TRC9pMXdvUjU4aXdTUGQ1TDNhNEF4K0JDZzd0MHlUUC9QSlJ0WDdodlNoM0Zhak5rRStleFNxDQpKWlBMcTVDWUFQTmFnQldZK1l6UldUSkN6OW5DK3B1T3B4WjA4eC9kelg0QUVjd3ZBRzhwZzArK0JvN0p3RGQ2DQo4dG0wSTVMVVhYbS8vVmYzQVFmMEdUZnBNNjFicnUrVHl2anZSaG1RSjhTNXF3b3phelp0ckpVcERRSkRLaFBZDQorZU1IZ3JsQkRUSHRYVkxYZlQwcUtoZnQxVU5YQ1kydi9VVXE0QzUvTmptMUtIZk1ueWRoSGcrdnpFZzltRTRXDQoybWRiV1ZTejUzWGRmekJzcEFZRTg4RUlULzhXMmJpZWJsbFdJdXhiMS9JYklwbmtWMHU1R2phME9CNWNWVm15DQo2NHpOT09rNXNnT0lsc0VncGd4QVU4bkhybm1nOTU4NVhpU2pUU01BZmI1aDJ6YlFVMHNFa09IdkFEbm44QXN4DQpFV00waXF1SzdscE1hUUtwRTU1NFVnQmNETWpiWm5oc3MxdFpmNXV6NlNYNFlFSTJ5NjRrSUhYaVRFTDZzcWorDQpvMVhXa3E5U0RaT3V2YnErVU9nQjZ5YVh3WnIrQjFmajZmR3Fvenl5K0hiVGRnMVkyYS9iVE9HNytyTS9kbCs5DQo3QlVWWnNDaUY1Q3MrVlJMTm1JcGZwSDgwVTRBR0hvVHlBVHN5YmlIOVpDWm44cXNGbVoyaE5wZVdHck0vYlFVDQo5M1dlMEc1bG11bjFxZDM0N1VobmNFdmZodHl0NDQ5aUh5dFdlYmV4ekRxRE1MZnVvNUJadFZmZS9YSkZocmlQDQoyekZMZTlnWnUvT2pNK2w2VGg2VUdKMDFqclVtcUtJMXZlYWkyeTRqcXpxUlpiU2cyRWluQkFwKzFoST0NCj1GZ01SDQotLS0tLUVORCBQR1AgTUVTU0FHRS0tLS0tDQo",
+      "size": 3050
+    }
+  },
+  "raw": {
+    "id": "15f7fd3ba3f37cf3",
+    "threadId": "15f7fd3ba3f37cf3",
+    "labelIds": ["Label_17", "IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL", "Label_4", "INBOX"],
+    "snippet": "",
+    "sizeEstimate": 8587,
+    "historyId": "1405999",
+    "internalDate": "1509678101000"
+  }
+}

@@ -8,7 +8,7 @@ import { PromiseCancellation, Str, Url } from '../../js/common/core/common.js';
 import { Api } from '../../js/common/api/shared/api.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
-import { Attachment } from '../../js/common/core/attachment.js';
+import { Attachment, AttachmentId } from '../../js/common/core/attachment.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
@@ -32,10 +32,8 @@ export class AttachmentDownloadView extends View {
   protected readonly isEncrypted: boolean;
   protected readonly errorDetailsOpened: boolean;
   protected readonly type: string | undefined;
-  protected readonly msgId: string | undefined;
-  protected readonly id: string | undefined;
   protected readonly name: string | undefined;
-  protected readonly url: string | undefined;
+  protected readonly attachmentId: AttachmentId;
   protected readonly gmail: Gmail;
   protected attachment!: Attachment;
   protected ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
@@ -73,11 +71,17 @@ export class AttachmentDownloadView extends View {
     this.errorDetailsOpened = uncheckedUrlParams.errorDetailsOpened === true;
     this.size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
     this.type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
-    this.msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-    this.id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attachmentId');
     this.name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
     // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
-    this.url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
+    const url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
+    if (url) {
+      this.attachmentId = { url };
+    } else {
+      this.attachmentId = {
+        msgId: Assert.urlParamRequire.string(uncheckedUrlParams, 'msgId'),
+        id: Assert.urlParamRequire.string(uncheckedUrlParams, 'attachmentId'),
+      };
+    }
     this.gmail = new Gmail(this.acctEmail);
   }
 
@@ -91,11 +95,9 @@ export class AttachmentDownloadView extends View {
     this.fesUrl = storage.fesUrl;
     try {
       this.attachment = new Attachment({
+        ...this.attachmentId,
         name: this.origNameBasedOnFilename,
         type: this.type,
-        msgId: this.msgId,
-        id: this.id,
-        url: this.url,
       });
     } catch (e) {
       Catch.reportErr(e);
@@ -107,9 +109,9 @@ export class AttachmentDownloadView extends View {
     this.renderHeader();
     $('#name').attr('title', this.name || '');
     $('img#file-format').attr('src', this.getFileIconSrc());
-    if (!this.size && this.url) {
+    if (!this.size && 'url' in this.attachmentId) {
       // download url of a file that has an unknown size
-      this.getUrlFileSize(this.url)
+      this.getUrlFileSize(this.attachmentId.url)
         .then(fileSize => {
           if (typeof fileSize !== 'undefined') {
             this.size = fileSize;
@@ -162,7 +164,7 @@ export class AttachmentDownloadView extends View {
       this.attachment.setData(await Api.download(this.attachment.url, this.renderProgress));
     } else if (this.attachment.id && this.attachment.msgId) {
       // gmail attId
-      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, this.renderProgress);
+      const { data } = await this.gmail.attachmentGet(this.attachment.msgId, this.attachment.id, { download: this.renderProgress });
       this.attachment.setData(data);
     } else {
       throw new Error('File is missing both id and url - this should be fixed');
@@ -246,6 +248,7 @@ export class AttachmentDownloadView extends View {
 
   private processAsPublicKeyAndHideAttachmentIfAppropriate = async () => {
     // todo: we should call this detection in the main `core/Attachment.treatAs` (e.g. in the context of GmailElementReplacer and InboxActiveThreadModule)
+    // and we'll also be able to minimize the pgp_pubkey block if isOutgoing
     // should be possible after #4906 is done
     if (((this.attachment.msgId && this.attachment.id) || this.attachment.url) && this.attachment.isPublicKey()) {
       // this is encrypted public key - download && decrypt & parse & render

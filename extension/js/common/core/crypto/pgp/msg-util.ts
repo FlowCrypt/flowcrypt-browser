@@ -2,7 +2,7 @@
 
 'use strict';
 import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../key.js';
-import { MsgBlockType, ReplaceableMsgBlockType } from '../../msg-block.js';
+import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
 import { opgp } from './openpgpjs-custom.js';
@@ -34,7 +34,7 @@ export namespace PgpMsgMethod {
       armor: boolean;
       date?: Date;
     };
-    export type Type = { data: Uint8Array | string };
+    export type Type = { data: Uint8Array };
     export type Decrypt = {
       kisWithPp: KeyInfoWithIdentityAndOptionalPp[];
       encryptedData: Uint8Array | string;
@@ -46,7 +46,7 @@ export namespace PgpMsgMethod {
   }
   export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<VerifyRes>;
-  export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
+  export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptResult>;
   export type Type = (arg: Arg.Type) => PgpMsgTypeResult;
   export type Encrypt = (arg: Arg.Encrypt) => Promise<EncryptResult>;
   export type EncryptResult = EncryptPgpResult | EncryptX509Result;
@@ -95,7 +95,7 @@ export type VerifyRes = {
   isErrFatal?: boolean;
   content?: Buf;
 };
-export type PgpMsgTypeResult = { armored: boolean; type: MsgBlockType } | undefined;
+export type PgpMsgTypeResult = { armored: boolean; type: ReplaceableMsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean; receivers: number }; // eslint-disable-line @typescript-eslint/naming-convention
 export enum DecryptErrTypes {
@@ -106,27 +106,14 @@ export enum DecryptErrTypes {
   badMdc = 'bad_mdc',
   needPassphrase = 'need_passphrase',
   format = 'format',
+  armorChecksumFailed = 'armor_checksum_failed',
   other = 'other',
-}
-
-export class FormatError extends Error {
-  public data: string;
-  public constructor(message: string, data: string) {
-    super(message);
-    this.data = data;
-  }
 }
 
 export class MsgUtil {
   public static type: PgpMsgMethod.Type = ({ data }) => {
     if (!data || !data.length) {
       return undefined;
-    }
-    if (typeof data === 'string') {
-      // Uint8Array sent over BrowserMsg gets converted to blobs on the sending side, and read on the receiving side
-      // Firefox blocks such blobs from content scripts to background, see: https://github.com/FlowCrypt/flowcrypt-browser/issues/2587
-      // that's why we add an option to send data as a base64 formatted string
-      data = Buf.fromBase64Str(data);
     }
     const firstByte = data[0];
     // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
@@ -177,7 +164,17 @@ export class MsgUtil {
 
   public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText, verificationPubs }) => {
     const message = await opgp.createMessage({ text: Str.with(plaintext) });
-    await message.appendSignature(sigText);
+    try {
+      await message.appendSignature(sigText);
+    } catch (formatErr) {
+      return {
+        match: null, // eslint-disable-line no-null/no-null
+        signerLongids: [],
+        suppliedLongids: [],
+        error: String(formatErr).replace('Error: ', ''),
+        isErrFatal: true,
+      };
+    }
     return await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
   };
 
@@ -187,7 +184,7 @@ export class MsgUtil {
     try {
       prepared = await PgpArmor.cryptoMsgPrepareForDecrypt(encryptedData);
     } catch (formatErr) {
-      return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
+      return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(formatErr), longids };
     }
     // there are 3 types of messages possible at this point
     // 1. PKCS#7 if isPkcs7 is true
@@ -434,6 +431,11 @@ export class MsgUtil {
       return {
         type: DecryptErrTypes.badMdc,
         message: `Security threat - opening this message is dangerous because it was modified in transit.`,
+      };
+    } else if (e === 'Ascii armor integrity check failed') {
+      return {
+        type: DecryptErrTypes.armorChecksumFailed,
+        message: e,
       };
     } else {
       return { type: DecryptErrTypes.other, message: e };

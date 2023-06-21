@@ -122,9 +122,9 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     if (chooseAccountEl) {
       chooseAccountEl.title = this.view.acctEmail;
     }
-    if (this.view.storage.picture) {
+    if (this.view.picture) {
       $('img.main-profile-img')
-        .attr('src', this.view.storage.picture)
+        .attr('src', this.view.picture)
         .on(
           'error',
           this.view.setHandler(self => {

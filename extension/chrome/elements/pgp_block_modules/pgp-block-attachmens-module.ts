@@ -6,7 +6,7 @@ import { Api } from '../../../js/common/api/shared/api.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { PgpBlockView } from '../pgp_block';
+import { PgpBlockView } from '../pgp_block.js';
 import { CommonHandlers, Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
@@ -67,12 +67,11 @@ export class PgpBlockViewAttachmentsModule {
           await this.decryptAndSaveAttachmentToDownloads(attachment);
         } else {
           Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
-          attachment.setData(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await Api.download(attachment.url!, (perc, load, total) =>
-              this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)
-            )
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const buf = await Api.download(attachment.url!, (perc, load, total) =>
+            this.renderProgress($(target).find('.progress .percent'), perc, load, total || attachment.length)
           );
+          if (!attachment.hasData()) attachment.setData(buf); // there may be some sort of a race
           await Ui.delay(100); // give browser time to render
           $(target).find('.progress').text('');
           await this.decryptAndSaveAttachmentToDownloads(attachment);

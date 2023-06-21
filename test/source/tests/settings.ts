@@ -20,7 +20,7 @@ import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { BrowserHandle } from '../browser';
+import { BrowserHandle, ControllablePage } from '../browser';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
@@ -765,29 +765,56 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - inbox - show original',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '15f7f5e966792203'; // signed inline
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
+
+        // switch to original
+        await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        // expect no pgp blocks
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
+        expect(await inboxPage.read('@message-line')).to.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE DECRYPTED');
+
+        // switch back to decrypted
+        await inboxPage.waitForNavigationIfAny(() => inboxPage.waitAndClick('@see-original'));
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect(await inboxPage.read('@message-line')).to.not.contain('BEGIN');
+        expect(await inboxPage.read('@see-original')).to.equal('SEE ORIGINAL');
+      })
+    );
+    test(
       'settings - pgp/mime preview and download attachment',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const downloadedAttachmentFilename = `${__dirname}/7 years.jpeg`;
-        Util.deleteFileIfExists(downloadedAttachmentFilename);
-        const inboxPage = await browser.newExtensionPage(
-          t,
-          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16e8b01f136c3d28`
-        );
-        const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
-        // check if download is awailable
-        await pgpBlockFrame.waitAll('.download-attachment');
-        // and preview
-        await pgpBlockFrame.waitAndClick('.preview-attachment');
-        const attachmentPreviewImage = await inboxPage.getFrame(['attachment_preview.htm']);
-        await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
-        await (inboxPage.target as any) // eslint-disable-line no-underscore-dangle
-          ._client()
-          .send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: __dirname });
-        await attachmentPreviewImage.waitAndClick('@attachment-preview-download');
-        await Util.sleep(1);
-        expect(fs.existsSync(downloadedAttachmentFilename)).to.be.true;
-        Util.deleteFileIfExists(downloadedAttachmentFilename);
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const checkPage = async (page: ControllablePage) => {
+          const pgpBlockFrame = await page.getFrame(['pgp_block.htm']);
+          // check if download is awailable
+          await pgpBlockFrame.waitAll('.download-attachment');
+          // and preview
+          await pgpBlockFrame.waitAndClick('.preview-attachment');
+          const attachmentPreviewImage = await page.getFrame(['attachment_preview.htm']);
+          await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+          const downloadedFiles = await attachmentPreviewImage.awaitDownloadTriggeredByClicking(() =>
+            attachmentPreviewImage.waitAndClick('@attachment-preview-download')
+          );
+          expect(Object.keys(downloadedFiles)).contains('7 years.jpeg');
+          await page.close();
+        };
+        const msgId = '16e8b01f136c3d28';
+        await checkPage(await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
+        await checkPage(await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${msgId}`));
       })
     );
     const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {
@@ -805,8 +832,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         // `what's up?.txt` becomes `what's_up_.txt` and this is native way and we can't change this logic
         // https://github.com/FlowCrypt/flowcrypt-browser/issues/3505#issuecomment-812269422
-        await checkIfFileDownloadsCorrectly(t, browser, '1821bf879a6f71e0', "what's_up_.txt");
-        await checkIfFileDownloadsCorrectly(t, browser, '182263bf9f105adf', "what's_up%253F.txt.pgp");
+        await checkIfFileDownloadsCorrectly(t, browser, '188721aebb71c16c', "what's_up_.txt");
+        await checkIfFileDownloadsCorrectly(t, browser, '188722a157fd54a8', `what's_up%253F.txt`);
         // should not strip .gpg or .pgp extension when downloading original file after unsuccesssful decryption
         // // Check if bad pgp attachment file got downloaded with original file name
         await checkIfFileDownloadsCorrectly(t, browser, '18610f7f4ae8da0a', 'test.bat.pgp');

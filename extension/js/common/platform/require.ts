@@ -46,16 +46,14 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireMimeParser = (): typeof MimeParser => {
-  return (window as any)['emailjs-mime-parser']; // eslint-disable-line
+  return (globalThis as any)['emailjs-mime-parser']; // eslint-disable-line
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const requireMimeBuilder = (): any => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (window as any)['emailjs-mime-builder'];
+export const requireMimeBuilder = () => {
+  return (globalThis as any)['emailjs-mime-builder']; // eslint-disable-line
 };
 
 export const requireIso88592 = (): Codec => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (window as any).iso88592 as Codec;
+  return (globalThis as any).iso88592 as Codec;
 };

@@ -1,18 +1,19 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util, TestMessage, TestMessageWithParams } from '../../util';
+import { Config, Util, TestMessage } from '../../util';
 
 import { AvaContext } from '.';
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
-import { google } from 'googleapis';
+import { gmail_v1, google } from 'googleapis';
 import { testVariant } from '../../test';
 import { testConstants } from './consts';
 import { PageRecipe } from '../page-recipe/abstract-page-recipe';
 import { InMemoryStoreKeys } from '../../core/const';
 import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
+import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { ConfigurationProvider } from '../../mock/lib/api';
 
@@ -99,7 +100,8 @@ export class BrowserRecipe {
     }
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
     await settingsPage.close();
-    return { acctEmail, accessToken };
+    const authHdr = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+    return { acctEmail, authHdr };
   };
 
   public static setupCommonAcctWithAttester = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
@@ -164,13 +166,18 @@ export class BrowserRecipe {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
-      await Promise.all(
-        list.data.drafts
-          .filter(draft => draft.id)
-          // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
-          .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
-      );
+      await BrowserRecipe.deleteDrafts(list.data.drafts, accessToken);
     }
+  };
+
+  public static deleteDrafts = async (drafts: gmail_v1.Schema$Draft[], accessToken: string) => {
+    const gmail = google.gmail({ version: 'v1' });
+    await Promise.all(
+      drafts
+        .filter(draft => draft.id)
+        // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion
+        .map(draft => gmail.users.drafts.delete({ id: draft.id!, userId: 'me', access_token: accessToken }))
+    );
   };
 
   // todo - ideally we could just add a 3rd common account: 'compatibility' | 'compose' | 'pp-change' in setUpCommonAcct
@@ -205,14 +212,17 @@ export class BrowserRecipe {
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
-  public static pgpBlockVerifyDecryptedContent = async (t: AvaContext, browser: BrowserHandle, m: TestMessageWithParams) => {
-    const pgpHostPage = await browser.newPage(t, `chrome/dev/ci_pgp_host_page.htm${m.params}`);
-    try {
-      const pgpBlockPage = await pgpHostPage.getFrame(['pgp_block.htm']);
-      return await BrowserRecipe.pgpBlockCheck(t, pgpBlockPage, m);
-    } finally {
-      await pgpHostPage.close();
-    }
+  public static pgpBlockVerifyDecryptedContent = async (
+    t: AvaContext,
+    browser: BrowserHandle,
+    msgId: string,
+    m: TestMessage,
+    extraHeaders: Record<string, string>
+  ) => {
+    const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, extraHeaders);
+    await gmailPage.waitAll('iframe');
+    await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), m);
+    await gmailPage.close();
   };
 
   public static pgpBlockCheck = async (t: AvaContext, pgpBlockPage: ControllableFrame, m: TestMessage) => {
@@ -243,21 +253,30 @@ export class BrowserRecipe {
         }
       }
     }
+    const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
+    const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
     if (m.signature) {
-      const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
+      // todo: check color, 'signed' should have 'green_label' class without 'red_label', others should have 'red_label' class
       if (sigBadgeContent !== m.signature) {
         t.log(`found sig content:${sigBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${m.signature}\nactual sig content:${sigBadgeContent}`);
       }
+    } else if (!m.error) {
+      // some badge still has to be present
+      expect(sigBadgeContent).to.be.ok;
     }
     if (m.encryption) {
-      const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
       if (encBadgeContent !== m.encryption) {
         t.log(`found enc content:${encBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected encryption content:${m.encryption}`);
       }
+    } else if (!m.error) {
+      // some badge still has to be present
+      expect(encBadgeContent).to.be.ok;
     }
     if (m.error) {
+      expect(sigBadgeContent).to.be.empty;
+      expect(encBadgeContent).to.be.empty;
       await pgpBlockPage.notPresent('@action-print');
       const errBadgeContent = await pgpBlockPage.read('@pgp-error');
       if (errBadgeContent !== m.error) {

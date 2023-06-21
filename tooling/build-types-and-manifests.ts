@@ -114,6 +114,8 @@ const updateEnterpriseBuild = () => {
 
 const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
+  const mockGmailPageHost = 'gmail.localhost:8001';
+  const mockGmailPage = `https://${mockGmailPageHost}`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
     return code
@@ -131,7 +133,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
-    code.replace(/https:\/\/mail\.google\.com/g, 'https://gmail.localhost:8001').replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
+    code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
   );
 };
 
