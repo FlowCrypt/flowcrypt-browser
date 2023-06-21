@@ -179,7 +179,7 @@ export class SetupRenderModule {
         )}" />${Xss.escape(e)}</label><br/>`
       ); // xss-escaped
     }
-    $('.input_email_alias').on('click', (event: JQuery.TriggeredEvent<HTMLElement>) => {
+    $('.input_email_alias').on('click', event => {
       const email = String($(event.target).data('email'));
       if ($(event.target).prop('checked')) {
         if (!this.view.submitKeyForAddrs.includes(email)) {

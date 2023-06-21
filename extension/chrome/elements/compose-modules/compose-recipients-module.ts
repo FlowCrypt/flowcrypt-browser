@@ -79,7 +79,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       'dragleave',
       this.view.setHandler(target => this.inputsDragLeaveHandler(target))
     );
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     inputs.on('dragover', e => e.preventDefault());
     inputs.on(
       'drop',
