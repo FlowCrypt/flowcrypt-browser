@@ -419,6 +419,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private onBodyKeydownHandler = (_: HTMLElement, e: JQuery.TriggeredEvent<HTMLElement>) => {
     if (this.view.sizeModule.composeWindowIsMinimized) {
       e.preventDefault();
+      return;
     }
     Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').trigger('click'))(e);
     const focusableEls = this.getFocusableEls();
