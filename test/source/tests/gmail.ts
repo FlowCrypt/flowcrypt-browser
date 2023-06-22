@@ -18,7 +18,7 @@ import { BrowserRecipe } from './tooling/browser-recipe';
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
  */
 
-export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
+export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash'; // 'all';
 
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
@@ -288,12 +288,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
-        // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
-        // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
-        if (await gmailPage.isElementPresent('//*[text()="delete forever"]')) {
-          await gmailPage.click('//*[text()="delete forever"]');
-        }
+        const threadId = '181d226b4e69f172'; // 1st message -- thread id
+        await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+        await GmailPageRecipe.trimConvo(gmailPage, threadId);
         await gmailPage.waitAndClick('@secure-reply-button');
         let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
@@ -301,7 +298,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await createSecureDraft(t, browser, gmailPage, 'reply draft');
         await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
         await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
-        await Util.sleep(30);
         replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
         // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
         await gmailPage.page.keyboard.press('Tab');
@@ -310,7 +306,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
         await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
         await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
-        await GmailPageRecipe.deleteLastReply(gmailPage);
+        await GmailPageRecipe.trimConvo(gmailPage, threadId);
       })
     );
 
@@ -357,7 +353,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
+        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
@@ -403,7 +399,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
+        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
         await gmailPage.waitAndClick('[act="94"]', { delay: 1 });
@@ -425,7 +421,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
+        const threadId = '181d226b4e69f172'; // 1st message -- thread id
+        await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+        await GmailPageRecipe.trimConvo(gmailPage, threadId);
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
         await Util.sleep(30);
         await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
