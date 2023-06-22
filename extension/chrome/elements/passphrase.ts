@@ -19,6 +19,9 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
+const ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE = 5;
+const BLOCKING_TIME_IN_MILI_SECONDS = 5 * 60 * 1000;
+// const RESET_COUNT_TIME_IN_MILLISECONDS = 5 * 6000;
 const passPhraseTypes = stringTuple('embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key');
 type PassPhraseType = (typeof passPhraseTypes)[number];
 
@@ -32,6 +35,10 @@ View.run(
     private readonly initiatorFrameId?: string;
     private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
     private clientConfiguration!: ClientConfiguration;
+    private failedPassPhraseAttempts!: number;
+    private lastUnsuccessfulPassphraseAttempt!: number;
+    private previousState: undefined | boolean;
+    private readonly CHECK_BRUTE_FORCE_FREQUENCY = 1000;
 
     public constructor() {
       super();
@@ -46,7 +53,11 @@ View.run(
 
     public render = async () => {
       Ui.event.protect();
-      const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+      const storage = await AcctStore.get(this.acctEmail, ['fesUrl', 'failed_passphrase_attempts', 'last_unsuccessful_passphrase_attempt']);
+      this.failedPassPhraseAttempts = storage.failed_passphrase_attempts ?? 0;
+      this.lastUnsuccessfulPassphraseAttempt = storage.last_unsuccessful_passphrase_attempt ?? 0;
+      await this.monitorBruteForceProtection();
+      Catch.setHandledInterval(() => this.monitorBruteForceProtection(), this.CHECK_BRUTE_FORCE_FREQUENCY);
       this.fesUrl = storage.fesUrl;
       this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       if (!this.clientConfiguration.forbidStoringPassPhrase()) {
@@ -178,6 +189,72 @@ View.run(
       );
     };
 
+    private renderBruteForceProtectionAlert(): void {
+      const now = new Date().valueOf();
+      const remainingTimeInSeconds = (this.lastUnsuccessfulPassphraseAttempt + BLOCKING_TIME_IN_MILI_SECONDS - now) / 1000;
+
+      $('.passphrase_attempts_introduce_label').text(Lang.pgpBlock.passphraseAntiBruteForceProtectionHint).show();
+
+      $('.action_ok').text(this.formatTime(remainingTimeInSeconds));
+      $('.action_ok').addClass('btn_disabled').attr('disabled', 'disabled');
+    }
+
+    private dismissBruteForceProtectionAlert(): void {
+      if (this.failedPassPhraseAttempts === 0) {
+        $('.passphrase_attempts_introduce_label').hide();
+      }
+      $('.action_ok').text('OK');
+      $('.action_ok').removeClass('btn_disabled').removeAttr('disabled');
+    }
+
+    private formatTime(remainingTimeInSeconds: number): string {
+      const minutes = Math.floor(remainingTimeInSeconds / 60);
+      const seconds = Math.floor(remainingTimeInSeconds % 60);
+      return `${minutes < 10 ? '0' + minutes : minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+    }
+
+    /**
+     * Monitor the status of anti-brute-force protection and manage the display of alerts.
+     */
+    private monitorBruteForceProtection = async (): Promise<void> => {
+      const isPassphraseCheckDisabled = await this.shouldDisablePassphraseCheck();
+
+      // Check if the state has changed or if we need to update the timer.
+      // This condition ensures the brute force protection alert is only rendered or dismissed
+      // when the state actually changes or when an update to the timer value is required.
+      if (isPassphraseCheckDisabled !== this.previousState || (this.previousState && isPassphraseCheckDisabled)) {
+        this.previousState = isPassphraseCheckDisabled;
+        if (isPassphraseCheckDisabled) {
+          this.renderBruteForceProtectionAlert();
+        } else {
+          this.dismissBruteForceProtectionAlert();
+        }
+      }
+    };
+
+    private updateRemainingAttemptsLabel = (): void => {
+      $('.passphrase_attempts_introduce_label').show();
+      const remainingAttempts = ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE - this.failedPassPhraseAttempts;
+      $('.passphrase_attempts_introduce_label').html(Lang.pgpBlock.passphraseAttemptIntroduce(Str.pluralize(remainingAttempts, 'attempt')));
+    };
+
+    private shouldDisablePassphraseCheck = async () => {
+      const now = new Date().valueOf();
+      // already passed anti-brute force 5 minute cooldown period
+      // reset last unsuccessful count
+      if (
+        now > this.lastUnsuccessfulPassphraseAttempt + BLOCKING_TIME_IN_MILI_SECONDS &&
+        this.failedPassPhraseAttempts >= ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE
+      ) {
+        await AcctStore.set(this.acctEmail, {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          failed_passphrase_attempts: 0,
+        });
+        this.failedPassPhraseAttempts = 0;
+      }
+      return this.failedPassPhraseAttempts >= ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE;
+    };
+
     private renderNormalPpPrompt = () => {
       $('#passphrase').css('border-color', '');
       $('#passphrase').css('color', 'black');
@@ -197,6 +274,9 @@ View.run(
     };
 
     private submitHandler = async () => {
+      if (await this.shouldDisablePassphraseCheck()) {
+        return;
+      }
       const pass = String($('#passphrase').val());
       const storageType: StorageType =
         $('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase() ? 'session' : 'local';
@@ -232,8 +312,22 @@ View.run(
         Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
       }
       if (atLeastOneMatched) {
+        await AcctStore.remove(this.acctEmail, ['last_unsuccessful_passphrase_attempt']);
+        await AcctStore.set(this.acctEmail, {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          failed_passphrase_attempts: 0,
+        });
         this.closeDialog(true, this.initiatorFrameId);
       } else {
+        await AcctStore.set(this.acctEmail, {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          failed_passphrase_attempts: this.failedPassPhraseAttempts + 1,
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          last_unsuccessful_passphrase_attempt: new Date().valueOf(),
+        });
+        this.failedPassPhraseAttempts += 1;
+        this.lastUnsuccessfulPassphraseAttempt = new Date().valueOf();
+        this.updateRemainingAttemptsLabel();
         this.renderFailedEntryPpPrompt();
         Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
       }
