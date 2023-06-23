@@ -18,6 +18,7 @@ import { ClientConfiguration } from '../../../js/common/client-configuration.js'
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { BruteForceProtection } from '../../../js/common/brute-force-protection.js';
 
 View.run(
   class ChangePassPhraseView extends View {
@@ -25,6 +26,7 @@ View.run(
     private readonly acctEmail: string;
     private readonly parentTabId: string;
     private readonly keyImportUi = new KeyImportUi({});
+    private readonly bruteForceProtection: BruteForceProtection;
 
     private mostUsefulPrv: ParsedKeyInfo | undefined;
     private clientConfiguration!: ClientConfiguration;
@@ -34,10 +36,12 @@ View.run(
       const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+      this.bruteForceProtection = new BruteForceProtection(this.acctEmail);
     }
 
     public render = async () => {
       const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+      await this.bruteForceProtection.init();
       this.fesUrl = storage.fesUrl;
       this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
@@ -89,13 +93,20 @@ View.run(
     };
 
     private actionTestCurrentPassPhraseHandler = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const prv = await KeyUtil.parse(this.mostUsefulPrv!.keyInfo.private);
+      if (await this.bruteForceProtection.shouldDisablePassphraseCheck()) {
+        return;
+      }
+      if (!this.mostUsefulPrv) {
+        return;
+      }
+      const prv = await KeyUtil.parse(this.mostUsefulPrv.keyInfo.private);
       if ((await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val()))) === true) {
+        await this.bruteForceProtection.passphraseCheckSucceed();
         this.mostUsefulPrv!.key = prv; // eslint-disable-line @typescript-eslint/no-non-null-assertion
         this.displayBlock('step_1_enter_new');
         $('#new_pass_phrase').focus();
       } else {
+        await this.bruteForceProtection.passphraseCheckFailed();
         await Ui.modal.error('Pass phrase did not match, please try again.');
         $('#current_pass_phrase').val('').focus();
       }
