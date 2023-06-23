@@ -205,7 +205,7 @@ View.run(
             this.altAccounts.removeClass('visible');
           } else {
             this.altAccounts.addClass('visible');
-            this.altAccounts.find('a').first().focus();
+            this.altAccounts.find('a').first().trigger('focus');
           }
           $('.ion-ios-arrow-down').toggleClass('up');
           $('.add-account').toggleClass('hidden');
@@ -220,7 +220,7 @@ View.run(
         'mouseenter',
         Ui.event.handle(target => {
           if (!preventAccountsMenuMouseenter) {
-            $(target).focus();
+            $(target).trigger('focus');
           }
         })
       );
@@ -256,14 +256,14 @@ View.run(
         if (!prev.length) {
           prev = accounts.last();
         }
-        prev.focus();
+        prev.trigger('focus');
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         let next = currentActive.next();
         if (!next.length) {
           next = accounts.first();
         }
-        next.focus();
+        next.trigger('focus');
       }
     };
 

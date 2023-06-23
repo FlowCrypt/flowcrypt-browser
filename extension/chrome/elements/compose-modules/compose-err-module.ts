@@ -188,7 +188,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
       }
     } else {
-      this.view.S.cached('input_password').focus();
+      this.view.S.cached('input_password').trigger('focus');
       throw new ComposerUserError("Some recipients don't have encryption set up. Please add a password.");
     }
   };

@@ -84,6 +84,7 @@ View.run(
         await Ui.modal.warning(
           "Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don't get locked out of your encrypted messages."
         );
+        $('#password').val('').trigger('focus');
       }
     };
   }

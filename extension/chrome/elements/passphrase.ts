@@ -99,7 +99,7 @@ View.run(
           break;
       }
       $('.passphrase_text').text(passphraseText);
-      $('#passphrase').focus();
+      $('#passphrase').trigger('focus');
       if (allPrivateKeys.length > 1) {
         let html: string;
         if (this.keysWeNeedPassPhraseFor.length === 1) {
@@ -185,7 +185,7 @@ View.run(
     private renderNormalPpPrompt = () => {
       $('#passphrase').css('border-color', '');
       $('#passphrase').css('color', 'black');
-      $('#passphrase').focus();
+      $('#passphrase').trigger('focus');
     };
 
     private renderFailedEntryPpPrompt = () => {
@@ -240,11 +240,6 @@ View.run(
       }
       if (atLeastOneMatched) {
         await this.bruteForceProtection.passphraseCheckSucceed();
-        await AcctStore.remove(this.acctEmail, ['last_unsuccessful_passphrase_attempt']);
-        await AcctStore.set(this.acctEmail, {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          failed_passphrase_attempts: 0,
-        });
         this.closeDialog(true, this.initiatorFrameId);
       } else {
         await this.bruteForceProtection.passphraseCheckFailed();

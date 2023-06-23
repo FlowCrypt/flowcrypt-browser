@@ -62,10 +62,10 @@ View.run(
         (storedOrSessionPp && (await KeyUtil.decrypt(this.mostUsefulPrv!.key, storedOrSessionPp)))
       ) {
         this.displayBlock('step_1_enter_new'); // current pp is already known
-        $('#new_pass_phrase').focus();
+        $('#new_pass_phrase').trigger('focus');
       } else {
         this.displayBlock('step_0_enter_current');
-        $('#current_pass_phrase').focus();
+        $('#current_pass_phrase').trigger('focus');
       }
       this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
     };
@@ -104,18 +104,18 @@ View.run(
         await this.bruteForceProtection.passphraseCheckSucceed();
         this.mostUsefulPrv!.key = prv; // eslint-disable-line @typescript-eslint/no-non-null-assertion
         this.displayBlock('step_1_enter_new');
-        $('#new_pass_phrase').focus();
+        $('#new_pass_phrase').trigger('focus');
       } else {
         await this.bruteForceProtection.passphraseCheckFailed();
         await Ui.modal.error('Pass phrase did not match, please try again.');
-        $('#current_pass_phrase').val('').focus();
+        $('#current_pass_phrase').val('').trigger('focus');
       }
     };
 
     private actionSetPassPhraseHandler = async (target: HTMLElement) => {
       if ($(target).hasClass('green')) {
         this.displayBlock('step_2_confirm_new');
-        $('#new_pass_phrase_confirm').focus();
+        $('#new_pass_phrase_confirm').trigger('focus');
       } else {
         await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
       }
@@ -125,7 +125,7 @@ View.run(
       $('#new_pass_phrase').val('').trigger('input');
       $('#new_pass_phrase_confirm').val('');
       this.displayBlock('step_1_enter_new');
-      $('#new_pass_phrase').focus();
+      $('#new_pass_phrase').trigger('focus');
     };
 
     private actionDoChangePassPhraseHandler = async () => {
@@ -133,7 +133,7 @@ View.run(
       if (newPp !== $('#new_pass_phrase_confirm').val()) {
         await Ui.modal.warning('The two pass phrases do not match, please try again.');
         $('#new_pass_phrase_confirm').val('');
-        $('#new_pass_phrase_confirm').focus();
+        $('#new_pass_phrase_confirm').trigger('focus');
         return;
       }
       try {
