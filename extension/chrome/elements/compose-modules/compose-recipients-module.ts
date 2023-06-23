@@ -589,7 +589,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.parseRenderRecipients($(e.target), true).catch(Catch.reportErr);
         this.hideContacts();
       }
-      e.target.trigger('focus');
+      e.target.focus();
       return true;
     } else if (this.view.S.cached('contacts').is(':hidden')) {
       // Next will affect contacts popover
