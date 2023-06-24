@@ -57,7 +57,11 @@ test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
 
-const testWithBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): Implementation<unknown[]> => {
+const testWithBrowser = (
+  cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
+  flag?: 'FAILING',
+  timeout = consts.TIMEOUT_EACH_RETRY
+): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
     let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
@@ -77,7 +81,8 @@ const testWithBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<
           t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
         },
         t,
-        consts,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        { ...consts, TIMEOUT_EACH_RETRY: timeout },
         flag
       );
 
