@@ -468,6 +468,14 @@ export class MessageRenderer {
     };
   };
 
+  private clipMessageIfLimitExceeds = (decryptedContent: string) => {
+    const maxDecryptedContentLength = 50000;
+    if (decryptedContent && decryptedContent.length > maxDecryptedContentLength) {
+      return decryptedContent.substring(0, maxDecryptedContentLength) + ' [clipped - message too large]';
+    }
+    return decryptedContent;
+  };
+
   private decideDecryptedContentFormattingAndRender = async (
     signerEmail: string | undefined,
     verificationPubs: string[],
@@ -502,6 +510,7 @@ export class MessageRenderer {
           attachmentBlock => Attachment.toTransferableAttachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
         );
       }
+      decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     } else {
       renderModule.renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
@@ -540,6 +549,7 @@ export class MessageRenderer {
           );
         }
       }
+      decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     }
     if (!sigResult?.match && signedContentInDecryptedData) {
       const plaintext = signedContentInDecryptedData.rawSignedContent;

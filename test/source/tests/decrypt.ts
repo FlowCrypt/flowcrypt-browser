@@ -1872,6 +1872,38 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - Restricting rendering of large text values in message decryption',
+      testWithBrowser(async (t, browser) => {
+        const threadId1 = '18514f9ceece6c14'; // sign-only
+        const threadId2 = '18514f65895242dd'; // encrypted + signed
+        const threadId3 = '188ebd700d5a5987'; // sign-only mime
+        const threadId4 = '188ebdff6579e577'; // encrypted mime
+
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const inboxPage = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        await pgpBlock.waitForContent('@pgp-block-content', '[clipped - message too large]');
+        const inboxPage2 = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
+        await inboxPage2.waitAll('iframe');
+        const pgpBlock2 = await inboxPage2.getFrame(['pgp_block.htm']);
+        await pgpBlock2.waitForSelTestState('ready');
+        await pgpBlock2.waitForContent('@pgp-block-content', '[clipped - message too large]');
+        const inboxPage3 = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
+        await inboxPage3.waitAll('iframe');
+        const pgpBlock3 = await inboxPage3.getFrame(['pgp_block.htm']);
+        await pgpBlock3.waitForSelTestState('ready');
+        await pgpBlock3.waitForContent('@pgp-block-content', '[clipped - message too large]');
+        const inboxPage4 = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
+        await inboxPage4.waitAll('iframe');
+        const pgpBlock4 = await inboxPage3.getFrame(['pgp_block.htm']);
+        await pgpBlock4.waitForSelTestState('ready');
+        await pgpBlock4.waitForContent('@pgp-block-content', '[clipped - message too large]');
+      })
+    );
+
+    test(
       'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '184cc6aa8e884397';
