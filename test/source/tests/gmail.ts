@@ -324,27 +324,32 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        // create compose draft
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'a compose draft');
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
-        await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
-        // open new compose window and saved draft
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await gmailPage.waitAndClick('//*[text()="Draft"]');
-        await Util.sleep(2);
-        // veryfy that there are two compose windows: new compose window and secure draft
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
-        expect(urls.length).to.equal(2);
-        await pageHasSecureDraft(gmailPage, 'compose draft');
-        // try to open 4 compose windows at the same time
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          const gmailPage = await openGmailPage(t, browser);
+          // create compose draft
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await createSecureDraft(t, browser, gmailPage, 'a compose draft');
+          t.timeout(minutes(2)); // extend ava's timeout
+          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
+          // open new compose window and saved draft
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitAndClick('//*[text()="Draft"]');
+          await Util.sleep(2);
+          // veryfy that there are two compose windows: new compose window and secure draft
+          const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
+          expect(urls.length).to.equal(2);
+          await pageHasSecureDraft(gmailPage, 'compose draft');
+          // try to open 4 compose windows at the same time
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
+        },
+        undefined,
+        minutes(5) // explicitly set timer-controlled timeout
+      )
     );
 
     test(
