@@ -448,7 +448,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
           await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
           await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
-          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
+          // sometimes "Page has unsaved data" alert is displayed here, auto-accept it
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
           await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
           await pageDoesNotHaveSecureReplyContainer(gmailPage);
           await gmailPage.click('[aria-label^="Discard draft"]');
