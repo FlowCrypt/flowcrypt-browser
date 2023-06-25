@@ -1878,27 +1878,22 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId2 = '18514f65895242dd'; // encrypted + signed
         const threadId3 = '188ebd700d5a5987'; // sign-only mime
         const threadId4 = '188ebdff6579e577'; // encrypted mime
-
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const inboxPage = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
-        await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForSelTestState('ready');
-        await pgpBlock.waitForContent('@pgp-block-content', '[clipped - message too large]');
-        const inboxPage2 = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
-        await inboxPage2.waitAll('iframe');
-        const pgpBlock2 = await inboxPage2.getFrame(['pgp_block.htm']);
-        await pgpBlock2.waitForSelTestState('ready');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const gmailPage1 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
+        await gmailPage1.waitAll('iframe');
+        const pgpBlock1 = await gmailPage1.getFrame(['pgp_block.htm']);
+        await pgpBlock1.waitForContent('@pgp-block-content', '[clipped - message too large]');
+        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
+        await gmailPage2.waitAll('iframe');
+        const pgpBlock2 = await gmailPage2.getFrame(['pgp_block.htm']);
         await pgpBlock2.waitForContent('@pgp-block-content', '[clipped - message too large]');
-        const inboxPage3 = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
-        await inboxPage3.waitAll('iframe');
-        const pgpBlock3 = await inboxPage3.getFrame(['pgp_block.htm']);
-        await pgpBlock3.waitForSelTestState('ready');
+        const gmailPage3 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId3}`, undefined, authHdr);
+        await gmailPage3.waitAll('iframe');
+        const pgpBlock3 = await gmailPage3.getFrame(['pgp_block.htm']);
         await pgpBlock3.waitForContent('@pgp-block-content', '[clipped - message too large]');
-        const inboxPage4 = await browser.newPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
-        await inboxPage4.waitAll('iframe');
-        const pgpBlock4 = await inboxPage3.getFrame(['pgp_block.htm']);
-        await pgpBlock4.waitForSelTestState('ready');
+        const gmailPage4 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId4}`, undefined, authHdr);
+        await gmailPage4.waitAll('iframe');
+        const pgpBlock4 = await gmailPage4.getFrame(['pgp_block.htm']);
         await pgpBlock4.waitForContent('@pgp-block-content', '[clipped - message too large]');
       })
     );
