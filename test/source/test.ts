@@ -102,7 +102,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
     }
     mockApiLogs.push(line);
   }).catch(e => {
-    console.error(e);
+    console.error(e.stack);
     process.exit(1);
   });
   const address = mockApi.server.address();
