@@ -510,7 +510,6 @@ export class MessageRenderer {
           attachmentBlock => Attachment.toTransferableAttachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
         );
       }
-      decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     } else {
       renderModule.renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
@@ -549,7 +548,6 @@ export class MessageRenderer {
           );
         }
       }
-      decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     }
     if (!sigResult?.match && signedContentInDecryptedData) {
       const plaintext = signedContentInDecryptedData.rawSignedContent;
@@ -567,6 +565,7 @@ export class MessageRenderer {
         plainSubject
       );
     }
+    decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
     await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, Boolean(signerEmail), retryVerification);
     if (renderableAttachments.length) {
