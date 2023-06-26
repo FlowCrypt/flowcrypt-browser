@@ -67,7 +67,7 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - npm install -g npm@8.11.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+          - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
           - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
