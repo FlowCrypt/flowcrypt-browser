@@ -2301,7 +2301,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           google: {
             aliases: {
-              [acct]: multipleEmailAliasList,
+              [acct]: { list: multipleEmailAliasList },
             },
           },
         });
@@ -2339,7 +2339,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           google: {
             aliases: {
-              [acct]: multipleEmailAliasList,
+              [acct]: { list: multipleEmailAliasList },
             },
           },
         });

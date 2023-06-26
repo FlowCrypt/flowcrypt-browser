@@ -34,6 +34,7 @@ import {
 import { revokedPrv, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { flowcryptTestClientConfiguration, getKeyManagerAutoImportNoPrvCreateRules, getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
+import { flowcryptPrimarySignature } from '../mock/google/google-endpoints';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -715,6 +716,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - reply - can load quote from plain/html email',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: {
+                primarySignature: flowcryptPrimarySignature,
+              },
+            },
+          },
+        });
         const appendUrl = 'threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' + '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
@@ -1702,6 +1720,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               },
             },
           },
+          google: {
+            aliases: {
+              [acct]: {
+                primarySignature: flowcryptPrimarySignature,
+              },
+            },
+          },
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1735,6 +1760,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               },
               'human@flowcrypt.com': {
                 pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: {
+                primarySignature: flowcryptPrimarySignature,
               },
             },
           },

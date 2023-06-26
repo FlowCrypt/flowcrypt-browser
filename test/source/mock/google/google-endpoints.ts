@@ -58,7 +58,13 @@ export type MockUserAlias = {
 export interface GoogleConfig {
   contacts?: string[];
   othercontacts?: string[];
-  aliases?: Dict<MockUserAlias[]>;
+  aliases?: Record<
+    string,
+    {
+      primarySignature?: string;
+      list?: MockUserAlias[];
+    }
+  >;
   getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   getAttachment?: Dict<{ error: Error } | { data: string }>;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
@@ -86,6 +92,9 @@ export const multipleEmailAliasList: MockUserAlias[] = [
     verificationStatus: 'accepted',
   },
 ];
+
+export const flowcryptPrimarySignature =
+  '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
 export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | undefined): HandlersDefinition => {
   return {
     '/o/oauth2/auth': async (
@@ -169,37 +178,21 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         treatAsAlias: false,
         verificationStatus: 'accepted',
       };
-      // If the account is a compatibility account, return specific aliases.
-      // This account is used in hundreds of tests, so we handle it separately to avoid duplicating the code.
-      if (acct === 'flowcrypt.compatibility@gmail.com') {
-        const alias = 'flowcryptcompatibility@gmail.com';
-        return {
-          sendAs: [
-            {
-              ...primarySendAs,
-              signature:
-                '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>',
-            },
-            {
-              sendAsEmail: alias,
-              displayName: 'An Alias',
-              replyToAddress: alias,
-              signature: '',
-              isDefault: false,
-              isPrimary: false,
-              treatAsAlias: false,
-              verificationStatus: 'accepted',
-            },
-          ],
-        };
-      }
       // If no aliases are defined in the config, return only the primary send-as object
       if (!config?.aliases) {
         return { sendAs: [primarySendAs] };
       }
       // Merge the primary send-as object with any aliases defined in the config
-      const aliases = config.aliases[acct] ?? [];
-      return { sendAs: [...aliases, primarySendAs] };
+      const aliases = config.aliases[acct] ?? {};
+      return {
+        sendAs: [
+          ...(aliases.list ?? []),
+          {
+            ...primarySendAs,
+            signature: aliases.primarySignature ?? primarySendAs.signature,
+          },
+        ],
+      };
     },
     '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
       // search messages
