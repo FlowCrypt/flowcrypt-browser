@@ -28,7 +28,7 @@ import {
   getKeyManagerChoosePassphraseForbidStoringRules,
 } from '../mock/fes/fes-constants';
 import { testSksKey } from '../mock/sks/sks-constants';
-import { multipleEmailAliasList } from '../mock/google/google-endpoints';
+import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -88,16 +88,22 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - optional checkbox for each email aliases',
       testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
+              [acct]: {
                 pubkey: somePubkey,
               },
             },
           },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
         });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await Util.sleep(5);
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
           key: { passphrase: 'long enough to suit requirements' },
@@ -110,7 +116,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
             await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
           },
         });
-        expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
         expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
         await settingsPage.close();
       })
@@ -2301,7 +2307,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           google: {
             aliases: {
-              [acct]: { list: multipleEmailAliasList },
+              [acct]: multipleEmailAliasList,
             },
           },
         });
@@ -2339,7 +2345,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           google: {
             aliases: {
-              [acct]: { list: multipleEmailAliasList },
+              [acct]: multipleEmailAliasList,
             },
           },
         });

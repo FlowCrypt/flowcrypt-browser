@@ -34,7 +34,7 @@ import {
 import { revokedPrv, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { flowcryptTestClientConfiguration, getKeyManagerAutoImportNoPrvCreateRules, getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
-import { flowcryptPrimarySignature } from '../mock/google/google-endpoints';
+import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -42,7 +42,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - send an encrypted message to a legacy pwd recipient and a pubkey recipient',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes';
         const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length + 2;
@@ -59,7 +73,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [senderEmail]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [senderEmail]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -74,7 +102,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - check for sender [flowcryptcompatibility@gmail.com] (alias) from a password-protected email',
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [senderEmail]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [senderEmail]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -483,15 +525,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - from alias',
       testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
+              [acct]: {
                 pubkey: somePubkey,
               },
               'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
             },
           },
         });
@@ -715,7 +763,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - reply - can load quote from plain/html email',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -726,13 +773,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             },
           },
           google: {
-            aliases: {
-              [acct]: {
-                primarySignature: flowcryptPrimarySignature,
-              },
+            primarySignature: {
+              [acct]: flowcryptCompatibilityPrimarySignature,
             },
           },
         });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const appendUrl = 'threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' + '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
@@ -1267,7 +1313,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const appendUrl = 'draftId=draft-1';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
         await expectRecipientElements(composePage, {
@@ -1437,7 +1498,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - loading drafts - reply',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
@@ -1721,10 +1797,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             },
           },
           google: {
-            aliases: {
-              [acct]: {
-                primarySignature: flowcryptPrimarySignature,
-              },
+            primarySignature: {
+              [acct]: flowcryptCompatibilityPrimarySignature,
             },
           },
         });
@@ -1764,10 +1838,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             },
           },
           google: {
-            aliases: {
-              [acct]: {
-                primarySignature: flowcryptPrimarySignature,
-              },
+            primarySignature: {
+              [acct]: flowcryptCompatibilityPrimarySignature,
             },
           },
         });

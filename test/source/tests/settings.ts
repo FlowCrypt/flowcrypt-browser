@@ -28,6 +28,7 @@ import { emailKeyIndex } from '../core/common';
 import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
+import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -35,7 +36,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my own emails show as contacts',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const comtactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -51,7 +66,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - attester shows my emails',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
@@ -82,20 +111,18 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
           google: {
             aliases: {
-              [email]: {
-                list: [
-                  {
-                    sendAsEmail: mismatchEmail,
-                    displayName: 'Test mismatch',
-                    replyToAddress: mismatchEmail,
-                    signature: '',
-                    isDefault: false,
-                    isPrimary: false,
-                    treatAsAlias: false,
-                    verificationStatus: 'accepted',
-                  },
-                ],
-              },
+              [email]: [
+                {
+                  sendAsEmail: mismatchEmail,
+                  displayName: 'Test mismatch',
+                  replyToAddress: mismatchEmail,
+                  signature: '',
+                  isDefault: false,
+                  isPrimary: false,
+                  treatAsAlias: false,
+                  verificationStatus: 'accepted',
+                },
+              ],
             },
           },
         });
@@ -193,7 +220,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - view contact public key',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -355,12 +396,18 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - remove public keys from contact',
       testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
+              [acct]: {
                 pubkey: somePubkey,
               },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
             },
           },
         });
@@ -402,7 +449,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(foundKeys.contactsSize).to.equal(1);
         expect(foundKeys.pubkey7FDE685548AEA788.fingerprint).to.equal('5520CACE2CB61EA713E5B0057FDE685548AEA788');
         expect(foundKeys.pubkeyADAC279C95093207.fingerprint).to.equal('E8F0517BA6D7DAB6081C96E4ADAC279C95093207');
-        const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');

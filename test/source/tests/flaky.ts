@@ -21,6 +21,7 @@ import { GoogleData } from '../mock/google/google-data';
 import { ControllableFrame } from '../browser/controllable';
 import { ConfigurationProvider } from '../mock/lib/api';
 import { singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
+import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints';
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
@@ -435,6 +436,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
               'human@flowcrypt.com': {
                 pubkey: somePubkey,
               },
+            },
+          },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
             },
           },
         });

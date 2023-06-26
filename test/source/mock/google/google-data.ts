@@ -178,15 +178,19 @@ export class GoogleData {
       const files = (await Promise.all(filePromises)) as Uint8Array[];
       for (const file of files) {
         const utfStr = new TextDecoder().decode(file);
-        const json = JSON.parse(utfStr) as ExportedMsg;
-        if (json.acctEmail.split(':')[0] === acct.split(':')[0]) {
-          Object.assign(acctData.attachments, json.attachments);
-          json.full.raw = json.raw.raw;
-          if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
-            acctData.drafts.push(json.full);
-          } else {
-            acctData.messages.push(json.full);
+        try {
+          const json = JSON.parse(utfStr) as ExportedMsg;
+          if (json.acctEmail.split(':')[0] === acct.split(':')[0]) {
+            Object.assign(acctData.attachments, json.attachments);
+            json.full.raw = json.raw.raw;
+            if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+              acctData.drafts.push(json.full);
+            } else {
+              acctData.messages.push(json.full);
+            }
           }
+        } catch (e) {
+          console.log(`Error while parsing JSON. error: ${e}`);
         }
       }
       DATA[acct] = acctData;

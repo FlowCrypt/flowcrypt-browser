@@ -58,13 +58,8 @@ export type MockUserAlias = {
 export interface GoogleConfig {
   contacts?: string[];
   othercontacts?: string[];
-  aliases?: Record<
-    string,
-    {
-      primarySignature?: string;
-      list?: MockUserAlias[];
-    }
-  >;
+  aliases?: Dict<MockUserAlias[]>;
+  primarySignature?: Dict<string>;
   getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   getAttachment?: Dict<{ error: Error } | { data: string }>;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
@@ -93,8 +88,21 @@ export const multipleEmailAliasList: MockUserAlias[] = [
   },
 ];
 
-export const flowcryptPrimarySignature =
+export const flowcryptCompatibilityPrimarySignature =
   '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
+
+export const flowcryptCompatibilityAliasList = [
+  {
+    sendAsEmail: 'flowcryptcompatibility@gmail.com',
+    displayName: 'An Alias',
+    replyToAddress: 'flowcryptcompatibility@gmail.com',
+    signature: '',
+    isDefault: false,
+    isPrimary: false,
+    treatAsAlias: false,
+    verificationStatus: 'accepted',
+  },
+];
 export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | undefined): HandlersDefinition => {
   return {
     '/o/oauth2/auth': async (
@@ -184,12 +192,16 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       }
       // Merge the primary send-as object with any aliases defined in the config
       const aliases = config.aliases[acct] ?? {};
+      let signature = primarySendAs.signature;
+      if (config.primarySignature && config.primarySignature[acct]) {
+        signature = config.primarySignature[acct];
+      }
       return {
         sendAs: [
-          ...(aliases.list ?? []),
+          ...aliases,
           {
             ...primarySendAs,
-            signature: aliases.primarySignature ?? primarySendAs.signature,
+            signature,
           },
         ],
       };
