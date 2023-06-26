@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { AvaContext, newTimeoutPromise } from '../tests/tooling';
-import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page } from 'puppeteer';
+import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page, WaitForOptions } from 'puppeteer';
 import { PageRecipe } from '../tests/page-recipe/abstract-page-recipe';
 import {
   TIMEOUT_DESTROY_UNEXPECTED_ALERT,
@@ -676,6 +676,7 @@ export class ControllablePage extends ControllableBase {
   public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
   private preventclose = false;
+  private acceptUnloadAlert = false;
 
   public constructor(public t: AvaContext, public page: Page) {
     super(page);
@@ -700,6 +701,10 @@ export class ControllablePage extends ControllableBase {
     });
     // page.on('error', e => this.consoleMsgs.push(`[error]${e.stack}[/error]`)); // this is Node event emitter error. Maybe just let it go crash the process / test
     page.on('dialog', alert => {
+      if (this.acceptUnloadAlert && alert.type() === 'beforeunload') {
+        alert.accept().catch((e: unknown) => t.log(`${t.attemptText} Err auto-accepting unload alert ${String(e)}`));
+        return;
+      }
       const controllableAlert = new ControllableAlert(alert);
       this.alerts.push(controllableAlert);
       setTimeout(() => {
@@ -716,6 +721,15 @@ export class ControllablePage extends ControllableBase {
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
     });
   }
+
+  public reload = async (options?: WaitForOptions, acceptUnloadAlert?: boolean) => {
+    this.acceptUnloadAlert = Boolean(acceptUnloadAlert);
+    try {
+      await this.page.reload(options);
+    } finally {
+      this.acceptUnloadAlert = false;
+    }
+  };
 
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
     const dialogPromise: Promise<ControllableAlert> = new Promise((resolve, reject) => {
