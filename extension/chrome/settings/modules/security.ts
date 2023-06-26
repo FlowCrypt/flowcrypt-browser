@@ -80,7 +80,7 @@ View.run(
               window.location.reload();
             } else {
               await Ui.modal.warning('Pass phrase did not match, please try again.');
-              $('input#passphrase_entry').val('').focus();
+              $('input#passphrase_entry').val('').trigger('focus');
             }
           })
         );

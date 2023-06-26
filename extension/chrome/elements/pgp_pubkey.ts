@@ -209,7 +209,7 @@ View.run(
           BrowserMsg.send.reRenderRecipient('broadcast', { email });
         } else {
           await Ui.modal.error('This email is invalid, please check for typos. Not added.');
-          $('.input_email').focus();
+          $('.input_email').trigger('focus');
         }
       }
     };
