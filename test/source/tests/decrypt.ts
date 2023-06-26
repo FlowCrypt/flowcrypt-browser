@@ -1003,6 +1003,35 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      `compose - #5125 test pass phrase anti brute force protection`,
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const wrongPassphrase = 'wrong';
+        const settingsPage = await browser.newExtensionSettingsPage(t);
+        await SettingsPageRecipe.ready(settingsPage);
+        const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+        await securityFrame.waitAndClick('@action-test-passphrase-begin');
+        // Repeat entering invalid passprase 5 times
+        for (const i of [4, 3, 2, 1, 0]) {
+          await securityFrame.waitAndType('@input-test-passphrase', wrongPassphrase);
+          await securityFrame.waitAndClick('@action-test-passphrase', { delay: 0.5 });
+          await securityFrame.waitAndRespondToModal('warning', 'confirm', 'not match');
+          if (i > 0) {
+            await securityFrame.waitForContent(
+              '@passphrase-attempts-introduce-label',
+              `For your protection and data security, there are currently only ${i} attempt${i > 1 ? 's' : ''}`
+            );
+          }
+        }
+        await securityFrame.waitForContent(
+          '@passphrase-attempts-introduce-label',
+          'To protect you and your data, the next attempt will only be possible after the timer below finishes. Please wait until then before trying again.'
+        );
+        expect(await securityFrame.attr('@action-test-passphrase', 'disabled')).to.be.eq('disabled');
+      })
+    );
+
+    test(
       'decrypt - by entering pass phrase + remember in session',
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
