@@ -75,6 +75,9 @@ export const Lang = {
     dontKnowHowOpen: (isCustomerUrlFesUsed: boolean) =>
       `Please ${contactMinimalSubsentence(isCustomerUrlFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
+    passphraseAttemptIntroduce: (attemptsLeft: string) =>
+      `For your protection and data security, there are currently only ${attemptsLeft} left.<br />If attempts are exceeded, there will a 5-minute cooldown period before you may try again.`,
+    passphraseAntiBruteForceProtectionHint: `To protect you and your data, the next attempt will only be possible after the timer below finishes. Please wait until then before trying again.`,
     toOpenMsg: 'to open this message.',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
     updateChromeSettings: 'Need to update chrome settings to view encrypted messages. ',

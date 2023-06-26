@@ -387,7 +387,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
         })
       )
-      .focus();
+      .trigger('focus');
     this.view.S.cached('prompt')
       .find('.action_close')
       .on(
