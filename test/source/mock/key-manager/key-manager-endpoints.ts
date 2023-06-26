@@ -10,6 +10,13 @@ import { OauthMock } from '../lib/oauth';
 
 export interface KeyManagerConfig {
   keys?: string[];
+  putKeysExpectation?: Record<
+    string,
+    {
+      identity?: string;
+      expirationExists?: boolean;
+    }
+  >;
   returnError?: HttpClientErr;
   putReturnError?: HttpClientErr;
 }
@@ -32,39 +39,23 @@ export const getMockKeyManagerEndpoints = (oauth: OauthMock, config: KeyManagerC
           if (config.putReturnError) {
             throw config.putReturnError;
           }
-          const { privateKey } = body as Dict<string>;
-          if (acctEmail === 'put.key@key-manager-autogen.flowcrypt.test') {
+          if (config.putKeysExpectation && config.putKeysExpectation[acctEmail]) {
+            const expectation = config.putKeysExpectation[acctEmail];
+            const { privateKey } = body as Dict<string>;
             const prv = await KeyUtil.parseMany(privateKey);
             expect(prv).to.have.length(1);
             expect(prv[0].algo.bits).to.equal(2048);
             expect(prv[0].identities).to.have.length(1);
-            expect(prv[0].identities[0]).to.equal('First Last <put.key@key-manager-autogen.flowcrypt.test>');
+            if (expectation.identity) {
+              expect(prv[0].identities[0]).to.equal(expectation.identity);
+            }
             expect(prv[0].isPrivate).to.be.true;
             expect(prv[0].fullyDecrypted).to.be.true;
-            expect(prv[0].expiration).to.not.exist;
-            config.keys = [privateKey];
-            return {};
-          }
-          if (acctEmail === 'expire@key-manager-keygen-expiration.flowcrypt.test') {
-            const prv = await KeyUtil.parseMany(privateKey);
-            expect(prv).to.have.length(1);
-            expect(prv[0].algo.bits).to.equal(2048);
-            expect(prv[0].identities).to.have.length(1);
-            expect(prv[0].identities[0]).to.equal('First Last <expire@key-manager-keygen-expiration.flowcrypt.test>');
-            expect(prv[0].isPrivate).to.be.true;
-            expect(prv[0].fullyDecrypted).to.be.true;
-            expect(prv[0].expiration).to.exist;
-            config.keys = [privateKey];
-            return {};
-          }
-          if (acctEmail.includes('updating.key')) {
-            const prv = await KeyUtil.parseMany(privateKey);
-            expect(prv).to.have.length(1);
-            expect(prv[0].algo.bits).to.equal(2048);
-            expect(prv[0].identities).to.have.length(1);
-            expect(prv[0].isPrivate).to.be.true;
-            expect(prv[0].fullyDecrypted).to.be.true;
-            expect(prv[0].expiration).to.not.exist;
+            if (expectation.expirationExists) {
+              expect(prv[0].expiration).to.exist;
+            } else {
+              expect(prv[0].expiration).to.not.exist;
+            }
             config.keys = [privateKey];
             return {};
           }
