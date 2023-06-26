@@ -45,8 +45,8 @@ export type AccountIndex =
   | 'use_rich_text'
   | 'rules'
   | 'fesUrl'
-  | 'failed_passphrase_attempts'
-  | 'last_unsuccessful_passphrase_attempt';
+  | 'failedPassphraseAttempts'
+  | 'lastUnsuccessfulPassphraseAttempt';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -75,8 +75,8 @@ export type AcctStoreDict = {
   use_rich_text?: boolean;
   rules?: ClientConfigurationJson;
   fesUrl?: string; // url where FlowCrypt External Service is deployed
-  failed_passphrase_attempts?: number;
-  last_unsuccessful_passphrase_attempt?: number;
+  failedPassphraseAttempts?: number;
+  lastUnsuccessfulPassphraseAttempt?: number;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

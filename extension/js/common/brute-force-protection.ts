@@ -8,60 +8,51 @@ import { AcctStore } from './platform/store/acct-store.js';
 const SUBMIT_BUTTON_SELECTOR = '.action_ok, .action_test_current_passphrase, .action_verify, .action_show_public_key';
 const PASSPHRASE_ATTEMPTS_INTRODUCE_SELECTOR = '.passphrase_attempts_introduce_label';
 const ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE = 5;
-const BLOCKING_TIME_IN_MILI_SECONDS = 5 * 60 * 1000;
+const BLOCKING_TIME_IN_MILLI_SECONDS = 5 * 60 * 1000;
 
 export class BruteForceProtection {
-  private acctEmail!: string;
   private failedPassPhraseAttempts!: number;
   private lastUnsuccessfulPassphraseAttempt!: number;
   private previousState: undefined | boolean;
   private submitButtonText = '';
   private readonly CHECK_BRUTE_FORCE_FREQUENCY = 1000;
 
-  public constructor(acctEmail: string) {
-    this.acctEmail = acctEmail;
-  }
+  public constructor(private acctEmail: string) {}
 
   public init = async () => {
-    const storage = await AcctStore.get(this.acctEmail, ['fesUrl', 'failed_passphrase_attempts', 'last_unsuccessful_passphrase_attempt']);
+    const storage = await AcctStore.get(this.acctEmail, ['failedPassphraseAttempts', 'lastUnsuccessfulPassphraseAttempt']);
     this.submitButtonText = $(SUBMIT_BUTTON_SELECTOR).text();
-    this.failedPassPhraseAttempts = storage.failed_passphrase_attempts ?? 0;
-    this.lastUnsuccessfulPassphraseAttempt = storage.last_unsuccessful_passphrase_attempt ?? 0;
+    this.failedPassPhraseAttempts = storage.failedPassphraseAttempts ?? 0;
+    if (this.failedPassPhraseAttempts < 0) {
+      // To prevent issue where someone can set storage.failedPassPhraseAttempts=-999 and will have thousand attempts before 5-minute cooldown
+      this.failedPassPhraseAttempts = ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE;
+    }
+    this.lastUnsuccessfulPassphraseAttempt = storage.lastUnsuccessfulPassphraseAttempt ?? 0;
     await this.monitorBruteForceProtection();
     Catch.setHandledInterval(() => this.monitorBruteForceProtection(), this.CHECK_BRUTE_FORCE_FREQUENCY);
   };
 
   public passphraseCheckFailed = async () => {
-    await AcctStore.set(this.acctEmail, {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      failed_passphrase_attempts: this.failedPassPhraseAttempts + 1,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      last_unsuccessful_passphrase_attempt: new Date().valueOf(),
-    });
     this.failedPassPhraseAttempts += 1;
     this.lastUnsuccessfulPassphraseAttempt = new Date().valueOf();
+    await AcctStore.set(this.acctEmail, {
+      failedPassphraseAttempts: this.failedPassPhraseAttempts,
+      lastUnsuccessfulPassphraseAttempt: this.lastUnsuccessfulPassphraseAttempt,
+    });
     this.updateRemainingAttemptsLabel();
   };
 
   public passphraseCheckSucceed = async () => {
-    await AcctStore.set(this.acctEmail, {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      failed_passphrase_attempts: 0,
-    });
-    await AcctStore.remove(this.acctEmail, ['last_unsuccessful_passphrase_attempt']);
+    await AcctStore.remove(this.acctEmail, ['failedPassphraseAttempts', 'lastUnsuccessfulPassphraseAttempt']);
   };
 
   public shouldDisablePassphraseCheck = async () => {
-    const now = new Date().valueOf();
+    const now = Date.now();
     // already passed anti-brute force 5 minute cooldown period
     // reset last unsuccessful count
-    if (
-      now > this.lastUnsuccessfulPassphraseAttempt + BLOCKING_TIME_IN_MILI_SECONDS &&
-      this.failedPassPhraseAttempts >= ANTI_BRUTE_FORCE_PROTECTION_ATTEMPTS_MAX_VALUE
-    ) {
+    if (now > this.lastUnsuccessfulPassphraseAttempt + BLOCKING_TIME_IN_MILLI_SECONDS) {
       await AcctStore.set(this.acctEmail, {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        failed_passphrase_attempts: 0,
+        failedPassphraseAttempts: 0,
       });
       this.failedPassPhraseAttempts = 0;
     }
@@ -69,8 +60,8 @@ export class BruteForceProtection {
   };
 
   private renderBruteForceProtectionAlert = () => {
-    const now = new Date().valueOf();
-    const remainingTimeInSeconds = (this.lastUnsuccessfulPassphraseAttempt + BLOCKING_TIME_IN_MILI_SECONDS - now) / 1000;
+    const now = Date.now();
+    const remainingTimeInSeconds = (this.lastUnsuccessfulPassphraseAttempt + BLOCKING_TIME_IN_MILLI_SECONDS - now) / 1000;
 
     $(PASSPHRASE_ATTEMPTS_INTRODUCE_SELECTOR).text(Lang.pgpBlock.passphraseAntiBruteForceProtectionHint).show();
 
