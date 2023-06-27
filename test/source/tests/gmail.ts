@@ -276,7 +276,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    // tests that read drafts or modify online/offline state shouldn't be interefered with
+    // draft-sensitive test
     test.serial(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
@@ -312,7 +312,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    // tests that read drafts or modify online/offline state shouldn't be interefered with
+    // convo-sensitive, draft-sensitive test
     test.serial(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
@@ -346,7 +346,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    // tests that read drafts or modify online/offline state shouldn't be interefered with
+    // draft-sensitive test
     test.serial(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(
@@ -458,7 +458,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    // convo-sensitive, draft-sensitive test
+    test.serial(
       'mail.google.com - plain reply draft',
       testWithBrowser(
         async (t, browser) => {
