@@ -385,8 +385,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private onRecipientsClickHandler = () => {
     if (!this.view.S.cached('input_to').is(':focus')) {
-      this.view.errModule.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.view.S.cached('input_to').val()})`);
-      this.view.S.cached('input_to').focus();
+      this.view.errModule.debug(
+        `input_addresses_container_inner.click -> calling input_to.trigger('focus') when input_to.val(${this.view.S.cached('input_to').val()})`
+      );
+      this.view.S.cached('input_to').trigger('focus');
     }
   };
 

@@ -18,6 +18,7 @@ import { ClientConfiguration } from '../../../js/common/client-configuration.js'
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { BruteForceProtection } from '../../../js/common/brute-force-protection.js';
 
 View.run(
   class ChangePassPhraseView extends View {
@@ -25,6 +26,7 @@ View.run(
     private readonly acctEmail: string;
     private readonly parentTabId: string;
     private readonly keyImportUi = new KeyImportUi({});
+    private readonly bruteForceProtection: BruteForceProtection;
 
     private mostUsefulPrv: ParsedKeyInfo | undefined;
     private clientConfiguration!: ClientConfiguration;
@@ -34,10 +36,12 @@ View.run(
       const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+      this.bruteForceProtection = new BruteForceProtection(this.acctEmail);
     }
 
     public render = async () => {
       const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+      await this.bruteForceProtection.init();
       this.fesUrl = storage.fesUrl;
       this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       await initPassphraseToggle(['current_pass_phrase', 'new_pass_phrase', 'new_pass_phrase_confirm']);
@@ -58,10 +62,10 @@ View.run(
         (storedOrSessionPp && (await KeyUtil.decrypt(this.mostUsefulPrv!.key, storedOrSessionPp)))
       ) {
         this.displayBlock('step_1_enter_new'); // current pp is already known
-        $('#new_pass_phrase').focus();
+        $('#new_pass_phrase').trigger('focus');
       } else {
         this.displayBlock('step_0_enter_current');
-        $('#current_pass_phrase').focus();
+        $('#current_pass_phrase').trigger('focus');
       }
       this.keyImportUi.renderPassPhraseStrengthValidationInput($('#new_pass_phrase'), $('.action_set_pass_phrase'));
     };
@@ -89,22 +93,29 @@ View.run(
     };
 
     private actionTestCurrentPassPhraseHandler = async () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const prv = await KeyUtil.parse(this.mostUsefulPrv!.keyInfo.private);
+      if (await this.bruteForceProtection.shouldDisablePassphraseCheck()) {
+        return;
+      }
+      if (!this.mostUsefulPrv) {
+        return;
+      }
+      const prv = await KeyUtil.parse(this.mostUsefulPrv.keyInfo.private);
       if ((await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val()))) === true) {
+        await this.bruteForceProtection.passphraseCheckSucceed();
         this.mostUsefulPrv!.key = prv; // eslint-disable-line @typescript-eslint/no-non-null-assertion
         this.displayBlock('step_1_enter_new');
-        $('#new_pass_phrase').focus();
+        $('#new_pass_phrase').trigger('focus');
       } else {
+        await this.bruteForceProtection.passphraseCheckFailed();
         await Ui.modal.error('Pass phrase did not match, please try again.');
-        $('#current_pass_phrase').val('').focus();
+        $('#current_pass_phrase').val('').trigger('focus');
       }
     };
 
     private actionSetPassPhraseHandler = async (target: HTMLElement) => {
       if ($(target).hasClass('green')) {
         this.displayBlock('step_2_confirm_new');
-        $('#new_pass_phrase_confirm').focus();
+        $('#new_pass_phrase_confirm').trigger('focus');
       } else {
         await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
       }
@@ -114,7 +125,7 @@ View.run(
       $('#new_pass_phrase').val('').trigger('input');
       $('#new_pass_phrase_confirm').val('');
       this.displayBlock('step_1_enter_new');
-      $('#new_pass_phrase').focus();
+      $('#new_pass_phrase').trigger('focus');
     };
 
     private actionDoChangePassPhraseHandler = async () => {
@@ -122,7 +133,7 @@ View.run(
       if (newPp !== $('#new_pass_phrase_confirm').val()) {
         await Ui.modal.warning('The two pass phrases do not match, please try again.');
         $('#new_pass_phrase_confirm').val('');
-        $('#new_pass_phrase_confirm').focus();
+        $('#new_pass_phrase_confirm').trigger('focus');
         return;
       }
       try {

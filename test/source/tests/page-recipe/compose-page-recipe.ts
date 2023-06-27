@@ -133,7 +133,7 @@ export class ComposePageRecipe extends PageRecipe {
       }
     }
     await composePageOrFrame.target.evaluate(() => {
-      $('#input_text').focus();
+      $('#input_text').trigger('focus');
     });
     await Util.sleep(1);
   };
