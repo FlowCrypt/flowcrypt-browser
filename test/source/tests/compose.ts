@@ -32,7 +32,15 @@ import {
   testMatchPubKey,
 } from '../mock/attester/attester-key-constants';
 import { revokedPrv, twoKeys2 } from '../mock/key-manager/key-manager-constants';
-import { flowcryptTestClientConfiguration, getKeyManagerAutoImportNoPrvCreateRules, getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
+import {
+  flowcryptTestClientConfiguration,
+  getKeyManagerAutoImportNoPrvCreateRules,
+  getKeyManagerAutogenRules,
+  processMessageFromUser,
+  processMessageFromUser2,
+  processMessageFromUser3,
+  processMessageFromUser4,
+} from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
 import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
 
@@ -3197,6 +3205,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           attester: {
             pubkeyLookup: {},
           },
+          fes: {
+            messagePostValidator: processMessageFromUser,
+          },
         });
         const port = t.urls?.port;
         const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
@@ -3256,6 +3267,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
                 pubkey: somePubkey,
               },
             },
+          },
+          fes: {
+            messagePostValidator: processMessageFromUser2,
           },
         });
         const acct = `user2@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
@@ -3344,6 +3358,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               },
             },
           },
+          fes: {
+            messagePostValidator: processMessageFromUser3,
+          },
         });
         const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -3372,6 +3389,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            messagePostValidator: processMessageFromUser4,
           },
         });
         const acct = `user4@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock

@@ -22,6 +22,7 @@ import { ControllableFrame } from '../browser/controllable';
 import { ConfigurationProvider } from '../mock/lib/api';
 import { singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints';
+import { processMessageFromUser4 } from '../mock/fes/fes-constants';
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
@@ -274,6 +275,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
                 pubkey: somePubkey,
               },
             },
+          },
+          fes: {
+            messagePostValidator: processMessageFromUser4,
           },
         });
         const port = t.urls?.port;

@@ -51,9 +51,15 @@ export type FesClientConfiguration = {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
+export interface FesMessageReturnType {
+  url: string;
+  externalId: string;
+  emailToExternalIdAndUrl: { [email: string]: { url: string; externalId: string } };
+}
 export interface FesConfig {
   returnError?: HttpClientErr;
   clientConfiguration?: FesClientConfiguration;
+  messagePostValidator?: (body: string, fesUrl: string) => Promise<FesMessageReturnType>;
 }
 
 const issuedAccessTokens: string[] = [];

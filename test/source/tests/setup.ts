@@ -26,6 +26,7 @@ import {
   getKeyManagerAutoImportNoPrvCreateRules,
   getKeyManagerAutogenRules,
   getKeyManagerChoosePassphraseForbidStoringRules,
+  processMessageFromUser,
 } from '../mock/fes/fes-constants';
 import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
@@ -2223,6 +2224,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            messagePostValidator: processMessageFromUser,
           },
         });
         const port = t.urls?.port;

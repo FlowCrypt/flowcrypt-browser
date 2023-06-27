@@ -186,25 +186,16 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         treatAsAlias: false,
         verificationStatus: 'accepted',
       };
+      if (config?.primarySignature && config.primarySignature[acct]) {
+        primarySendAs.signature = config.primarySignature[acct];
+      }
       // If no aliases are defined in the config, return only the primary send-as object
       if (!config?.aliases) {
         return { sendAs: [primarySendAs] };
       }
       // Merge the primary send-as object with any aliases defined in the config
-      const aliases = config.aliases[acct] ?? {};
-      let signature = primarySendAs.signature;
-      if (config.primarySignature && config.primarySignature[acct]) {
-        signature = config.primarySignature[acct];
-      }
-      return {
-        sendAs: [
-          ...aliases,
-          {
-            ...primarySendAs,
-            signature,
-          },
-        ],
-      };
+      const aliases = config.aliases[acct] ?? [];
+      return { sendAs: [...aliases, primarySendAs] };
     },
     '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
       // search messages
