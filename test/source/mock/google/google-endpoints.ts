@@ -62,6 +62,7 @@ export interface GoogleConfig {
   primarySignature?: Dict<string>;
   getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   getAttachment?: Dict<{ error: Error } | { data: string }>;
+  draftIdToSave?: string;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
 }
 
@@ -328,14 +329,8 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         }
         const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
         const data = await GoogleData.withInitializedData(acct);
-        if (mimeMsg.subject?.includes('saving and rendering a draft with image')) {
-          data.addDraft('draft_with_image', raw, mimeMsg);
-        }
-        if (mimeMsg.subject?.includes('check existing draft not saved without changes')) {
-          data.addDraft('check_existing_draft_save', raw, mimeMsg);
-        }
-        if (mimeMsg.subject?.includes('RTL')) {
-          data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
+        if (config?.draftIdToSave) {
+          data.addDraft(config.draftIdToSave, raw, mimeMsg);
         }
         return {};
       } else if (isDelete(req)) {

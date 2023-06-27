@@ -1903,7 +1903,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - saving and rendering a draft with image',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const draftId = 'draft_with_image';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            draftIdToSave: draftId,
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const imgBase64 =
           'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1917,7 +1931,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=draft_with_image',
+          appendUrl: `draftId=${draftId}`,
         });
         const body = await composePage.waitAny('@input-body');
         await composePage.waitAll('#input_text img');
@@ -1928,14 +1942,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - check existing draft not saved without changes',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const draftId = 'check_existing_draft_save';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            draftIdToSave: draftId,
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `check existing draft not saved without changes ${Util.lousyRandom()}`;
         await ComposePageRecipe.fillMsg(composePage, {}, subject, subject);
         await Util.sleep(4);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=check_existing_draft_save',
+          appendUrl: `draftId=${draftId}`,
         });
         await composePage.verifyContentIsNotPresentContinuously('@send-btn-note', 'Saved', 5);
       })
@@ -1976,7 +2004,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - saving and rendering a draft with RTL text (plain text)',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const draftId = 'draft_with_rtl_text_plain';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            draftIdToSave: draftId,
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL plain text`;
         await Util.sleep(5); // until #5037 is fixed
@@ -1986,7 +2028,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=draft_with_rtl_text_plain',
+          appendUrl: `draftId=${draftId}`,
         });
         expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
         expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
@@ -1996,17 +2038,30 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - saving and rendering a draft with RTL text (rich text)',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const draftId = 'draft_with_rtl_text_rich';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            draftIdToSave: draftId,
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL rich text`;
-        await Util.sleep(5); // until #5037 is fixed
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
           richtext: true,
         });
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
-          appendUrl: 'draftId=draft_with_rtl_text_rich',
+          appendUrl: `draftId=${draftId}`,
         });
         expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
       })
