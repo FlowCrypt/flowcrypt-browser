@@ -59,12 +59,12 @@ View.run(
       const textVal = $('#input_text').val();
       const emailVal = String($('#input_email').val());
       if (!Str.isEmailValid(emailVal)) {
-        $('#input_email').removeAttr('disabled').focus();
+        $('#input_email').removeAttr('disabled').trigger('focus');
         await Ui.modal.warning('Please enter valid email - so that we can get back to you.');
         return;
       }
       if (!textVal) {
-        $('#input_text').focus();
+        $('#input_text').trigger('focus');
         await Ui.modal.warning('Message should not be empty.');
         return;
       }

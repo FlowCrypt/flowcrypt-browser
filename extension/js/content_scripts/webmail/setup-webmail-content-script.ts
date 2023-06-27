@@ -189,10 +189,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         // iframe have to be blurred before focusing body
         document.activeElement.blur();
       }
-      $('body').focus();
+      $('body').trigger('focus');
     });
     BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.ComposeWindow) => {
-      $(`iframe#${frameId}`).focus();
+      $(`iframe#${frameId}`).trigger('focus');
     });
     BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
       $(`iframe#${frameId}`).remove();

@@ -235,7 +235,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {
     $(addIntroBtn).css('display', 'none');
     this.view.S.cached('intro_container').css('display', 'table-row');
-    this.view.S.cached('input_intro').focus();
+    this.view.S.cached('input_intro').trigger('focus');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 

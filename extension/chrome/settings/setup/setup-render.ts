@@ -110,7 +110,7 @@ export class SetupRenderModule {
         $('.backups_count_words').text(
           this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup'
         );
-        $('#step_2_recovery input').focus();
+        $('#step_2_recovery input').trigger('focus');
       }
     }
   };

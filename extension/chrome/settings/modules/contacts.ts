@@ -232,7 +232,7 @@ View.run(
           await this.loadAndRenderContactList();
         } catch (e) {
           await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(!!this.fesUrl));
-          $('#edit_contact .input_pubkey').val('').focus();
+          $('#edit_contact .input_pubkey').val('').trigger('focus');
         }
       }
     };
