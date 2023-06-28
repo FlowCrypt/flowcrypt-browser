@@ -27,11 +27,6 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
           apiVersion: 'v1',
         };
       }
-      if (req.headers.host === `fes.localhost:${port}`) {
-        // test `status404 does not return any fesUrl` uses this
-        // this makes enterprise version tolerate missing FES - explicit 404
-        throw new HttpClientErr(`Not found`, 404);
-      }
       if (req.headers.host === `fes.google.mock.localhost:${port}`) {
         // test `compose - auto include pubkey is inactive when our key is available on Wkd` uses this
         // this makes enterprise version tolerate missing FES - explicit 404
