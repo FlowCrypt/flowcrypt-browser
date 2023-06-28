@@ -43,7 +43,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeFrameCount ?? 1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
-        const replyBox = await browser.newPage(t, urls[composeFrameIndex ?? 0]);
+        const replyBox = await gmailPage.getFrame([urls[composeFrameIndex ?? 0]]);
         if (isReplyPromptAccepted) {
           await replyBox.waitAll('@action-send');
           await replyBox.notPresent('@action-accept-reply-prompt');
@@ -51,7 +51,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await replyBox.waitAll('@action-accept-reply-prompt');
           await replyBox.notPresent('@action-send');
         }
-        await replyBox.close();
       }
     };
 
