@@ -63,6 +63,7 @@ export interface GoogleConfig {
   getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   getAttachment?: Dict<{ error: Error } | { data: string }>;
   draftIdToSave?: string;
+  threadNotFoundError?: Record<string, number>;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
 }
 
@@ -262,8 +263,10 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         const id = parseResourceId(req.url!);
         const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
         if (!msgs.length) {
-          const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
-          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
+          if (config?.threadNotFoundError && config.threadNotFoundError[id]) {
+            throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, config.threadNotFoundError[id]);
+          }
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, 400);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
       }

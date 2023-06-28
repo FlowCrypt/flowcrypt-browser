@@ -695,7 +695,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - reply - old gmail threadId fmt',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        t.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              [acct]: {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          google: {
+            threadNotFoundError: {
+              '16841ce0ce5cb74d': 404,
+            },
+          },
+        });
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&replyMsgId=16841ce0ce5cb74d';
         const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
