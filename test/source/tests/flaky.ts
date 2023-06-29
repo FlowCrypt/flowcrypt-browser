@@ -34,7 +34,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'compose - own key expired - update and retry',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual.0@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [acctEmail]: {
@@ -96,7 +96,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'setup - create key - with backup to inbox',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual.1@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
@@ -114,7 +114,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'setup - create key - choose no backup',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual.2@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
@@ -132,7 +132,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'setup - create key - backup as file - submit pubkey',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.new.manual.3@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
@@ -149,7 +149,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'create@prv-create-no-prv-backup.flowcrypt.test - create key allowed but backups not',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -202,7 +202,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user@no-submit-client-configuration.flowcrypt.test - do not submit to attester on key generation',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -228,7 +228,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'settings - generate rsa3072 key',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -267,7 +267,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               'flowcrypt.compatibility@gmail.com': {
@@ -280,7 +280,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
-        const port = t.urls?.port;
+        const port = t.context.urls?.port;
         const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
@@ -385,7 +385,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'user@forbid-storing-passphrase-client-configuration.flowcrypt.test - do not store passphrase',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               'human@flowcrypt.com': {
@@ -525,7 +525,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'compose - load contacts - contacts should be properly ordered',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           google: {
             contacts: [
               'testsearchorder1@flowcrypt.com',
@@ -777,7 +777,7 @@ AfYUJUhqjgSuBctnpj0=
         const passphrase = 'some pass for testing';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, rsa4096, passphrase, {}, false);
         const start = new Date();
-        const inboxPage = await browser.newPage(t, t.urls?.extensionInbox(acctEmail) + `&threadId=${threadId}`);
+        const inboxPage = await browser.newPage(t, t.context.urls?.extensionInbox(acctEmail) + `&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const frameName = 'pgp_block.htm';
         let frames: Frame[] = [];

@@ -39,26 +39,26 @@ export class BrowserHandle {
     }
     this.pages.push(controllablePage);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (url && url.includes(t.urls!.extensionId)) {
+    if (url && url.includes(t.context.urls!.extensionId)) {
       await controllablePage.waitUntilViewLoaded();
     }
     return controllablePage;
   };
 
   public newExtensionPage = async (t: AvaContext, url: string): Promise<ControllablePage> => {
-    return this.newPage(t, t.urls?.extension(url));
+    return this.newPage(t, t.context.urls?.extension(url));
   };
 
   public newExtensionInboxPage = async (t: AvaContext, acctEmail: string, threadId?: string): Promise<ControllablePage> => {
-    return this.newPage(t, t.urls?.extensionInbox(acctEmail, threadId));
+    return this.newPage(t, t.context.urls?.extensionInbox(acctEmail, threadId));
   };
 
   public newExtensionSettingsPage = async (t: AvaContext, acctEmail?: string | undefined): Promise<ControllablePage> => {
-    return this.newPage(t, t.urls?.extensionSettings(acctEmail));
+    return this.newPage(t, t.context.urls?.extensionSettings(acctEmail));
   };
 
   public newMockGmailPage = async (t: AvaContext, extraHeaders?: Record<string, string>): Promise<ControllablePage> => {
-    return this.newPage(t, t.urls?.mockGmailUrl(), undefined, extraHeaders);
+    return this.newPage(t, t.context.urls?.mockGmailUrl(), undefined, extraHeaders);
   };
 
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
@@ -69,7 +69,7 @@ export class BrowserHandle {
       await page.setViewport(this.viewport);
       this.pages.push(controllablePage);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (url.includes(t.urls!.extensionId)) {
+      if (url.includes(t.context.urls!.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
       }
       return controllablePage;

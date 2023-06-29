@@ -65,10 +65,10 @@ const testWithBrowser = (
   return async (t: AvaContext) => {
     let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
-      t.mockApi = await startMockApiAndCopyBuild(t);
-      closeMockApi = t.mockApi.close;
+      t.context.mockApi = await startMockApiAndCopyBuild(t);
+      closeMockApi = t.context.mockApi.close;
     } else {
-      t.urls = new TestUrls(await browserPool.getExtensionId(t));
+      t.context.urls = new TestUrls(await browserPool.getExtensionId(t));
     }
     try {
       await browserPool.withNewBrowserTimeoutAndRetry(
@@ -109,8 +109,8 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   if (typeof address === 'object' && address) {
     const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
 
-    t.extensionDir = result.stdout;
-    t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
+    t.context.extensionDir = result.stdout;
+    t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
     t.log('Failed to get mock build address');
   }
@@ -119,7 +119,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
 
 const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
   try {
-    const page = await browser.newPage(t, t.urls?.extension('chrome/dev/ci_unit_test.htm'));
+    const page = await browser.newPage(t, t.context.urls?.extension('chrome/dev/ci_unit_test.htm'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
     const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
       input: unknown;

@@ -687,7 +687,7 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      const extensionUrl = t.urls?.extension('');
+      const extensionUrl = t.context.urls?.extension('');
       if ((extensionUrl && url.indexOf(extensionUrl) !== 0) || fail) {
         // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
@@ -702,20 +702,20 @@ export class ControllablePage extends ControllableBase {
     // page.on('error', e => this.consoleMsgs.push(`[error]${e.stack}[/error]`)); // this is Node event emitter error. Maybe just let it go crash the process / test
     page.on('dialog', alert => {
       if (this.acceptUnloadAlert && alert.type() === 'beforeunload') {
-        alert.accept().catch((e: unknown) => t.log(`${t.attemptText} Err auto-accepting unload alert ${String(e)}`));
+        alert.accept().catch((e: unknown) => t.log(`${t.context.attemptText} Err auto-accepting unload alert ${String(e)}`));
         return;
       }
       const controllableAlert = new ControllableAlert(alert);
       this.alerts.push(controllableAlert);
       setTimeout(() => {
         if (controllableAlert.active) {
-          t.retry = true;
+          t.context.retry = true;
           this.preventclose = true;
-          t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
+          t.log(`${t.context.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch((e: unknown) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
+            alert.dismiss().catch((e: unknown) => t.log(`${t.context.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
-            t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
+            t.log(`${t.context.attemptText} Err2 dismissing alert ${String(e)}`);
           }
         }
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
@@ -753,9 +753,9 @@ export class ControllablePage extends ControllableBase {
   };
 
   public goto = async (url: string) => {
-    if (this.t.urls) {
-      const extensionUrl = this.t.urls.extension('');
-      url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.urls.extension(url);
+    if (this.t.context.urls) {
+      const extensionUrl = this.t.context.urls.extension('');
+      url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.context.urls.extension(url);
     }
 
     await Util.sleep(1);

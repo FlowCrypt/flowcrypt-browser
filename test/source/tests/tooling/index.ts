@@ -6,7 +6,7 @@ import { TestUrls } from '../../browser/test-urls';
 import { Consts } from '../../test';
 import { Api } from '../../mock/lib/api';
 
-export type AvaContext = ExecutionContext<unknown> & {
+export type TestContext = {
   retry?: true;
   attemptNumber?: number;
   totalAttempts?: number;
@@ -15,6 +15,8 @@ export type AvaContext = ExecutionContext<unknown> & {
   urls?: TestUrls;
   mockApi?: Api<{ query: { [k: string]: string }; body?: unknown }, unknown>;
 };
+
+export type AvaContext = ExecutionContext<TestContext>;
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;
 
