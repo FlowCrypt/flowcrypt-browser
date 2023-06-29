@@ -1867,7 +1867,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL plain text`;
-        await Util.sleep(5); // until #5037 is fixed
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
           richtext: false,
         });
@@ -1887,7 +1886,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         const subject = `مرحبا RTL rich text`;
-        await Util.sleep(5); // until #5037 is fixed
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, 'مرحبا', {
           richtext: true,
         });
