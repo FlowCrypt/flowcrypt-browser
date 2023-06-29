@@ -141,7 +141,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-        const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+        const composePage = await GmailPageRecipe.openSecureComposeWithRichTextWorkaround(t, gmailPage, browser);
         const subject = `New Rich Text Message ${Util.lousyRandom()}`;
         await ComposePageRecipe.fillMsg(composePage, { to: acctEmail }, subject, undefined, {
           richtext: true,
