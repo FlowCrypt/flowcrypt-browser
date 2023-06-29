@@ -255,15 +255,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - can load contact based on name different from email',
       testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail', {
-          attester: {
-            pubkeyLookup: {
-              'ci.tests.gmail@flowcrypt.test': {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         // works on the first search
         const composePage1 = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage1.type('@input-to', 'FirstName'); // test guessing of contacts when the name is not included in email address
@@ -340,26 +332,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `compose - auto include pubkey when our key is not available on Wkd`,
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              'ci.tests.gmail@flowcrypt.test': {
-                pubkey: somePubkey,
-              },
-              'flowcrypt.compatibility@gmail.com': {
-                pubkey: somePubkey,
-              },
-            },
-          },
-        });
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail', {
-          attester: {
-            pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: { includeFlowcryptCompatibilityKey: true },
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.page.setViewport({ width: 540, height: 606 });
@@ -2044,13 +2018,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const threadId = '173fd7dbe2fec90c';
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail', {
-          attester: {
-            pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
-                pubkey: somePubkey,
-              },
-            },
-          },
+          attester: { includeFlowcryptCompatibilityKey: true },
         });
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');

@@ -35,6 +35,7 @@ interface CommonAcctConfig {
   };
   attester?: {
     includeHumanKey?: boolean;
+    includeFlowcryptCompatibilityKey?: boolean;
     pubkeyLookup?: Record<string, PubKeyLookUpResult>;
   };
 }
@@ -158,6 +159,11 @@ export class BrowserRecipe {
     if (config?.attester) {
       if (config.attester.includeHumanKey) {
         t.mockApi!.configProvider.config.attester.pubkeyLookup!['human@flowcrypt.com'] = {
+          pubkey: somePubkey,
+        };
+      }
+      if (config.attester.includeFlowcryptCompatibilityKey) {
+        t.mockApi!.configProvider.config.attester.pubkeyLookup!['flowcrypt.compatibility@gmail.com'] = {
           pubkey: somePubkey,
         };
       }
