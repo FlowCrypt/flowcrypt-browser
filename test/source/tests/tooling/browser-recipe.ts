@@ -16,27 +16,19 @@ import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { ConfigurationProvider } from '../../mock/lib/api';
-import { MockUserAlias } from '../../mock/google/google-endpoints';
-import { PubKeyLookUpResult } from '../../mock/attester/attester-endpoints';
-import { Dict } from '../../core/common';
-import { GmailMsg } from '../../mock/google/google-data';
+import { GoogleConfig, MockUserAlias } from '../../mock/google/google-endpoints';
+import { AttesterConfig } from '../../mock/attester/attester-endpoints';
 import { somePubkey } from '../../mock/attester/attester-key-constants';
 
 type TestAccount = 'compatibility' | 'compose' | 'ci.tests.gmail';
 interface CommonAcctConfig {
-  google?: {
+  google?: GoogleConfig & {
     primarySignature?: string;
     aliases?: MockUserAlias[];
-    draftIdToSave?: string;
-    contacts?: string[];
-    threadNotFoundError?: Record<string, number>;
-    htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
-    getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   };
-  attester?: {
+  attester?: AttesterConfig & {
     includeHumanKey?: boolean;
     includeFlowcryptCompatibilityKey?: boolean;
-    pubkeyLookup?: Record<string, PubKeyLookUpResult>;
   };
 }
 export class BrowserRecipe {
