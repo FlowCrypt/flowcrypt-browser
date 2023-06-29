@@ -36,21 +36,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my own emails show as contacts',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-          google: {
-            aliases: {
-              [acct]: flowcryptCompatibilityAliasList,
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { aliases: flowcryptCompatibilityAliasList },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const comtactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -66,21 +54,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - attester shows my emails',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-          google: {
-            aliases: {
-              [acct]: flowcryptCompatibilityAliasList,
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { aliases: flowcryptCompatibilityAliasList },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
@@ -220,21 +196,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - view contact public key',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-          google: {
-            aliases: {
-              [acct]: flowcryptCompatibilityAliasList,
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { aliases: flowcryptCompatibilityAliasList },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
@@ -397,21 +361,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - remove public keys from contact',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-          google: {
-            aliases: {
-              [acct]: flowcryptCompatibilityAliasList,
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { aliases: flowcryptCompatibilityAliasList },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const foundKeys = await dbPage.page.evaluate(async () => {
           const acct = 'flowcrypt.compatibility@gmail.com';

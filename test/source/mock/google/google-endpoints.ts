@@ -263,10 +263,8 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         const id = parseResourceId(req.url!);
         const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
         if (!msgs.length) {
-          if (config?.threadNotFoundError && config.threadNotFoundError[id]) {
-            throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, config.threadNotFoundError[id]);
-          }
-          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, 400);
+          const errorCode = config?.threadNotFoundError?.[id] ?? 400;
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, errorCode);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
       }

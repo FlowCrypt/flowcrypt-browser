@@ -8,7 +8,7 @@ import { expect } from 'chai';
 import { Dict } from '../../core/common';
 import { Util } from '../../util';
 
-interface PubKeyLookUpResult {
+export interface PubKeyLookUpResult {
   pubkey?: string;
   delayInSeconds?: number;
   domainToCheck?: string;

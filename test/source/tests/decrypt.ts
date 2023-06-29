@@ -1635,14 +1635,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - signed-only PGP/MIME message is processed from API, rendered html is ignored',
       testWithBrowser(async (t, browser) => {
         const msgId = '17daefa0eb077da6';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const signerEmail = 'some.sender@test.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           attester: {
             pubkeyLookup: {
-              [acctEmail]: {
-                pubkey: somePubkey,
-              },
               [signerEmail]: {
                 pubkey: await get203FAE7076005381(),
               },
@@ -1650,7 +1646,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           },
           google: { htmlRenderer: () => 'Some corrupted message' },
         });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1886,7 +1881,13 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
             },
           },
         });
-        const { authHdr } = await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: {
+            getMsg: {
+              [msgId]: { raw: { msg: { id: msgId, threadId: msgId, historyId: msgId, raw: 'RSo' } } }, // corrupted raw part
+            },
+          },
+        });
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,

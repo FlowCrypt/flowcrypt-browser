@@ -16,7 +16,28 @@ import { GmailPageRecipe } from '../page-recipe/gmail-page-recipe';
 import { expect } from 'chai';
 import { KeyUtil } from '../../core/crypto/key';
 import { ConfigurationProvider } from '../../mock/lib/api';
+import { MockUserAlias } from '../../mock/google/google-endpoints';
+import { PubKeyLookUpResult } from '../../mock/attester/attester-endpoints';
+import { Dict } from '../../core/common';
+import { GmailMsg } from '../../mock/google/google-data';
+import { somePubkey } from '../../mock/attester/attester-key-constants';
 
+type TestAccount = 'compatibility' | 'compose' | 'ci.tests.gmail';
+interface CommonAcctConfig {
+  google?: {
+    primarySignature?: string;
+    aliases?: MockUserAlias[];
+    draftIdToSave?: string;
+    contacts?: string[];
+    threadNotFoundError?: Record<string, number>;
+    htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
+    getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
+  };
+  attester?: {
+    includeHumanKey?: boolean;
+    pubkeyLookup?: Record<string, PubKeyLookUpResult>;
+  };
+}
 export class BrowserRecipe {
   public static oldAndNewComposeButtonSelectors = ['div.z0[class*="_destroyable"]', 'div.pb-25px[class*="_destroyable"]', '.new_secure_compose_window_button'];
 
@@ -67,7 +88,7 @@ export class BrowserRecipe {
     return gmailPage;
   };
 
-  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: TestAccount) => {
     let acctEmail: string | undefined;
     let settingsPage: ControllablePage | undefined;
     if (acct === 'compatibility') {
@@ -104,7 +125,7 @@ export class BrowserRecipe {
     return { acctEmail, authHdr };
   };
 
-  public static setupCommonAcctWithAttester = async (t: AvaContext, browser: BrowserHandle, acct: 'compatibility' | 'compose' | 'ci.tests.gmail') => {
+  public static setupCommonAcctWithAttester = async (t: AvaContext, browser: BrowserHandle, acct: TestAccount, config?: CommonAcctConfig) => {
     const accountConfigMap = {
       compatibility: {
         email: 'flowcrypt.compatibility@gmail.com',
@@ -134,6 +155,30 @@ export class BrowserRecipe {
         },
       },
     };
+    if (config?.attester) {
+      if (config.attester.includeHumanKey) {
+        t.mockApi!.configProvider.config.attester.pubkeyLookup!['human@flowcrypt.com'] = {
+          pubkey: somePubkey,
+        };
+      }
+      if (config.attester.pubkeyLookup) {
+        t.mockApi!.configProvider.config.attester.pubkeyLookup = {
+          ...t.mockApi!.configProvider.config.attester.pubkeyLookup,
+          ...config.attester.pubkeyLookup,
+        };
+      }
+    }
+    if (config?.google) {
+      t.mockApi!.configProvider.config.google = {
+        contacts: config.google.contacts,
+        aliases: config.google.aliases ? { [acctEmail]: config.google.aliases } : undefined,
+        primarySignature: config.google.primarySignature ? { [acctEmail]: config.google.primarySignature } : undefined,
+        draftIdToSave: config.google.draftIdToSave,
+        threadNotFoundError: config.google.threadNotFoundError,
+        htmlRenderer: config.google.htmlRenderer,
+        getMsg: config.google.getMsg,
+      };
+    }
     return await this.setUpCommonAcct(t, browser, acct);
   };
 

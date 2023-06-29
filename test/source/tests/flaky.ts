@@ -431,24 +431,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       'standalone - different send from, new signed message, verification in mock',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-              'human@flowcrypt.com': {
-                pubkey: somePubkey,
-              },
-            },
-          },
-          google: {
-            aliases: {
-              [acct]: flowcryptCompatibilityAliasList,
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          attester: { includeHumanKey: true },
+          google: { aliases: flowcryptCompatibilityAliasList },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const key = Config.key('flowcryptcompatibility.from.address');
         await SettingsPageRecipe.addKeyTest(
           t,
@@ -491,20 +477,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'with attachments + shows progress %',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-              'human@flowcrypt.com': {
-                pubkey: somePubkey,
-              },
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          attester: { includeHumanKey: true },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
@@ -517,20 +492,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'compose > large file > public domain account (should not prompt to upgrade)',
       testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-              'human@flowcrypt.com': {
-                pubkey: somePubkey,
-              },
-            },
-          },
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          attester: { includeHumanKey: true },
         });
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
