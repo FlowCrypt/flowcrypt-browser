@@ -58,6 +58,7 @@ export interface FesMessageReturnType {
 }
 export interface FesConfig {
   returnError?: HttpClientErr;
+  apiEndpointReturnError?: HttpClientErr;
   clientConfiguration?: FesClientConfiguration;
   messagePostValidator?: (body: string, fesUrl: string) => Promise<FesMessageReturnType>;
 }
@@ -76,11 +77,8 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
           apiVersion: 'v1',
         };
       }
-      const port = parsePort(req);
-      if (req.headers.host === `fes.google.mock.localhost:${port}`) {
-        // test `compose - auto include pubkey is inactive when our key is available on Wkd` uses this
-        // this makes enterprise version tolerate missing FES - explicit 404
-        throw new HttpClientErr(`Not found`, 404);
+      if (config?.apiEndpointReturnError) {
+        throw config.apiEndpointReturnError;
       }
       throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`);
     },

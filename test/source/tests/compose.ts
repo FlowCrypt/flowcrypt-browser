@@ -394,6 +394,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
               ...keyManagerAutogenRules,
               flags: [...(keyManagerAutogenRules.flags ?? []), 'NO_ATTESTER_SUBMIT'],
             },
+            apiEndpointReturnError: new HttpClientErr('Not Found', Status.NOT_FOUND),
           },
           wkd: {
             directLookup: {
