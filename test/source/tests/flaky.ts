@@ -77,16 +77,14 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await composePage.close();
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAndClick('@action-show-key-0');
-        const urls = await settingsPage.getFramesUrls(['my_key.htm'], { appearIn: 5 });
-        await settingsPage.close();
         // Updating the key to valid one
-        const updatePrvPage = await browser.newPage(t, urls[0]);
+        const updatePrvPage = await settingsPage.getFrame(['my_key.htm'], { timeout: 5 });
         await updatePrvPage.waitAndClick('@action-update-prv');
         await updatePrvPage.waitAndType('@input-prv-key', validKey);
         await updatePrvPage.type('@input-passphrase', 'qweasd');
         await updatePrvPage.waitAndClick('@action-update-key');
         await PageRecipe.waitForModalAndRespond(updatePrvPage, 'confirm', { clickOn: 'confirm' });
-        await updatePrvPage.close();
+        await settingsPage.close();
         // Try send message again
         composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Own Key Expired no more');

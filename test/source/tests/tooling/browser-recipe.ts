@@ -103,19 +103,20 @@ export class BrowserRecipe {
         // import from backup since the test runs faster and we can control the state in mock tests
         await SetupPageRecipe.recover(settingsPage, 'ci.tests.gmail');
       }
-      if (testVariant === 'CONSUMER-LIVE-GMAIL') {
-        // clean up drafts so that broken tests from the past don't affect this test run
-        await BrowserRecipe.deleteAllDraftsInGmailAccount(settingsPage);
-      }
     } else {
       acctEmail = 'ci.tests.gmail@flowcrypt.dev';
       settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
       await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
     }
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
-    await settingsPage.close();
+    const cleanupTasks = [settingsPage.close()];
+    if (testVariant === 'CONSUMER-LIVE-GMAIL') {
+      // clean up drafts so that broken tests from the past don't affect this test run
+      cleanupTasks.push(BrowserRecipe.deleteAllDraftsInGmailAccount(accessToken));
+    }
+    await Promise.all(cleanupTasks);
     const authHdr = { Authorization: `Bearer ${accessToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-    return { acctEmail, authHdr };
+    return { acctEmail, accessToken, authHdr };
   };
 
   public static setupCommonAcctWithAttester = async (t: AvaContext, browser: BrowserHandle, acct: TestAccount, config?: CommonAcctConfig) => {
@@ -203,8 +204,7 @@ export class BrowserRecipe {
   public static getPassphraseFromInMemoryStore = (controllable: Controllable, acctEmail: string, longid: string): Promise<string> =>
     BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, `passphrase_${longid}`);
 
-  public static deleteAllDraftsInGmailAccount = async (settingsPage: ControllablePage): Promise<void> => {
-    const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, 'ci.tests.gmail@flowcrypt.dev');
+  public static deleteAllDraftsInGmailAccount = async (accessToken: string): Promise<void> => {
     const gmail = google.gmail({ version: 'v1' });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });

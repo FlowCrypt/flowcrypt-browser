@@ -42,7 +42,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeFrameCount ?? 1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
-        const replyBox = await browser.newPage(t, urls[composeFrameIndex ?? 0]);
+        const replyBox = await gmailPage.getFrame([urls[composeFrameIndex ?? 0]]);
         if (isReplyPromptAccepted) {
           await replyBox.waitAll('@action-send');
           await replyBox.notPresent('@action-accept-reply-prompt');
@@ -50,7 +50,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await replyBox.waitAll('@action-accept-reply-prompt');
           await replyBox.notPresent('@action-send');
         }
-        await replyBox.close();
       }
     };
 
@@ -72,7 +71,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       } else {
         composeBox = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
       }
-      await Util.sleep(5); // until #5037 is fixed
       await composeBox.type('@input-body', content, true);
       if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
@@ -124,7 +122,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-        const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+        const composePage = await GmailPageRecipe.openSecureComposeWithRichTextWorkaround(t, gmailPage, browser);
         const subject = `New Rich Text Message ${Util.lousyRandom()}`;
         await ComposePageRecipe.fillMsg(composePage, { to: acctEmail }, subject, undefined, {
           richtext: true,
@@ -181,6 +179,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           signature: 'not signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -207,6 +206,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -233,6 +233,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -251,10 +252,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
-    test(
+    // draft-sensitive test
+    test.serial(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
         async (t, browser) => {
@@ -273,7 +276,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitAndClick('#fc_offline_drafts a');
           // compose draft 2 should be first in list as drafts are sorted by date descending
           const draft = await pageHasSecureDraft(gmailPage, 'compose draft 2');
-          await Util.sleep(5); // until #5037 is fixed
           await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
           await ComposePageRecipe.waitWhenDraftIsSaved(draft);
           t.timeout(minutes(2)); // extend ava's timeout
@@ -289,7 +291,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    test(
+    // convo-sensitive, draft-sensitive test
+    test.serial(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -322,7 +325,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    test(
+    // draft-sensitive test
+    test.serial(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(
         async (t, browser) => {
@@ -433,7 +437,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    // convo-sensitive, draft-sensitive test
+    test.serial(
       'mail.google.com - plain reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -475,6 +480,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
         await gmailPage.waitAll(['.aZi'], { visible: false });
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
         await gmailPage.close();
       })
     );
@@ -520,7 +526,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
         await Util.sleep(5);
         await gmailPage.waitForContent('.a3s', 'Plain message');
-        expect(await gmailPage.isElementPresent('div.aQH')).to.equal(true); // gmail attachment container
+        expect(await gmailPage.isElementPresent('.aQH')).to.equal(true); // gmail attachment container
         // expect no pgp blocks
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
         expect(urls.length).to.equal(0);
@@ -536,6 +542,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
         expect(urls.length).to.equal(1);
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 

@@ -7,6 +7,8 @@ agent:
 auto_cancel:
   running:
     when: branch != 'master'
+execution_time_limit:
+  hours: 1
 
 blocks:
   - name: Mock UI Tests
