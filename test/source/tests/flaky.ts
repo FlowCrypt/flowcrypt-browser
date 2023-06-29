@@ -435,7 +435,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           attester: { includeHumanKey: true },
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const key = Config.key('flowcryptcompatibility.from.address');
         await SettingsPageRecipe.addKeyTest(

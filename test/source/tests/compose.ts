@@ -52,7 +52,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes';
@@ -71,7 +71,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
@@ -88,7 +88,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const msgPwd = 'super hard password for the message';
         const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
@@ -433,7 +433,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           attester: { includeHumanKey: true },
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
@@ -651,7 +651,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - reply - can load quote from plain/html email',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { primarySignature: flowcryptCompatibilityPrimarySignature },
+          google: { acctPrimarySignature: flowcryptCompatibilityPrimarySignature },
         });
         const appendUrl = 'threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' + '&ignoreDraft=___cu_false___&replyMsgId=16b36861a890bb26';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
@@ -1172,7 +1172,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const appendUrl = 'draftId=draft-1';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
@@ -1344,7 +1344,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - loading drafts - reply',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const appendUrl = 'threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&replyMsgId=16cfa9001baaac0a&draftId=draft-3';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
@@ -1604,7 +1604,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           attester: { includeHumanKey: true },
           google: {
-            primarySignature: flowcryptCompatibilityPrimarySignature,
+            acctPrimarySignature: flowcryptCompatibilityPrimarySignature,
           },
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
@@ -1632,7 +1632,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           attester: { includeHumanKey: true },
           google: {
-            primarySignature: flowcryptCompatibilityPrimarySignature,
+            acctPrimarySignature: flowcryptCompatibilityPrimarySignature,
           },
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');

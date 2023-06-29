@@ -23,8 +23,8 @@ import { somePubkey } from '../../mock/attester/attester-key-constants';
 type TestAccount = 'compatibility' | 'compose' | 'ci.tests.gmail';
 interface CommonAcctConfig {
   google?: GoogleConfig & {
-    primarySignature?: string;
-    aliases?: MockUserAlias[];
+    acctPrimarySignature?: string;
+    acctAliases?: MockUserAlias[];
   };
   attester?: AttesterConfig & {
     includeHumanKey?: boolean;
@@ -169,8 +169,8 @@ export class BrowserRecipe {
     if (config?.google) {
       t.mockApi!.configProvider.config.google = {
         contacts: config.google.contacts,
-        aliases: config.google.aliases ? { [acctEmail]: config.google.aliases } : undefined,
-        primarySignature: config.google.primarySignature ? { [acctEmail]: config.google.primarySignature } : undefined,
+        aliases: config.google.acctAliases ? { [acctEmail]: config.google.acctAliases } : undefined,
+        primarySignature: config.google.acctPrimarySignature ? { [acctEmail]: config.google.acctPrimarySignature } : undefined,
         draftIdToSave: config.google.draftIdToSave,
         threadNotFoundError: config.google.threadNotFoundError,
         htmlRenderer: config.google.htmlRenderer,

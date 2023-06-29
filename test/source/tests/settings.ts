@@ -37,7 +37,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -55,7 +55,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -197,7 +197,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -362,7 +362,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { aliases: flowcryptCompatibilityAliasList },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
         const foundKeys = await dbPage.page.evaluate(async () => {
