@@ -43,6 +43,7 @@ import {
 } from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
 import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
+import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -2956,6 +2957,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           fes: {
             messagePostValidator: processMessageFromUser,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
         const port = t.urls?.port;
@@ -3019,6 +3021,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           fes: {
             messagePostValidator: processMessageFromUser2,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
         const acct = `user2@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
@@ -3109,6 +3112,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           fes: {
             messagePostValidator: processMessageFromUser3,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
         const acct = `user3@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock
@@ -3141,6 +3145,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
           fes: {
             messagePostValidator: processMessageFromUser4,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
         const acct = `user4@standardsubdomainfes.localhost:${t.urls?.port}`; // added port to trick extension into calling the mock

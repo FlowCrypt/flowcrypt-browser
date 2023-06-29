@@ -13,6 +13,8 @@ const standardFesUrl = (port: string) => {
 };
 const issuedAccessTokens: string[] = [];
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const standardSubDomainFesClientConfiguration = { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] };
 export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): HandlersDefinition => {
   return {
     // standard fes location at https://fes.domain.com
@@ -39,10 +41,9 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       if (req.method !== 'GET') {
         throw new HttpClientErr('Unsupported method');
       }
-      const port = parsePort(req);
-      if (req.headers.host === standardFesUrl(port) && req.url === `/api/v1/client-configuration?domain=standardsubdomainfes.localhost:${port}`) {
+      if (config?.clientConfiguration) {
         return {
-          clientConfiguration: { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] }, // eslint-disable-line @typescript-eslint/naming-convention
+          clientConfiguration: config.clientConfiguration,
         };
       }
       throw new HttpClientErr(`Unexpected FES domain "${req.headers.host}" and url "${req.url}"`);

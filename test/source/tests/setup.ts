@@ -30,6 +30,7 @@ import {
 } from '../mock/fes/fes-constants';
 import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
+import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2227,6 +2228,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           fes: {
             messagePostValidator: processMessageFromUser,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
         const port = t.urls?.port;
