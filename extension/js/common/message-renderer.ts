@@ -470,7 +470,7 @@ export class MessageRenderer {
 
   private clipMessageIfLimitExceeds = (decryptedContent: string) => {
     const maxDecryptedContentLength = 100000;
-    const base64InlineImageRegex = /<img src="data:image\/[^;]+;base64,[^"]+" name="(\w+\.\w+)" title="(\w+\.\w+)">/g;
+    const base64InlineImageRegex = /<img src="data:image\/(jpeg|png|gif|bmp|tiff|webp)+;base64,[^"]+" name="(\w+\.\w+)" title="(\w+\.\w+)">/g;
     const content = decryptedContent.replace(base64InlineImageRegex, '');
     if (content.length > maxDecryptedContentLength) {
       return decryptedContent.substring(0, maxDecryptedContentLength) + ' [clipped - message too large]';
