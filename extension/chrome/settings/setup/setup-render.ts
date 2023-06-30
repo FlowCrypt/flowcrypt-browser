@@ -12,6 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import * as $ from 'jquery';
 
 export class SetupRenderModule {
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
@@ -109,7 +110,7 @@ export class SetupRenderModule {
         $('.backups_count_words').text(
           this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup'
         );
-        $('#step_2_recovery input').focus();
+        $('#step_2_recovery input').trigger('focus');
       }
     }
   };
@@ -189,9 +190,9 @@ export class SetupRenderModule {
       }
     });
     if (emailAliases.length > 0) {
-      $('.container_for_import_key_email_alias').css('visibility', 'visible');
+      $('.also_submit_alias_key_view').show();
     }
-    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false });
   };
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {

@@ -21,7 +21,7 @@ console.info('background_process.js starting');
 (async () => {
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
-  const inMemoryStore = new ExpirationCache(4 * 60 * 60 * 1000); // 4 hours
+  const inMemoryStore = new ExpirationCache<string, string>(4 * 60 * 60 * 1000); // 4 hours
   Catch.setHandledInterval(() => inMemoryStore.deleteExpired(), 60000); // each minute
 
   try {

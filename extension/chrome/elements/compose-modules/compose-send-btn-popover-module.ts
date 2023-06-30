@@ -96,12 +96,13 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
+  private toggleVisible = (event: JQuery.TriggeredEvent<HTMLElement>) => {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
-    const popoverClickHandler = this.view.setHandler((elem, event) => {
-      if (!this.view.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
+    const popoverClickHandler = this.view.setHandler((_elem, event) => {
+      const ev = event as JQuery.BlurEvent<HTMLElement>;
+      if (!this.view.S.cached('sending_options_container')[0].contains(ev.relatedTarget as HTMLElement)) {
         sendingContainer.removeClass('popover-opened');
         $('body').off('click', popoverClickHandler);
         this.view.S.cached('toggle_send_options').off('keydown');
@@ -124,7 +125,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  private keydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+  private keydownHandler = (e: JQuery.TriggeredEvent<HTMLElement>): void => {
     const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
     const currentActive = sendingOptions.filter('.active');
     if (e.key === 'Escape') {

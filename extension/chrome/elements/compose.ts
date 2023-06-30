@@ -204,7 +204,7 @@ export class ComposeView extends View {
   public setHandlers = () => {
     BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       if (this.frameId === frameId) {
-        this.S.cached('input_to').focus();
+        this.S.cached('input_to').trigger('focus');
       }
     });
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {

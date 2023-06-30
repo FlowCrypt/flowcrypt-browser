@@ -12,7 +12,6 @@ export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg
 export type MsgBlockType =
   | ReplaceableMsgBlockType
   | 'plainText'
-  | 'signedText'
   | 'plainHtml'
   | 'decryptedHtml'
   | 'plainAttachment'
@@ -20,8 +19,7 @@ export type MsgBlockType =
   | 'decryptedAttachment'
   | 'encryptedAttachmentLink'
   | 'decryptErr'
-  | 'verifiedMsg'
-  | 'signedHtml';
+  | 'verifiedMsg';
 
 export class MsgBlock {
   public constructor(

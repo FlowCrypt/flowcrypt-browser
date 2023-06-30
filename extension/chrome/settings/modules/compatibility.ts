@@ -79,7 +79,7 @@ View.run(
         $('.input_key').val(pubkeys[0]);
       } else {
         await Ui.modal.error('This email is invalid, please check for typos.');
-        $('.input_email').focus();
+        $('.input_email').trigger('focus');
       }
     };
 

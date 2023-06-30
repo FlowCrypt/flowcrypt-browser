@@ -6,7 +6,7 @@ import { TestUrls } from '../../browser/test-urls';
 import { Consts } from '../../test';
 import { Api } from '../../mock/lib/api';
 
-export type AvaContext = ExecutionContext<unknown> & {
+export type TestContext = {
   retry?: true;
   attemptNumber?: number;
   totalAttempts?: number;
@@ -14,11 +14,14 @@ export type AvaContext = ExecutionContext<unknown> & {
   extensionDir?: string;
   urls?: TestUrls;
   mockApi?: Api<{ query: { [k: string]: string }; body?: unknown }, unknown>;
+  mockApiLogs?: string[];
+  debugHtmls?: string[];
 };
+
+export type AvaContext = ExecutionContext<TestContext>;
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;
 
-const debugHtmls: string[] = [];
 const debugHtmlStyle = `
 <style>
   h1 { margin-top: 50px; margin-left: 20px; }
@@ -35,17 +38,21 @@ const debugHtmlStyle = `
 </style>
 `;
 
-export const addDebugHtml = (html: string) => {
-  debugHtmls.push(html);
+export const addDebugHtml = (context: TestContext, html: string) => {
+  if (context.debugHtmls) {
+    context.debugHtmls.push(html);
+  } else {
+    context.debugHtmls = [html];
+  }
 };
 
-export const getDebugHtmlAtts = (testId: string, mockApiLogs: string[]): string[] => {
-  if (debugHtmls.length && mockApiLogs.length) {
-    debugHtmls.push(`<h1>Google Mock API logs</h1><pre>${mockApiLogs.join('\n')}</pre>`);
+export const getDebugHtmlAtts = (testId: string, context: TestContext): string[] => {
+  if (context.debugHtmls?.length && context.mockApiLogs?.length) {
+    context.debugHtmls.push(`<h1>Google Mock API logs</h1><pre>${context.mockApiLogs.join('\n')}</pre>`);
   }
   const debugAtts: string[] = [];
   let currentDebugAtt = '';
-  for (const debugHtml of debugHtmls) {
+  for (const debugHtml of context.debugHtmls ?? []) {
     currentDebugAtt += debugHtml;
     if (currentDebugAtt.length > MAX_ATT_SIZE) {
       debugAtts.push(currentDebugAtt);

@@ -1,0 +1,167 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "161b2ac5a73d4097",
+    "threadId": "161b2ac5a73d4097",
+    "labelIds": [
+      "IMPORTANT",
+      "STARRED",
+      "Label_20",
+      "Label_3",
+      "CATEGORY_PERSONAL",
+      "Label_12"
+    ],
+    "snippet": "-- ------------------------------ 1io | Sales &amp; Marketing 1io GmbH | Mozartstr. 5 | 87435 Kempten | Germany 1io | Development &amp; Support kuhnert GmbH | Mozartstr. 5 | 87435 Kempten | Germany",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "X-Gm-Message-State",
+          "value": "APf1xPCxciCfd6O0F+1olzt+I0cOOeHfFRnDKxwaEyuBo/4TUau/6j4N jt9UG35NptarCR+NGqxteQDDSrAIZD8PR2xa/IBn2xdfGNTacwjBbppv+wIBI8uqRJesF0FOFT5 8f1xl2yValBuWm2cDQG7WtHDnozgx1A=="
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "Mime-Version",
+          "value": "1.0 (Mac OS X Mail 11.2 \\(3445.5.20\\))"
+        },
+        {
+          "name": "Subject",
+          "value": "Encrypted email - sent with GPGTools"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 20 Feb 2018 11:04:52 +0100"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "X-Mailer",
+          "value": "Apple Mail (2.3445.5.20)"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"001a114b3ae8345d1b0565a1f1af\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain; charset=\"UTF-8\""
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "inline"
+            }
+          ],
+          "body": {
+            "size": 273,
+            "data": "DQotLSANCiANCg0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQoNCjFpbyB8IFNhbGVzICYgTWFya2V0aW5nIA0KMWlvIEdtYkggfCBNb3phcnRzdHIuIDUgfCA4NzQzNSBLZW1wdGVuIHwgR2VybWFueQ0KDQoxaW8gfCBEZXZlbG9wbWVudCAmIFN1cHBvcnQNCmt1aG5lcnQgR21iSCB8IE1vemFydHN0ci4gNSB8IDg3NDM1IEtlbXB0ZW4gfCBHZXJtYW55DQoNClBob25lOiArNDkgODMxIDI1MSAzMTAwDQpFbWFpbDogc2FsZXNAMWlvLmNvbQ0Kd3d3LjFpby5jb20NCg0K"
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "multipart/encrypted",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "multipart/encrypted; boundary=\"Apple-Mail=_19110F11-27E3-4802-AEB0-70E542C2C0C6\"; protocol=\"application/pgp-encrypted\""
+            }
+          ],
+          "body": {
+            "size": 0
+          },
+          "parts": [
+            {
+              "partId": "1.0",
+              "mimeType": "application/pgp-encrypted",
+              "filename": "",
+              "headers": [
+                {
+                  "name": "Content-Transfer-Encoding",
+                  "value": "7bit"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "application/pgp-encrypted"
+                },
+                {
+                  "name": "Content-Description",
+                  "value": "PGP/MIME Versions Identification"
+                }
+              ],
+              "body": {
+                "attachmentId": "ANGjdJ8bsFiV_sB88rlsx5EzArsngSpwuckzEKevIhhfyW8KEH9yTe29g-SUJ7laBGggj04VAGzOobVkcg-1ear1i9XyLvYCnddUeeflZrwzgJDuos4ISBvcvoyZPaUwkldn5KFLF21YSvtzAb4waBTP6W-G3A4CFD2iA8TezHI_p3ybr375VlSrQfJONA6flEgwd239PFbJ50RCfa1vMhO26K3_qf1QB-ayHhR8e3CrTNoKnsukAPAKL0QLXq7I0mG3l7s5updKuT01PiPRT6l0J_sZJV4qZsEiVSgeibAJaHbDvftyKEA2aBaTHPc6xk1L8mQy8ZLtzNgfAN524fZsDjW1uzYh9vhXVbUVpTj9gpttFpB4QHp1xUL_Uio",
+                "size": 12
+              }
+            },
+            {
+              "partId": "1.1",
+              "mimeType": "application/octet-stream",
+              "filename": "encrypted.asc",
+              "headers": [
+                {
+                  "name": "Content-Transfer-Encoding",
+                  "value": "7bit"
+                },
+                {
+                  "name": "Content-Disposition",
+                  "value": "inline; filename=encrypted.asc"
+                },
+                {
+                  "name": "Content-Type",
+                  "value": "application/octet-stream; name=encrypted.asc"
+                },
+                {
+                  "name": "Content-Description",
+                  "value": "OpenPGP encrypted message"
+                }
+              ],
+              "body": {
+                "attachmentId": "ANGjdJ9FU1bpT2FkvAKH1lNX0PD6wW_rm7vR0ycZ0pdP_VcspoqtkmiugTEVs3XuxvO8D7bKuWo9HUEy_VhEKhQQGVpkgtqlrJH2rExNrnKX7L7dsE8jacNXTS6c4Pv_SyBdL8-cZ46mZd1L_hQqSQQqfNIP21ltKZLTBceWt58pOxGCBtxmd0bmuLjgBP6hRICrMk7hwhT4No0z_xxkhUI2gh9X9wq34VOXTxgjnUtM3TpmTyIvsKi9swI_pGMBvqaxHx75ftY9lVz4m-STUEb7uITLhmw6__IFbdhxbTZo0feKebGKZKVs6iVGiC5T4-WcwmHgL4mDFriV7TyJ-gN7pdQRQ09eUKtAQI9PH9Gfj8rFeVd8QTKdUvfK3t8",
+                "size": 3123
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "sizeEstimate": 9242,
+    "historyId": "1406133",
+    "internalDate": "1519121092000"
+  },
+  "attachments": {
+    "ANGjdJ8bsFiV_sB88rlsx5EzArsngSpwuckzEKevIhhfyW8KEH9yTe29g-SUJ7laBGggj04VAGzOobVkcg-1ear1i9XyLvYCnddUeeflZrwzgJDuos4ISBvcvoyZPaUwkldn5KFLF21YSvtzAb4waBTP6W-G3A4CFD2iA8TezHI_p3ybr375VlSrQfJONA6flEgwd239PFbJ50RCfa1vMhO26K3_qf1QB-ayHhR8e3CrTNoKnsukAPAKL0QLXq7I0mG3l7s5updKuT01PiPRT6l0J_sZJV4qZsEiVSgeibAJaHbDvftyKEA2aBaTHPc6xk1L8mQy8ZLtzNgfAN524fZsDjW1uzYh9vhXVbUVpTj9gpttFpB4QHp1xUL_Uio": {
+      "data": "VmVyc2lvbjogMQ0K",
+      "size": 12
+    },
+    "ANGjdJ9FU1bpT2FkvAKH1lNX0PD6wW_rm7vR0ycZ0pdP_VcspoqtkmiugTEVs3XuxvO8D7bKuWo9HUEy_VhEKhQQGVpkgtqlrJH2rExNrnKX7L7dsE8jacNXTS6c4Pv_SyBdL8-cZ46mZd1L_hQqSQQqfNIP21ltKZLTBceWt58pOxGCBtxmd0bmuLjgBP6hRICrMk7hwhT4No0z_xxkhUI2gh9X9wq34VOXTxgjnUtM3TpmTyIvsKi9swI_pGMBvqaxHx75ftY9lVz4m-STUEb7uITLhmw6__IFbdhxbTZo0feKebGKZKVs6iVGiC5T4-WcwmHgL4mDFriV7TyJ-gN7pdQRQ09eUKtAQI9PH9Gfj8rFeVd8QTKdUvfK3t8": {
+      "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNCmhRSU1BMHRhTC96bUxaVUJBUkFBcFNPRW9XWlNwdkJOTUZQZ3loYm5NZDNKZHYyK3NRUlNzM2lYMjh6NlRzT3ANCnhxN0dxbTF4aC8yN0VlSmZpc0NaSDlBZjFhQjlPU1FYRHpmWkc5TnF2WFhRY3NNc3A2R2NxeXpVaHhwMzNWRHENCjV4V1JBb1M4TTRXdkVNR09LeDJxNENob0JocGw4d2xvRFF0UHRuazdjRHYzWVJneEYwSlNrd1R5LytzNndBT0oNClgvVUx5QWF5SjhNZ0VUa1JwRmd6WXBXYVdUbXJKc2RzeTkxQVNKQVArS3VqR242Qk5zczBMZHVmV3J6T1pteHcNCkozc1gvU2FzdXJNd3dhZnRSY1FkOUNWemNrckFGZXV3bjRmQ3NyNGtGZFIrUkRTTTdHUlBNNXJ4V25UaXVsZ2gNCjlTUlR5ZWt2SmxwbndibjlLNnFQTzZvaVhWRFptQjVHcGwzT3VCbDVWL1BhelNIcG0relB6Tnhpd2xRT29iZ04NClAzNVBmYnBKQWkvcStwU0VyYTBkbVUxSnRlazdzL05oL3NSZWJKRWdBWHdadnVVaVRCdTJ6ZEl5Z1crSXRzYWENClFxdmZmeVpxY3JZODVRMEtGK3o1ajdNT1lYTDBFM2JraEV0cG91MHBqZE9FSlRzYk5sQXNGdTY0b3hSalVqa0QNCnMrZnBndjNoblcrdllIUXk5OEIxVkV6MVErMkczc3htQXJlcG5hRDdLeWxqNm1ORS9JMlFQWUNsL0RxeEJkWnYNCi9TS0w5RDV0NkRLcWowY3U2VHNpdFdOYlQ4U09xMW9KUDk3WlVjcitOZzlZSERZbmI2djNtWGRLWjJVeHRxVkcNCm1YekdVOXJjMlFXK2x0UUlOcGowdVl6S05RaVl4WG5WYU8wZVlGNHdKUTVFa0plaXhMbHRVUUtTVGxhclFLT0YNCkFnd0RCbEF4OTliMW10WUJELzl5QWNteXJ2bEFHRXZuNWJTY1FYVjBrNEtZMG4yZ3BYcDZBODF1eUpBdjRpRm8NClV5ZTRMZFJsWkVkeDlXT3hwdWpmTENpR0FLYU40dGZEb0R3NEcvQWxMZWxPd0c4N0FjdUswMUVZUU9tdFZXbU8NCjBqUGtRSmttUWU2OFo2OEtSVWxTN0Jwc0xyaUMrZlNqYlQ5d09saFZBNnhhQTBEUWZpZy9oTWt2WnAvQTJ2Q1QNCng3T0U0OXNpRzZseVdIaFRRWEVtWGZsR20yM2EzRXphMSsxNkxuOFREVUV0M3VGaVBGQWc4V2s0YXJiMk5NdGgNCmx6UE92THREak9tVmpwYlBEdEdqbVVlQ2psdDNtLzNJQjJIcklJOUtaclQvblhCYjI5WGVuWGE0ejNSdjh6aUYNCnRCTldPWHFLajRFMGFZelhKS05Edkd0SzdEZG40Z01nZExmc1NlSjR6TDl2d2FtK0wvSmk3V1BiM1NHU2V3NkgNClBLR25PSmoyZkJNWFVuV3h6TERmN0taczhaNk9ONjlQMjZrWXJ3ZCtNcEwyaGtoRWk1ZllrcEhEYW03dkJVVWINCll3QlVwR0YyTXN4MllIN3N1Q3dhTlZlWFgvYWtOemV1Nit4Z3lvY1BURGxJUE4zQytKc1pJZWdsdzdsc1dzK24NCjNFY1R2Uy9DNnpJT0xUSDBmWUFFUzVkemMxc1NJWVBKK0U4Nm5oQzhzbnhuU0lzSnlhQjhPSnhTZlZVcmVNbU8NCncxa2lCZE11QXRVUE9VczNNRTlYYXFpYzJ6UXJjWDFHL0tTTmpzWENORWYvait5L05wZVZQOGp0eUdGbUhkaTINCklhQkZlejZyTU9RV21FaW1UaHo4cjc4MDVqdmZZSGxDV1JOMUFEU3Z4dGQ2cGp6VWdyZG5tR3U4bXFmWjM5THENCkFUNVB3THp0YU9qYUkvaENPZFB6amI3LzVPTHZBaDh2b2M2RWJFWEVIUnZnMFV0N3ZpV25TbEx3MlZyZ0hYTTQNCnVCRUVNVXRSVGFGUXIxOUZLeXA2OThWK25Nb2k2aTAwYW94Vll4NUswZmhSMjhlVGl5WkZSQVlMcG80alY0cDcNCkc1d3VTMkJsL2V0TERaK0tsV2pOME9kWm4xM09JTVYwaE8xMlJpYkI3aXhLMGRSNmFGeHNyRHZMMDVSSWw2Q3gNCjlvTGFCVFFzK1FjSFRHTDg4K0owZHhZOVEwOS9Ca3o4VkpjSWRNOEJJSlNQRGoyWjk3RnNNUGdvMjFOTlI3RVcNCmFLWS8xNy96dEZIWFhzaDRMUFl4cjh4ZS9qejhpOVBZUENvM1ZUZTRFOGxXN3IwWGJYQ3NpbkZ0bW91Ty9hd1gNClpGMHBnTUNuU2ZUK0Zhamk2VEh4ZmVNQ1FFWEgvQTdITGUzMmw3Qi9uaGw5cTdIYjZ2RUlKcmF2N3lmU1NwcDQNClc5UDBRb3o1eFhSdHBoY3FFNzhUWEdObE1ZR09aalp0TUtrOXFQZVJBZkJsZjlvMEIxVEFQQVZiL2NhWWJwaDYNCkNlK2QybVJQU0h2L0ZabEh0azNhVmhMYkVWQmRmYndjdWxpOE9ZKzEzRWlVdXpHYWhyaldYSlU4L1ZqMzhVOFYNCkd0OGdsbVVrc2haRFgrMDIzWUo0ZS9CZzNtMUNsbmF2WG5XK29LRHNVZnZIT2pJQndIMVBHamtobmFFcXFYdzQNCmhITStxbjIxS1ZpeURlbWd4aGlmZjlydXZOcTB3MGZXaytkRDFiQ3VTOUpKTTNMcmdwcTdFZHVCaFAwOTI0RHANCmxRdkROSE1PWHFkbTV4NmNlYzRaREpVSlZLTnQwUk0yaGkrejFaV3VaS3NObm0yV2tWNVZNakU1bTRrVmtMS1cNClJ6Sk9wWis4Q3pNaTNvWU8yUjlCUllwY05qTkVUWE44Nm1ZYU1KT0J4WHlVTTFwK2NOVnRxakUyTDdFTWh5K1INCnM2c0tpRFBYMVZIWC9VcklvQmlzY0FKc1JPekZKMkRvTFMyMW9tTDZWMW9wQ3A1eWc2NnQ5UDRrc25aQy9QVFQNCjVqbmRxV2JORlZ6Q3N5YUdqSDlza0h3SGxGYmd3bnVvbnZod1NoSklmakVuRzlDSUtVbHNJc0hJSHh1VUtPMGoNCjRkbUNtZnBRVlVZZ1dOc3c2dTZGWjRtWGFUd3grZzhlNUJqUDB4Vy92UWttc09sdFpueHQ5MHpwOGF1anRHeUgNCk03NDFyektBcDQwd1I3bW1kOHFpQWltMzk5eXlMdGhOU3JKT0dJNExZYml4SU1FazBJZGlVN0JvSHZPa05qcUYNCkU2Y1pCZ0hJc3RDbE96NnJZSUptek1lSlNENWtuakhCTzNPNE9JbEZPdE9hNDdqT3JVNXlDVjJNYVV0TGNJOEENClMxWVo3NWJnem5WUVpFSFM2cU5IN2xmdUx3M0RQbTVvdHZZSlF3WDlOZjJFZk5oZHA0WEtpU3lOOUdzbHpweEwNCnRSNUZNQTIrOTdNQUM0clVnNklyRUYvc3ZNMEkzMDdnL0VLR0NKcDlLMU11dVZtclV2T3VSeERjYmR6d1RSTUENCllzN0JqZjlqYXNPMWd3OUNYRS9vV1BRQ0VSbFpNc2UrMzlEbUprZldwYzNqeFlMbzI5T3F3S056eWpvaHI5N3oNCi9mZk05OGR3bWtMSllyOEhoL1NWbEtydnE5OGtBNDAwLy9ZbzlaaE9xdlhoeEFDNTFkbjdJZGxQTDBoclJWRTINCjdFNGNIWlE2azVSQmk2bVJzMXY2czQ3cWdVZWtRQUZmaE93TlVFQ3ZLenVLQkZZRHRVcHdnUzMyUmt5dGRjUmYNCk13aHFhdTBGNXJiZ2hkV3BKQ1k5dmZmaXczcXBUaDNxMmJNVm0wWlJSMlNDVXRKOUwrUkM3OFBTdGJOdTl4cjINCm52Q2dxeVhKVWwwcDUvUWJxTFVkdExyNVpSc09zUG5LbzNDcW1lZHBrdjlwNzVVZGEwVkFTaXNPVmY2NEZjMzUNCk1hN016ZnFMVHJQU1FTcE5mTExjDQo9b0tyZA0KLS0tLS1FTkQgUEdQIE1FU1NBR0UtLS0tLQ0K",
+      "size": 3123
+    }
+  },
+  "raw": {
+    "id": "161b2ac5a73d4097",
+    "threadId": "161b2ac5a73d4097",
+    "labelIds": ["IMPORTANT", "STARRED", "Label_20", "Label_3", "CATEGORY_PERSONAL", "Label_12"],
+    "snippet": "-- ------------------------------ 1io | Sales &amp; Marketing 1io GmbH | Mozartstr. 5 | 87435 Kempten | Germany 1io | Development &amp; Support kuhnert GmbH | Mozartstr. 5 | 87435 Kempten | Germany",
+    "sizeEstimate": 9242,
+    "historyId": "1406133",
+    "internalDate": "1519121092000"
+  }
+}

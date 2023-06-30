@@ -1416,6 +1416,30 @@ td {
   padding-left: 10px;
 }
 
+.pgp_neutral .error_container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.pgp_neutral .error_container .error_info {
+  display: inline-flex;
+  flex-direction: column;
+  width: 270px;
+  align-items: flex-start;
+}
+
+.pgp_neutral .error_container .error_info span {
+  color: #a44;
+  font-size: 14px;
+}
+
+.pgp_neutral button {
+  width: 120px;
+}
+
 .pgp_insecure {
   border: none;
   border-left: 4px solid #d14836;
@@ -1536,6 +1560,7 @@ td {
   opacity: 1;
 }
 
+#pgp_block .input_error_email,
 #pgp_block .input_email,
 #backup_block .input_pass_phrase {
   padding: 9px;

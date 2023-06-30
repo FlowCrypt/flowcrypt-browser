@@ -1,0 +1,73 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "15f7f5f098d6bc36",
+    "threadId": "15f7f5f098d6bc36",
+    "labelIds": [
+      "IMPORTANT",
+      "STARRED",
+      "Label_8",
+      "Label_3",
+      "CATEGORY_PERSONAL",
+      "Label_12",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- Version: FlowCrypt 5.0.4 Gmail Encryption flowcrypt.com Comment: Seamlessly send, receive and search encrypted email wcFMA+ADv/5v4RgKAQ/",
+    "payload": {
+      "partId": "",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+        {
+          "name": "X-Gm-Message-State",
+          "value": "AMCzsaWhLvT1I9D3MUtiK8AZOkKOcQaoGSd2mq5SCZCIGDakUB3Ii8Cg kyxMVL3SBmcv2IZIUPpj1E6axOuKWlqu68U9dHU="
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=6D24791A5B106262B06217C606CA553EC2455D70"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 2 Nov 2017 17:54:14 -0700"
+        },
+        {
+          "name": "Subject",
+          "value": "encrypted utf8"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=\"UTF-8\""
+        }
+      ],
+      "body": {
+        "size": 1916,
+        "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQpWZXJzaW9uOiBGbG93Q3J5cHQgNS4wLjQgR21haWwgRW5jcnlwdGlvbiBmbG93Y3J5cHQuY29tDQpDb21tZW50OiBTZWFtbGVzc2x5IHNlbmQsIHJlY2VpdmUgYW5kIHNlYXJjaCBlbmNyeXB0ZWQgZW1haWwNCg0Kd2NGTUErQUR2LzV2NFJnS0FRLzhDaGduYmhHWm9QV2x1cmdZSUl2MlFyWTE5aGphVXMzY3B1S01EbER1DQpWRXRSUmt0S3RYMmFRM1VvYThVdWpjNXhiUC90ajRQSTJUcTdIcTJKNmUrZXZKODNRT2tLaFQ5empmYUoNCk1xdXROZVA2VEZEZHRCc3VtZG9MTUVQWGVHUkw1aVExUXBJbGlmZW5JTXNHSTBKUlJZWm5aSklhK2V6Zg0KQWhwL0tyd0swNmJuVDdtb3BtNHpOUmFpMkpSRHBwQ2JzNDg2WGs5RXJPTXRDTEV6V0RaY1ZQRDc2YWdDDQpvVGlSUWpYK0hlSXlQZ0FxWVRGZ1M0bjVPeU9sMjRhbHdId1BBdllWOXVNRW1LZm9XWkFPYzg3bFo1M3YNCm1xbXlqMTRrV010SHdOaGdROEFuY296R2J2KzBqNTIvSkFUSzlVNjA1Y0Y2ZjAvdWM0d3ZkMmpxcGZXWQ0KK3lKdzhFMXdMUjkzb0h2cDBvc3lySFBxNVRGZVFPMkN5THpPaGhac1Q1MGt5WEp1RCtRZmdqN2J1TmVkDQpRUVkyVmU0bnJrWVBnSElNdWtmWFFEajhXMFpDbHVjdDNXQ2c3TTBZV0ppekRuSTlHRTJVTjlWTjRPSG4NCmRmbGUvQWpCQ2lqeFdMeFFxV0NTeXV3Tm1abDJRYUhTK1RyR2o3KzI3R3RzUWMzSlB1MjZENTBhM1BSZw0KSFo5c3JPWUhWUlIxOFBnb1NmdW55U05pbzZGdU1DcmVnK3RQZHMwZE4vWWFwQ2tYbk9TcklXVUdoT3YvDQo1WGFsSXBNSzRJQ2E3bUNtdGdHVjdDOUJXL2x2RHIyakw0by9FMGp5SkhNRjdlVWlteWxHTFU1RVR1MGUNCjN3SkZlbWxMTWxDbGNmc29vN0RqcHYvWkx2N004U3ZCTHdTenI4L2tGMW5Cd1V3RFMxb3YvT1l0bFFFQg0KRC8wWUc0UUdJa2t4TGpLNXBITGxXR0Q5azRWSjB2eE1qZ1Azekk1aExHM1Y5ajltUjNkbTd6bWlVTHBODQoveWVEbFU3djFzZG1oMnM4eDR5Slo1eEphaUw2Z0RQR294S2cwMTdMMUd5Tnpxdm5hOXFvRGMySHhCTWoNCmVnczhSUjZEbzhycWs5cDhFQlhpSTNGbEhIbi81aEc0OU5pL0xOTnhjcWY2ZE9leHRUV3BtNHRGZU1IeA0KOW5BK1BPMk1vRjZvR2tyZ2JPTURVdEtad25RR0N4QTMvWVhndjd3eWEvb0FTMUhZVnZSeDZMYmwxWU1FDQpITTdlNG5ZaUFPZmx3VTJnZXRFdFNYZnUxQ0Q4cDMwRi9Ba08rcUthaXRaRjJMWG1TLzQxeUlqRDY5b1ENCnNZNUVSS1JkTlFUQmtyNWVVaFM2ckZYSUk4U1h0SlZ3K0RZMjlBQWVsWlRJeElKL3pMVzZBaVB5ZFJTcA0KbXU0dmkxL3k3WVdUUTFiV2x2eUlqSFdEUnB3VnY0SzdWTVdJazh3VXEzdVJGNS8yKzRoL2VtY1hjN3BHDQpMdVgrd2lxTVd3OEhqdjM0LzhIbGx0clFSRzM4SnRzVEtDOURQS1RxZXpySWNkUHZ2NFBrVlhHSEx4WWcNCmRGeWZrWXIvYjNtS2lHVnBwdEdFRTFyQ1B6ZzBUQ2Q4Sk5RZ0ZyMDRYcTVnRWxQUDZYQmN2czNKNStoKw0KdUhsYUZzb1BNenRobjgrZU5tdnhpQ0hwZDkyVklibDlWcTYvWnRTUGNKbjRkcnJmdG4zVjF6dlVDNzEyDQo0TE5wMmlpcGRTQXluZmtCUUUwRkp2N205bWJ1bkNhNWFBRVZRN2J4aGdOWDFDcUF0Um1lc2hkOHc3U0ENCm95VHd4TitWc1FVaHg4T01LQi92UTRTUU5OSzJBVmdhS25WWEV0UFdKc3lqMEhVbHdIQjlqalY1TDRJLw0KaTRPb1ZFeTVBTkwyZjA5Y1BlSEdrYmFLYjhzNExUcVpBVTZaeitMZkRmVGp6UHJSRDNxVmNuM0tjd2ozDQo0ZUN2a0JJRXQ4Tko1K1pWSUtoTjNsR0NDYWIrRkpPdGxYYUNMMG9rczdKR2xRbjU3SVBtdG1XQ2FHS2ENClZSaHA0V1Uzb0lWWmtLakkyM3NJV2R0MGwwejFIMXhLaEZWRitMRTRraVEvQ0l3aWZHWUoyUjVlUWk1SQ0KcXRGeFZXeThUNFk0YVdQY2l2NzNQK1JML25EZDNKVT0NCj13bVNXDQotLS0tLUVORCBQR1AgTUVTU0FHRS0tLS0tDQoNClRoaXMgaXMgZW1haWwgZm9vdGVyDQo="
+      }
+    },
+    "sizeEstimate": 6617,
+    "historyId": "1406105",
+    "internalDate": "1509670454000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "15f7f5f098d6bc36",
+    "threadId": "15f7f5f098d6bc36",
+    "labelIds": ["IMPORTANT", "STARRED", "Label_8", "Label_3", "CATEGORY_PERSONAL", "Label_12", "INBOX"],
+    "snippet": "-----BEGIN PGP MESSAGE----- Version: FlowCrypt 5.0.4 Gmail Encryption flowcrypt.com Comment: Seamlessly send, receive and search encrypted email wcFMA+ADv/5v4RgKAQ/",
+    "sizeEstimate": 6617,
+    "historyId": "1406105",
+    "internalDate": "1509670454000"
+  }
+}

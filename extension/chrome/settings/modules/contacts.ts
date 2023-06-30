@@ -232,7 +232,7 @@ View.run(
           await this.loadAndRenderContactList();
         } catch (e) {
           await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(!!this.fesUrl));
-          $('#edit_contact .input_pubkey').val('').focus();
+          $('#edit_contact .input_pubkey').val('').trigger('focus');
         }
       }
     };
@@ -282,12 +282,8 @@ View.run(
           const container = $('#bulk_import #processed');
           for (const block of blocks) {
             if (block.type === 'publicKey' || block.type === 'certificate') {
-              const replacedHtmlSafe = XssSafeFactory.renderableMsgBlock(
-                this.factory!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                block,
-                '',
-                ''
-              );
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              const replacedHtmlSafe = XssSafeFactory.renderableMsgBlock(this.factory!, block);
               if (replacedHtmlSafe && replacedHtmlSafe !== value) {
                 container.append(replacedHtmlSafe); // xss-safe-factory
               }

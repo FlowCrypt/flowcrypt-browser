@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 
 import { BrowserHandle, BrowserPool } from './browser';
-import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
+import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
@@ -51,20 +51,22 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
-const mockApiLogs: string[] = [];
 
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
 
-const testWithBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>, flag?: 'FAILING'): Implementation<unknown[]> => {
+const testWithBrowser = (
+  cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
+  flag?: 'FAILING',
+  timeout = consts.TIMEOUT_EACH_RETRY
+): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
-    let closeMockApi: (() => Promise<void>) | undefined;
+    const mockApi = isMock ? await startMockApiAndCopyBuild(t) : undefined;
     if (isMock) {
-      t.mockApi = await startMockApiAndCopyBuild(t);
-      closeMockApi = t.mockApi.close;
+      t.context.mockApi = mockApi;
     } else {
-      t.urls = new TestUrls(await browserPool.getExtensionId(t));
+      t.context.urls = new TestUrls(await browserPool.getExtensionId(t));
     }
     try {
       await browserPool.withNewBrowserTimeoutAndRetry(
@@ -77,20 +79,21 @@ const testWithBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<
           t.log(`run time: ${Math.ceil((Date.now() - start) / 1000)}s`);
         },
         t,
-        consts,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        { ...consts, TIMEOUT_EACH_RETRY: timeout },
         flag
       );
 
       t.pass();
     } finally {
-      if (closeMockApi) {
-        await closeMockApi();
-      }
+      await mockApi?.close();
     }
   };
 };
 
 const startMockApiAndCopyBuild = async (t: AvaContext) => {
+  const mockApiLogs: string[] = [];
+  t.context.mockApiLogs = mockApiLogs;
   const mockApi = await startAllApisMock(line => {
     if (DEBUG_MOCK_LOG) {
       console.log(line);
@@ -104,8 +107,8 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   if (typeof address === 'object' && address) {
     const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
 
-    t.extensionDir = result.stdout;
-    t.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
+    t.context.extensionDir = result.stdout;
+    t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
     t.log('Failed to get mock build address');
   }
@@ -114,7 +117,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
 
 const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
   try {
-    const page = await browser.newPage(t, t.urls?.extension('chrome/dev/ci_unit_test.htm'));
+    const page = await browser.newPage(t, t.context.urls?.extension('chrome/dev/ci_unit_test.htm'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
     const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
       input: unknown;
@@ -152,6 +155,13 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
         e.message !== 'Some keys could not be parsed' &&
         !e.message.match(/BrowserMsg\(ajax\) Bad Request: 400 when GET-ing https:\/\/localhost:\d+\/flowcrypt-email-key-manager/)
     )
+    // below for test "decrypt - failure retrieving chunk download - next request will try anew"
+    .filter(
+      e =>
+        !/BrowserMsg\(ajaxGmailAttachmentGetChunk\) \(no status text\): 400 when GET-ing https:\/\/localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
+          e.message
+        )
+    )
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
@@ -160,7 +170,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for "test allows to retry public key search when attester returns error"
     .filter(
-      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester.return.error@flowcrypt.test/)
+      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/)
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
@@ -184,11 +194,11 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-test.after.always('send debug info if any', async t => {
+test.afterEach.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
-  const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
+  const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -196,10 +206,14 @@ test.after.always('send debug info if any', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
-    mkdirSync(debugArtifactDir);
+    try {
+      mkdirSync(debugArtifactDir);
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+    }
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
-      const fileName = `debugHtmlAttachment-${i}.html`;
+      const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
       writeFileSync(filePath, debugHtmlAttachments[i]);

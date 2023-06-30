@@ -9,7 +9,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class PgpBlockViewQuoteModule {
   public constructor(private view: PgpBlockView) {}
 
-  public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
+  public separateQuotedContentAndRenderText = (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
       const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent)); // xss-sanitized
       let htmlBlockQuoteExists = false;
@@ -32,10 +32,10 @@ export class PgpBlockViewQuoteModule {
           message[0].removeChild(shouldBeQuoted[i]);
           quotedHtml += shouldBeQuoted[i].outerHTML;
         }
-        await this.view.renderModule.renderContent(message.html(), false);
+        this.view.renderModule.renderContent(message.html(), false);
         this.appendCollapsedQuotedContentButton(quotedHtml, true);
       } else {
-        await this.view.renderModule.renderContent(decryptedContent, false);
+        this.view.renderModule.renderContent(decryptedContent, false);
       }
     } else {
       const lines = decryptedContent.split(/\r?\n/);
@@ -62,7 +62,7 @@ export class PgpBlockViewQuoteModule {
         // only got quoted part, no real text -> show everything as real text, without quoting
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
-      await this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false);
+      this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false);
       if (linesQuotedPart.join('').trim()) {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }

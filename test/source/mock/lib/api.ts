@@ -13,6 +13,7 @@ import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key
 import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
 import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
 import { SksConfig, getMockSksEndpoints } from '../sks/sks-endpoints';
+import { getMockCustomerUrlFesEndpoints } from '../fes/customer-url-fes-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -67,6 +68,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
     handlers = {
       ...handlers,
       ...getMockGoogleEndpoints(this.oauth, this.config.google),
+      ...getMockCustomerUrlFesEndpoints(this.config.fes),
       ...getMockSharedTenantFesEndpoints(this.config.fes),
       ...getMockWkdEndpoints(this.config.wkd),
       ...getMockSksEndpoints(this.config.sks),

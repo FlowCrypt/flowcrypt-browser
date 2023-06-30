@@ -24,7 +24,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
         this.view.sizeModule.resizeComposeBox();
       },
     });
-    this.view.S.cached('body').on('click', '#attachment_list li', async (e: JQuery.Event) => {
+    this.view.S.cached('body').on('click', '#attachment_list li', async e => {
       const fileId = $(e.currentTarget).attr('qq-file-id') as string;
       const attachment = await this.attachment.collectAttachment(fileId);
       Browser.saveToDownloads(attachment);

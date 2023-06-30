@@ -38,14 +38,15 @@ export type AccountIndex =
   | 'full_name'
   | 'cryptup_enabled'
   | 'setup_done'
-  | 'successfully_received_at_leat_one_message'
   | 'notification_setup_done_seen'
   | 'picture'
   | 'outgoing_language'
   | 'setup_date'
   | 'use_rich_text'
   | 'rules'
-  | 'fesUrl';
+  | 'fesUrl'
+  | 'failedPassphraseAttempts'
+  | 'lastUnsuccessfulPassphraseAttempt';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -67,7 +68,6 @@ export type AcctStoreDict = {
   full_name?: string;
   cryptup_enabled?: boolean;
   setup_done?: boolean;
-  successfully_received_at_leat_one_message?: boolean;
   notification_setup_done_seen?: boolean;
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
@@ -75,6 +75,8 @@ export type AcctStoreDict = {
   use_rich_text?: boolean;
   rules?: ClientConfigurationJson;
   fesUrl?: string; // url where FlowCrypt External Service is deployed
+  failedPassphraseAttempts?: number;
+  lastUnsuccessfulPassphraseAttempt?: number;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

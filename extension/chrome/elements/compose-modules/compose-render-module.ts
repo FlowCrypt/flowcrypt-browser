@@ -156,7 +156,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     const repliedBodyEl = this.view.S.cached('reply_msg_successful').find('div.replied_body');
     if (this.view.inputModule.isRichText()) {
       const sanitized = Xss.htmlSanitizeKeepBasicTags(this.view.inputModule.extract('html', 'input_text', 'SKIP-ADDONS'), 'IMG-KEEP');
-      Xss.setElementContentDANGEROUSLY(repliedBodyEl.get(0), sanitized); // xss-sanitized
+      Xss.setElementContentDANGEROUSLY(repliedBodyEl.get(0) as Element, sanitized); // xss-sanitized
       this.renderReplySuccessMimeAttachments(this.view.inputModule.extractAttachments());
     } else {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
@@ -385,12 +385,14 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private onRecipientsClickHandler = () => {
     if (!this.view.S.cached('input_to').is(':focus')) {
-      this.view.errModule.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.view.S.cached('input_to').val()})`);
-      this.view.S.cached('input_to').focus();
+      this.view.errModule.debug(
+        `input_addresses_container_inner.click -> calling input_to.trigger('focus') when input_to.val(${this.view.S.cached('input_to').val()})`
+      );
+      this.view.S.cached('input_to').trigger('focus');
     }
   };
 
-  private onRecipientPasteHandler = async (elem: HTMLElement, event: JQuery.Event<HTMLElement>) => {
+  private onRecipientPasteHandler = async (elem: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => {
     if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
       const textData = event.originalEvent.clipboardData.getData('text/plain');
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
@@ -416,9 +418,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  private onBodyKeydownHandler = (_: HTMLElement, e: JQuery.Event<HTMLElement>) => {
+  private onBodyKeydownHandler = (_: HTMLElement, e: JQuery.TriggeredEvent<HTMLElement>) => {
     if (this.view.sizeModule.composeWindowIsMinimized) {
-      return e.preventDefault();
+      e.preventDefault();
+      return;
     }
     Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').trigger('click'))(e);
     const focusableEls = this.getFocusableEls();

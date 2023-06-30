@@ -11,14 +11,14 @@ import { TestVariant, Util } from './../util';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { GmailPageRecipe } from './page-recipe/gmail-page-recipe';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
-import { AvaContext } from './tooling';
+import { AvaContext, minutes } from './tooling';
 import { BrowserRecipe } from './tooling/browser-recipe';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
  */
 
-export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
+export type GmailCategory = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash'; // 'all';
 
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
@@ -42,7 +42,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeFrameCount ?? 1);
       if (typeof isReplyPromptAccepted !== 'undefined') {
-        const replyBox = await browser.newPage(t, urls[composeFrameIndex ?? 0]);
+        const replyBox = await gmailPage.getFrame([urls[composeFrameIndex ?? 0]]);
         if (isReplyPromptAccepted) {
           await replyBox.waitAll('@action-send');
           await replyBox.notPresent('@action-accept-reply-prompt');
@@ -50,7 +50,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await replyBox.waitAll('@action-accept-reply-prompt');
           await replyBox.notPresent('@action-send');
         }
-        await replyBox.close();
       }
     };
 
@@ -72,7 +71,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       } else {
         composeBox = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
       }
-      await Util.sleep(5); // until #5037 is fixed
       await composeBox.type('@input-body', content, true);
       if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
@@ -124,7 +122,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-        const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
+        const composePage = await GmailPageRecipe.openSecureComposeWithRichTextWorkaround(t, gmailPage, browser);
         const subject = `New Rich Text Message ${Util.lousyRandom()}`;
         await ComposePageRecipe.fillMsg(composePage, { to: acctEmail }, subject, undefined, {
           richtext: true,
@@ -140,27 +138,17 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'mail.google.com - decrypt message in offline mode',
+      'mail.google.com - back button works in offline mode',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
-        /*
-      await gmailPage.type('[aria-label^="Search"]', 'encrypted email for offline decrypt');
-      await gmailPage.press('Enter'); // submit search
-      await Util.sleep(2); // wait for search results
-      */
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDWztBnnCgRHzjrvmFqLtcJD');
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
-          sleep: 10,
-          appearIn: 25,
-        });
-        expect(pgpBlockUrls.length).to.equal(1);
+        const expectedMessage = { content: ['this should decrypt even offline'], signature: 'signed', encryption: 'encrypted' };
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['/chrome/elements/pgp_block.htm'], { sleep: 10, timeout: 25 }), expectedMessage);
+        await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.page.setOfflineMode(true); // go offline mode
-        await gmailPage.press('Enter'); // open the message
-        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
-        await gmailPage.page.setOfflineMode(true); // go offline mode
-        await pgpBlockFrame.frame.goto(pgpBlockFrame.frame.url()); // reload the frame
-        await pgpBlockFrame.waitForContent('@pgp-block-content', 'this should decrypt even offline');
+        await gmailPage.page.goBack({ waitUntil: 'load' });
+        await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['/chrome/elements/pgp_block.htm']), expectedMessage);
       })
     );
 
@@ -184,14 +172,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
         expect(urls.length).to.equal(1);
-        const params = urls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params,
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['test that content from msg.asc renders'],
           encryption: 'encrypted',
           signature: 'not signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -207,18 +195,18 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
-        const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
+        const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['1234'],
           encryption: 'not encrypted',
           signature: 'signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
-        await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
+        await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -234,11 +222,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           appearIn: 25,
         });
         expect(pgpBlockUrls.length).to.equal(1);
-        await testMinimumElementHeight(gmailPage, '.pgp_block.signedMsg', 80);
+        await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
         await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
-        const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
+        const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['1234'],
           encryption: 'not encrypted',
           signature: 'signed',
@@ -246,6 +233,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
@@ -255,13 +243,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
-          sleep: 10,
-          appearIn: 25,
-        });
-        const url = pgpBlockUrls[0].split('/chrome/elements/pgp_block.htm')[1];
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, {
-          params: url,
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm'], { sleep: 10, timeout: 25 });
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
           content: ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'],
           encryption: 'encrypted',
           signature: 'signed',
@@ -269,92 +252,108 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 
-    test(
+    // draft-sensitive test
+    test.serial(
       'mail.google.com - saving and rendering compose drafts when offline',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        // create compose draft
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'compose draft 1', { offline: true });
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'compose draft 2', { offline: true });
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
-        await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
-        await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
-        await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
-        await gmailPage.waitAndClick('#fc_offline_drafts a');
-        // compose draft 2 should be first in list as drafts are sorted by date descending
-        const draft = await pageHasSecureDraft(gmailPage, 'compose draft 2');
-        await Util.sleep(5); // until #5037 is fixed
-        await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
-        await ComposePageRecipe.waitWhenDraftIsSaved(draft);
-        // after draft 2 is saved to the cloud, it should be removed from offline drafts
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
-        await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
-        await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
-        await gmailPage.waitAndClick('#fc_offline_drafts a');
-        await pageHasSecureDraft(gmailPage, 'compose draft 1');
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          const gmailPage = await openGmailPage(t, browser);
+          // create compose draft
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await createSecureDraft(t, browser, gmailPage, 'compose draft 1', { offline: true });
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await createSecureDraft(t, browser, gmailPage, 'compose draft 2', { offline: true });
+          t.timeout(minutes(2)); // extend ava's timeout
+          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
+          await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
+          await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
+          await gmailPage.waitAndClick('#fc_offline_drafts a');
+          // compose draft 2 should be first in list as drafts are sorted by date descending
+          const draft = await pageHasSecureDraft(gmailPage, 'compose draft 2');
+          await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
+          await ComposePageRecipe.waitWhenDraftIsSaved(draft);
+          t.timeout(minutes(2)); // extend ava's timeout
+          // after draft 2 is saved to the cloud, it should be removed from offline drafts
+          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
+          await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
+          await gmailPage.waitAndClick('#fc_offline_drafts a');
+          await pageHasSecureDraft(gmailPage, 'compose draft 1');
+        },
+        undefined,
+        minutes(5) // explicitly set timer-controlled timeout
+      )
     );
 
-    test(
+    // convo-sensitive, draft-sensitive test
+    test.serial(
       'mail.google.com - secure reply btn, reply draft',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
-        // Gmail has 100 emails per thread limit, so if there are 98 deleted messages + 1 initial message,
-        // the draft number 100 won't be saved. Therefore, we need to delete forever trashed messages from this thread.
-        if (await gmailPage.isElementPresent('//*[text()="delete forever"]')) {
-          await gmailPage.click('//*[text()="delete forever"]');
-        }
-        await gmailPage.waitAndClick('@secure-reply-button');
-        let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
-        await Util.sleep(3);
-        expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
-        await createSecureDraft(t, browser, gmailPage, 'reply draft');
-        await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
-        await Util.sleep(30);
-        replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
-        // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
-        await gmailPage.page.keyboard.press('Tab');
-        await gmailPage.page.keyboard.press('Enter');
-        await replyBox.waitTillGone('@action-send');
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
-        await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
-        await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
-        await GmailPageRecipe.deleteLastReply(gmailPage);
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          const gmailPage = await openGmailPage(t, browser);
+          const threadId = '181d226b4e69f172'; // 1st message -- thread id
+          await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+          await GmailPageRecipe.trimConvo(gmailPage, threadId);
+          t.timeout(minutes(2)); // extend ava's timeout
+          await gmailPage.waitAndClick('@secure-reply-button');
+          let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+          await Util.sleep(3);
+          expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
+          await createSecureDraft(t, browser, gmailPage, 'reply draft');
+          await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
+          replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
+          // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
+          await gmailPage.page.keyboard.press('Tab');
+          await gmailPage.page.keyboard.press('Enter');
+          await replyBox.waitTillGone('@action-send');
+          t.timeout(minutes(2)); // extend ava's timeout
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
+          await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
+          await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
+          await GmailPageRecipe.trimConvo(gmailPage, threadId);
+        },
+        undefined,
+        minutes(5) // this test normally takes more than 3 minutes and often more than 4 minutes
+      )
     );
 
-    test(
+    // draft-sensitive test
+    test.serial(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        // create compose draft
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await createSecureDraft(t, browser, gmailPage, 'a compose draft');
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
-        await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
-        // open new compose window and saved draft
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await gmailPage.waitAndClick('//*[text()="Draft"]');
-        await Util.sleep(2);
-        // veryfy that there are two compose windows: new compose window and secure draft
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
-        expect(urls.length).to.equal(2);
-        await pageHasSecureDraft(gmailPage, 'compose draft');
-        // try to open 4 compose windows at the same time
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
-        await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          const gmailPage = await openGmailPage(t, browser);
+          // create compose draft
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await createSecureDraft(t, browser, gmailPage, 'a compose draft');
+          t.timeout(minutes(2)); // extend ava's timeout
+          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
+          // open new compose window and saved draft
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitAndClick('//*[text()="Draft"]');
+          await Util.sleep(2);
+          // veryfy that there are two compose windows: new compose window and secure draft
+          const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
+          expect(urls.length).to.equal(2);
+          await pageHasSecureDraft(gmailPage, 'compose draft');
+          // try to open 4 compose windows at the same time
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
+        },
+        undefined,
+        minutes(5) // explicitly set timer-controlled timeout
+      )
     );
 
     test(
@@ -375,7 +374,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
+        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
@@ -421,7 +420,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // to go encrypted convo
+        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
         await gmailPage.waitAndClick('[act="94"]', { delay: 1 });
@@ -438,23 +437,31 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    // convo-sensitive, draft-sensitive test
+    test.serial(
       'mail.google.com - plain reply draft',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGpGnLZzLxNpWchTnNfxKkNzBSD'); // go to encrypted convo
-        await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
-        await Util.sleep(30);
-        await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
-        await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
-        await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
-        await Util.sleep(10);
-        await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
-        await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
-        await pageDoesNotHaveSecureReplyContainer(gmailPage);
-        await gmailPage.click('[aria-label^="Discard draft"]');
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          const gmailPage = await openGmailPage(t, browser);
+          const threadId = '181d226b4e69f172'; // 1st message -- thread id
+          await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+          await GmailPageRecipe.trimConvo(gmailPage, threadId);
+          await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
+          t.timeout(minutes(2)); // extend ava's timeout
+          await Util.sleep(5);
+          await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
+          await gmailPage.type('div[aria-label="Message Body"]', 'plain reply', true);
+          await gmailPage.waitForContent('.oG.aOy', 'Draft saved');
+          // sometimes "Page has unsaved data" alert is displayed here, auto-accept it
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
+          await gmailPage.waitForContent('div[aria-label="Message Body"]', 'plain reply', 30);
+          await pageDoesNotHaveSecureReplyContainer(gmailPage);
+          await gmailPage.click('[aria-label^="Discard draft"]');
+        },
+        undefined,
+        minutes(5) // explicitly set timer-controlled timeout
+      )
     );
 
     test(
@@ -473,6 +480,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
         await gmailPage.waitAll(['.aZi'], { visible: false });
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
         await gmailPage.close();
       })
     );
@@ -518,7 +526,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHrBdFGBXqpFZvSkcQpKkvrM');
         await Util.sleep(5);
         await gmailPage.waitForContent('.a3s', 'Plain message');
-        expect(await gmailPage.isElementPresent('div.aQH')).to.equal(true); // gmail attachment container
+        expect(await gmailPage.isElementPresent('.aQH')).to.equal(true); // gmail attachment container
         // expect no pgp blocks
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
         expect(urls.length).to.equal(0);
@@ -534,6 +542,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
         expect(urls.length).to.equal(1);
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
 

@@ -105,7 +105,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.cached('recipients_placeholder').on(
       'click',
       this.view.setHandler(() => {
-        this.view.S.cached('input_to').focus();
+        this.view.S.cached('input_to').trigger('focus');
       })
     );
     this.view.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));
@@ -459,16 +459,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
   };
 
-  private inputsBlurHandler = async (target: HTMLElement, e: JQuery.Event<HTMLElement, null>) => {
+  private inputsBlurHandler = async (target: HTMLElement, e: JQuery.TriggeredEvent<HTMLElement>) => {
     if (this.dragged) {
       // blur while drag&drop
       return;
     }
-    if (e.relatedTarget === this.view.S.cached('contacts').get(0)) {
+    const relatedTarget = (e as JQuery.BlurEvent).relatedTarget;
+    if (relatedTarget === this.view.S.cached('contacts').get(0)) {
       // user selected contact in #contacts list, do nothing here
       return;
     }
-    this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+    this.view.errModule.debug(`input_to.blur -> parseRenderRecipients start causedBy(${(relatedTarget as HTMLElement)?.outerHTML})`);
     this.hideContacts();
     await this.parseRenderRecipients($(target));
     this.view.errModule.debug(`input_to.blur -> parseRenderRecipients done`);
@@ -521,7 +522,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     newContainer.append(buttonsContainer); // xss-safe-value
     newContainer.css('display', 'flex');
     target.style.display = 'none';
-    input.focus();
+    input.trigger('focus');
     this.view.sizeModule.resizeComposeBox();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
@@ -554,7 +555,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
    * Returns the boolean value which indicates if this.searchContacts() should be
    * prevented from triggering (in keyup handler)
    */
-  private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
+  private recipientInputKeydownHandler = (e: JQuery.TriggeredEvent<HTMLElement>): boolean => {
     const currentActive = this.view.S.cached('contacts').find('ul li.select_contact.active');
     if (e.key === 'Backspace') {
       if (!$(e.target).val()) {
@@ -596,7 +597,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else if (e.key === 'Escape') {
       e.stopPropagation();
       this.hideContacts();
-      this.view.S.cached('input_to').focus();
+      this.view.S.cached('input_to').trigger('focus');
       return true;
     } else if (!currentActive.length) {
       return false; // all following code operates on selected currentActive element
@@ -864,7 +865,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           if (authResult.result === 'Success') {
             this.googleContactsSearchEnabled = true;
             this.hideContacts();
-            input.focus();
+            input.trigger('focus');
             await this.searchContacts(input);
           } else if (authResult.result !== 'Closed') {
             await Ui.modal.error(
@@ -890,7 +891,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     }
     this.view.errModule.debug(`selectContact -> parseRenderRecipients start`);
     this.parseRenderRecipients(input, false, [email]).catch(Catch.reportErr);
-    input.focus();
+    input.trigger('focus');
     this.hideContacts();
   };
 
@@ -1147,7 +1148,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (container) {
       this.view.sizeModule.resizeInput($(container).find('input'));
     }
-    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
+    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).trigger('focus');
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
@@ -1211,7 +1212,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const newInput = this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`);
       this.view.sizeModule.resizeInput(newInput.add(previousInput));
       this.dragged = undefined;
-      newInput.focus();
+      newInput.trigger('focus');
     };
     element.ondragend = () => Catch.setHandledTimeout(() => (this.dragged = undefined), 0);
   };

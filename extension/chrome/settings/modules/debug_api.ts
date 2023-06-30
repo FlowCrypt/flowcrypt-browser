@@ -43,7 +43,6 @@ View.run(
           'full_name',
           'cryptup_enabled',
           'setup_done',
-          'successfully_received_at_leat_one_message',
           'notification_setup_done_seen',
           'rules',
           'use_rich_text',

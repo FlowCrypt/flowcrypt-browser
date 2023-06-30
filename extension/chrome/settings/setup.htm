@@ -146,7 +146,7 @@
             Submit corresponding pubkey to FlowCrypt Attester (recommended)
           </label>
         </div>
-        <div class="line left display_none remove_if_pubkey_submitting_not_user_configurable">
+        <div class="line left display_none remove_if_pubkey_submitting_not_user_configurable also_submit_alias_key_view">
           <label>
             <input type="checkbox" class="input_submit_all" disabled="disabled" />
             <span>
@@ -234,9 +234,9 @@
               </label>
             </div>
             <div
-              class="line left remove_if_pubkey_submitting_not_user_configurable container_for_import_key_email_alias"
+              class="line left remove_if_pubkey_submitting_not_user_configurable container_for_import_key_email_alias also_submit_alias_key_view"
               data-test="container-for-import-key-email-alias"
-              style="visibility: hidden"
+              style="display: none"
             >
               <label>
                 <input type="checkbox" class="input_submit_all" disabled="disabled" />

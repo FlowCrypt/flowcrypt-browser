@@ -57,8 +57,8 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
       this.view.S.cached(selName)
-        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
-        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
+        .on('focusin', e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? (e.relatedTarget as HTMLElement).outerHTML : undefined})`))
+        .on('focusout', e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? (e.relatedTarget as HTMLElement).outerHTML : undefined})`));
     }
   };
 
@@ -188,7 +188,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
       }
     } else {
-      this.view.S.cached('input_password').focus();
+      this.view.S.cached('input_password').trigger('focus');
       throw new ComposerUserError("Some recipients don't have encryption set up. Please add a password.");
     }
   };
