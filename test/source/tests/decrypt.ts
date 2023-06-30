@@ -1908,15 +1908,15 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId2 = '1890b42720e9f5f5'; // encrypted
         const threadId3 = '1890b4d49ead6379'; // encrypted mime
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const gmailPage1 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
+        const gmailPage1 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
         await gmailPage1.waitAll('iframe');
         const pgpBlock1 = await gmailPage1.getFrame(['pgp_block.htm']);
         await pgpBlock1.waitForContent('@pgp-block-content', '[clipped - message too large]');
-        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
+        const gmailPage2 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
         await gmailPage2.waitAll('iframe');
         const pgpBlock2 = await gmailPage2.getFrame(['pgp_block.htm']);
         await pgpBlock2.waitForContent('@pgp-block-content', '[clipped - message too large]');
-        const gmailPage3 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId3}`, undefined, authHdr);
+        const gmailPage3 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId3}`, undefined, authHdr);
         await gmailPage3.waitAll('iframe');
         const pgpBlock3 = await gmailPage3.getFrame(['pgp_block.htm']);
         await pgpBlock3.waitForContent('@pgp-block-content', '[clipped - message too large]');
@@ -1928,7 +1928,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const threadId1 = '1890bbca1d2acc4c';
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const gmailPage1 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
+        const gmailPage1 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
         await gmailPage1.waitAll('iframe');
         const pgpBlock1 = await gmailPage1.getFrame(['pgp_block.htm']);
         await pgpBlock1.verifyContentIsNotPresentContinuously('@pgp-block-content', '[clipped - message too large]');
