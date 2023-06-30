@@ -59,8 +59,11 @@ export interface GoogleConfig {
   contacts?: string[];
   othercontacts?: string[];
   aliases?: Dict<MockUserAlias[]>;
+  primarySignature?: Dict<string>;
   getMsg?: Dict<Dict<{ error: Error } | { msg: GmailMsg }>>;
   getAttachment?: Dict<{ error: Error } | { data: string }>;
+  draftIdToSave?: string;
+  threadNotFoundError?: Record<string, number>;
   htmlRenderer?: (msgId: string, prerendered?: string) => string | undefined;
 }
 
@@ -79,6 +82,22 @@ export const multipleEmailAliasList: MockUserAlias[] = [
     sendAsEmail: 'alias2@example.com',
     displayName: 'An Alias1',
     replyToAddress: 'alias2@example.com',
+    signature: '',
+    isDefault: false,
+    isPrimary: false,
+    treatAsAlias: false,
+    verificationStatus: 'accepted',
+  },
+];
+
+export const flowcryptCompatibilityPrimarySignature =
+  '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
+
+export const flowcryptCompatibilityAliasList = [
+  {
+    sendAsEmail: 'flowcryptcompatibility@gmail.com',
+    displayName: 'An Alias',
+    replyToAddress: 'flowcryptcompatibility@gmail.com',
     signature: '',
     isDefault: false,
     isPrimary: false,
@@ -169,29 +188,8 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         treatAsAlias: false,
         verificationStatus: 'accepted',
       };
-      // If the account is a compatibility account, return specific aliases.
-      // This account is used in hundreds of tests, so we handle it separately to avoid duplicating the code.
-      if (acct === 'flowcrypt.compatibility@gmail.com') {
-        const alias = 'flowcryptcompatibility@gmail.com';
-        return {
-          sendAs: [
-            {
-              ...primarySendAs,
-              signature:
-                '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>',
-            },
-            {
-              sendAsEmail: alias,
-              displayName: 'An Alias',
-              replyToAddress: alias,
-              signature: '',
-              isDefault: false,
-              isPrimary: false,
-              treatAsAlias: false,
-              verificationStatus: 'accepted',
-            },
-          ],
-        };
+      if (config?.primarySignature && config.primarySignature[acct]) {
+        primarySendAs.signature = config.primarySignature[acct];
       }
       // If no aliases are defined in the config, return only the primary send-as object
       if (!config?.aliases) {
@@ -265,8 +263,8 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         const id = parseResourceId(req.url!);
         const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
         if (!msgs.length) {
-          const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
-          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
+          const errorCode = config?.threadNotFoundError?.[id] ?? 400;
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, errorCode);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => GoogleData.fmtMsg(m, format)) };
       }
@@ -332,14 +330,8 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         }
         const mimeMsg = await Parse.convertBase64ToMimeMsg(raw);
         const data = await GoogleData.withInitializedData(acct);
-        if (mimeMsg.subject?.includes('saving and rendering a draft with image')) {
-          data.addDraft('draft_with_image', raw, mimeMsg);
-        }
-        if (mimeMsg.subject?.includes('check existing draft not saved without changes')) {
-          data.addDraft('check_existing_draft_save', raw, mimeMsg);
-        }
-        if (mimeMsg.subject?.includes('RTL')) {
-          data.addDraft(`draft_with_rtl_text_${mimeMsg.subject?.includes('rich text') ? 'rich' : 'plain'}`, raw, mimeMsg);
+        if (config?.draftIdToSave) {
+          data.addDraft(config.draftIdToSave, raw, mimeMsg);
         }
         return {};
       } else if (isDelete(req)) {

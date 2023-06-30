@@ -26,9 +26,11 @@ import {
   getKeyManagerAutoImportNoPrvCreateRules,
   getKeyManagerAutogenRules,
   getKeyManagerChoosePassphraseForbidStoringRules,
+  processMessageFromUser,
 } from '../mock/fes/fes-constants';
 import { testSksKey } from '../mock/sks/sks-constants';
-import { multipleEmailAliasList } from '../mock/google/google-endpoints';
+import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
+import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -88,16 +90,22 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'setup - optional checkbox for each email aliases',
       testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
+              [acct]: {
                 pubkey: somePubkey,
               },
             },
           },
+          google: {
+            aliases: {
+              [acct]: flowcryptCompatibilityAliasList,
+            },
+          },
         });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await Util.sleep(5);
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
           key: { passphrase: 'long enough to suit requirements' },
@@ -110,7 +118,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
             await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
           },
         });
-        expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['flowcrypt.compatibility@gmail.com']).not.to.be.an('undefined');
+        expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
         expect(t.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
         await settingsPage.close();
       })
@@ -833,6 +841,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           ekm: {
             keys: [negativeExpirationKey.privateKey],
+            putKeysExpectation: {
+              [acctEmail]: {
+                expirationExists: false,
+              },
+            },
           },
           fes: {
             clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
@@ -1423,18 +1436,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
       testWithBrowser(async (t, browser) => {
+        const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [testConstants.updatingPrv],
+            putKeysExpectation: {
+              [acct]: {
+                expirationExists: false,
+              },
+            },
           },
           fes: {
             clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.urls!.port!),
           },
         });
-        const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const passphrase = 'long enough to suit requirements';
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -1604,18 +1622,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - updates of key found on key manager via setup page (with passphrase)',
       testWithBrowser(async (t, browser) => {
+        const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [testConstants.updatingPrv],
+            putKeysExpectation: {
+              [acct]: {
+                expirationExists: false,
+              },
+            },
           },
           fes: {
             clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.urls!.port!),
           },
         });
-        const acct = 'put.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const passphrase = 'long enough to suit requirements';
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
@@ -1672,18 +1695,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test - updates of key found on key manager when NO_PRV_CREATE',
       testWithBrowser(async (t, browser) => {
+        const acct = 'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [testConstants.updatingPrv],
+            putKeysExpectation: {
+              [acct]: {
+                expirationExists: false,
+              },
+            },
           },
           fes: {
             clientConfiguration: getKeyManagerAutoImportNoPrvCreateRules(t.urls!.port!),
           },
         });
-        const acct = 'get.updating.key@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
@@ -1966,18 +1994,23 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'put.key@key-manager-autogen.flowcrypt.test - automatic setup with key not found on key manager, then generated',
       testWithBrowser(async (t, browser) => {
+        const acct = 'put.key@key-manager-autogen.flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [],
+            putKeysExpectation: {
+              [acct]: {
+                identity: 'First Last <put.key@key-manager-autogen.flowcrypt.test>',
+              },
+            },
           },
           fes: {
             clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
           },
         });
-        const acct = 'put.key@key-manager-autogen.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -2113,12 +2146,19 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'expire@key-manager-keygen-expiration.flowcrypt.test - ClientConfiguration enforce_keygen_expire_months: 1',
       testWithBrowser(async (t, browser) => {
+        const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           ekm: {
             keys: [],
+            putKeysExpectation: {
+              [acct]: {
+                expirationExists: true,
+                identity: 'First Last <expire@key-manager-keygen-expiration.flowcrypt.test>',
+              },
+            },
           },
           fes: {
             clientConfiguration: {
@@ -2128,7 +2168,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             },
           },
         });
-        const acct = 'expire@key-manager-keygen-expiration.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -2186,6 +2225,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
+          },
+          fes: {
+            messagePostValidator: processMessageFromUser,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
         const port = t.urls?.port;
