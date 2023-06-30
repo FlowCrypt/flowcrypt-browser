@@ -1904,10 +1904,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - Restricting rendering of large text values in message decryption',
       testWithBrowser(async (t, browser) => {
-        const threadId1 = '18514f9ceece6c14'; // sign-only
-        const threadId2 = '18514f65895242dd'; // encrypted + signed
-        const threadId3 = '188ebd700d5a5987'; // sign-only mime
-        const threadId4 = '188ebdff6579e577'; // encrypted mime
+        const threadId1 = '1890b67a3ab3fe80'; // sign-only
+        const threadId2 = '1890b42720e9f5f5'; // encrypted
+        const threadId3 = '1890b4d49ead6379'; // encrypted mime
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const gmailPage1 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
         await gmailPage1.waitAll('iframe');
@@ -1921,10 +1920,18 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await gmailPage3.waitAll('iframe');
         const pgpBlock3 = await gmailPage3.getFrame(['pgp_block.htm']);
         await pgpBlock3.waitForContent('@pgp-block-content', '[clipped - message too large]');
-        const gmailPage4 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId4}`, undefined, authHdr);
-        await gmailPage4.waitAll('iframe');
-        const pgpBlock4 = await gmailPage4.getFrame(['pgp_block.htm']);
-        await pgpBlock4.waitForContent('@pgp-block-content', '[clipped - message too large]');
+      })
+    );
+
+    test(
+      'decrypt - Message clipping should exclude inline images',
+      testWithBrowser(async (t, browser) => {
+        const threadId1 = '1890bbca1d2acc4c';
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const gmailPage1 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
+        await gmailPage1.waitAll('iframe');
+        const pgpBlock1 = await gmailPage1.getFrame(['pgp_block.htm']);
+        await pgpBlock1.verifyContentIsNotPresentContinuously('@pgp-block-content', '[clipped - message too large]');
       })
     );
 
