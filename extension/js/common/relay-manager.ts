@@ -9,7 +9,7 @@ import { RenderMessage } from './render-message.js';
 import { RenderRelay } from './render-relay.js';
 
 type FrameEntry = {
-  readyToReceive?: true;
+  tabId?: string;
   queue: RenderMessage[];
   progressText?: string;
   relay?: RenderRelay;
@@ -19,7 +19,7 @@ export class RelayManager implements RelayManagerInterface {
   private static readonly completionMessage: RenderMessage = { done: true };
   private readonly frames = new Map<string, FrameEntry>();
 
-  public constructor(private tabId: string, private debug: boolean = false) {
+  public constructor(private debug: boolean = false) {
     const framesObserver = new MutationObserver(async mutationsList => {
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
@@ -45,9 +45,7 @@ export class RelayManager implements RelayManagerInterface {
     const frameData = this.frames.get(frameId);
     if (frameData) {
       frameData.queue.push(message);
-      if (frameData.readyToReceive) {
-        this.flush({ frameId, queue: frameData.queue });
-      }
+      this.flushIfReady(frameId);
     }
   };
 
@@ -62,14 +60,9 @@ export class RelayManager implements RelayManagerInterface {
     this.relay(frameId, RelayManager.completionMessage);
   };
 
-  public handleMessageFromFrame = (data: unknown) => {
-    const typedData = data as { readyToReceive?: string; retry?: string } | undefined;
-    if (typeof typedData?.readyToReceive === 'string') {
-      this.readyToReceive(typedData.readyToReceive);
-    }
-    if (typeof typedData?.retry === 'string') {
-      this.retry(typedData.retry);
-    }
+  public retry = (frameId: string) => {
+    const frameData = this.frames.get(frameId);
+    frameData?.relay?.executeRetry();
   };
 
   public renderProgressText = (frameId: string, text: string) => {
@@ -84,10 +77,16 @@ export class RelayManager implements RelayManagerInterface {
     const perc = RelayManager.getPercentage(percent, loaded, total, expectedTransferSize);
     if (typeof perc !== 'undefined') {
       const frameData = this.frames.get(frameId);
-      if (frameData?.readyToReceive && typeof frameData.progressText !== 'undefined') {
+      if (frameData?.tabId && typeof frameData.progressText !== 'undefined') {
         this.relay(frameId, { renderText: `${frameData.progressText} ${perc}%` });
       }
     }
+  };
+
+  public associate = (frameId: string, tabId: string) => {
+    const frameData = this.getOrCreate(frameId);
+    frameData.tabId = tabId;
+    this.flushIfReady(frameId);
   };
 
   private dropRemovedNodes = (removedNode: Node) => {
@@ -122,26 +121,17 @@ export class RelayManager implements RelayManagerInterface {
     return newFrameEntry;
   };
 
-  private flush = ({ frameId, queue }: { frameId: string; queue: RenderMessage[] }) => {
-    while (true) {
-      const message = queue.shift();
+  private flushIfReady = (frameId: string) => {
+    const frameData = this.frames.get(frameId);
+    while (frameData?.tabId) {
+      const message = frameData.queue.shift();
       if (message) {
-        BrowserMsg.send.pgpBlockRender(this.tabId, { ...message, frameId });
+        BrowserMsg.send.pgpBlockRender(frameData.tabId, message);
         if (message === RelayManager.completionMessage) {
           this.frames.delete(frameId);
+          break;
         }
       } else break;
     }
-  };
-
-  private readyToReceive = (frameId: string) => {
-    const frameData = this.getOrCreate(frameId);
-    frameData.readyToReceive = true;
-    this.flush({ frameId, queue: frameData.queue });
-  };
-
-  private retry = (frameId: string) => {
-    const frameData = this.frames.get(frameId);
-    frameData?.relay?.executeRetry();
   };
 }

@@ -18,7 +18,7 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { Time } from './time.js';
-import { RenderMessageWithFrameId } from '../render-message.js';
+import { RenderMessage } from '../render-message.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -81,9 +81,11 @@ export namespace Bm {
   export type AjaxProgress = { frameId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowConfirmation = { text: string; isHTML: boolean; footer?: string };
+  export type ShowConfirmation = { text: string; isHTML: boolean; responseDest: string; footer?: string };
   export type ReRenderRecipient = { email: string };
   export type ShowConfirmationResult = { isConfirmed: boolean };
+  export type PgpBlockRetry = { frameId: string };
+  export type PgpBlockReady = { frameId: string; tabId: Dest };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -159,6 +161,9 @@ export namespace Bm {
     | ReRenderRecipient
     | PgpKeyBinaryToArmored
     | AuthWindowResult
+    | RenderMessage
+    | PgpBlockReady
+    | PgpBlockRetry
     | ConfirmationResult;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -252,7 +257,9 @@ export class BrowserMsg {
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
     ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => BrowserMsg.sendCatch(dest, 'ajax_progress', bm),
-    pgpBlockRender: (dest: Bm.Dest, bm: RenderMessageWithFrameId) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
+    pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
+    pgpBlockReady: (dest: Bm.Dest, bm: Bm.PgpBlockReady) => BrowserMsg.sendCatch(dest, 'pgp_block_ready', bm),
+    pgpBlockRetry: (dest: Bm.Dest, bm: Bm.PgpBlockRetry) => BrowserMsg.sendCatch(dest, 'pgp_block_retry', bm),
   };
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
@@ -325,12 +332,12 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   };
 
-  public static listen = (listenForTabId: string) => {
+  public static listen = (dest: string) => {
     const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-      // console.debug(`listener(${listenForTabId}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
+      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
       try {
-        if (msg.to === listenForTabId || msg.to === 'broadcast') {
+        if (msg.to === dest || msg.to === 'broadcast') {
           if (!processed.includes(msg.uid)) {
             processed.push(msg.uid);
             if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {

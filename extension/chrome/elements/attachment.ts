@@ -25,8 +25,8 @@ import { AttachmentWarnings } from './shared/attachment_warnings.js';
 export class AttachmentDownloadView extends View {
   public fesUrl?: string;
   public confirmationResultResolver?: (confirm: boolean) => void;
+  public readonly parentTabId: string;
   protected readonly acctEmail: string;
-  protected readonly parentTabId: string;
   protected readonly frameId: string;
   protected readonly origNameBasedOnFilename: string;
   protected readonly isEncrypted: boolean;
@@ -85,8 +85,8 @@ export class AttachmentDownloadView extends View {
     this.gmail = new Gmail(this.acctEmail);
   }
 
-  public getParentTabId = () => {
-    return this.parentTabId;
+  public getDest = () => {
+    return this.tabId;
   };
 
   public render = async () => {

@@ -219,6 +219,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await factory.showAddPubkeyDialog(emails);
     });
+    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, tabId }: Bm.PgpBlockReady) => {
+      relayManager.associate(frameId, tabId);
+    });
+    BrowserMsg.addListener('pgp_block_retry', async ({ frameId }: Bm.PgpBlockRetry) => {
+      relayManager.retry(frameId);
+    });
     BrowserMsg.addListener('notification_show', async ({ notification, callbacks, group }: Bm.NotificationShow) => {
       notifications.show(notification, callbacks, group);
       $('body').one(
@@ -420,7 +426,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
-      const relayManager = new RelayManager(tabId);
+      const relayManager = new RelayManager();
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       await startPullingKeysFromEkm(
@@ -430,11 +436,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      window.addEventListener('message', e => {
-        if (e.origin === Env.getExtensionOrigin()) {
-          relayManager.handleMessageFromFrame(e.data);
-        }
-      });
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {

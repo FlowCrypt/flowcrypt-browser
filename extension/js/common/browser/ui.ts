@@ -14,7 +14,8 @@ type NamedSels = Dict<JQuery<HTMLElement>>;
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>;
 
 export interface ConfirmationResultTracker {
-  getParentTabId: () => string;
+  getDest: () => string;
+  parentTabId: string;
   confirmationResultResolver?: (confirm: boolean) => void;
 }
 
@@ -24,9 +25,9 @@ export class CommonHandlers {
       view.confirmationResultResolver?.(confirm);
     };
   };
-  public static showConfirmationHandler: Bm.AsyncResponselessHandler = async ({ text, isHTML, footer }: Bm.ShowConfirmation) => {
+  public static showConfirmationHandler: Bm.AsyncResponselessHandler = async ({ text, isHTML, footer, responseDest }: Bm.ShowConfirmation) => {
     const confirm = await Ui.modal.confirm(text, isHTML, footer);
-    BrowserMsg.send.confirmationResult('broadcast', { confirm });
+    BrowserMsg.send.confirmationResult(responseDest, { confirm });
   };
 }
 
@@ -335,7 +336,12 @@ export class Ui {
         const p = new Promise((resolve: (value: boolean) => void) => {
           confirmationResultTracker.confirmationResultResolver = resolve;
         });
-        BrowserMsg.send.showConfirmation(confirmationResultTracker.getParentTabId(), { text, isHTML, footer });
+        BrowserMsg.send.showConfirmation(confirmationResultTracker.parentTabId, {
+          text,
+          isHTML,
+          footer,
+          responseDest: confirmationResultTracker.getDest(),
+        });
         return await p;
       },
     };

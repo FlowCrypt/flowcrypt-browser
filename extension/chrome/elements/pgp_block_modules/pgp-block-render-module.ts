@@ -145,7 +145,7 @@ export class PgpBlockViewRenderModule {
   public renderSignatureOffline = () => {
     this.renderSignatureStatus('error verifying signature: offline, click to retry').on(
       'click',
-      this.view.setHandler(() => window.parent.postMessage({ retry: this.view.frameId }, '*'))
+      this.view.setHandler(() => BrowserMsg.send.pgpBlockRetry(this.view.getDest(), { frameId: this.view.frameId }))
     );
   };
 }
