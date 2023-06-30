@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 
 import { BrowserHandle, BrowserPool } from './browser';
-import { AvaContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
+import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
@@ -51,7 +51,6 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
-const mockApiLogs: string[] = [];
 
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
@@ -92,6 +91,8 @@ const testWithBrowser = (
 };
 
 const startMockApiAndCopyBuild = async (t: AvaContext) => {
+  const mockApiLogs: string[] = [];
+  t.context.mockApiLogs = mockApiLogs;
   const mockApi = await startAllApisMock(line => {
     if (DEBUG_MOCK_LOG) {
       console.log(line);
@@ -192,11 +193,11 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-test.after.always('send debug info if any', async t => {
+test.afterEach.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
-  const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
+  const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -204,10 +205,14 @@ test.after.always('send debug info if any', async t => {
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
-    mkdirSync(debugArtifactDir);
+    try {
+      mkdirSync(debugArtifactDir);
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+    }
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
-      const fileName = `debugHtmlAttachment-${i}.html`;
+      const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
       writeFileSync(filePath, debugHtmlAttachments[i]);

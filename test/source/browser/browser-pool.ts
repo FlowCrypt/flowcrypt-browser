@@ -114,7 +114,7 @@ export class BrowserPool {
           await this.throwOnRetryFlagAndReset(t);
           if (attemptDebugHtmls.length && flag !== 'FAILING') {
             // don't debug known failures
-            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+            addDebugHtml(t.context, `<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
           }
           return;
         } catch (err) {
@@ -138,7 +138,7 @@ export class BrowserPool {
     } else {
       if (flag !== 'FAILING') {
         // don't debug known failures
-        addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+        addDebugHtml(t.context, `<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
       }
       t.log(`${t.context.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
