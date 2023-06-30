@@ -37,7 +37,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         // expect no pgp blocks
         expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage.waitForContent('.a3s', plainMessage);
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await gmailPage.close();
@@ -58,7 +58,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         // expect no pgp blocks
         expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage.waitForContent('.a3s', plainMessage);
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await gmailPage.close();
@@ -74,7 +74,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
         await gmailPage.close();
@@ -154,7 +154,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.pgpBlockCheck(t, pgpBlock, expectedMessage);
         expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(false);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), expectedMessage);
         await gmailPage.notPresent('.aV3');
       })
@@ -218,7 +218,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
         expect(urls.length).to.equal(0);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitForContent('.a3s', 'Plain message');
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await gmailPage.close();
@@ -241,7 +241,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       'mail.google.com - decrypt message in offline mode',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getMsg: {
             '17b91b7e122902d2': { full: { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) } },
           },
@@ -265,12 +265,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const msgId = '17b91b7e122902d2';
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getMsg: {
             [msgId]: { full: { error: new HttpClientErr('RequestTimeout', Status.UNAUTHORIZED) } },
           },
         };
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         // Check reconnect auth notification
         await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
         await gmailPage.waitAll('iframe');
@@ -288,12 +288,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const msgId = '17daefa0eb077da6';
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getMsg: {
             [msgId]: { raw: { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) } },
           },
         };
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         // no pgp_block
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
@@ -1072,7 +1072,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await replyFrame.waitAndClick('@action-forward');
         await replyFrame.waitForContent('@input-body', 'googlelogo_color_272x92dp.png'); // check if forwarded content contains cid image name
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlockFromGmailPage = await gmailPage.getFrame(['pgp_block.htm']);
         await pgpBlockFromGmailPage.waitForSelTestState('ready');
@@ -1090,7 +1090,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await (await inboxPage.getFrame(['pgp_block.htm'])).waitForSelTestState('ready');
         expect(await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 })).length.to.be.lessThan(2);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await (await gmailPage.getFrame(['pgp_block.htm'])).waitForSelTestState('ready');
         expect(await gmailPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 })).length.to.be.lessThan(2);
       })
@@ -1116,7 +1116,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         };
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         await testPrintBlockInPage(await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${msgId}`));
-        await testPrintBlockInPage(await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
+        await testPrintBlockInPage(await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
       })
     );
 
@@ -1157,7 +1157,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const urls = await inboxPage.getFramesUrls(['pgp_pubkey.htm'], { sleep: 3 });
         expect(urls.length).to.be.equal(1);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlockFromGmailPage = await gmailPage.getFrame(['pgp_block.htm']);
         await pgpBlockFromGmailPage.waitForSelTestState('ready');
@@ -1185,7 +1185,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - thunderbird - signed text is recognized',
       testWithBrowser(async (t, browser) => {
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
         const msgId = '17dad75e63e47f97';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${msgId}`);
         await inboxPage.waitAll('iframe', { timeout: 2 });
@@ -1205,14 +1205,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - timeout when looking up pubkey - inbox',
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = {
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = {
           returnError: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST),
         };
         const msgId = '17dad75e63e47f97';
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${msgId}`);
         const pgpFrame = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpFrame.waitForContent('@pgp-signature', 'error verifying signature: offline, click to retry');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
         await pgpFrame.waitAndClick('@pgp-signature');
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
           content: ['1234'],
@@ -1227,14 +1227,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - timeout when looking up pubkey - gmail',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = {
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = {
           returnError: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST),
         };
         const msgId = '17dad75e63e47f97';
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         const pgpFrame = await gmailPage.getFrame(['pgp_block.htm']);
         await pgpFrame.waitForContent('@pgp-signature', 'error verifying signature: offline, click to retry');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.sender@test.com'] = { pubkey: await get203FAE7076005381() };
         await pgpFrame.waitAndClick('@pgp-signature');
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), {
           content: ['1234'],
@@ -1249,17 +1249,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - failure retrieving chunk download - next request will try anew',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getAttachment: {
             'ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwfhKWlCUqnXbZtBdwjPQqN9omCqn-0-r4JBy6amb0ogGz9jZL9q11Z_iUJzxr_X0MlJj0cw-3EYCFKPDrpfVVQZ-28Ajhd35CkI3Z93s3FU4BUKHROZR1qdEPOoQM63k1IOPTfL9c7ES-W8EaOKxB-k0n0frlXqpTJgv-AHAi9NEAaq-ghluobPc4JiSjgkK7_0MkykEm4oZfBSHSuzG94c3HWeYNJw4bcWFHiKRln7bB8nq5JTJe546Zg2MoVkMuc7K6a0cUwGd9mdAUAPqPyq1ENIQ9bGFK7ozlDezHHZYP8rOTEL3QBx6rEE-aaGT2MEQyWPtsp8Zgt42prnUjysPDe-uVs-pl31UpIDhf':
               { error: new HttpClientErr('RequestTimeout', Status.BAD_REQUEST) },
           },
         };
         const msgId = '1885ded59a2b5a8d';
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await gmailPage.waitForContent('.attachment_loader', 'Categorize: unknown err'); // 'RequestTimeout' responseText gets lost in chunk downloader
-        t.mockApi!.configProvider!.config.google = {};
+        t.context.mockApi!.configProvider!.config.google = {};
         await gmailPage.target.$$eval('.evaluated', elems => {
           for (const el of elems) {
             el.classList.remove('evaluated');
@@ -1280,11 +1280,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const msgId = '17dad75e63e47f97';
         const senderEmail = 'some.sender@test.com';
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup![senderEmail] = {
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup![senderEmail] = {
           pubkey: await get203FAE7076005381(),
           delayInSeconds: 5,
         };
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         const pgpBlockPage = await gmailPage.getFrame(['pgp_block.htm']);
         await pgpBlockPage.waitForContent('@pgp-block-content', '1234', 4, 10);
         await pgpBlockPage.waitForContent('@pgp-signature', 'verifying signature...', 3, 10);
@@ -1296,7 +1296,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'verification - public key fetched from WKD',
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.wkd = {
+        t.context.mockApi!.configProvider!.config.wkd = {
           directLookup: {
             'some.sender': {
               pubkeys: [await get203FAE7076005381()],
@@ -1322,7 +1322,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const msgId = '17dad75e63e47f97';
         const senderEmail = 'some.sender@test.com';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup![senderEmail] = { pubkey: await get203FAE7076005381() };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup![senderEmail] = { pubkey: await get203FAE7076005381() };
         const acctAttr = acctEmail.replace(/[\.@]/g, '');
         const senderAttr = senderEmail.replace(/[\.@]/g, '');
         {
@@ -1376,7 +1376,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(urls.length).to.equal(1);
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), expectedMessage);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe', { timeout: 2 });
         const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(frameUrlsFromGmailPage.length).to.equal(1);
@@ -1388,7 +1388,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'signature - sender is different from pubkey uid',
       testWithBrowser(async (t, browser) => {
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sender@example.com'] = {
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sender@example.com'] = {
           pubkey: testConstants.pubkey2864E326A5BE488A,
         };
         const threadId = '1766644f13510f58';
@@ -1403,7 +1403,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         };
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), expectedMessage);
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), expectedMessage);
       })
     );
@@ -1413,7 +1413,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const threadId = '1766644f13510f58';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sender@example.com'] = {
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sender@example.com'] = {
           pubkey: testConstants.pubkey2864E326A5BE488A,
         };
         await PageRecipe.addPubkey(
@@ -1424,7 +1424,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           'sender@example.com'
         );
         // todo: make sure pubkey2864E326A5BE488A isn't present in ContactStore yet
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe', { timeout: 2 });
         const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(frameUrlsFromGmailPage.length).to.equal(1);
@@ -1457,7 +1457,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           await (window as any).ContactStore.update(undefined, 'schlemazle@proton.me', { pubkey: key });
         }, testConstants.protonPubkey);
         await dbPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/1869220e0c8f16dd`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
         await BrowserRecipe.pgpBlockCheck(t, pgpBlock, {
@@ -1520,7 +1520,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
         expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
         await inboxPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
@@ -1535,12 +1535,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const msgId = '1869220e0c8f16de';
         // 1. plain text
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getAttachment: {
             '1869220e0c8f16de-part1': { data: 'MTIz'.repeat(500) }, // string containing 123123...
           },
         };
-        const gmailPage1 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage1 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage1.waitAll('iframe');
         await gmailPage1.waitForContent('.attachment_loader', 'Unknown OpenPGP format');
         expect((await gmailPage1.getFramesUrls(['pgp_block.htm'], { sleep: 0, appearIn: 0 })).length).to.equal(1);
@@ -1548,14 +1548,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect((await gmailPage1.getFramesUrls(['pgp_pubkey.htm'], { sleep: 0, appearIn: 0 })).length).to.equal(0);
         await gmailPage1.close();
         // 2. encryptedFile
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getAttachment: {
             '1869220e0c8f16de-part1': {
               data: `LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQpWZXJzaW9uOiBGbG93Q3J5cHQgRW1haWwgRW5jcnlwdGlvbiA3LjkuOA0KQ29tbWVudDogU2VhbWxlc3NseSBzZW5kIGFuZCByZWNlaXZlIGVuY3J5cHRlZCBlbWFpbA0KDQp3VjREZVdmZ0N0VnRkbm9TQVFkQWRkRitWYmhVTjd0V2NGMnNKSW5aRzFKK08xYlBOLzNHd0NGbXlSd2wNCmFGTXcwMGhHVUd4UXBscUJNZnBVaktnWHdJSlpnbFNPbkd0b242VkpuVlpXSmwzN0tQcmZ6aFZ6bnhJbg0KckxCT3ZIUHp3Y0ZNQXpCZmdhbXUwU0ExQVJBQW9EeGhiRUIvQmNnVDB6Y29CYnJRMDhPZXpKZ2VWVDhXDQozY2p5RFI1YjY2U21MUCt5ZzdLTm5oUXNnR1I4blNRaUozNk1Id3JmU3MzTVcrNSt5YXdZOWcveXZWQzgNCkMxS3MzQTREbFlvcWFTY3dTUjhDeG9qcTAwNmErdGI0blp5cTdyY3ZsaDg5UjVObURZMjkxcC8vQ05JSA0KNC9rRWZXSVVIaW9sZEc0VlFnTnhVd0ZSbEVmMXYwL1RMTGg0bXN0ckJhU1BBM3BiV1VOZnZOYmc2WGl2DQpIcU1FVGdxUVVOb0MvU0dCYlNFOHgvNTlZa0tQQVlVcUNpT2E2UW5NWW14UUliUE1xNTFUV0VTS1ZVYmQNCmZ4S3BBeDNUaWQzRFBqWDNjT1Zvb2VsRWxDeXZLSDlkWlBweWEyTGpoankrUkVKWmZkNkpmNXpDUkdKVA0KSCs5cG9CdVpDR3BSMmVXamQ3SG5hbzFObjdKZkFSM3R2SDdVZUVMc1JjcFNJQ1JPZWxUQmJEVWlQK2JNDQpzOVduUWVsQ3FVNGNrNDE3dUpaNjluSXp1Y0NURnlnYmlIZzVXZnNzQzNxcVQzRTVjSE0yNXJEbmQ5MSsNCkVZN1RCbFJ5Z0tqM1RmRlYyRHZUNmdybk0yQWhvUnkyTWNGSGtMaEhCanJ4M3BCSHhGRWkvZVZLcncvaw0Ka044alJ4MFBMWWlZYWtGZjJWTCt4d0JxUkljWmd5SER4K2o5akViR1d2M25kU1ByT01qNFZxaVRMb0tUDQpBVkk4TUwyVHVCZGJGQS9TUWYyODZtTjhBeklRR2ZqL3J1enI0NFFCZS90RnlHdSsyR0NBQ3FxWGl2b3cNClo2d2QwVWRuc056Y3FKY0FWa28zOFN3QldtdjZzc3NwQURNZXNtYnU5WjA1V3k1L1BodlN3QUlCckovZA0KdjFJWnQ3VFpackNmSG4xak1xamRWRUhTRXB0VEJxYzBiSGxUT0c4Q0NST2VPNWFkSE13UW8zekJSRThYDQpqNG1JTkp5R1pyM3g5TCtxUTJuUnZrSlRBVTZNWm02UzdsWWdVdURqbi9DS3YzNUtYa1hqcnNPN1lsTTANClhydG1uMUZCTVZMQTNta3MwK1R4TSsyalBGNitKbmpaK29tVEpIbjRuWGNmWSsxM1VBaGZBNlNkeFFkQg0KVGQ3cjlkOWM0WUxTaEtEdXhwMlh4eDNXVVR2N3oxSm9sdFI1ZURXVFgxc3hMZURQQ0s0RnQ1VVNSYVhCDQpVc3hENnE0R2x3bHAzZz09DQo9MmVUTQ0KLS0tLS1FTkQgUEdQIE1FU1NBR0UtLS0tLQ0K`,
             },
           },
         };
-        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage2 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage2.waitAll('iframe');
         expect((await gmailPage2.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage2.getFramesUrls(['pgp_pubkey.htm'], { sleep: 0, appearIn: 0 })).length).to.equal(0);
@@ -1567,14 +1567,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(decryptedContent).to.equal('1234');
         await gmailPage2.close();
         // 3. broken file
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getAttachment: {
             '1869220e0c8f16de-part1': {
               data: 'LS0tLS1CRUdJTiBQR1AgUFVCTElDIEtFWSBCTE9DSy0tLS0tCgp4c0ZOQkdQOGIxSUJFQUN2WTk1bkVZRUZDOUpFZVA0NzVCWTRGSERaSzhITE5TTWJ4c2tRZGNSYXV3eXUKNEpyVm5Yb3UvOFFmdEtaejNheVVGbEswbVJ5NWFHZytEMW1jTjJFRHVmd0E3ZnVPb3dHWk1yOVdxeE9sCm1SK21YL0I3eWM4RmZNTHNIWjhrOVQzRncrcy9QbTR0dEdBaHVBSUpkMEx5bzZZTGdaVGFoL0hNK1MyOApQUUhFcGZPQWdtYk52YjdXYUxRd2gwb1RNR01Mb3NYSENoOE5PdlNXOVRTNHpCK2JNaEVuZkY1MytYTTUKUlVac0RRU3M4cDU5aXRjbjdrVTNMNDVDSzhWamc2UzQ5bWlHcFo2eFBESitmS04vWmhMelRrVDVhSFZ2Ck9qVUpMQ0NYcFluRzh1cVUvMXhYTGRBTk0xRk5LSFRrNEV1dUdpSEZBNlhZZWlQVnd4L2ROdytJdmVQUgpjYmd0a0dvTWZkZXQ0eXdmVWZyRnlkRlV1WEhmNTlYSm9hUzB0azNuVS9nUkMwZlJnZVN3ZFFhbVoxaXMKeEFzeXBydDlwUFNIbVZWQ3lGRU95Qk5ELzhsaWxCOFpMNS8xYmxPQmdyWkdqMXpNUm5VSkhEanM2VGtQCmhBcXc5ZEw2ais0cE4ybzNnalVGY2JQQng5TGZiZldicnFhWk1Xd2tEYi95c0E0cFNDZUxCbkdZSXc3OApoRExjaWpDZStSSkxsdTJzbkhmUnFjQ0kyd2FiK01NVUhDMTF4VHA1bHpBNHUwZW9xdWZwK0xPdWREWHoKemF3c2RqeitvalJ4ZjBZaUVkNGpZVmtJOS9xUDRXVmtPM1FtSlBOV3JEdzNYRGpTU3Z3cHo1ZWxyRTBsCjI0cE9IMXBHTE4vNkNEWnAwaDF3TnRMaEVBWDBhSWYva2N5cGp3QVJBUUFCelN0elkyaHNaVzFoZW14bApRSEJ5YjNSdmJpNXRaU0E4YzJOb2JHVnRZ',
             },
           },
         };
-        const gmailPage3 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage3 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage3.waitAll('iframe');
         expect((await gmailPage3.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage3.getFramesUrls(['attachment.htm'], { sleep: 0, appearIn: 0 })).length).to.equal(0);
@@ -1582,14 +1582,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'This OpenPGP key is not usable.');
         await gmailPage3.close();
         // 4. binary pubkey
-        t.mockApi!.configProvider!.config.google = {
+        t.context.mockApi!.configProvider!.config.google = {
           getAttachment: {
             '1869220e0c8f16de-part1': {
               data: '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',
             },
           },
         };
-        const gmailPage4 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
+        const gmailPage4 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr);
         await gmailPage4.waitAll('iframe');
         // todo: we can add support for binary public keys
         await gmailPage4.waitForContent('.attachment_loader', 'Unknown OpenPGP format');
@@ -1606,7 +1606,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await settingsPage.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/1866867cfdb8b61e`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlocks = await Promise.all((await gmailPage.getFramesUrls(['pgp_block.htm'])).map(url => gmailPage.getFrame([url])));
         expect(pgpBlocks.length).to.equal(3);
@@ -1666,7 +1666,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const msgId = '17daefa0eb077da6';
         const signerEmail = 'some.sender@test.com';
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup![signerEmail] = { pubkey: await get203FAE7076005381() };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup![signerEmail] = { pubkey: await get203FAE7076005381() };
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, msgId);
         await inboxPage.waitAll('iframe');
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
@@ -1682,7 +1682,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - protonmail - load pubkey into contact + verify detached msg',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['flowcrypt.compatibility@protonmail.com'] = { pubkey: protonMailCompatKey };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['flowcrypt.compatibility@protonmail.com'] = { pubkey: protonMailCompatKey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1724,7 +1724,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - protonmail - auto TOFU load matching pubkey first time',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.alias@protonmail.com'] = { pubkey: protonMailCompatKey };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['some.alias@protonmail.com'] = { pubkey: protonMailCompatKey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1743,7 +1743,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - verify encrypted+signed message',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['martin@politick.ca'] = { pubkey: mpVerificationKey };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['martin@politick.ca'] = { pubkey: mpVerificationKey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -1873,7 +1873,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const msgId = '175ccd8755eab85f';
         // eslint-disable @typescript-eslint/no-non-null-assertion
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
           google: {
             getMsg: {
@@ -1953,7 +1953,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       `verify - sha1 shows error`,
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        t.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sha1@sign.com'] = { pubkey: sha1signpubkey };
+        t.context.mockApi!.configProvider!.config.attester!.pubkeyLookup!['sha1@sign.com'] = { pubkey: sha1signpubkey };
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
@@ -2029,7 +2029,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         );
         expect(Object.entries(downloadedFile3).length).to.equal(1);
         await inboxPage2.close();
-        const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         const pgpBlockPage3 = await gmailPage.getFrame(['pgp_block.htm']);
         await pgpBlockPage3.waitAndClick('@download-attachment-0');
@@ -2053,7 +2053,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         );
         expect(Object.entries([downloadedFile4, downloadedFile5]).length).to.equal(2);
         await gmailPage.close();
-        const gmailPage2 = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
+        const gmailPage2 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
         const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
         await pgpBlockPage4.waitAndClick('@download-attachment-0');
         // check warning modal for inline signed attachment test on Gmail page

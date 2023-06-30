@@ -26,7 +26,7 @@ export class BrowserPool {
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     await this.semaphore.acquire();
-    const extensionDir = t.extensionDir ?? this.extensionBuildDir;
+    const extensionDir = t.context.extensionDir ?? this.extensionBuildDir;
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
@@ -103,10 +103,10 @@ export class BrowserPool {
   public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts, flag?: 'FAILING') => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
-    t.totalAttempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS;
-    for (let attemptNumber = 1; attemptNumber <= t.totalAttempts; attemptNumber++) {
-      t.attemptNumber = attemptNumber;
-      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
+    t.context.totalAttempts = flag === 'FAILING' ? 1 : consts.ATTEMPTS;
+    for (let attemptNumber = 1; attemptNumber <= t.context.totalAttempts; attemptNumber++) {
+      t.context.attemptNumber = attemptNumber;
+      t.context.attemptText = `(attempt ${t.context.attemptNumber} of ${t.context.totalAttempts})`;
       try {
         const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
@@ -114,7 +114,7 @@ export class BrowserPool {
           await this.throwOnRetryFlagAndReset(t);
           if (attemptDebugHtmls.length && flag !== 'FAILING') {
             // don't debug known failures
-            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+            addDebugHtml(t.context, `<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
           }
           return;
         } catch (err) {
@@ -131,16 +131,16 @@ export class BrowserPool {
   };
 
   private processTestError = (err: unknown, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
-    t.retry = undefined;
+    t.context.retry = undefined;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (t.attemptNumber! < t.totalAttempts!) {
-      t.log(`${t.attemptText} Retrying: ${String(err)}`);
+    if (t.context.attemptNumber! < t.context.totalAttempts!) {
+      t.log(`${t.context.attemptText} Retrying: ${String(err)}`);
     } else {
       if (flag !== 'FAILING') {
         // don't debug known failures
-        addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+        addDebugHtml(t.context, `<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
       }
-      t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
+      t.log(`${t.context.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }
   };
@@ -159,8 +159,8 @@ export class BrowserPool {
 
   private throwOnRetryFlagAndReset = async (t: AvaContext) => {
     await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
-    if (t.retry) {
-      t.retry = undefined;
+    if (t.context.retry) {
+      t.context.retry = undefined;
       const e = new Error(`last attempt marked for retry`);
       e.stack = e.message; // stack is not interesting here, too much clutter would be printed
       throw e;

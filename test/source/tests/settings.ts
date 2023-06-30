@@ -74,7 +74,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const email = 'test.match.attester.key@gmail.com';
         const mismatchEmail = 'test.mismatch.attester.key@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [email]: {
@@ -512,7 +512,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - privileged frames and action buttons should be hidden when using key manager test',
       testWithBrowser(async (t, browser) => {
         const acct = 'two.keys@key-manager-autogen.flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -520,7 +520,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             keys: [twoKeys1, twoKeys2],
           },
           fes: {
-            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+            clientConfiguration: getKeyManagerAutogenRules(t.context.urls!.port!),
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
@@ -550,7 +550,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - change passphrase - current in local storage',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -568,7 +568,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - change passphrase - current in session known',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -613,7 +613,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - change passphrase honoring FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -669,7 +669,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - change passphrase - current in session unknown',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -814,7 +814,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           await page.close();
         };
         const msgId = '16e8b01f136c3d28';
-        await checkPage(await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
+        await checkPage(await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
         await checkPage(await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${msgId}`));
       })
     );
@@ -882,7 +882,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - update non-first private key',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -933,7 +933,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - my key page - revocation certificate',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -977,7 +977,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to file with the same pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1052,7 +1052,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to inbox with the same strong pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple.inbox2@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1101,7 +1101,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - manual backup several keys to file with a missing but guessed pass phrase',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1160,7 +1160,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to inbox with a missing pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1206,7 +1206,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup a key with a missing pass phrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1244,7 +1244,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - manual backup several keys to file with different pass phrases',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1291,7 +1291,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - setup_manual only backs up supplied key to file',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1340,7 +1340,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - setup_manual only backs up supplied key to inbox',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple.inbox1@gmail.com';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1390,7 +1390,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - manual backup to inbox keys with weak pass phrases results in error',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1436,7 +1436,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - manual enter and key update honor FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1480,7 +1480,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       testWithBrowser(async (t, browser) => {
         const acct1 = 'ci.tests.gmail@flowcrypt.test';
         const acct2 = 'user@default-remember-passphrase-client-configuration.flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [acct1]: {
@@ -1509,7 +1509,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             clickOn: 'confirm',
           })
         );
-        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+        t.context.mockApi!.configProvider.config.fes!.clientConfiguration = {
           flags: ['DEFAULT_REMEMBER_PASS_PHRASE'],
         };
         await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
@@ -1545,7 +1545,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - ensure gracious behavior & ui should remain functional when updating client configuration',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1553,10 +1553,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             keys: [testConstants.existingPrv],
           },
           fes: {
-            clientConfiguration: getKeyManagerAutogenRules(t.urls!.port!),
+            clientConfiguration: getKeyManagerAutogenRules(t.context.urls!.port!),
           },
         });
-        const port = t.urls?.port;
+        const port = t.context.urls?.port;
         const domain = 'settings.flowcrypt.test';
         const acct = `test-update@${domain}`;
         const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
@@ -1576,7 +1576,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const accessToken = await BrowserRecipe.getGoogleAccessToken(setupPage, acct);
         await setupPage.close();
         // Set invalid client configuration and check if it ensures gracious behavior & ui remain functional
-        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+        t.context.mockApi!.configProvider.config.fes!.clientConfiguration = {
           // flags is required but don't return it (to mock invalid client configuration)
           key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`, // eslint-disable-line @typescript-eslint/naming-convention
         };
@@ -1603,9 +1603,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - client configuration gets updated on settings and content script reloads',
       testWithBrowser(async (t, browser) => {
-        const port = t.urls?.port;
+        const port = t.context.urls?.port;
         /* eslint-disable @typescript-eslint/naming-convention */
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
@@ -1647,7 +1647,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await setupPage.close();
         // modify the setup
         /* eslint-disable @typescript-eslint/naming-convention */
-        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+        t.context.mockApi!.configProvider.config.fes!.clientConfiguration = {
           flags: ['NO_ATTESTER_SUBMIT', 'HIDE_ARMOR_META', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           custom_keyserver_url: `https://localhost:${port}`,
           // key_manager_url: undefined,
@@ -1672,7 +1672,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // keep settingsPage open to re-read the storage later via it
         // re-configure the setup again
         /* eslint-disable @typescript-eslint/naming-convention */
-        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+        t.context.mockApi!.configProvider.config.fes!.clientConfiguration = {
           flags: ['NO_PRV_BACKUP', 'ENFORCE_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN', 'PASS_PHRASE_QUIET_AUTOGEN', 'DEFAULT_REMEMBER_PASS_PHRASE'],
           // custom_keyserver_url: undefined,
           key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
@@ -1703,7 +1703,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(clientConfiguration3.key_manager_url).to.equal(`https://localhost:${port}/flowcrypt-email-key-manager`);
         await gmailPage.close();
         // configure an error
-        t.mockApi!.configProvider.config.fes!.returnError = new HttpClientErr('Test error', Status.BAD_REQUEST);
+        t.context.mockApi!.configProvider.config.fes!.returnError = new HttpClientErr('Test error', Status.BAD_REQUEST);
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(
           gmailPage,
@@ -1734,7 +1734,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - email change to account that has FORBID_STORING_PASS_PHRASE',
       testWithBrowser(async (t, browser) => {
         const acct1 = 'ci.tests.gmail@flowcrypt.test';
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {
               [acct1]: {
@@ -1764,7 +1764,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             clickOn: 'confirm',
           })
         );
-        t.mockApi!.configProvider.config.fes!.clientConfiguration = {
+        t.context.mockApi!.configProvider.config.fes!.clientConfiguration = {
           flags: ['FORBID_STORING_PASS_PHRASE'],
         };
         await OauthPageRecipe.mock(t, oauthPopup1, acct2, 'override_acct');
@@ -1800,7 +1800,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - adding a key honors FORBID_STORING_PASS_PHRASE ClientConfiguration',
       testWithBrowser(async (t, browser) => {
-        t.mockApi!.configProvider = new ConfigurationProvider({
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },

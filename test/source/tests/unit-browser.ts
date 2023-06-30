@@ -25,7 +25,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
         title,
         testWithBrowser(async (t, browser) => {
           if (acct) {
-            t.mockApi!.configProvider = new ConfigurationProvider({
+            t.context.mockApi!.configProvider = new ConfigurationProvider({
               attester: {
                 pubkeyLookup: {
                   'ci.tests.gmail@flowcrypt.test': {
@@ -39,7 +39,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             });
             await BrowserRecipe.setUpCommonAcct(t, browser, acct);
           } else {
-            t.mockApi!.configProvider = new ConfigurationProvider({
+            t.context.mockApi!.configProvider = new ConfigurationProvider({
               wkd: {
                 directLookup: {
                   'john.doe': { pubkeys: [johnDoeDirectKey] },
@@ -72,7 +72,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
-          const testCodeWithMockPort = testCode.replace(/\:8001/g, ':' + t.urls?.port);
+          const testCodeWithMockPort = testCode.replace(/\:8001/g, ':' + t.context.urls?.port);
           const runThisCodeInBrowser = `
             (async () => {
               try {

@@ -138,11 +138,11 @@ export class BrowserRecipe {
     const key = Config.key(keyTitle);
     const privateKey = await KeyUtil.parse(key.armored!);
     const pubKey = await KeyUtil.asPublicKey(privateKey);
-    if (!t.mockApi!.configProvider) {
-      t.mockApi!.configProvider = new ConfigurationProvider({});
+    if (!t.context.mockApi!.configProvider) {
+      t.context.mockApi!.configProvider = new ConfigurationProvider({});
     }
-    t.mockApi!.configProvider!.config.attester = {
-      ...(t.mockApi!.configProvider!.config.attester ?? {}),
+    t.context.mockApi!.configProvider!.config.attester = {
+      ...(t.context.mockApi!.configProvider!.config.attester ?? {}),
       pubkeyLookup: {
         [acctEmail]: {
           pubkey: KeyUtil.armor(pubKey),
@@ -151,24 +151,24 @@ export class BrowserRecipe {
     };
     if (config?.attester) {
       if (config.attester.includeHumanKey) {
-        t.mockApi!.configProvider.config.attester.pubkeyLookup!['human@flowcrypt.com'] = {
+        t.context.mockApi!.configProvider.config.attester.pubkeyLookup!['human@flowcrypt.com'] = {
           pubkey: somePubkey,
         };
       }
       if (config.attester.includeFlowcryptCompatibilityKey) {
-        t.mockApi!.configProvider.config.attester.pubkeyLookup!['flowcrypt.compatibility@gmail.com'] = {
+        t.context.mockApi!.configProvider.config.attester.pubkeyLookup!['flowcrypt.compatibility@gmail.com'] = {
           pubkey: somePubkey,
         };
       }
       if (config.attester.pubkeyLookup) {
-        t.mockApi!.configProvider.config.attester.pubkeyLookup = {
-          ...t.mockApi!.configProvider.config.attester.pubkeyLookup,
+        t.context.mockApi!.configProvider.config.attester.pubkeyLookup = {
+          ...t.context.mockApi!.configProvider.config.attester.pubkeyLookup,
           ...config.attester.pubkeyLookup,
         };
       }
     }
     if (config?.google) {
-      t.mockApi!.configProvider.config.google = {
+      t.context.mockApi!.configProvider.config.google = {
         contacts: config.google.contacts,
         aliases: config.google.acctAliases ? { [acctEmail]: config.google.acctAliases } : undefined,
         primarySignature: config.google.acctPrimarySignature ? { [acctEmail]: config.google.acctPrimarySignature } : undefined,
@@ -262,7 +262,7 @@ export class BrowserRecipe {
     m: TestMessage,
     extraHeaders: Record<string, string>
   ) => {
-    const gmailPage = await browser.newPage(t, `${t.urls?.mockGmailUrl()}/${msgId}`, undefined, extraHeaders);
+    const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, extraHeaders);
     await gmailPage.waitAll('iframe');
     await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), m);
     await gmailPage.close();
