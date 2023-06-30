@@ -63,10 +63,8 @@ const testWithBrowser = (
   timeout = consts.TIMEOUT_EACH_RETRY
 ): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
-    let closeMockApi: (() => Promise<void>) | undefined;
     if (isMock) {
       t.context.mockApi = await startMockApiAndCopyBuild(t);
-      closeMockApi = t.context.mockApi.close;
     } else {
       t.context.urls = new TestUrls(await browserPool.getExtensionId(t));
     }
@@ -88,9 +86,7 @@ const testWithBrowser = (
 
       t.pass();
     } finally {
-      if (closeMockApi) {
-        await closeMockApi();
-      }
+      await t.context.mockApi?.close(); // todo: may be moved to test.afterEach.always
     }
   };
 };
