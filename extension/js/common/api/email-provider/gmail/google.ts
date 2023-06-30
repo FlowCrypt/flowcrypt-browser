@@ -10,6 +10,32 @@ import { GmailRes } from './gmail-parser.js';
 import { GoogleAuth } from './google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
 
+type GoogleUserProfile = {
+  resourceName: string;
+  etag: string;
+  names: GoogleName[];
+};
+
+type GoogleName = {
+  metadata: GoogleMetadata;
+  displayName: string;
+  familyName: string;
+  givenName: string;
+  displayNameLastFirst: string;
+  unstructuredName: string;
+};
+
+type GoogleMetadata = {
+  primary?: boolean;
+  source: GoogleSource;
+  sourcePrimary?: boolean;
+};
+
+type GoogleSource = {
+  type: string;
+  id: string;
+};
+
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
     return `https://mail.google.com/mail/u/${acctEmail}`;
@@ -89,6 +115,25 @@ export class Google {
         const name = (entry.person?.names || []).find(name => name.metadata.primary === true)?.displayName;
         return { email, name };
       });
+  };
+
+  public static getNames = async (acctEmail: string) => {
+    const method = 'GET';
+    const contentType = 'application/json; charset=UTF-8';
+    const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
+    const data = { personFields: 'names' };
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const contacts = GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
+      url: getProfileUrl,
+      method,
+      data,
+      headers,
+      contentType,
+      crossDomain: true,
+      async: true,
+    }) as Promise<GoogleUserProfile>;
+    return contacts;
   };
 
   public static encodeAsMultipartRelated = (parts: Dict<string>) => {
