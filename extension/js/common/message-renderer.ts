@@ -468,6 +468,16 @@ export class MessageRenderer {
     };
   };
 
+  private clipMessageIfLimitExceeds = (decryptedContent: string) => {
+    const maxDecryptedContentLength = 100000;
+    const base64InlineImageRegex = /<img src="data:image\/(jpeg|png|gif|bmp|tiff|webp)+;base64,[^"]+" name="(\w+\.\w+)" title="(\w+\.\w+)">/g;
+    const content = decryptedContent.replace(base64InlineImageRegex, '');
+    if (content.length > maxDecryptedContentLength) {
+      return decryptedContent.substring(0, maxDecryptedContentLength) + ' [clipped - message too large]';
+    }
+    return decryptedContent;
+  };
+
   private decideDecryptedContentFormattingAndRender = async (
     signerEmail: string | undefined,
     verificationPubs: string[],
@@ -557,6 +567,7 @@ export class MessageRenderer {
         plainSubject
       );
     }
+    decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
     await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, Boolean(signerEmail), retryVerification);
     if (renderableAttachments.length) {
