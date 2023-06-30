@@ -178,6 +178,14 @@ export class Xss {
     const blockStart = `CU_BS_${random}`;
     const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
+    // Preserve newlines inside of <pre> tags.
+    const messageDomParser = new DOMParser();
+    const messageDom = messageDomParser.parseFromString(html, 'text/html');
+    const preTags = messageDom.getElementsByTagName('pre');
+    for (const pre of preTags) {
+      pre.innerHTML = pre.innerHTML.replace(/\n/g, br);
+    }
+    html = messageDom.body.innerHTML;
     html = html.replace(/\n/g, '');
     html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
     html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockStart);
