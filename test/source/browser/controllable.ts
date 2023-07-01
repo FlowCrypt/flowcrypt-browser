@@ -529,8 +529,15 @@ abstract class ControllableBase {
       }
       while (Object.keys(files).length < expectFileCount) {
         const newFilenames = await this.waitForFilesToDownload(downloadPath);
-        for (const filename of newFilenames) {
-          files[filename] = fs.readFileSync(path.resolve(downloadPath, filename));
+        if (newFilenames.length) {
+          for (const filename of newFilenames) {
+            const filepath = path.resolve(downloadPath, filename);
+            files[filename] = fs.readFileSync(filepath);
+            fs.unlinkSync(filepath);
+          }
+        } else {
+          // Give a turn to other promises, including timeoutPromise
+          await new Promise(resolve => setImmediate(resolve));
         }
       }
     })();
