@@ -34,7 +34,7 @@ abstract class ControllableBase {
   }
 
   public isElementPresent = async (selector: string) => {
-    return Boolean(await this.element(selector));
+    return Boolean(await this.firstElement(selector));
   };
 
   public isElementVisible = async (selector: string) => {
@@ -128,7 +128,7 @@ abstract class ControllableBase {
   public waitUntilFocused = async (selector: string) => {
     const start = Date.now();
     while (Date.now() - start < TIMEOUT_ELEMENT_APPEAR * 1000) {
-      const e = (await this.element(selector)) as ElementHandle;
+      const e = (await this.singleElement(selector)) as ElementHandle;
       const activeElement = (await this.target.evaluateHandle(() => document.activeElement)) as ElementHandle;
       const activeElementHtml = await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML');
       const testedElementHtml = await PageRecipe.getElementPropertyJson(e, 'outerHTML');
@@ -142,12 +142,8 @@ abstract class ControllableBase {
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
-    const e = await this.element(selector);
+    const e = await this.singleElement(selector);
     this.log(`click:2:${selector}`);
-    if (!e) {
-      throw Error(`Element not found: ${selector}`);
-    }
-    this.log(`click:4:${selector}`);
     try {
       await e.click();
     } catch (e) {
@@ -157,7 +153,7 @@ abstract class ControllableBase {
       }
       throw e;
     }
-    this.log(`click:5:${selector}`);
+    this.log(`click:3:${selector}`);
   };
 
   public clickIfPresent = async (selector: string): Promise<boolean> => {
@@ -169,7 +165,7 @@ abstract class ControllableBase {
   };
 
   public type = async (selector: string, text: string, letterByLetter = false) => {
-    const e = await this.element(selector);
+    const e = await this.singleElement(selector);
     if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
@@ -571,7 +567,7 @@ abstract class ControllableBase {
     }
   };
 
-  protected element = async (selector: string): Promise<ElementHandle | null> => {
+  protected firstElement = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
       return (await this.target.$x(selector))[0] as ElementHandle<Element>;
@@ -580,12 +576,26 @@ abstract class ControllableBase {
     }
   };
 
+  protected singleElement = async (selector: string): Promise<ElementHandle<Element>> => {
+    const elements = await this.elements(selector);
+    if (!elements.length) {
+      throw Error(`Element not found: ${selector}`);
+    } else if (elements.length > 1) {
+      throw Error(`More than one element found: ${selector}`);
+    }
+    return elements[0];
+  };
+
   protected elementCount = async (selector: string): Promise<number> => {
+    return (await this.elements(selector)).length;
+  };
+
+  protected elements = async (selector: string) => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector)).length;
+      return (await this.target.$x(selector)) as ElementHandle<Element>[];
     } else {
-      return (await this.target.$$(selector)).length;
+      return await this.target.$$(selector);
     }
   };
 
