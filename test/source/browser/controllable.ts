@@ -16,7 +16,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 import { mkdirp } from 'mkdirp';
-import { Dict } from '../core/common';
+import { Dict, asyncFilter } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const jQuery: any;
@@ -570,17 +570,21 @@ abstract class ControllableBase {
   protected firstElement = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector))[0] as ElementHandle<Element>;
+      return (await this.target.$x(selector))[0] as ElementHandle;
     } else {
       return await this.target.$(selector);
     }
   };
 
-  protected singleElement = async (selector: string): Promise<ElementHandle<Element>> => {
+  protected singleElement = async (selector: string): Promise<ElementHandle> => {
     const elements = await this.elements(selector);
     if (!elements.length) {
       throw Error(`Element not found: ${selector}`);
     } else if (elements.length > 1) {
+      const visibleElements = await asyncFilter(elements, Util.isVisible);
+      if (visibleElements.length === 1) {
+        return visibleElements[0];
+      }
       throw Error(`More than one element found: ${selector}`);
     }
     return elements[0];
@@ -593,7 +597,7 @@ abstract class ControllableBase {
   protected elements = async (selector: string) => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector)) as ElementHandle<Element>[];
+      return (await this.target.$x(selector)) as ElementHandle[];
     } else {
       return await this.target.$$(selector);
     }
@@ -611,10 +615,9 @@ abstract class ControllableBase {
         for (const selector of processedSelectors) {
           const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
           for (const element of elements) {
-            // eslint-disable-next-line no-null/no-null
-            if ((await element.boundingBox()) !== null || !visible) {
+            if (!visible || (await Util.isVisible(element))) {
               // element is visible
-              return element as ElementHandle<Element>;
+              return element as ElementHandle;
             }
           }
         }
