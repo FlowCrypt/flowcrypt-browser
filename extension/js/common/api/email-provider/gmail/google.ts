@@ -10,32 +10,6 @@ import { GmailRes } from './gmail-parser.js';
 import { GoogleAuth } from './google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
 
-type GoogleUserProfile = {
-  resourceName: string;
-  etag: string;
-  names: GoogleName[];
-};
-
-type GoogleName = {
-  metadata: GoogleMetadata;
-  displayName: string;
-  familyName: string;
-  givenName: string;
-  displayNameLastFirst: string;
-  unstructuredName: string;
-};
-
-type GoogleMetadata = {
-  primary?: boolean;
-  source: GoogleSource;
-  sourcePrimary?: boolean;
-};
-
-type GoogleSource = {
-  type: string;
-  id: string;
-};
-
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
     return `https://mail.google.com/mail/u/${acctEmail}`;
@@ -132,7 +106,7 @@ export class Google {
       contentType,
       crossDomain: true,
       async: true,
-    }) as Promise<GoogleUserProfile>;
+    }) as Promise<GmailRes.GoogleUserProfile>;
     return contacts;
   };
 

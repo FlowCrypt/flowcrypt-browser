@@ -168,7 +168,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
             },
             displayName: 'First Last',
             familyName: 'First',
-            givenName: 'LLast',
+            givenName: 'Last',
             displayNameLastFirst: 'Last, First',
             unstructuredName: 'First Last',
           },
