@@ -122,6 +122,15 @@ export namespace GmailRes {
       };
     }[];
   };
+
+  export type GoogleUserProfile = {
+    names: {
+      metadata: {
+        primary?: boolean;
+      };
+      displayName: string;
+    }[];
+  };
 }
 
 export class GmailParser {

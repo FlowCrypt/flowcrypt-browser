@@ -27,6 +27,7 @@ import { isCustomerUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Time } from './browser/time.js';
+import { Google } from './api/email-provider/gmail/google.js';
 
 declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-types
 
@@ -543,15 +544,20 @@ export class Settings {
 
   private static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
+    const namesRes = await Google.getNames(acctEmail);
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const a of validAliases) {
-      result[a.sendAsEmail.toLowerCase()] = {
+      const sendAsEmail = a.sendAsEmail.toLowerCase();
+      result[sendAsEmail] = {
         name: a.displayName,
         isPrimary: !!a.isPrimary,
         isDefault: a.isDefault,
         footer: a.signature,
       };
+      if (sendAsEmail === acctEmail.toLowerCase()) {
+        result[sendAsEmail].name = namesRes.names.find(name => name.metadata.primary ?? false)?.displayName;
+      }
     }
     return result;
   };
