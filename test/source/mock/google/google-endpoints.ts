@@ -154,6 +154,27 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         .map(email => ({ person: { emailAddresses: [{ metadata: { primary: true }, value: email }] } }));
       return { results };
     },
+    '/v1/people/me': async ({ query: { personFields } }, req) => {
+      if (!isGet(req) || personFields !== 'names') {
+        throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+      }
+      return {
+        resourceName: 'people/resourceId',
+        etag: '%EgUBAi43PRoEAQIFByIMSFMydTZETy9IEFE9',
+        names: [
+          {
+            metadata: {
+              primary: true,
+            },
+            displayName: 'First Last',
+            familyName: 'First',
+            givenName: 'Last',
+            displayNameLastFirst: 'Last, First',
+            unstructuredName: 'First Last',
+          },
+        ],
+      };
+    },
     '/v1/otherContacts:search': async ({ query: { query } }, req) => {
       if (!isGet(req)) {
         throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
