@@ -556,7 +556,7 @@ export class Settings {
         footer: a.signature,
       };
       if (sendAsEmail === acctEmail.toLowerCase()) {
-        result[sendAsEmail].name = namesRes.names.find(name => name.metadata.primary)?.displayName;
+        result[sendAsEmail].name = namesRes.names.find(name => name.metadata.primary ?? false)?.displayName;
       }
     }
     return result;

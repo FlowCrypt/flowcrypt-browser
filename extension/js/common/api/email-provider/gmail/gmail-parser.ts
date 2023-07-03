@@ -124,16 +124,12 @@ export namespace GmailRes {
   };
 
   export type GoogleUserProfile = {
-    names: GoogleName[];
-  };
-
-  type GoogleName = {
-    metadata: GoogleMetadata;
-    displayName: string;
-  };
-
-  type GoogleMetadata = {
-    primary?: boolean;
+    names: {
+      metadata: {
+        primary?: boolean;
+      };
+      displayName: string;
+    }[];
   };
 }
 
