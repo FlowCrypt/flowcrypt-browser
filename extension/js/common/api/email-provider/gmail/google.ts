@@ -91,6 +91,25 @@ export class Google {
       });
   };
 
+  public static getNames = async (acctEmail: string) => {
+    const method = 'GET';
+    const contentType = 'application/json; charset=UTF-8';
+    const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
+    const data = { personFields: 'names' };
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const contacts = GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
+      url: getProfileUrl,
+      method,
+      data,
+      headers,
+      contentType,
+      crossDomain: true,
+      async: true,
+    }) as Promise<GmailRes.GoogleUserProfile>;
+    return contacts;
+  };
+
   public static encodeAsMultipartRelated = (parts: Dict<string>) => {
     // todo - this could probably be achieved with emailjs-mime-builder
     const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);
