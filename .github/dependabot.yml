@@ -24,3 +24,5 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "openpgp"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "squire-rte"
+        versions: ["2.0.3"]
