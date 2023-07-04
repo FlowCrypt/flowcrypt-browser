@@ -29,7 +29,7 @@
     "eslint-plugin-no-only-tests": "3.1.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
-    "googleapis": "118.0.0",
+    "googleapis": "120.0.0",
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "mailparser": "3.6.5",
