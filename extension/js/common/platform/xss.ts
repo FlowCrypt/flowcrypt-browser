@@ -174,14 +174,16 @@ export class Xss {
     Xss.throwIfNotSupported();
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-TEXT');
     const random = Str.sloppyRandom(5);
-    const htmlWrapper = trim ? '' : '1'; // DOMParser trims html when parsing, so we need to wrap it with a non-space character
+    // DOMParser trims html when parsing, so we'll pad it at the beginning and/or the end when needed
+    const beginPadding = !trim && /^\s/.test(html) ? '1' : '';
+    const endPadding = !trim && /\s$/.test(html) ? '1' : '';
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
     const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
     // Preserve newlines inside of <pre> tags.
     const messageDomParser = new DOMParser();
-    const messageDom = messageDomParser.parseFromString(`${htmlWrapper}${html}${htmlWrapper}`, 'text/html');
+    const messageDom = messageDomParser.parseFromString(`${beginPadding}${html}${endPadding}`, 'text/html');
     const preTags = messageDom.getElementsByTagName('pre');
     for (const pre of preTags) {
       pre.innerHTML = pre.innerHTML.replace(/\n/g, br); // xss-direct
@@ -213,10 +215,10 @@ export class Xss {
     text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
     if (trim) {
       text = text.trim();
-    } else if (text.length < 2 || text[0] !== htmlWrapper || text[text.length - 1] !== htmlWrapper) {
-      throw Error('Unexpected failure to htmlSanitizeAndStripAllTags');
+    } else if (text.startsWith(beginPadding) && text.endsWith(endPadding)) {
+      text = text.slice(beginPadding.length, -endPadding.length || undefined);
     } else {
-      text = text.slice(1, -1);
+      throw Error('Unexpected failure in htmlSanitizeAndStripAllTags: missing padding');
     }
     if (outputNl !== '\n') {
       text = text.replace(/\n/g, outputNl);
