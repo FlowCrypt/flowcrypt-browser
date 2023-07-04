@@ -183,7 +183,7 @@ export class Xss {
     const messageDom = messageDomParser.parseFromString(html, 'text/html');
     const preTags = messageDom.getElementsByTagName('pre');
     for (const pre of preTags) {
-      pre.innerHTML = pre.innerHTML.replace(/\n/g, br);
+      pre.innerHTML = pre.innerHTML.replace(/\n/g, br); // xss-escaped
     }
     html = messageDom.body.innerHTML;
     html = html.replace(/\n/g, '');
