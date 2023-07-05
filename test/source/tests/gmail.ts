@@ -129,7 +129,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         await ComposePageRecipe.sendAndClose(composePage);
         await gmailPage.waitAndClick('[aria-label^="Inbox"]');
-        await gmailPage.waitAndClick('[role="row"]'); // click the first message
+        await gmailPage.waitAll('[role="row"]');
+        const firstMessage = await gmailPage.target.$('[role="row"]');
+        expect(firstMessage).to.be.ok;
+        await firstMessage!.click();
         await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
         await GmailPageRecipe.deleteThread(gmailPage);
@@ -401,13 +404,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
         await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 }); // click first message of thread
         await Util.sleep(3);
-        await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+        const messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
+        expect(messages.length).to.equal(2);
+
+        const plainReplyButton = await messages[0].$('[data-tooltip="Reply"]');
+        expect(plainReplyButton).to.be.ok;
+        await Util.sleep(1);
+        await plainReplyButton!.click();
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
           'The last message was encrypted, but you are composing a reply without encryption.'
         );
-        await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
+
+        const secureReplyButton = await messages[0].$('[data-tooltip="Secure Reply"]');
+        expect(secureReplyButton).to.be.ok;
+        await secureReplyButton!.click(); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
       })
