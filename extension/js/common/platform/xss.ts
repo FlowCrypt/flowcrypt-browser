@@ -174,16 +174,19 @@ export class Xss {
     Xss.throwIfNotSupported();
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-TEXT');
     const random = Str.sloppyRandom(5);
+    // DOMParser trims html when parsing, so we'll pad it at the beginning and/or the end when needed
+    const beginPadding = !trim && /^\s/.test(html) ? '1' : '';
+    const endPadding = !trim && /\s$/.test(html) ? '1' : '';
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
     const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
     // Preserve newlines inside of <pre> tags.
     const messageDomParser = new DOMParser();
-    const messageDom = messageDomParser.parseFromString(html, 'text/html');
+    const messageDom = messageDomParser.parseFromString(`${beginPadding}${html}${endPadding}`, 'text/html');
     const preTags = messageDom.getElementsByTagName('pre');
     for (const pre of preTags) {
-      pre.innerHTML = pre.innerHTML.replace(/\n/g, br);
+      pre.innerHTML = pre.innerHTML.replace(/\n/g, br); // xss-direct
     }
     html = messageDom.body.innerHTML;
     html = html.replace(/\n/g, '');
@@ -212,6 +215,10 @@ export class Xss {
     text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
     if (trim) {
       text = text.trim();
+    } else if (text.startsWith(beginPadding) && text.endsWith(endPadding)) {
+      text = text.slice(beginPadding.length, -endPadding.length || undefined);
+    } else {
+      throw Error('Unexpected failure in htmlSanitizeAndStripAllTags: missing padding');
     }
     if (outputNl !== '\n') {
       text = text.replace(/\n/g, outputNl);
