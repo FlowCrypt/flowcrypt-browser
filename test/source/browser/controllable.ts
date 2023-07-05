@@ -561,7 +561,7 @@ abstract class ControllableBase {
     } else if ((m = customSelLanguageQuery.match(/@([a-z0-9\-_]+)$/i))) {
       return customSelLanguageQuery.replace(/@([a-z0-9\-_]+)$/i, `[data-test="${m[1]}"]`);
     } else if ((m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/i))) {
-      return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
+      return `//*[@data-test='${m[1]}' and (contains(text(),'${m[2]}') or contains(*/following-sibling::text(),'${m[2]}'))]`;
     } else {
       return customSelLanguageQuery;
     }
