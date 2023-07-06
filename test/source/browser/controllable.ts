@@ -537,7 +537,7 @@ abstract class ControllableBase {
           }
         } else {
           // Give a turn to other promises, including timeoutPromise
-          await new Promise(resolve => setImmediate(resolve));
+          await Util.sleep(0.5);
         }
       }
     })();
