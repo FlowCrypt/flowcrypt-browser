@@ -1482,6 +1482,10 @@ td {
   margin-top: 8px;
 }
 
+#pgp_block img {
+  width: 100%;
+}
+
 #pgp_block #attachments a.preview-attachment,
 #pgp_block #attachments a.download-attachment,
 .replied_body #attachments .attachment {

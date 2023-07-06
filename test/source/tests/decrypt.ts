@@ -119,6 +119,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - large image should fit in decrypted iframe`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '18925acc3904388c';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitAll('#pgp_block img');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        await inboxPage.close();
+      })
+    );
+
+    test(
       `decrypt - parsed signed message with signature.asc as plain attachment`,
       testWithBrowser(async (t, browser) => {
         const threadId = '187085b874fb727c';
