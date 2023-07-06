@@ -194,8 +194,8 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-test.afterEach.always('send debug info if any', async t => {
-  console.info('send debug info - deciding');
+test.afterEach.always('send debug info if any', t => {
+  console.info(`${t.title} - test has ${t.passed ? 'passed' : 'FAILED'}`);
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
   const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
