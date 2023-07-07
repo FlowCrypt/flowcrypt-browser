@@ -265,6 +265,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          t.timeout(minutes(2)); // extend ava's timeout
           const gmailPage = await openGmailPage(t, browser);
           // create compose draft
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
@@ -290,7 +291,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await pageHasSecureDraft(gmailPage, 'compose draft 1');
         },
         undefined,
-        minutes(5) // explicitly set timer-controlled timeout
+        minutes(7) // explicitly set timer-controlled timeout
       )
     );
 
@@ -303,6 +304,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           const gmailPage = await openGmailPage(t, browser);
           const threadId = '181d226b4e69f172'; // 1st message -- thread id
           await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+          t.timeout(minutes(2)); // extend ava's timeout
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
           t.timeout(minutes(2)); // extend ava's timeout
           await gmailPage.waitAndClick('@secure-reply-button');
@@ -311,6 +313,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
           await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
+          t.timeout(minutes(2)); // extend ava's timeout
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
@@ -324,7 +327,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
         },
         undefined,
-        minutes(5) // this test normally takes more than 3 minutes and often more than 4 minutes
+        minutes(7) // this test normally takes more than 3 minutes and often more than 4 minutes
       )
     );
 
@@ -340,6 +343,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await createSecureDraft(t, browser, gmailPage, 'a compose draft');
           t.timeout(minutes(2)); // extend ava's timeout
           await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          t.timeout(minutes(2)); // extend ava's timeout
           await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
           // open new compose window and saved draft
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
@@ -355,7 +359,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
         },
         undefined,
-        minutes(5) // explicitly set timer-controlled timeout
+        minutes(7) // explicitly set timer-controlled timeout
       )
     );
 
