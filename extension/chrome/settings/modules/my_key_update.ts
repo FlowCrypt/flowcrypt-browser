@@ -104,6 +104,7 @@ View.run(
       try {
         if (!String(this.inputPrivateKey.val())) {
           await Ui.modal.warning('Please insert an ASCII armored private key to continue.');
+          return;
         }
         const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
         const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
