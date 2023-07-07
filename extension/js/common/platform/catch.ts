@@ -42,6 +42,8 @@ export class Catch {
     'Script error.',
     // benign error https://github.com/WICG/ResizeObserver/issues/38#issuecomment-422126006 https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
     'ResizeObserver loop limit exceeded',
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5280
+    'Could not find valid self-signature',
   ];
 
   public static rewrapErr = (e: unknown, message: string): Error => {
