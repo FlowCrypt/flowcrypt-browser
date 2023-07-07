@@ -1483,7 +1483,7 @@ td {
 }
 
 #pgp_block img {
-  width: 100%;
+  max-width: 100%;
 }
 
 #pgp_block #attachments a.preview-attachment,
