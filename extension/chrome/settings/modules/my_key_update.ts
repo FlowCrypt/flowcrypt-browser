@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Key, KeyInfoWithIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -101,45 +101,55 @@ View.run(
     };
 
     private updatePrivateKeyHandler = async () => {
-      const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-      const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-      const updatedKeyPassphrase = String($('.input_passphrase').val());
-      if (typeof updatedKey === 'undefined') {
-        await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-      } else if (updatedKey.isPublic) {
-        await Ui.modal.warning(
-          'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
-        );
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
-        await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
-      } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
-        await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
-      } else {
-        if (updatedKey.usableForEncryption) {
-          await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
-          return;
+      try {
+        if (!String(this.inputPrivateKey.val())) {
+          await Ui.modal.warning('Please insert an ASCII armored private key to continue.');
         }
-        // cannot get a valid encryption key packet
-        if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
-          // known issues - key can be fixed
-          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-            this.acctEmail,
-            '.compatibility_fix_container',
-            updatedKeyEncrypted,
-            updatedKeyPassphrase,
-            this.showKeyUrl
-          );
-          await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
-        } else {
+        const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+        const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+        const updatedKeyPassphrase = String($('.input_passphrase').val());
+        if (typeof updatedKey === 'undefined') {
+          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+        } else if (updatedKey.isPublic) {
           await Ui.modal.warning(
-            `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
-              !!this.fesUrl
-            )} to see why is that.`,
-            Ui.testCompatibilityLink
+            'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
           );
-          window.location.href = this.showKeyUrl;
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
+        } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
+          await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
+          await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
+        } else {
+          if (updatedKey.usableForEncryption) {
+            await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
+            return;
+          }
+          // cannot get a valid encryption key packet
+          if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
+            // known issues - key can be fixed
+            const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+              this.acctEmail,
+              '.compatibility_fix_container',
+              updatedKeyEncrypted,
+              updatedKeyPassphrase,
+              this.showKeyUrl
+            );
+            await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
+          } else {
+            await Ui.modal.warning(
+              `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
+                !!this.fesUrl
+              )} to see why is that.`,
+              Ui.testCompatibilityLink
+            );
+            window.location.href = this.showKeyUrl;
+          }
+        }
+      } catch (e) {
+        if (e instanceof UnexpectedKeyTypeError) {
+          await Ui.modal.warning(`The key provided is invalid. Please ensure that you import an ASCII armored OpenPGP private key and try again.
+          \nFor assistance, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}.`);
         }
       }
     };
