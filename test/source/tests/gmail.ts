@@ -71,6 +71,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       } else {
         composeBox = await gmailPage.getFrame(['/chrome/elements/compose.htm']);
       }
+      await composeBox.click('@input-body');
+      await Util.sleep(1);
       await composeBox.type('@input-body', content, true);
       if (params.offline) {
         await ComposePageRecipe.waitWhenDraftIsSavedLocally(composeBox);
@@ -278,9 +280,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           t.timeout(minutes(2)); // extend ava's timeout
           await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
           await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
-          await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
-          await gmailPage.waitAndClick('#fc_offline_drafts a');
+          await gmailPage.waitAll('#fc_offline_drafts a');
+          const drafts = await gmailPage.target.$$('#fc_offline_drafts a');
+          expect(drafts.length).to.equal(2);
           // compose draft 2 should be first in list as drafts are sorted by date descending
+          await drafts[0].click();
           t.timeout(minutes(2)); // extend ava's timeout
           const draft = await pageHasSecureDraft(gmailPage, 'compose draft 2');
           await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
@@ -346,14 +350,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
           await createSecureDraft(t, browser, gmailPage, 'a compose draft');
           t.timeout(minutes(2)); // extend ava's timeout
-          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
           t.timeout(minutes(4)); // extend ava's timeout
           await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
           // open new compose window and saved draft
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
           await gmailPage.waitAndClick('//*[text()="Draft"]');
           await Util.sleep(2);
-          // veryfy that there are two compose windows: new compose window and secure draft
+          // verify that there are two compose windows: new compose window and secure draft
           const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
           expect(urls.length).to.equal(2);
           await pageHasSecureDraft(gmailPage, 'compose draft');
