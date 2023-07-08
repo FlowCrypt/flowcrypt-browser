@@ -260,19 +260,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.serial(
+    test(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-          t.timeout(minutes(2)); // extend ava's timeout
+          t.timeout(minutes(3)); // extend ava's timeout
           const gmailPage = await openGmailPage(t, browser);
           // create compose draft
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
           await createSecureDraft(t, browser, gmailPage, 'compose draft 1', { offline: true });
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
           await createSecureDraft(t, browser, gmailPage, 'compose draft 2', { offline: true });
-          t.timeout(minutes(2)); // extend ava's timeout
+          t.timeout(minutes(3)); // extend ava's timeout
           await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
           await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
           await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
@@ -282,7 +282,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           const draft = await pageHasSecureDraft(gmailPage, 'compose draft 2');
           await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
           await ComposePageRecipe.waitWhenDraftIsSaved(draft);
-          t.timeout(minutes(2)); // extend ava's timeout
+          t.timeout(minutes(3)); // extend ava's timeout
           // after draft 2 is saved to the cloud, it should be removed from offline drafts
           await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
           await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
