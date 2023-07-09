@@ -321,15 +321,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
           t.timeout(minutes(1)); // extend ava's timeout
-          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           t.timeout(minutes(2)); // extend ava's timeout
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
-          // await replyBox.waitAndClick('@action-send'); doesn't work for some reason, use keyboard instead
-          await gmailPage.page.keyboard.press('Tab');
-          await gmailPage.page.keyboard.press('Enter');
-          await replyBox.waitTillGone('@action-send');
+          await replyBox.waitAndClick('@action-send');
           t.timeout(minutes(2)); // extend ava's timeout
-          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' }, true);
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
           await gmailPage.waitForContent('.h7:last-child .ajA', 'Re: [ci.test] encrypted email for reply render'); // make sure that the subject of the sent draft is corrent
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
