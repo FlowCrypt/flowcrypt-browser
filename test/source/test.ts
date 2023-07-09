@@ -219,7 +219,7 @@ test.afterEach.always('send debug info if any', async t => {
       writeFileSync(filePath, debugHtmlAttachments[i]);
     }
     console.info('All debug files written.');
-  } else {
+  } else if (!t.passed) {
     console.info(`no fails to debug`);
   }
   t.pass();
