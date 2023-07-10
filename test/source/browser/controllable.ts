@@ -422,8 +422,8 @@ abstract class ControllableBase {
     const isImageDisplayedCorrectly = await this.target.evaluate(selector => {
       const pgpBlock = document.querySelector('#pgp_block') as HTMLDivElement;
       const img = document.querySelector(selector) as HTMLImageElement;
-      const imgWidth = img.offsetHeight;
-      const pgpBlockWidth = pgpBlock.offsetHeight;
+      const imgWidth = img.offsetWidth;
+      const pgpBlockWidth = pgpBlock.offsetWidth;
       return img.naturalWidth !== 0 && img.naturalHeight !== 0 && imgWidth < pgpBlockWidth;
     }, selector);
     expect(isImageDisplayedCorrectly).to.be.true;
