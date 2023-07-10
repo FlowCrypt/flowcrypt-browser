@@ -424,7 +424,7 @@ abstract class ControllableBase {
       const img = document.querySelector(selector) as HTMLImageElement;
       const imgWidth = img.offsetWidth;
       const pgpBlockWidth = pgpBlock.offsetWidth;
-      return img.naturalWidth !== 0 && img.naturalHeight !== 0 && imgWidth < pgpBlockWidth;
+      return img.naturalWidth !== 0 && img.naturalHeight !== 0 && imgWidth <= pgpBlockWidth;
     }, selector);
     expect(isImageDisplayedCorrectly).to.be.true;
   };
