@@ -105,6 +105,23 @@ View.run(
       BrowserMsg.send.reload(this.parentTabId, { advanced: true });
     };
 
+    private handlePrivateKeyError = async (e: UserAlert | KeyCanBeFixed | UnexpectedKeyTypeError) => {
+      if (e instanceof UserAlert) {
+        return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
+      } else if (e instanceof KeyCanBeFixed) {
+        return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted);
+      } else if (e instanceof UnexpectedKeyTypeError) {
+        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
+      } else {
+        Catch.reportErr(e);
+        return await Ui.modal.error(
+          `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
+          false,
+          Ui.testCompatibilityLink
+        );
+      }
+    };
+
     private addPrivateKeyHandler = async (submitBtn: HTMLElement) => {
       if (submitBtn.className.includes('gray')) {
         await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
@@ -116,20 +133,7 @@ View.run(
           await this.saveKeyAndContinue(checked.encrypted);
         }
       } catch (e) {
-        if (e instanceof UserAlert) {
-          return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
-        } else if (e instanceof KeyCanBeFixed) {
-          return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted);
-        } else if (e instanceof UnexpectedKeyTypeError) {
-          return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
-        } else {
-          Catch.reportErr(e);
-          return await Ui.modal.error(
-            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
-            false,
-            Ui.testCompatibilityLink
-          );
-        }
+        await this.handlePrivateKeyError(e);
       }
     };
 

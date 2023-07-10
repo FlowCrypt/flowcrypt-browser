@@ -19,11 +19,16 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
+import { KeyCanBeFixed, UserAlert } from '../../../js/common/ui/key-import-ui.js';
+import { Catch } from '../../../js/common/platform/catch.js';
+import { saveKeysAndPassPhrase, setPassphraseForPrvs } from '../../../js/common/helpers.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 
 View.run(
   class MyKeyUpdateView extends View {
     protected fesUrl?: string;
     private readonly acctEmail: string;
+    private readonly parentTabId: string;
     private readonly fingerprint: string;
     private readonly showKeyUrl: string;
     private readonly inputPrivateKey = $('.input_private_key');
@@ -36,6 +41,7 @@ View.run(
       super();
       const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+      this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
       this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
     }
@@ -73,6 +79,63 @@ View.run(
         this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler())
       );
       $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
+    };
+
+    private isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
+
+    private toggleCompatibilityView = (visible: boolean) => {
+      if (visible) {
+        $('#add_key_container').hide();
+        $('#compatibility_fix').show();
+      } else {
+        $('#add_key_container').show();
+        $('#compatibility_fix').hide();
+      }
+    };
+
+    private saveKeyAndContinue = async (key: Key) => {
+      await saveKeysAndPassPhrase(this.acctEmail, [key]); // resulting new_key checked above
+      await setPassphraseForPrvs(this.clientConfiguration, this.acctEmail, [key], {
+        passphrase: String($('.input_passphrase').val()),
+        passphrase_save: !!$('.input_passphrase_save').prop('checked'), // eslint-disable-line , @typescript-eslint/naming-convention
+      });
+      BrowserMsg.send.reload(this.parentTabId, { advanced: true });
+    };
+
+    private renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key) => {
+      let fixedPrv;
+      try {
+        this.toggleCompatibilityView(true);
+        fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+          this.acctEmail,
+          '#compatibility_fix',
+          origPrv,
+          String($('.input_passphrase').val()),
+          window.location.href.replace(/#$/, '')
+        );
+        await this.saveKeyAndContinue(fixedPrv);
+      } catch (e) {
+        Catch.reportErr(e);
+        await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`, false, Ui.testCompatibilityLink);
+        this.toggleCompatibilityView(false);
+      }
+    };
+
+    private handlePrivateKeyError = async (e: UserAlert | KeyCanBeFixed | UnexpectedKeyTypeError) => {
+      if (e instanceof UserAlert) {
+        return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
+      } else if (e instanceof KeyCanBeFixed) {
+        return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted);
+      } else if (e instanceof UnexpectedKeyTypeError) {
+        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
+      } else {
+        Catch.reportErr(e);
+        return await Ui.modal.error(
+          `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
+          false,
+          Ui.testCompatibilityLink
+        );
+      }
     };
 
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
@@ -148,10 +211,7 @@ View.run(
           }
         }
       } catch (e) {
-        if (e instanceof UnexpectedKeyTypeError) {
-          await Ui.modal.warning(`The key provided is invalid. Please ensure that you import an ASCII armored OpenPGP private key and try again.
-          \nFor assistance, please ${Lang.general.contactMinimalSubsentence(!!this.fesUrl)}.`);
-        }
+        return await this.handlePrivateKeyError(e);
       }
     };
   }
