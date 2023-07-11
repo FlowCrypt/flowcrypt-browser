@@ -19,7 +19,7 @@ export class RelayManager implements RelayManagerInterface {
   private static readonly completionMessage: RenderMessage = { done: true };
   private readonly frames = new Map<string, FrameEntry>();
 
-  public constructor(private debug: boolean = false) {
+  public constructor(private tabId: string, private debug: boolean = false) {
     const framesObserver = new MutationObserver(async mutationsList => {
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
@@ -126,10 +126,7 @@ export class RelayManager implements RelayManagerInterface {
     while (true) {
       const message = queue.shift();
       if (message) {
-        BrowserMsg.send.pgpBlockRender(
-          'broadcast', // todo: own tabId?
-          { ...message, frameId }
-        );
+        BrowserMsg.send.pgpBlockRender(this.tabId, { ...message, frameId });
         if (message === RelayManager.completionMessage) {
           this.frames.delete(frameId);
         }

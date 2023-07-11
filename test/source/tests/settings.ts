@@ -204,7 +204,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
         await Util.sleep(1);
-        await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
+        await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom(flowcrypt.compatibility)');
         await Util.sleep(1);
         const contacts = await contactsFrame.read('@page-contacts');
         expect(contacts).to.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');

@@ -420,7 +420,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
-      const relayManager = new RelayManager();
+      const relayManager = new RelayManager(tabId);
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       await startPullingKeysFromEkm(

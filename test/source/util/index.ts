@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as fs from 'fs';
-import { Keyboard, KeyInput } from 'puppeteer';
+import { ElementHandle, Keyboard, KeyInput } from 'puppeteer';
 import { BrowserHandle } from '../browser/browser-handle.js';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
 import { SettingsPageRecipe } from '../tests/page-recipe/settings-page-recipe.js';
@@ -120,6 +120,11 @@ export class Util {
     } catch (e) {
       // file didn't exist
     }
+  };
+
+  public static isVisible = async <T extends Node>(element: ElementHandle<T>) => {
+    // eslint-disable-next-line no-null/no-null
+    return (await element.boundingBox()) !== null;
   };
 
   public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
