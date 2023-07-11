@@ -37,7 +37,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         isReplyPromptAccepted?: boolean;
         composeFrameIndex?: number;
         composeFrameCount?: number;
-      } = {}
+      } = {},
     ) => {
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
       expect(urls.length).to.equal(composeFrameCount ?? 1);
@@ -58,7 +58,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       browser: BrowserHandle,
       gmailPage: ControllablePage,
       content: string,
-      params: { offline: boolean } = { offline: false }
+      params: { offline: boolean } = { offline: false },
     ) => {
       let composeBox: Controllable | undefined;
       if (params.offline) {
@@ -115,7 +115,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await settingsPage.close();
         const googleChatPage = await BrowserRecipe.openGoogleChatPage(t, browser);
         await googleChatPage.notPresent(BrowserRecipe.oldAndNewComposeButtonSelectors); // compose button should not be injected
-      })
+      }),
     );
 
     test(
@@ -131,15 +131,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         await ComposePageRecipe.sendAndClose(composePage);
         await gmailPage.waitAndClick('[aria-label^="Inbox"]');
-        await gmailPage.waitAll('[role="row"]');
-        const firstMessage = await gmailPage.target.$('[role="row"]');
-        expect(firstMessage).to.be.ok;
-        await firstMessage!.click();
+        await gmailPage.waitAndClick('[role="row"]:first-of-type'); // click the first message
         await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
         await GmailPageRecipe.deleteThread(gmailPage);
         expect(urls.length).to.eq(1);
-      })
+      }),
     );
 
     test(
@@ -154,7 +151,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.page.setOfflineMode(true); // go offline mode
         await gmailPage.page.goBack({ waitUntil: 'load' });
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['/chrome/elements/pgp_block.htm']), expectedMessage);
-      })
+      }),
     );
 
     test(
@@ -166,7 +163,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitForContent('.aVW span:first-child', '36');
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls.length).to.equal(36);
-      })
+      }),
     );
 
     test(
@@ -185,7 +182,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-      })
+      }),
     );
 
     test(
@@ -212,7 +209,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-      })
+      }),
     );
 
     test(
@@ -239,7 +236,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-      })
+      }),
     );
 
     test(
@@ -258,7 +255,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
         await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-      })
+      }),
     );
 
     // draft-sensitive test
@@ -280,12 +277,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           t.timeout(minutes(2)); // extend ava's timeout
           await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
           await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
-          await gmailPage.waitAll('#fc_offline_drafts a');
-          const drafts = await gmailPage.target.$$('#fc_offline_drafts a');
-          expect(drafts.length).to.equal(2);
-          // compose draft 2 should be first in list as drafts are sorted by date descending
-          await drafts[0].click();
+          await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
+          await gmailPage.waitAndClick('#fc_offline_drafts a:first-of-type');
           t.timeout(minutes(2)); // extend ava's timeout
+          // compose draft 2 should be first in list as drafts are sorted by date descending
           const draft = await pageHasSecureDraft(gmailPage, 'compose draft 2');
           await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
           await ComposePageRecipe.waitWhenDraftIsSaved(draft);
@@ -298,8 +293,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await pageHasSecureDraft(gmailPage, 'compose draft 1');
         },
         undefined,
-        minutes(7) // explicitly set timer-controlled timeout
-      )
+        minutes(7), // explicitly set timer-controlled timeout
+      ),
     );
 
     // convo-sensitive, draft-sensitive test
@@ -335,8 +330,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
         },
         undefined,
-        minutes(7) // this test normally takes more than 3 minutes and often more than 4 minutes
-      )
+        minutes(7), // this test normally takes more than 3 minutes and often more than 4 minutes
+      ),
     );
 
     // draft-sensitive test
@@ -368,8 +363,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
         },
         undefined,
-        minutes(7) // explicitly set timer-controlled timeout
-      )
+        minutes(7), // explicitly set timer-controlled timeout
+      ),
     );
 
     test(
@@ -380,7 +375,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(1);
         await gotoGmailPage(gmailPage, '/FMfcgzGpHHKCrKRLptBSNwkpMxzkdcQc'); // plain convo with smart replies
         await gmailPage.waitForContent('.brb', 'Yes');
-      })
+      }),
     );
 
     test(
@@ -396,7 +391,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
-          'The last message was encrypted, but you are composing a reply without encryption.'
+          'The last message was encrypted, but you are composing a reply without encryption.',
         );
         await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
@@ -406,7 +401,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
-      })
+      }),
     );
 
     test(
@@ -427,7 +422,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
-          'The last message was encrypted, but you are composing a reply without encryption.'
+          'The last message was encrypted, but you are composing a reply without encryption.',
         );
 
         const secureReplyButton = await messages[0].$('[data-tooltip="Secure Reply"]');
@@ -435,7 +430,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await secureReplyButton!.click(); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
-      })
+      }),
     );
 
     test(
@@ -454,12 +449,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
-          'The last message was encrypted, but you are composing a reply without encryption.'
+          'The last message was encrypted, but you are composing a reply without encryption.',
         );
         await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
-      })
+      }),
     );
 
     // convo-sensitive, draft-sensitive test
@@ -485,8 +480,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.click('[aria-label^="Discard draft"]');
         },
         undefined,
-        minutes(5) // explicitly set timer-controlled timeout
-      )
+        minutes(5), // explicitly set timer-controlled timeout
+      ),
     );
 
     test(
@@ -497,7 +492,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           settingsPage,
           'flowcrypt.compatibility.1pp1',
           { submitPubkey: false, usedPgpBefore: true },
-          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+          { isSavePassphraseChecked: false, isSavePassphraseHidden: false },
         );
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGllVqqBbjHQQRDsSwcZBlMRzDr');
@@ -507,7 +502,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll(['.aZi'], { visible: false });
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
         await gmailPage.close();
-      })
+      }),
     );
 
     test(
@@ -520,7 +515,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('iframe');
         await gmailPage.waitAll(['.aZi'], { visible: true });
         await gmailPage.close();
-      })
+      }),
     );
 
     test(
@@ -531,7 +526,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           settingsPage,
           'flowcrypt.compatibility.1pp1',
           { submitPubkey: false, usedPgpBefore: true },
-          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+          { isSavePassphraseChecked: false, isSavePassphraseHidden: false },
         );
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHprlHvtTJscCJQpZcqrKQbg');
@@ -540,7 +535,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
         await gmailPage.waitAll(['.aZi'], { visible: false });
         await gmailPage.close();
-      })
+      }),
     );
 
     test(
@@ -555,7 +550,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // expect no pgp blocks
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
         expect(urls.length).to.equal(0);
-      })
+      }),
     );
 
     test(
@@ -568,7 +563,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         expect(urls.length).to.equal(1);
         await pageHasSecureReplyContainer(t, browser, gmailPage);
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-      })
+      }),
     );
 
     // uses live openpgpkey.flowcrypt.com WKD
@@ -581,7 +576,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
         await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
         expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
-      })
+      }),
     );
 
     // todo - missing equivalent sample at ci.tests.gmail
