@@ -3,3 +3,4 @@ semi: true
 singleQuote: true
 endOfLine: 'auto'
 arrowParens: 'avoid'
+trailingComma: 'es5'
