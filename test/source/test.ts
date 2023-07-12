@@ -195,7 +195,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
 });
 
 test.afterEach.always('send debug info if any', async t => {
-  console.info('send debug info - deciding');
+  console.info(`${t.passed ? 'passed' : 'FAILED'} test, ${t.title}`);
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
   const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
@@ -219,7 +219,7 @@ test.afterEach.always('send debug info if any', async t => {
       writeFileSync(filePath, debugHtmlAttachments[i]);
     }
     console.info('All debug files written.');
-  } else {
+  } else if (!t.passed) {
     console.info(`no fails to debug`);
   }
   t.pass();
