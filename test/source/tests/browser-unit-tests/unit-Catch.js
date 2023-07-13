@@ -59,3 +59,12 @@ BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Catcher does not include query string on report`);
+(async () => {
+  const formatted = Catch.formatExceptionForReport({'name': 'Error'});
+  if (formatted.url.indexOf('?') !== -1) {
+    throw new Error(`The reported url where the error occur should not include query strings. Expecting ${expectedUrl} but got ${formatted.url}.`)
+  }
+  return 'pass';
+})();
