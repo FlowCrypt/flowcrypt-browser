@@ -64,7 +64,7 @@ BROWSER_UNIT_TEST_NAME(`Catcher does not include query string on report`);
 (async () => {
   const formatted = Catch.formatExceptionForReport({'name': 'Error'});
   if (formatted.url.indexOf('?') !== -1) {
-    throw new Error(`The reported url where the error occur should not include query strings. Expecting ${expectedUrl} but got ${formatted.url}.`)
+    throw new Error(`The reported URL where the error occurred should not include query strings. Expecting ${expectedUrl} but got ${formatted.url}.`)
   }
   return 'pass';
 })();
