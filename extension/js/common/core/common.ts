@@ -419,6 +419,18 @@ export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<b
   return false;
 };
 
+export const asyncFilter = async <T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
+  return (
+    await Promise.all(
+      arr.map(async e => {
+        return { e, flag: await predicate(e) };
+      })
+    )
+  )
+    .filter(o => o.flag)
+    .map(o => o.e);
+};
+
 export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
 };

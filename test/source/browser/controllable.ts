@@ -16,7 +16,7 @@ import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 import { mkdirp } from 'mkdirp';
-import { Dict } from '../core/common';
+import { Dict, asyncFilter } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const jQuery: any;
@@ -34,7 +34,7 @@ abstract class ControllableBase {
   }
 
   public isElementPresent = async (selector: string) => {
-    return Boolean(await this.element(selector));
+    return Boolean(await this.firstElement(selector));
   };
 
   public isElementVisible = async (selector: string) => {
@@ -128,7 +128,7 @@ abstract class ControllableBase {
   public waitUntilFocused = async (selector: string) => {
     const start = Date.now();
     while (Date.now() - start < TIMEOUT_ELEMENT_APPEAR * 1000) {
-      const e = (await this.element(selector)) as ElementHandle;
+      const e = (await this.singleElement(selector)) as ElementHandle;
       const activeElement = (await this.target.evaluateHandle(() => document.activeElement)) as ElementHandle;
       const activeElementHtml = await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML');
       const testedElementHtml = await PageRecipe.getElementPropertyJson(e, 'outerHTML');
@@ -142,12 +142,8 @@ abstract class ControllableBase {
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
-    const e = await this.element(selector);
+    const e = await this.singleElement(selector);
     this.log(`click:2:${selector}`);
-    if (!e) {
-      throw Error(`Element not found: ${selector}`);
-    }
-    this.log(`click:4:${selector}`);
     try {
       await e.click();
     } catch (e) {
@@ -157,7 +153,7 @@ abstract class ControllableBase {
       }
       throw e;
     }
-    this.log(`click:5:${selector}`);
+    this.log(`click:3:${selector}`);
   };
 
   public clickIfPresent = async (selector: string): Promise<boolean> => {
@@ -169,7 +165,7 @@ abstract class ControllableBase {
   };
 
   public type = async (selector: string, text: string, letterByLetter = false) => {
-    const e = await this.element(selector);
+    const e = await this.singleElement(selector);
     if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
@@ -575,27 +571,45 @@ abstract class ControllableBase {
     } else if ((m = customSelLanguageQuery.match(/@([a-z0-9\-_]+)$/i))) {
       return customSelLanguageQuery.replace(/@([a-z0-9\-_]+)$/i, `[data-test="${m[1]}"]`);
     } else if ((m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/i))) {
-      return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
+      return `//*[@data-test='${m[1]}' and (contains(text(),'${m[2]}') or contains(*/following-sibling::text(),'${m[2]}'))]`;
     } else {
       return customSelLanguageQuery;
     }
   };
 
-  protected element = async (selector: string): Promise<ElementHandle | null> => {
+  protected firstElement = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector))[0] as ElementHandle<Element>;
+      return (await this.target.$x(selector))[0] as ElementHandle;
     } else {
       return await this.target.$(selector);
     }
   };
 
+  protected singleElement = async (selector: string): Promise<ElementHandle> => {
+    const elements = await this.elements(selector);
+    if (!elements.length) {
+      throw Error(`Element not found: ${selector}`);
+    } else if (elements.length > 1) {
+      const visibleElements = await asyncFilter(elements, Util.isVisible);
+      if (visibleElements.length === 1) {
+        return visibleElements[0];
+      }
+      throw Error(`More than one element found: ${selector}`);
+    }
+    return elements[0];
+  };
+
   protected elementCount = async (selector: string): Promise<number> => {
+    return (await this.elements(selector)).length;
+  };
+
+  protected elements = async (selector: string) => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector)).length;
+      return (await this.target.$x(selector)) as ElementHandle[];
     } else {
-      return (await this.target.$$(selector)).length;
+      return await this.target.$$(selector);
     }
   };
 
@@ -611,10 +625,9 @@ abstract class ControllableBase {
         for (const selector of processedSelectors) {
           const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
           for (const element of elements) {
-            // eslint-disable-next-line no-null/no-null
-            if ((await element.boundingBox()) !== null || !visible) {
+            if (!visible || (await Util.isVisible(element))) {
               // element is visible
-              return element as ElementHandle<Element>;
+              return element as ElementHandle;
             }
           }
         }

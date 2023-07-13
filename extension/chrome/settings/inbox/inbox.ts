@@ -56,7 +56,6 @@ export class InboxView extends View {
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
-    this.relayManager = new RelayManager(this.debug);
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
@@ -72,6 +71,7 @@ export class InboxView extends View {
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
+    this.relayManager = new RelayManager(this.tabId, this.debug);
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
