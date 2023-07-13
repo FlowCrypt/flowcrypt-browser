@@ -1544,6 +1544,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
         await myKeyFrame.waitAndClick('@action-update-prv');
+        await myKeyFrame.waitAndClick('@source-paste');
         await myKeyFrame.waitAndType('@input-prv-key', testConstants.testKeyB8F687BCDE14435A);
         await myKeyFrame.type('@input-passphrase', passphrase);
         await myKeyFrame.waitAndClick('@action-update-key');
