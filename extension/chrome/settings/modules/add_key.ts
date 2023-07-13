@@ -98,10 +98,13 @@ View.run(
 
     private saveKeyAndContinue = async (key: Key) => {
       await saveKeysAndPassPhrase(this.acctEmail, [key]); // resulting new_key checked above
+      /* eslint-disable @typescript-eslint/naming-convention */
       await setPassphraseForPrvs(this.clientConfiguration, this.acctEmail, [key], {
         passphrase: String($('.input_passphrase').val()),
-        passphrase_save: !!$('.input_passphrase_save').prop('checked'), // eslint-disable-line , @typescript-eslint/naming-convention
+        passphrase_save: !!$('.input_passphrase_save').prop('checked'),
+        passphrase_ensure_single_copy: false, // we require KeyImportUi to rejectKnown keys
       });
+      /* eslint-enable @typescript-eslint/naming-convention */
       BrowserMsg.send.reload(this.parentTabId, { advanced: true });
     };
 

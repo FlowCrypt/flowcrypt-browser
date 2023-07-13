@@ -19,11 +19,14 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 
 View.run(
   class MyKeyUpdateView extends View {
     protected fesUrl?: string;
     private readonly acctEmail: string;
+    private readonly keyImportUi = new KeyImportUi({});
     private readonly fingerprint: string;
     private readonly showKeyUrl: string;
     private readonly inputPrivateKey = $('.input_private_key');
@@ -57,6 +60,7 @@ View.run(
         );
       } else {
         $('#content').show();
+        this.keyImportUi.initPrvImportSrcForm(this.acctEmail, undefined);
         this.pubLookup = new PubLookup(this.clientConfiguration);
         [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
         Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
@@ -64,6 +68,7 @@ View.run(
         $('.email').text(this.acctEmail);
         $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
         this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.ki.fingerprints[0] + ')');
+        $('.source_selector').css('display', 'block');
       }
     };
 
@@ -76,13 +81,10 @@ View.run(
     };
 
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      const shouldSavePassphraseInStorage =
-        !this.clientConfiguration.forbidStoringPassPhrase() && !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
-      await KeyStore.add(this.acctEmail, updatedPrv);
-      await PassphraseStore.set('local', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
-      await PassphraseStore.set('session', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
+      /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/naming-convention */
+      const passphrase_save = !this.clientConfiguration.forbidStoringPassPhrase() && !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
+      await saveKeysAndPassPhrase(this.acctEmail, [updatedPrv], { passphrase: updatedPrvPassphrase, passphrase_save, passphrase_ensure_single_copy: true });
+      /* eslint-enable @typescript-eslint/no-non-null-assertion, @typescript-eslint/naming-convention */
       if (
         this.clientConfiguration.canSubmitPubToAttester() &&
         (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?'))
@@ -101,11 +103,14 @@ View.run(
     };
 
     private updatePrivateKeyHandler = async () => {
-      const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
       const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+      const updatedKey = await KeyUtil.parse(KeyUtil.armor(updatedKeyEncrypted)); // create a "cloned" copy to decrypt later
       const updatedKeyPassphrase = String($('.input_passphrase').val());
+      KeyImportUi.allowReselect();
       if (typeof updatedKey === 'undefined') {
         await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+      } else if (updatedKeyEncrypted.identities.length === 0) {
+        await Ui.modal.error(Lang.setup.prvHasUseridIssue);
       } else if (updatedKey.isPublic) {
         await Ui.modal.warning(
           'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'

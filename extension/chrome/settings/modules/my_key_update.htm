@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="/css/animate.css" />
     <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
     <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+    <script type="text/template" src="/chrome/elements/shared/attach.template.htm" id="qq-template"></script>
   </head>
 
   <body id="settings">
@@ -21,16 +23,35 @@
       </div>
       <div class="line">FlowCrypt will also recreate a new public key from your updated private key.</div>
       <div class="line">
-        <textarea class="input_private_key armored" data-test="input-prv-key" placeholder="Updated ASCII Armored Private Key" maxlength="80000"></textarea>
+        <ul style="list-style: none; margin-left: 0; padding-left: 0" class="source_selector display_none">
+          <li>
+            <input type="radio" name="source" id="source_file" data-test="source-file" value="file" />
+            <label for="source_file"> Load from a file</label>
+          </li>
+          <li>
+            <input type="radio" name="source" id="source_paste" data-test="source-paste" value="paste" />
+            <label for="source_paste"> Paste armored key directly </label>
+          </li>
+        </ul>
       </div>
-      <div class="line">
-        <input class="input_passphrase" type="password" data-test="input-passphrase" placeholder="Private Key Passphrase" maxlength="256" />
+      <div class="source_file_container display_none">
+        <a href="#" id="fineuploader_button" class="display_none">file</a>
+        <div class="line display_none" id="fineuploader"></div>
       </div>
-      <div class="line"><span class="button green long action_update_private_key" data-test="action-update-key">update private key</span></div>
+      <div class="source_paste_container display_none">
+        <div class="line">
+          <textarea class="input_private_key armored" data-test="input-prv-key" placeholder="Updated ASCII Armored Private Key" maxlength="80000"></textarea>
+        </div>
+        <div class="line">
+          <input class="input_passphrase" type="password" data-test="input-passphrase" placeholder="Private Key Passphrase" maxlength="256" />
+        </div>
+        <div class="line"><span class="button green long action_update_private_key" data-test="action-update-key">update private key</span></div>
+      </div>
       <div class="line"><a href="#" class="action_show_public_key">Back to Public Key</a></div>
     </div>
 
     <script src="/lib/purify.js"></script>
+    <script src="/lib/fine-uploader.js"></script>
     <script src="/lib/jquery.min.js"></script>
     <script src="/lib/sweetalert2.js"></script>
     <script src="/lib/openpgp.js"></script>

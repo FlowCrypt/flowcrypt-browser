@@ -15,7 +15,7 @@ import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
+import { KeyInfoWithIdentity, KeyUtil, PubkeyInfoWithLastCheck } from '../core/crypto/key';
 import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
@@ -915,6 +915,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await Util.sleep(1);
         await myKeyFrame.waitAll('@content-fingerprint');
         await myKeyFrame.waitAndClick('@action-update-prv');
+        await myKeyFrame.waitAndClick('@source-paste');
         await myKeyFrame.waitAndType('@input-prv-key', testConstants.testKeyMultiple98acfa1eadab5b92);
         await myKeyFrame.type('@input-passphrase', '1234');
         await myKeyFrame.waitAndClick('@action-update-key');
@@ -927,6 +928,87 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         ]);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
+      })
+    );
+    test(
+      'settings - my key page - update private key from file',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.manualEnter(
+          settingsPage,
+          'unused',
+          {
+            submitPubkey: false,
+            usedPgpBefore: false,
+            key: {
+              title: '?',
+              // eslint-disable-next-line no-null/no-null
+              armored: null,
+              filePath: 'test/samples/openpgp/flowcrypttestkeymultiplegmailcom-0x98acfa1eadab5b92-original.asc',
+              passphrase: '1234',
+              longid: '1b383d0334e38b28',
+            },
+          },
+          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+        );
+        // test the pubkey in the storage
+        const oldContact = await dbPage.page.evaluate(async acctEmail => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
+        }, acctEmail);
+        expect(oldContact.sortedPubkeys.length).to.equal(1);
+        expect((oldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1610024667000);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-0`, ['my_key.htm', 'placement=settings']);
+        await Util.sleep(1);
+        await myKeyFrame.waitAll('@content-fingerprint');
+        await myKeyFrame.waitAndClick('@action-update-prv');
+        {
+          const [fileChooser] = await Promise.all([settingsPage.page.waitForFileChooser(), myKeyFrame.waitAndClick('@source-file', { retryErrs: true })]);
+          await fileChooser.accept(['test/samples/openpgp/flowcrypttestkeymultiplegmailcom-0x98acfa1eadab5b92-updated-userid-issue.key']); // binary key
+        }
+        await myKeyFrame.type('@input-passphrase', '1234');
+        await myKeyFrame.waitAndClick('@action-update-key');
+        await PageRecipe.waitForModalAndRespond(myKeyFrame, 'error', {
+          contentToCheck: 'The set of User IDs in this key is not supported.',
+          clickOn: 'confirm',
+        });
+        // test the pubkey in the storage
+        const expectedOldContact = await dbPage.page.evaluate(async acctEmail => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
+        }, acctEmail);
+        expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
+        expect((expectedOldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1610024667000);
+        {
+          const [fileChooser] = await Promise.all([settingsPage.page.waitForFileChooser(), myKeyFrame.waitAndClick('@source-file', { retryErrs: true })]);
+          await fileChooser.accept(['test/samples/openpgp/flowcrypttestkeymultiplegmailcom-0x98acfa1eadab5b92-updated.key']); // binary key
+        }
+        await myKeyFrame.waitAndClick('@action-update-key');
+        await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', {
+          contentToCheck: 'Public and private key updated locally',
+          clickOn: 'cancel',
+        });
+        // test the pubkey in the storage
+        const newContact = await dbPage.page.evaluate(async acctEmail => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
+        }, acctEmail);
+        expect(newContact.sortedPubkeys.length).to.equal(1);
+        const newPubkey = (newContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey;
+        expect(newPubkey.lastModified).to.equal(1689250647000);
+        // we now have two uids
+        expect(newPubkey.identities).to.eql(['Additional Name <flowcrypt.test@example.com>', 'flowcrypt.test.key.multiple@gmail.com']);
+        expect(newPubkey.emails).to.eql(['flowcrypt.test@example.com', 'flowcrypt.test.key.multiple@gmail.com']);
+        await settingsPage.close();
+        await dbPage.close();
       })
     );
     test(
