@@ -50,6 +50,7 @@ blocks:
         on_fail:
           commands:
             - |
+              shopt -s nullglob
               for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
                 echo "Uploading debug file $file as job artifact..."
                 artifact push job "$file"
@@ -85,6 +86,7 @@ blocks:
         on_fail:
           commands:
             - |
+              shopt -s nullglob
               for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
                 echo "Uploading debug file $file as job artifact..."
                 artifact push job "$file"
