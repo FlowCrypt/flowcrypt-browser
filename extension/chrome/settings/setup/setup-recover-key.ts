@@ -63,6 +63,7 @@ export class SetupRecoverKeyModule {
         submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
+        passphrase_ensure_single_copy: true,
         recovered: true,
       };
       await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);

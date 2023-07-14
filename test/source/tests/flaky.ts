@@ -80,6 +80,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         // Updating the key to valid one
         const updatePrvPage = await settingsPage.getFrame(['my_key.htm'], { timeout: 5 });
         await updatePrvPage.waitAndClick('@action-update-prv');
+        await updatePrvPage.waitAndClick('@source-paste');
         await updatePrvPage.waitAndType('@input-prv-key', validKey);
         await updatePrvPage.type('@input-passphrase', 'qweasd');
         await updatePrvPage.waitAndClick('@action-update-key');

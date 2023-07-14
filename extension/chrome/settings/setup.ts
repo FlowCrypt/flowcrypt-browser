@@ -38,7 +38,8 @@ import { InMemoryStore } from '../../js/common/platform/store/in-memory-store.js
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface PassphraseOptions {
   passphrase: string;
-  passphrase_save: boolean;
+  passphrase_save: boolean; // if true and not forbidden by OrgRules, save to the local storage, otherwise to session
+  passphrase_ensure_single_copy: boolean; // make sure the passphrase isn't both in local storage and session
 }
 
 export interface SetupOptions extends PassphraseOptions {
