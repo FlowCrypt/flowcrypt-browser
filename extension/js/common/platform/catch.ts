@@ -42,6 +42,8 @@ export class Catch {
     'Script error.',
     // benign error https://github.com/WICG/ResizeObserver/issues/38#issuecomment-422126006 https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
     'ResizeObserver loop limit exceeded',
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5280
+    '400 when POST-ing https://flowcrypt.com/attester/welcome-message string: email,pubkey -> This key does not appear valid',
   ];
 
   public static rewrapErr = (e: unknown, message: string): Error => {
