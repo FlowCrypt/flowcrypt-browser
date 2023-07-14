@@ -61,7 +61,8 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
               },
             });
           }
-          const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+          /* The "test" parameter is utilized by the unit test named "Catcher does not include query string on report." */
+          const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm?test=1');
           // update host page h1
           await hostPage.target.evaluate(title => {
             window.document.getElementsByTagName('h1')[0].textContent = title;

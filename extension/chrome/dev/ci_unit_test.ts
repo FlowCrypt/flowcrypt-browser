@@ -23,11 +23,6 @@ import { PgpHash } from '../../js/common/core/crypto/pgp/pgp-hash.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Xss } from '../../js/common/platform/xss.js';
 
-/* Used for test "Catcher does not include query string on report" */
-const urlParamSize = new URL(window.location.href).searchParams.size;
-if (urlParamSize <= 0) {
-  window.location.href = '?test1=test_value_1&test2=test_value_2';
-}
 /**
  * importing all libs that are tested in ci tests
  * add lib name below, let the IDE resolve the actual import
