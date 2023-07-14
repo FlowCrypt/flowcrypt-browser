@@ -292,7 +292,7 @@ export class Catch {
     return {
       name: exception.name.substring(0, 50),
       message: exception.message.substring(0, 200),
-      url: window.location.href.substring(0, 100),
+      url: window.location.href.split('?')[0],
       line: line || 0,
       col: col || 0,
       trace: exception.stack || '',
