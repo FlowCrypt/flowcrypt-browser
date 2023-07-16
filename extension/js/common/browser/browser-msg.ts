@@ -34,6 +34,10 @@ export namespace Bm {
     uid: string;
     stack: string;
   };
+  export type RawWindowMessageWithResponseDest = Raw & {
+    data: { bm: AnyRequest & { responseDest: Dest }; objUrls: Dict<string> };
+    responseName: string;
+  };
 
   export type SetCss = { css: Dict<string>; traverseUp?: number; selector: string };
   export type AddOrRemoveClass = { class: string; selector: string };
@@ -60,7 +64,8 @@ export namespace Bm {
   export type OpenGoogleAuthDialog = { acctEmail?: string; scopes?: string[] };
   export type OpenPage = { page: string; addUrlText?: string | UrlParams };
   export type PassphraseEntry = { entered: boolean; initiatorFrameId?: string };
-  export type ConfirmationResult = { confirm: boolean };
+  export type AsyncResult<T> = { requestUid: string; payload: T };
+  export type ConfirmationResult = AsyncResult<boolean>;
   export type AuthWindowResult = { url?: string; error?: string };
   export type Db = { f: string; args: unknown[] };
   export type InMemoryStoreSet = {
@@ -81,9 +86,8 @@ export namespace Bm {
   export type AjaxProgress = { frameId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowConfirmation = { text: string; isHTML: boolean; responseDest: string; footer?: string };
+  export type ShowConfirmation = { text: string; isHTML: boolean; responseDest: string; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
-  export type ShowConfirmationResult = { isConfirmed: boolean };
   export type PgpBlockRetry = { frameId: string };
   export type PgpBlockReady = { frameId: string; tabId: Dest };
 
@@ -104,7 +108,6 @@ export namespace Bm {
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
-    export type ShowConfirmationResult = boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -247,7 +250,7 @@ export class BrowserMsg {
     notificationShow: (dest: Bm.Dest, bm: Bm.NotificationShow) => BrowserMsg.sendCatch(dest, 'notification_show', bm),
     notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) =>
       BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm),
-    showConfirmation: (dest: Bm.Dest, bm: Bm.ShowConfirmation) => BrowserMsg.sendCatch(dest, 'confirmation_show', bm),
+    showConfirmation: (bm: Bm.ShowConfirmation) => BrowserMsg.sendToParentWindow('confirmation_show', bm, 'confirmation_result'),
     renderPublicKeys: (dest: Bm.Dest, bm: Bm.RenderPublicKeys) => BrowserMsg.sendCatch(dest, 'render_public_keys', bm),
     replyPubkeyMismatch: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'reply_pubkey_mismatch', {}),
     addPubkeyDialog: (dest: Bm.Dest, bm: Bm.AddPubkeyDialog) => BrowserMsg.sendCatch(dest, 'add_pubkey_dialog', bm),
@@ -261,6 +264,7 @@ export class BrowserMsg {
     pgpBlockReady: (dest: Bm.Dest, bm: Bm.PgpBlockReady) => BrowserMsg.sendCatch(dest, 'pgp_block_ready', bm),
     pgpBlockRetry: (dest: Bm.Dest, bm: Bm.PgpBlockRetry) => BrowserMsg.sendCatch(dest, 'pgp_block_retry', bm),
   };
+  private static readonly processed: string[] = [];
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
@@ -332,39 +336,25 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   };
 
+  // this is a means to get messages from child iframes
+  public static listenForWindowMessages = () => {
+    const allowedOrigin = Env.getExtensionOrigin();
+    window.addEventListener('message', e => {
+      if (e.origin === allowedOrigin) {
+        const msg = e.data as Bm.RawWindowMessageWithResponseDest;
+        BrowserMsg.handleMsg(msg, {}, (rawResponse: Bm.RawResponse) => {
+          BrowserMsg.sendCatch(msg.data.bm.responseDest, msg.responseName, rawResponse);
+        });
+      }
+    });
+  };
+
   public static listen = (dest: string) => {
-    const processed: string[] = [];
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
-      try {
-        if (msg.to === dest || msg.to === 'broadcast') {
-          if (!processed.includes(msg.uid)) {
-            processed.push(msg.uid);
-            if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
-              const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
-              BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-                .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), rawRespond))
-                .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
-              return true; // will respond
-            } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
-              return true; // will respond
-            }
-          } else {
-            // sometimes received events get duplicated
-            // while first event is being processed, second even will arrive
-            // that's why we generate a unique id of each request (uid) and filter them above to identify truly unique requests
-            // if we got here, that means we are handing a duplicate request
-            // we'll indicate will respond = true, so that the processing of the actual request is not negatively affected
-            // leaving it at "false" would respond with null, which would throw an error back to the original BrowserMsg sender:
-            // "Error: BrowserMsg.sendAwait(pgpMsgDiagnosePubkeys) returned(null) with lastError: (no lastError)"
-            // the duplication is likely caused by our routing mechanism. Sometimes browser will deliver the message directly as well as through bg
-            return true;
-          }
-        }
-      } catch (e) {
-        BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
-        return true; // will respond
+      if (msg.to === dest || msg.to === 'broadcast') {
+        BrowserMsg.handleMsg(msg, sender, rawRespond);
+        return true;
       }
       return false; // will not respond
     });
@@ -430,6 +420,47 @@ export class BrowserMsg {
         return true; // will respond
       }
     });
+  };
+
+  private static sendToParentWindow = (name: string, bm: Dict<unknown> & { responseDest: Bm.Dest }, responseName: string) => {
+    const raw: Bm.RawWindowMessageWithResponseDest = {
+      data: { bm, objUrls: {} },
+      name,
+      stack: '',
+      // eslint-disable-next-line no-null/no-null
+      to: null,
+      uid: Str.sloppyRandom(10),
+      responseName,
+    };
+    window.parent.postMessage(raw, '*');
+  };
+
+  private static handleMsg = (msg: Bm.Raw, sender: chrome.runtime.MessageSender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+    try {
+      if (!BrowserMsg.processed.includes(msg.uid)) {
+        // todo: Set or ExpirationCache?
+        BrowserMsg.processed.push(msg.uid);
+        if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
+          const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
+          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
+            .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), rawRespond))
+            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
+        } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
+          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
+        }
+      } else {
+        // sometimes received events get duplicated
+        // while first event is being processed, second even will arrive
+        // that's why we generate a unique id of each request (uid) and filter them above to identify truly unique requests
+        // if we got here, that means we are handing a duplicate request
+        // we'll indicate will respond = true, so that the processing of the actual request is not negatively affected
+        // leaving it at "false" would respond with null, which would throw an error back to the original BrowserMsg sender:
+        // "Error: BrowserMsg.sendAwait(pgpMsgDiagnosePubkeys) returned(null) with lastError: (no lastError)"
+        // the duplication is likely caused by our routing mechanism. Sometimes browser will deliver the message directly as well as through bg
+      }
+    } catch (e) {
+      BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
+    }
   };
 
   /**

@@ -244,6 +244,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       relayManager.renderProgress(progress);
     });
     BrowserMsg.listen(tabId);
+    BrowserMsg.listenForWindowMessages(); // listen for direct messages from child iframes
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
