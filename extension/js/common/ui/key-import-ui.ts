@@ -76,6 +76,11 @@ export class KeyImportUi {
     submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
   };
 
+  // by unselecting, we allow to click on "Load from a file" and trigger the fineuploader again
+  public static allowReselect = () => {
+    $('input[type=radio][name=source]').prop('checked', false);
+  };
+
   public onBadPassphrase: VoidCallback = () => undefined;
 
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
@@ -181,7 +186,7 @@ export class KeyImportUi {
         } else {
           $('.input_private_key').val('').change().prop('disabled', false);
           await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.testCompatibilityLink);
-          $('input[type=radio][name=source]').removeAttr('checked');
+          KeyImportUi.allowReselect();
         }
       },
     });
@@ -310,7 +315,7 @@ export class KeyImportUi {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
     if (type === 'publicKey' && !k.isPublic) {
-      throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
+      throw new UserAlert('This was a private key. Please insert a public key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
   };
 

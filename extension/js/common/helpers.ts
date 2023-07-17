@@ -20,7 +20,12 @@ export const isCustomerUrlFesUsed = async (acctEmail: string) => {
 export const setPassphraseForPrvs = async (clientConfiguration: ClientConfiguration, acctEmail: string, prvs: Key[], ppOptions: PassphraseOptions) => {
   const storageType = ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase() ? 'local' : 'session';
   for (const prv of prvs) {
-    await PassphraseStore.set(storageType, acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
+    const keyInfo = { longid: KeyUtil.getPrimaryLongid(prv) };
+    await PassphraseStore.set(storageType, acctEmail, keyInfo, ppOptions.passphrase);
+    if (ppOptions.passphrase_ensure_single_copy) {
+      // delete from the other storage
+      await PassphraseStore.set(storageType === 'local' ? 'session' : 'local', acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, undefined);
+    }
   }
 };
 
@@ -41,8 +46,6 @@ const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppO
     }
   }
   if (ppOptions !== undefined) {
-    // todo: it would be good to check that the passphrase isn't present in the other storage type
-    //    though this situation is not possible with current use cases
     await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
@@ -125,7 +128,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   let ppOptions: PassphraseOptions | undefined; // the options to pass to saveKeysAndPassPhrase
   if (!originalOptions?.passphrase && (await ClientConfiguration.newInstance(acctEmail)).mustAutogenPassPhraseQuietly()) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true };
+    ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true, passphrase_ensure_single_copy: true };
   } else {
     ppOptions = originalOptions;
   }
@@ -163,7 +166,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   if (encryptedKeys?.keys.length) {
     // new keys are about to be added, they must be accompanied with the passphrase setting
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const effectivePpOptions = { passphrase: encryptedKeys.passphrase, passphrase_save: passphraseInLocalStorage };
+    const effectivePpOptions = { passphrase: encryptedKeys.passphrase, passphrase_save: passphraseInLocalStorage, passphrase_ensure_single_copy: true };
     // ppOptions have special meaning in saveKeysAndPassPhrase(), they trigger `name` updates, todo: refactor in #4545
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys.keys, ppOptions ? effectivePpOptions : undefined);
     if (!ppOptions) {

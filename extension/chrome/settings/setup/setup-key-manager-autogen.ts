@@ -47,6 +47,7 @@ export class SetupWithEmailKeyManagerModule {
     const setupOptions: SetupOptions = {
       passphrase_save:
         this.view.clientConfiguration.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
+      passphrase_ensure_single_copy: false, // there can't be any saved passphrases for the new key
       submit_main: this.view.clientConfiguration.canSubmitPubToAttester(),
       submit_all: false,
       passphrase,
