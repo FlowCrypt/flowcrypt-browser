@@ -214,7 +214,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '184a474fc1bd59b8',
-          expectedContent: 'This message contained the actual encrypted text inside a "message" attachment.',
+          content: ['This message contained the actual encrypted text inside a "message" attachment.'],
         });
       })
     );
@@ -247,7 +247,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '17dbdf2425ac0f29',
-          expectedContent: 'Documento anexo de prueba.docx',
+          content: ['Documento anexo de prueba.docx'],
         });
       })
     );
@@ -1049,27 +1049,27 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - by entering pass phrase + remember in session',
       testWithBrowser(async (t, browser) => {
-        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
         const threadId = '15f7f5630573be2d';
-        const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
+        const content = ['The International DUBLIN Literary Award is an international literary award'];
         const settingsPage = await browser.newExtensionSettingsPage(t);
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
+        const enterPp = {
+          passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
+          isForgetPpChecked: true,
+          isForgetPpHidden: false,
+        };
+        // 1. gmail page test
         // requires pp entry
-        await InboxPageRecipe.checkDecryptMsg(t, browser, {
-          acctEmail,
-          threadId,
-          expectedContent,
-          enterPp: {
-            passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
-            isForgetPpChecked: true,
-            isForgetPpHidden: false,
-          },
-        });
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
         // now remembers pp in session
-        await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
-        // Finish session and check if it's finished
-        await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
+        // 2. inbox page test
+        // requires pp entry
+        await InboxPageRecipe.checkDecryptMsg(t, browser, { enterPp, content, acctEmail, threadId });
+        // now remembers pp in session
+        await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, content, finishSessionAfterTesting: true });
       })
     );
 

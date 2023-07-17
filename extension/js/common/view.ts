@@ -11,11 +11,15 @@ export abstract class View {
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
       const view = new viewClass();
-      (async () => {
-        await view.render();
-        await Promise.resolve(view.setHandlers()); // allow both sync and async
-        View.setTestViewStateLoaded();
-      })().catch(View.reportAndRenderErr);
+      window.addEventListener('load', async () => {
+        try {
+          await view.render();
+          await Promise.resolve(view.setHandlers()); // allow both sync and async
+          View.setTestViewStateLoaded();
+        } catch (e) {
+          View.reportAndRenderErr(e);
+        }
+      });
     } catch (e) {
       View.reportAndRenderErr(e);
     }

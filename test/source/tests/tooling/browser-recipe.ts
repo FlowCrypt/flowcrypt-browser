@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Config, Util, TestMessage } from '../../util';
+import { Config, Util, TestMessage, TestMessageAndSession } from '../../util';
 
 import { AvaContext } from '.';
 import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
@@ -255,34 +255,86 @@ export class BrowserRecipe {
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
+  // todo: move to gmail-page-recipe
   public static pgpBlockVerifyDecryptedContent = async (
     t: AvaContext,
     browser: BrowserHandle,
     msgId: string,
-    m: TestMessage,
+    m: TestMessageAndSession,
     extraHeaders: Record<string, string>
   ) => {
     const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, extraHeaders);
-    await gmailPage.waitAll('iframe');
-    await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['pgp_block.htm']), m);
+    await BrowserRecipe.checkDecryptMsgOnPage(t, gmailPage, m);
     await gmailPage.close();
   };
 
-  public static pgpBlockCheck = async (t: AvaContext, pgpBlockPage: ControllableFrame, m: TestMessage) => {
-    if (m.expectPercentageProgress) {
-      await pgpBlockPage.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
+  // todo: move some of these helpers somewhere to page-recipe/...
+  // gmail or inbox
+  public static checkDecryptMsgOnPage = async (t: AvaContext, page: ControllablePage, m: TestMessageAndSession) => {
+    await page.waitAll('iframe');
+    if (m.finishSessionBeforeTesting) {
+      await BrowserRecipe.finishSession(page);
+      await page.waitAll('iframe');
     }
-    await pgpBlockPage.waitForSelTestState('ready', 100);
+    await BrowserRecipe.pgpBlockCheck(t, await page.getFrame(['pgp_block.htm']), m);
+    if (m.finishSessionAfterTesting) {
+      await BrowserRecipe.finishSession(page);
+      await page.waitAll('iframe');
+      const pgpBlockFrame = await page.getFrame(['pgp_block.htm']);
+      await pgpBlockFrame.waitAll('@pgp-block-content');
+      await pgpBlockFrame.waitForSelTestState('ready');
+      await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
+      await page.waitAll('@dialog-passphrase');
+    }
+  };
+
+  // gmail or inbox
+  public static finishSession = async (page: ControllablePage) => {
+    await page.waitAndClick('@action-finish-session');
+    await page.waitTillGone('@action-finish-session');
+    await Util.sleep(3); // give frames time to reload, else we will be manipulating them while reloading -> Error: waitForFunction failed: frame got detached.
+  };
+
+  // todo: move to page-recipe/pgp-block-frame-recipe or frame-recipe/pgp-block-frame-recipe?
+  public static pgpBlockCheck = async (t: AvaContext, pgpBlockFrame: ControllableFrame, m: TestMessage) => {
+    if (m.expectPercentageProgress) {
+      await pgpBlockFrame.waitForContent('@pgp-block-content', /Retrieving message... \d+%/, 20, 10);
+    } else {
+      await pgpBlockFrame.waitAll('@pgp-block-content');
+    }
+    await pgpBlockFrame.waitForSelTestState('ready', 100);
     await Util.sleep(1);
+    if (m.enterPp) {
+      const page = pgpBlockFrame.getPage();
+      await page.notPresent('@action-finish-session'); // todo: gmail
+      const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
+      expect(errBadgeContent).to.equal('pass phrase needed');
+      await pgpBlockFrame.notPresent('@action-print');
+      await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
+      await page.waitAll('@dialog-passphrase');
+      const ppFrame = await page.getFrame(['passphrase.htm']);
+      await ppFrame.waitAndType('@input-pass-phrase', m.enterPp.passphrase);
+      if (m.enterPp.isForgetPpHidden !== undefined) {
+        expect(await ppFrame.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(m.enterPp.isForgetPpHidden);
+      }
+      if (m.enterPp.isForgetPpChecked !== undefined) {
+        expect(await ppFrame.isChecked('@forget-pass-phrase-checkbox')).to.equal(m.enterPp.isForgetPpChecked);
+      }
+      await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
+      await pgpBlockFrame.waitForSelTestState('ready');
+      await page.waitAll('@action-finish-session'); // todo: gmail
+      await Util.sleep(1);
+    }
+
     if (m.quoted) {
-      await pgpBlockPage.waitAndClick('@action-show-quoted-content');
+      await pgpBlockFrame.waitAndClick('@action-show-quoted-content');
       await Util.sleep(1);
     } else {
-      if (await pgpBlockPage.isElementPresent('@action-show-quoted-content')) {
+      if (await pgpBlockFrame.isElementPresent('@action-show-quoted-content')) {
         throw new Error(`element: @action-show-quoted-content not expected in: ${t.title}`);
       }
     }
-    const content = await pgpBlockPage.read('@pgp-block-content');
+    const content = await pgpBlockFrame.read('@pgp-block-content');
     for (const expectedContent of m.content) {
       if (!content?.includes(expectedContent)) {
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content: ${expectedContent}` + `\nactual content: ${content}`);
@@ -296,8 +348,8 @@ export class BrowserRecipe {
         }
       }
     }
-    const sigBadgeContent = await pgpBlockPage.read('@pgp-signature');
-    const encBadgeContent = await pgpBlockPage.read('@pgp-encryption');
+    const sigBadgeContent = await pgpBlockFrame.read('@pgp-signature');
+    const encBadgeContent = await pgpBlockFrame.read('@pgp-encryption');
     if (m.signature) {
       // todo: check color, 'signed' should have 'green_label' class without 'red_label', others should have 'red_label' class
       if (sigBadgeContent !== m.signature) {
@@ -320,15 +372,18 @@ export class BrowserRecipe {
     if (m.error) {
       expect(sigBadgeContent).to.be.empty;
       expect(encBadgeContent).to.be.empty;
-      await pgpBlockPage.notPresent('@action-print');
-      const errBadgeContent = await pgpBlockPage.read('@pgp-error');
+      await pgpBlockFrame.notPresent('@action-print');
+      const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
       if (errBadgeContent !== m.error) {
         t.log(`found err content:${errBadgeContent}`);
         throw new Error(`pgp_block_verify_decrypted_content:missing expected error content:${m.error}`);
       }
-    } else if (m.content.length > 0) {
-      if (!(await pgpBlockPage.isElementVisible('@action-print'))) {
-        throw new Error(`Print button is invisible`);
+    } else {
+      await pgpBlockFrame.waitAll('@pgp-error', { visible: false });
+      if (m.content.length > 0) {
+        if (!(await pgpBlockFrame.isElementVisible('@action-print'))) {
+          throw new Error(`Print button is invisible`);
+        }
       }
     }
   };
