@@ -23,8 +23,11 @@ export class RelayManager implements RelayManagerInterface {
     const framesObserver = new MutationObserver(async mutationsList => {
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
-          for (const removedNode of mutation.removedNodes) {
-            this.dropRemovedNodes(removedNode);
+          const removedFrameIds = this.findFrameIds(mutation.removedNodes);
+          // todo: const addedFrameIds = this.findFrameIds(mutation.addedNodes);
+          // Value.arr.intersection -- reloaded frames
+          for (const frameId of removedFrameIds) {
+            this.dropRemovedFrame(frameId);
           }
         }
       }
@@ -89,27 +92,29 @@ export class RelayManager implements RelayManagerInterface {
     this.flushIfReady(frameId);
   };
 
-  private dropRemovedNodes = (removedNode: Node) => {
-    let frameId: string | undefined;
-    if (removedNode.nodeType === Node.ELEMENT_NODE) {
-      const element = removedNode as HTMLElement;
-      if (element.tagName === 'IFRAME') {
-        frameId = element.id;
+  private findFrameIds = (nodes: NodeList): string[] => {
+    const frameIds: string[] = [];
+    for (const node of nodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        if (element.tagName === 'IFRAME') {
+          frameIds.push(element.id);
+          continue;
+        }
       }
+      frameIds.push(...this.findFrameIds(node.childNodes));
     }
-    if (frameId) {
-      if (this.debug) {
-        console.debug('releasing resources connected to frameId=', frameId);
-      }
-      const frameData = this.frames.get(frameId);
-      if (frameData) {
-        if (frameData.relay?.cancellation) frameData.relay.cancellation.cancel = true;
-        this.frames.delete(frameId);
-      }
-    } else {
-      for (const childNode of removedNode.childNodes) {
-        this.dropRemovedNodes(childNode);
-      }
+    return frameIds;
+  };
+
+  private dropRemovedFrame = (frameId: string) => {
+    if (this.debug) {
+      console.debug('releasing resources connected to frameId=', frameId);
+    }
+    const frameData = this.frames.get(frameId);
+    if (frameData) {
+      if (frameData.relay?.cancellation) frameData.relay.cancellation.cancel = true;
+      this.frames.delete(frameId);
     }
   };
 
