@@ -577,48 +577,42 @@ export class MessageRenderer {
     return isEncrypted ? { publicKeys } : {};
   };
 
-  private relayAndStartProcessing = async (
+  private relayAndStartProcessing = (
     relayManager: RelayManager,
     factory: XssSafeFactory,
     frameId: string,
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
-  ): Promise<{ processor: Promise<unknown> }> => {
-    const renderModule = relayManager.createRelay(frameId);
-    if (printMailInfo) {
-      renderModule.setPrintMailInfo(printMailInfo);
-    }
-    const processor = cb(renderModule, frameId)
-      .then(async result => {
-        const appendAfter = $(`iframe#${frameId}`); // todo: review inbox-active-thread -- may fail
-        // todo: how publicKeys and needPassphrase interact?
-        for (const armoredPubkey of result.publicKeys ?? []) {
-          appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
-        }
-        while (result.needPassphrase && !renderModule.cancellation.cancel) {
-          // if we need passphrase, we have to be able to re-try decryption indefinitely on button presses,
-          // so we can only release resources when the frame is detached
-          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, renderModule.cancellation);
-          if (renderModule.cancellation.cancel) {
-            if (this.debug) {
-              console.debug('Destination frame was detached -- stopping processing');
-            }
-            return;
+  ): void => {
+    relayManager.createAndStartRelay(frameId, async (renderModule: RenderInterface) => {
+      if (printMailInfo) {
+        renderModule.setPrintMailInfo(printMailInfo);
+      }
+      let result = await cb(renderModule, frameId); // not sure if it's a good idea to pass frameId
+      // todo: review inbox-active-thread -- may fail if the frameId isn't in the DOM yet
+      // we may stop here and wait until renderModule is attached (receive a signal from RelayManager based on frameData)
+      const appendAfter = $(`iframe#${frameId}`);
+      // todo: how publicKeys and needPassphrase interact?
+      for (const armoredPubkey of result.publicKeys ?? []) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
+      }
+      while (result.needPassphrase && !renderModule.cancellation.cancel) {
+        // if we need passphrase, we have to be able to re-try decryption indefinitely on button presses,
+        // so we can only release resources when the frame is detached
+        await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, renderModule.cancellation);
+        if (renderModule.cancellation.cancel) {
+          if (this.debug) {
+            console.debug('Destination frame was detached -- stopping processing');
           }
-          renderModule.clearErrorStatus();
-          renderModule.renderText('Decrypting...');
-          result = await cb(renderModule, frameId);
-          // I guess, no additional publicKeys will appear here for display...
+          return;
         }
-      })
-      .catch(e => {
-        // normally no exceptions come to this point so let's report it
-        Catch.reportErr(e);
-        renderModule.renderErr(Xss.escape(String(e)), undefined);
-      })
-      .finally(() => relayManager.done(frameId));
-    return { processor };
+        renderModule.clearErrorStatus();
+        renderModule.renderText('Decrypting...');
+        result = await cb(renderModule, frameId);
+        // I guess, no additional publicKeys will appear here for display...
+      }
+    });
   };
 
   private renderMsgBlock = async (
@@ -764,10 +758,10 @@ export class MessageRenderer {
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
-  ): Promise<{ processor: Promise<unknown> }> => {
+  ): Promise<void> => {
     const { frameId, frameXssSafe } = this.factory.embeddedMsg(type); // xss-safe-factory
     loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, 'set'); // xss-safe-value
-    return await this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
+    await this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processCryptoMessage = async (

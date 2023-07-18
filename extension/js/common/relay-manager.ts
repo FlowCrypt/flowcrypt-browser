@@ -16,7 +16,6 @@ type FrameEntry = {
 };
 
 export class RelayManager implements RelayManagerInterface {
-  private static readonly completionMessage: RenderMessage = { done: true };
   private readonly frames = new Map<string, FrameEntry>();
 
   public constructor(private debug: boolean = false) {
@@ -24,10 +23,13 @@ export class RelayManager implements RelayManagerInterface {
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
           const removedFrameIds = this.findFrameIds(mutation.removedNodes);
-          // todo: const addedFrameIds = this.findFrameIds(mutation.addedNodes);
-          // Value.arr.intersection -- reloaded frames
+          const addedFrameIds = this.findFrameIds(mutation.addedNodes);
           for (const frameId of removedFrameIds) {
-            this.dropRemovedFrame(frameId);
+            if (addedFrameIds.includes(frameId)) {
+              this.restartRelay(frameId);
+            } else {
+              this.dropRemovedFrame(frameId);
+            }
           }
         }
       }
@@ -52,15 +54,11 @@ export class RelayManager implements RelayManagerInterface {
     }
   };
 
-  public createRelay = (frameId: string): RenderInterface => {
+  public createAndStartRelay = (frameId: string, processor: (renderModule: RenderInterface) => Promise<void>) => {
     const frameData = this.getOrCreate(frameId);
-    const relay = new RenderRelay(this, frameId);
+    const relay = new RenderRelay(this, frameId, processor);
     frameData.relay = relay;
-    return relay;
-  };
-
-  public done = (frameId: string) => {
-    this.relay(frameId, RelayManager.completionMessage);
+    relay.start();
   };
 
   public retry = (frameId: string) => {
@@ -92,6 +90,16 @@ export class RelayManager implements RelayManagerInterface {
     this.flushIfReady(frameId);
   };
 
+  public restartRelay = (frameId: string) => {
+    const frameData = this.frames.get(frameId);
+    if (frameData?.relay) {
+      frameData.relay.cancellation.cancel = true; // cancel the old processing to prevent interference and release resources
+      const relay = frameData.relay.clone();
+      this.frames.set(frameId, { queue: [], relay }); // wire the new relay
+      relay.start(); // start the processor anew
+    }
+  };
+
   private findFrameIds = (nodes: NodeList): string[] => {
     const frameIds: string[] = [];
     for (const node of nodes) {
@@ -121,7 +129,7 @@ export class RelayManager implements RelayManagerInterface {
   private getOrCreate = (frameId: string): FrameEntry => {
     const frameEntry = this.frames.get(frameId);
     if (frameEntry) return frameEntry;
-    const newFrameEntry = { queue: [], cancellation: { cancel: false } };
+    const newFrameEntry = { queue: [] };
     this.frames.set(frameId, newFrameEntry);
     return newFrameEntry;
   };
@@ -132,10 +140,6 @@ export class RelayManager implements RelayManagerInterface {
       const message = frameData.queue.shift();
       if (message) {
         BrowserMsg.send.pgpBlockRender(frameData.tabId, message);
-        if (message === RelayManager.completionMessage) {
-          this.frames.delete(frameId);
-          break;
-        }
       } else break;
     }
   };

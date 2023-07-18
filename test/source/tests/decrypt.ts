@@ -1069,7 +1069,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         // requires pp entry
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
         // now remembers pp in session
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content /* todo: finishSessionAfterTesting: true */ }, authHdr);
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
       })
     );
 
