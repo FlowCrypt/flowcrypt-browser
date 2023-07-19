@@ -32,6 +32,7 @@ export type ClientConfigurationJson = {
   enforce_keygen_algo?: string;
   enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;
+  prv_backup_to_designated_mailbox?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -252,5 +253,13 @@ export class ClientConfiguration {
    */
   public shouldDisableFlowCryptHostedPasswordMessages = (): boolean => {
     return (this.clientConfigurationJson.flags || []).includes('DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES');
+  };
+
+  /**
+   * With this option present, the decrypted private key backup will be encrypted and sent
+   * to the primary uid set to the public key specified in this client configuration org rule.
+   */
+  public getPublicKeyForPrivateKeyBackupToDesignatedMailbox = (): string | undefined => {
+    return this.clientConfigurationJson.prv_backup_to_designated_mailbox;
   };
 }
