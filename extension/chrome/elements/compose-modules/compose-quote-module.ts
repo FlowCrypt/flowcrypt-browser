@@ -91,7 +91,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       if (typeof raw === 'undefined') {
         return undefined;
       }
-      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
+      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw));
       const headers = {
         date: String(decoded.headers.date),
         from: decoded.from,
