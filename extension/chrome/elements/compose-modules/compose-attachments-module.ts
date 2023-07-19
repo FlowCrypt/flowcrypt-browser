@@ -32,6 +32,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
   };
 
   private getMaxAttachmentSizeAndOversizeNotice = async (): Promise<AttachmentLimits> => {
+    // To prevent size bloating, it is recommended to set the attachment size limit to 19MB for Rich-text editor mode - https://github.com/FlowCrypt/flowcrypt-browser/issues/2538#issuecomment-1639926581
     const sizeMb = this.view.sendBtnModule.popover.choices.richtext ? 19 : 25;
     return {
       sizeMb,
