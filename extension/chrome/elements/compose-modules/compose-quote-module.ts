@@ -89,7 +89,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
       this.setQuoteLoaderProgress('processing...');
       if (!raw) {
-        return undefined;
+        return;
       }
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw));
       const headers = {
