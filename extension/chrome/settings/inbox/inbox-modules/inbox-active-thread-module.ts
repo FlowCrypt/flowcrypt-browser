@@ -189,7 +189,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         loaderContext.getRenderedMessageXssSafe() +
         loaderContext.getRenderedAttachmentsXssSafe();
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-value
-      await this.view.messageRenderer.startProcessingInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames);
+      this.view.messageRenderer.startProcessingInlineBlocks(this.view.relayManager, this.view.factory, messageInfo, blocksInFrames);
       if (exportBtn) {
         $('.action-export').on(
           'click',

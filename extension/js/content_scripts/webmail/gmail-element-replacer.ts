@@ -93,7 +93,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   public reinsertReplyBox = (replyMsgId: string) => {
     const params: FactoryReplyParams = { replyMsgId };
-    $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
+    $('.reply_message_iframe_container:visible')
+      .last()
+      .append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   };
 
   public scrollToReplyBox = (replyMsgId: string) => {
@@ -192,7 +194,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
-      await this.messageRenderer.startProcessingInlineBlocks(this.relayManager, this.factory, setMessageInfo, blocksInFrames).catch(Catch.reportErr);
+      this.messageRenderer.startProcessingInlineBlocks(this.relayManager, this.factory, setMessageInfo, blocksInFrames);
     }
   };
 
