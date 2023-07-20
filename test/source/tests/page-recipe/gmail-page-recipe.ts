@@ -29,6 +29,14 @@ export class GmailPageRecipe extends PageRecipe {
     await gmailPage.waitForContent('.bAq', 'Conversation moved to Trash');
   };
 
+  public static expandMainMenuIfNeeded = async (gmailPage: ControllablePage) => {
+    const mainMenu = await gmailPage.waitAny('[aria-label="Main menu"]');
+    const expanded = await PageRecipe.getElementAttribute(mainMenu, 'aria-expanded');
+    if (expanded === 'false') {
+      await mainMenu.click();
+    }
+  };
+
   public static trimConvo = async (gmailPage: ControllablePage, messageId: string) => {
     const messageIdAttrName = 'data-legacy-message-id';
     while (true) {
