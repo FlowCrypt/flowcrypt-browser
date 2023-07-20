@@ -88,8 +88,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     try {
       const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
       this.setQuoteLoaderProgress('processing...');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
+      if (!raw) {
+        return;
+      }
+      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw));
       const headers = {
         date: String(decoded.headers.date),
         from: decoded.from,
