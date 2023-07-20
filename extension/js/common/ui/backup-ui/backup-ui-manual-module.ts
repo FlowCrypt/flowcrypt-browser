@@ -6,7 +6,7 @@ import { Xss } from '../../platform/xss.js';
 import { Attachment } from '../../core/attachment.js';
 import { SendableMsg } from '../../api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../core/const.js';
-import { KeyUtil, KeyInfoWithIdentity } from '../../core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity, Key } from '../../core/crypto/key.js';
 import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../browser/browser-msg.js';
@@ -20,6 +20,7 @@ import { KeyStore } from '../../platform/store/key-store.js';
 import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
 import { Lang } from '../../../../js/common/lang.js';
+import { MsgUtil } from '../../core/crypto/pgp/msg-util.js';
 
 const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
 export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
@@ -64,15 +65,22 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
     }
   };
 
-  public doBackupOnDesignatedMailbox = async (decryptedPrvs: KeyInfoWithIdentity, destinationEmail: string, fingerprint: string) => {
-    const emailMsg = String(await $.get({ url: '/chrome/emails/email_prv_backup_to_designated_mailbox.template.htm', dataType: 'html' }));
-    const emailAttachments = await this.asBackupFile(decryptedPrvs);
+  public doBackupOnDesignatedMailbox = async (
+    userEmail: string,
+    msgEncryptionKey: Key,
+    decryptedPrvs: KeyInfoWithIdentity[],
+    destinationEmail: string,
+    fingerprint: string
+  ) => {
+    const emailMsg = Lang.setup.prvBackupToDesignatedMailboxEmailBody;
+    const emailAttachments = decryptedPrvs.map(prv => this.asBackupFile(prv));
     const headers = {
       from: this.ui.acctEmail,
       recipients: { to: [{ email: destinationEmail }] },
       subject: Lang.setup.prvBackupToDesignatedMailboxEmailSubject(destinationEmail, fingerprint),
     };
-    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/html': emailMsg }, [emailAttachments]);
+    const encryptedMsg = await MsgUtil.encryptMessage({ pubkeys: [msgEncryptionKey], data: Buf.fromUtfStr(emailMsg), armor: true });
+    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/plain': encryptedMsg.data.toString() }, emailAttachments);
     if (this.ui.emailProvider === 'gmail') {
       return await this.ui.gmail.msgSend(msg);
     } else {

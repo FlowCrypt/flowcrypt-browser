@@ -11,7 +11,8 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
-import { Str } from '../../../js/common/core/common.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 
 export class SetupCreateKeyModule {
   public constructor(private view: SetupView) {}
@@ -39,11 +40,38 @@ export class SetupCreateKeyModule {
       if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
         const pubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
         if (pubkey) {
-          const emailEncryptionKey = await KeyUtil.parse(pubkey);
-          const primaryUserId = await emailEncryptionKey.id;
-          const userEmail = Str.parseEmail(emailEncryptionKey.identities[0]).email;
-          console.log(userEmail, primaryUserId);
-          // doBackupOnDesignatedMailbox
+          const msgEncryptionKey = await KeyUtil.parse(pubkey);
+          const destinationEmail = msgEncryptionKey.emails[0];
+          try {
+            const prvKeyAttachment = await KeyStore.get(this.view.acctEmail);
+            const primaryKeyId = await prvKeyAttachment[0].id;
+            const primaryUserId = prvKeyAttachment[0].emails![0];
+            await this.view.backupUi.initialize({
+              acctEmail: this.view.acctEmail,
+              action: 'setup_automatic',
+              keyIdentity,
+              onBackedUpFinished: async () => {
+                $('pre.status_details').remove();
+                $('#backup-template-container').remove();
+                await this.view.finalizeSetup();
+                await this.view.setupRender.renderSetupDone();
+              },
+            });
+            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(
+              primaryUserId,
+              msgEncryptionKey,
+              prvKeyAttachment,
+              destinationEmail,
+              primaryKeyId
+            );
+          } catch (e) {
+            if (ApiErr.isNetErr(e)) {
+              await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
+            } else {
+              Catch.reportErr(e);
+              await Ui.modal.error(`Error happened: ${String(e)}`);
+            }
+          }
         }
       } else if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
