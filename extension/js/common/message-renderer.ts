@@ -320,7 +320,7 @@ export class MessageRenderer {
           // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
           const raw = await this.downloader.msgGetRaw(msgId);
           loaderContext.hideAttachment(attachmentSel);
-          await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
             this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email, body)
           );
           return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
@@ -349,7 +349,7 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+        this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
           this.processCryptoMessage(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
@@ -372,14 +372,12 @@ export class MessageRenderer {
     }
   };
 
-  public startProcessingInlineBlocks = async (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
-    await Promise.all(
-      Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
-        )
-      )
-    );
+  public startProcessingInlineBlocks = (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
+    for (const [frameId, block] of Object.entries(blocks)) {
+      this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+        this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+      );
+    }
   };
 
   public deleteExpired = (): void => {
@@ -751,16 +749,16 @@ export class MessageRenderer {
     return {};
   };
 
-  private setMsgBodyAndStartProcessing = async (
+  private setMsgBodyAndStartProcessing = (
     loaderContext: LoaderContextInterface,
     type: string, // for diagnostics
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
     cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
-  ): Promise<void> => {
+  ) => {
     const { frameId, frameXssSafe } = this.factory.embeddedMsg(type); // xss-safe-factory
     loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, 'set'); // xss-safe-value
-    await this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
+    this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processCryptoMessage = async (

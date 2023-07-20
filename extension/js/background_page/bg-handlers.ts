@@ -94,7 +94,7 @@ export class BgHandlers {
   public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
     if (sender === 'background') {
       return { tabId: null }; // eslint-disable-line no-null/no-null
-    } else if (sender.tab) {
+    } else if (typeof sender.tab?.id === 'number' && sender.tab.id > 0) {
       return { tabId: `${sender.tab.id}:${sender.frameId}` };
     } else {
       // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
