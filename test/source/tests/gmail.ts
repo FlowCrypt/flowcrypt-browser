@@ -130,6 +130,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           richtext: true,
         });
         await ComposePageRecipe.sendAndClose(composePage);
+        await GmailPageRecipe.expandMainMenuIfNeeded(gmailPage);
         await gmailPage.waitAndClick('[aria-label^="Inbox"]');
         await gmailPage.waitAndClick('[role="row"]:first-of-type'); // click the first message
         await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
@@ -271,7 +272,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await createSecureDraft(t, browser, gmailPage, 'compose draft 1', { offline: true });
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
           await createSecureDraft(t, browser, gmailPage, 'compose draft 2', { offline: true });
-          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await GmailPageRecipe.expandMainMenuIfNeeded(gmailPage);
           await gmailPage.waitAndClick('[data-tooltip="Drafts"]');
           await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
           await gmailPage.ensureElementsCount('#fc_offline_drafts a', 2);
@@ -281,7 +283,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await draft.type('@input-body', 'trigger saving a draft to the cloud', true);
           await ComposePageRecipe.waitWhenDraftIsSaved(draft);
           // after draft 2 is saved to the cloud, it should be removed from offline drafts
-          await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
           await gmailPage.waitForContent('#fc_offline_drafts', 'FlowCrypt offline drafts:');
           await gmailPage.ensureElementsCount('#fc_offline_drafts a', 1);
           await gmailPage.waitAndClick('#fc_offline_drafts a');
