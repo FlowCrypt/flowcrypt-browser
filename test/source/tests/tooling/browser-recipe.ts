@@ -306,7 +306,7 @@ export class BrowserRecipe {
     await Util.sleep(1);
     if (m.enterPp) {
       const page = pgpBlockFrame.getPage();
-      await page.notPresent('@action-finish-session'); // todo: gmail
+      await page.notPresent('@action-finish-session');
       const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
       expect(errBadgeContent).to.equal('pass phrase needed');
       await pgpBlockFrame.notPresent('@action-print');
