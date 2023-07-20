@@ -83,7 +83,7 @@ export namespace Bm {
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQuery.AjaxSettings<ApiCallContext>; stack: string };
-  export type AjaxProgress = { frameId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
+  export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; responseDest: string; requestUid: string; footer?: string };
@@ -159,6 +159,7 @@ export namespace Bm {
     | StoreAcctSet
     | PgpMsgDecrypt
     | Ajax
+    | AjaxProgress
     | ShowAttachmentPreview
     | ShowConfirmation
     | ReRenderRecipient

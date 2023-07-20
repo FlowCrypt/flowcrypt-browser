@@ -1060,16 +1060,16 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           isForgetPpChecked: true,
           isForgetPpHidden: false,
         };
-        // 1. gmail page test
-        // requires pp entry
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
-        // now remembers pp in session
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
-        // 2. inbox page test
+        // 1. inbox page test
         // requires pp entry
         await InboxPageRecipe.checkDecryptMsg(t, browser, { enterPp, content, acctEmail, threadId });
         // now remembers pp in session
         await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, content, finishSessionAfterTesting: true });
+        // 2. gmail page test
+        // requires pp entry
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
+        // now remembers pp in session
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
       })
     );
 
