@@ -11,6 +11,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
+import { Str } from '../../../js/common/core/common.js';
 
 export class SetupCreateKeyModule {
   public constructor(private view: SetupView) {}
@@ -35,7 +36,16 @@ export class SetupCreateKeyModule {
       /* eslint-enable @typescript-eslint/naming-convention */
       const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
-      if (this.view.clientConfiguration.canBackupKeys()) {
+      if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
+        const pubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
+        if (pubkey) {
+          const emailEncryptionKey = await KeyUtil.parse(pubkey);
+          const primaryUserId = await emailEncryptionKey.id;
+          const userEmail = Str.parseEmail(emailEncryptionKey.identities[0]).email;
+          console.log(userEmail, primaryUserId);
+          // doBackupOnDesignatedMailbox
+        }
+      } else if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
         const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
         // only finalize after backup is done.

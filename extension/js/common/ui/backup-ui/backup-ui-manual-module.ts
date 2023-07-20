@@ -19,6 +19,7 @@ import { PassphraseStore } from '../../platform/store/passphrase-store.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
+import { Lang } from '../../../../js/common/lang.js';
 
 const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
 export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
@@ -56,6 +57,22 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0],
     };
     const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
+    if (this.ui.emailProvider === 'gmail') {
+      return await this.ui.gmail.msgSend(msg);
+    } else {
+      throw Error(`Backup method not implemented for ${this.ui.emailProvider}`);
+    }
+  };
+
+  public doBackupOnDesignatedMailbox = async (decryptedPrvs: KeyInfoWithIdentity, destinationEmail: string, fingerprint: string) => {
+    const emailMsg = String(await $.get({ url: '/chrome/emails/email_prv_backup_to_designated_mailbox.template.htm', dataType: 'html' }));
+    const emailAttachments = await this.asBackupFile(decryptedPrvs);
+    const headers = {
+      from: this.ui.acctEmail,
+      recipients: { to: [{ email: destinationEmail }] },
+      subject: Lang.setup.prvBackupToDesignatedMailboxEmailSubject(destinationEmail, fingerprint),
+    };
+    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/html': emailMsg }, [emailAttachments]);
     if (this.ui.emailProvider === 'gmail') {
       return await this.ui.gmail.msgSend(msg);
     } else {

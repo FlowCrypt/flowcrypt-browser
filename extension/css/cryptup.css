@@ -689,6 +689,11 @@ body#settings > div#content.setup h1 {
   animation: fadeIn 0.7s;
 }
 
+body#settings > div#content.setup div#step_0_backup_to_designated_mailbox {
+  display: none;
+  animation: fadeIn 0.7s;
+}
+
 body#settings > div#content.setup div#step_0_found_key {
   display: none;
   animation: fadeIn 0.7s;

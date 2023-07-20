@@ -49,8 +49,8 @@ export const Lang = {
     prvHasUseridIssue: 'The set of User IDs in this key is not supported.',
     ppMatchAllSet: "Your pass phrase matches. Good job! You're all set.",
     noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
-    prvBackupToDesignatedMailboxEmailSubject: (userEmail: string, primaryFingerprint: string) =>
-      `FlowCrypt OpenPGP Private Key backup for user ${userEmail} with id ${primaryFingerprint}`,
+    prvBackupToDesignatedMailboxEmailSubject: (destinationEmail: string, primaryFingerprint: string) =>
+      `FlowCrypt OpenPGP Private Key backup for user ${destinationEmail} with id ${primaryFingerprint}`,
   },
   account: {
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,

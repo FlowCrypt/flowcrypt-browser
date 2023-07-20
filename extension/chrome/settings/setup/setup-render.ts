@@ -90,6 +90,7 @@ export class SetupRenderModule {
   public displayBlock = (name: string) => {
     const blocks = [
       'loading',
+      'step_0_backup_to_designated_mailbox',
       'step_0_found_key',
       'step_1_easy_or_manual',
       'step_2a_manual_create',
@@ -127,7 +128,13 @@ export class SetupRenderModule {
         Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
       );
     }
-    if (keyserverRes.pubkeys.length) {
+    if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
+      if (!this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
+        this.displayBlock('step_0_backup_to_designated_mailbox');
+      } else {
+        throw new Error("Client Configuration flag 'PRV_AUTOIMPORT_OR_AUTOGEN' cannot be used together with 'prv_backup_to_designated_mailbox' rule.");
+      }
+    } else if (keyserverRes.pubkeys.length) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
