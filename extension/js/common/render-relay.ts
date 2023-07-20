@@ -6,18 +6,60 @@ import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { PrintMailInfo, RenderMessage } from './render-message.js';
 import { TransferableAttachment } from './core/attachment.js';
-import { PromiseCancellation } from './core/common.js';
+import { PromiseCancellation, Str } from './core/common.js';
 import { Catch } from './platform/catch.js';
 import { Xss } from './platform/xss.js';
+import { ProgressCb } from './api/shared/api.js';
+import { Bm } from './browser/browser-msg.js';
 
 export class RenderRelay implements RenderInterface {
   public readonly cancellation: PromiseCancellation = { cancel: false };
   private retry?: () => void;
+  private progressOperation?: {
+    text: string;
+    operationId: string; // we can possibly receive a callback from an operation started by the replaced RenderRelay, so need to check operationId
+  };
   public constructor(
     private relayManager: RelayManagerInterface,
     private frameId: string,
     private processor: (renderModule: RenderInterface) => Promise<void>
   ) {}
+
+  public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
+    if (typeof percent === 'undefined') {
+      if (total || expectedTransferSize) {
+        percent = Math.round((loaded / (total || expectedTransferSize)) * 100);
+      }
+    }
+    return percent;
+  };
+
+  public startProgressRendering = (text: string) => {
+    this.relay({ renderText: text }); // we want to enqueue this initial message in case of hanging...
+    const operationId = Str.sloppyRandom(10);
+    this.progressOperation = { text, operationId };
+    return (expectedTransferSize: number) => {
+      // the `download` shortcut function can be used in some cases
+      // if not lost by messaging, it will be given priority over message-based progress implementation
+      const download: ProgressCb = (percent, loaded, total) => this.renderProgress({ operationId, percent, loaded, total, expectedTransferSize });
+      return {
+        operationId,
+        expectedTransferSize,
+        download, // shortcut
+      };
+    };
+  };
+
+  public renderProgress = ({ operationId, percent, loaded, total, expectedTransferSize }: Bm.AjaxProgress) => {
+    if (this.progressOperation && this.progressOperation.operationId === operationId) {
+      const perc = RenderRelay.getPercentage(percent, loaded, total, expectedTransferSize);
+      if (typeof perc !== 'undefined') {
+        this.relay({ renderText: `${this.progressOperation.text} ${perc}%` }, { progressOperationRendering: true });
+      }
+      return true;
+    }
+    return false;
+  };
 
   public clone = () => {
     return new RenderRelay(this.relayManager, this.frameId, this.processor);
@@ -98,9 +140,13 @@ export class RenderRelay implements RenderInterface {
     }
   };
 
-  private relay = (message: RenderMessage) => {
+  private relay = (message: RenderMessage, options?: { progressOperationRendering: true }) => {
     if (!this.cancellation.cancel) {
-      this.relayManager.relay(this.frameId, message);
+      if (!options?.progressOperationRendering) {
+        // "unsubscribe" from further progress callbacks
+        this.progressOperation = undefined;
+      }
+      this.relayManager.relay(this.frameId, message, options?.progressOperationRendering);
     }
   };
 }

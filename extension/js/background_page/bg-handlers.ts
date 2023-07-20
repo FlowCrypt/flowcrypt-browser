@@ -30,7 +30,7 @@ export class BgHandlers {
   };
 
   public static ajaxHandler = async (r: Bm.Ajax, sender: Bm.Sender): Promise<Bm.Res.Ajax> => {
-    if (r.req.context?.frameId) {
+    if (r.req.context?.operationId) {
       // progress updates were requested via messages
       let dest = r.req.context.tabId;
       if (typeof dest === 'undefined') {
@@ -43,10 +43,10 @@ export class BgHandlers {
       }
       if (typeof dest !== 'undefined') {
         const destination = dest;
-        const frameId = r.req.context.frameId;
+        const operationId = r.req.context.operationId;
         const expectedTransferSize = r.req.context.expectedTransferSize;
         r.req.xhr = Api.getAjaxProgressXhrFactory({
-          download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, frameId }),
+          download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, operationId }),
         });
       }
     }

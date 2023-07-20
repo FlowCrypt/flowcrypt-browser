@@ -11,7 +11,6 @@ import { RenderRelay } from './render-relay.js';
 type FrameEntry = {
   tabId?: string;
   queue: RenderMessage[];
-  progressText?: string;
   relay?: RenderRelay;
 };
 
@@ -37,20 +36,13 @@ export class RelayManager implements RelayManagerInterface {
     framesObserver.observe(window.document, { subtree: true, childList: true });
   }
 
-  public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
-    if (typeof percent === 'undefined') {
-      if (total || expectedTransferSize) {
-        percent = Math.round((loaded / (total || expectedTransferSize)) * 100);
-      }
-    }
-    return percent;
-  };
-
-  public relay = (frameId: string, message: RenderMessage) => {
+  public relay = (frameId: string, message: RenderMessage, dontEnqueue?: boolean) => {
     const frameData = this.frames.get(frameId);
     if (frameData) {
-      frameData.queue.push(message);
-      this.flushIfReady(frameId);
+      if (!dontEnqueue || this.flushIfReady(frameId)) {
+        frameData.queue.push(message);
+        this.flushIfReady(frameId);
+      }
     }
   };
 
@@ -66,21 +58,12 @@ export class RelayManager implements RelayManagerInterface {
     frameData?.relay?.executeRetry();
   };
 
-  public renderProgressText = (frameId: string, text: string) => {
-    const frameData = this.frames.get(frameId);
-    if (frameData) {
-      frameData.progressText = text;
-      this.relay(frameId, { renderText: text });
-    }
-  };
-
-  public renderProgress = ({ frameId, percent, loaded, total, expectedTransferSize }: Bm.AjaxProgress) => {
-    const perc = RelayManager.getPercentage(percent, loaded, total, expectedTransferSize);
-    if (typeof perc !== 'undefined') {
-      const frameData = this.frames.get(frameId);
-      if (frameData?.tabId && typeof frameData.progressText !== 'undefined') {
-        this.relay(frameId, { renderText: `${frameData.progressText} ${perc}%` });
-      }
+  public renderProgress = (r: Bm.AjaxProgress) => {
+    // simply forward this message to all relays
+    // the correct recipient will recognize itself by operationId match
+    // and return true
+    for (const [, value] of this.frames) {
+      if (value.relay?.renderProgress(r)) break;
     }
   };
 
@@ -140,7 +123,10 @@ export class RelayManager implements RelayManagerInterface {
       const message = frameData.queue.shift();
       if (message) {
         BrowserMsg.send.pgpBlockRender(frameData.tabId, message);
-      } else break;
+      } else {
+        return true; // flushed
+      }
     }
+    return false; // not flushed
   };
 }
