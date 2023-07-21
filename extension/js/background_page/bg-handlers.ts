@@ -91,11 +91,15 @@ export class BgHandlers {
       });
     });
 
-  public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
+  public static respondWithSenderTabId = async (r: Bm._tab_, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
     if (sender === 'background') {
       return { tabId: null }; // eslint-disable-line no-null/no-null
     } else if (typeof sender.tab?.id === 'number' && sender.tab.id > 0) {
-      return { tabId: `${sender.tab.id}:${sender.frameId}` };
+      const tabId = `${sender.tab.id}:${sender.frameId}`;
+      if (r.contentScript) {
+        BrowserMsg.contentScriptsRegistry.add(tabId);
+      }
+      return { tabId };
     } else {
       // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
       // https://developers.chrome.com/extensions/runtime#type-MessageSender
