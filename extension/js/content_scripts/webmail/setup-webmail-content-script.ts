@@ -104,7 +104,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const initInternalVars = async (acctEmail: string) => {
-    const tabId = await BrowserMsg.requiredTabId(30, 1000); // keep trying for 30 seconds
+    const tabId = await BrowserMsg.requiredTabId(true, 30, 1000); // keep trying for 30 seconds
     const notifications = new Notifications();
     const factory = new XssSafeFactory(acctEmail, tabId, win.reloadable_class, win.destroyable_class);
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);

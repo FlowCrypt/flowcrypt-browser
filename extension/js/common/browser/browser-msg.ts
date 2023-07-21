@@ -68,6 +68,7 @@ export namespace Bm {
   export type ConfirmationResult = AsyncResult<boolean>;
   export type AuthWindowResult = { url?: string; error?: string };
   export type Db = { f: string; args: unknown[] };
+  export type _tab_ = { contentScript?: boolean }; // eslint-disable-line @typescript-eslint/naming-convention
   export type InMemoryStoreSet = {
     acctEmail: string;
     key: string;
@@ -107,7 +108,7 @@ export namespace Bm {
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
-    export type _tab_ = { tabId: string | null | undefined }; // eslint-disable-line @typescript-eslint/naming-convention
+    export type _tab_ = { tabId: string | null | undefined; contentScript?: boolean }; // eslint-disable-line @typescript-eslint/naming-convention
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,6 +130,7 @@ export namespace Bm {
   }
 
   export type AnyRequest =
+    | _tab_
     | PassphraseEntry
     | OpenPage
     | OpenGoogleAuthDialog
@@ -203,6 +205,8 @@ export class TabIdRequiredError extends Error {}
 
 export class BrowserMsg {
   public static MAX_SIZE = 1024 * 1024; // 1MB
+
+  public static contentScriptsRegistry = new Set<string>();
 
   public static send = {
     // todo - may want to organise this differently, seems to always confuse me when sending a message
@@ -301,9 +305,9 @@ export class BrowserMsg {
     window.document.body.appendChild(div);
   };
 
-  public static tabId = async (): Promise<string | null | undefined> => {
+  public static tabId = async (contentScript?: boolean): Promise<string | null | undefined> => {
     try {
-      const { tabId } = (await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true)) as Bm.Res._tab_;
+      const { tabId } = (await BrowserMsg.sendAwait(undefined, '_tab_', { contentScript }, true)) as Bm.Res._tab_;
       return tabId;
     } catch (e) {
       if (e instanceof BgNotReadyErr) {
@@ -313,11 +317,11 @@ export class BrowserMsg {
     }
   };
 
-  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
+  public static requiredTabId = async (contentScript?: boolean, attempts = 10, delay = 200): Promise<string> => {
     let tabId;
     for (let i = 0; i < attempts; i++) {
       // sometimes returns undefined right after browser start due to BgNotReadyErr
-      tabId = await BrowserMsg.tabId();
+      tabId = await BrowserMsg.tabId(contentScript);
       if (tabId) {
         return tabId;
       }
@@ -478,8 +482,7 @@ export class BrowserMsg {
     if (Catch.browser().name !== 'chrome') {
       return true; // only chrome sends messages directly to extension frame parent (in addition to sending to bg)
     }
-    if (destination !== `${sender.tab.id}:0`) {
-      // zero mains the main frame in a tab, the parent frame
+    if (BrowserMsg.contentScriptsRegistry.has(destination)) {
       return true; // not sending to a parent (must relay, browser does not send directly)
     }
     if (sender.url?.includes(chrome.runtime.id) && sender.tab.url?.startsWith('https://')) {
