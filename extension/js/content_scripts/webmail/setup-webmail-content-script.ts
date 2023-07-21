@@ -103,13 +103,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
-  class AbortContentScriptSetup extends Error {}
-
   const initInternalVars = async (acctEmail: string) => {
     const tabId = await BrowserMsg.requiredTabId(true, 30, 1000); // keep trying for 30 seconds
-    if (!tabId.endsWith(':0')) {
-      throw new AbortContentScriptSetup();
-    }
     const notifications = new Notifications();
     const factory = new XssSafeFactory(acctEmail, tabId, win.reloadable_class, win.destroyable_class);
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
@@ -443,9 +438,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       );
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
     } catch (e) {
-      if (e instanceof AbortContentScriptSetup) {
-        console.warn('Aborting content script setup into a non-top frame');
-      } else if (e instanceof TabIdRequiredError) {
+      if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);
       } else if (e instanceof Error && e.message === 'Extension context invalidated.') {
         console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
