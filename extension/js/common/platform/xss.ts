@@ -230,6 +230,15 @@ export class Xss {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
   };
 
+  public static stripEmojis = (str: string) => {
+    const emojiRegex = /[\u{1F300}-\u{1F64F}\u{2700}-\u{27B0}\u{23E9}-\u{23FA}\u{2194}-\u{21AA}\u261D\u26A1\u263A-\uD83E\uD83E]/gu;
+    // regex for removing whitespace other form of whitespaces www.utf8-chartable.de/unicode-utf8-table.pl?start=65024&names=-
+    const whitespaceRegex = /[\u{FE00}-\u{FE0F}]/gu;
+    str = str.replace(emojiRegex, '');
+    str = str.replace(whitespaceRegex, ''); //
+    return this.escape(str);
+  };
+
   public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
     return str

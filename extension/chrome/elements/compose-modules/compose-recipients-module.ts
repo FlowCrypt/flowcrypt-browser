@@ -346,7 +346,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const recipient = orderedRecipients[processed];
       const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
       const nameOrEmail = recipient.name || recipient.email || recipient.invalid || '';
-      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(nameOrEmail)}</span>`;
+      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.stripEmojis(nameOrEmail)}</span>`;
       $(emailHtml).insertBefore(rest); // xss-escaped
       processed++;
     }
@@ -808,7 +808,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
         displayEmail = '<div class="select_contact_email" data-test="action-select-contact-email">' + Xss.escape(displayEmail) + '</div>';
         if (contact.name) {
-          ulHtml += '<div class="select_contact_name" data-test="action-select-contact-name">' + Xss.escape(contact.name) + displayEmail + '</div>';
+          ulHtml += '<div class="select_contact_name" data-test="action-select-contact-name">' + Xss.stripEmojis(contact.name) + displayEmail + '</div>';
         } else {
           ulHtml += displayEmail;
         }
@@ -906,7 +906,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const recipientId = this.generateRecipientId();
       const recipientsHtml =
         `<span tabindex="0" id="${recipientId}" data-test="${recipientId}">` +
-        `<span class="recipient-name">${Xss.escape(name || '')}</span>` +
+        `<span class="recipient-name">${Xss.stripEmojis(name || '')}</span>` +
         `<span class="recipient-email">${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);
@@ -1057,7 +1057,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     } else if (info && info.sortedPubkeys.length) {
       if (info.info.name) {
         recipient.name = info.info.name;
-        $(el).find('.recipient-name').text(Xss.escape(info.info.name));
+        $(el).find('.recipient-name').text(Xss.stripEmojis(info.info.name));
       }
       // New logic:
       // 1. Keys are sorted in a special way.
@@ -1098,7 +1098,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       $(el).addClass('no_pgp');
       if (info?.info.name) {
         recipient.name = info.info.name;
-        $(el).find('.recipient-name').text(Xss.escape(info.info.name));
+        $(el).find('.recipient-name').text(Xss.stripEmojis(info.info.name));
       }
       Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');

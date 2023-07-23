@@ -245,13 +245,13 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       switch (recipient.sendingType) {
         case 'to':
-          result.to!.push({ email: recipient.email, name: recipient.name });
+          result.to!.push({ email: recipient.email, name: Xss.stripEmojis(recipient.name || '') });
           break;
         case 'cc':
-          result.cc!.push({ email: recipient.email, name: recipient.name });
+          result.cc!.push({ email: recipient.email, name: Xss.stripEmojis(recipient.name || '') });
           break;
         case 'bcc':
-          result.bcc!.push({ email: recipient.email, name: recipient.name });
+          result.bcc!.push({ email: recipient.email, name: Xss.stripEmojis(recipient.name || '') });
           break;
       }
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
