@@ -67,6 +67,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - strip emojis in a recipient email address',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const recipientEmail = 'User ⭐ Name <test@email.com>';
+        const msgPwd = 'super hard password for the message';
+        const subject = 'PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        await ComposePageRecipe.selectFromOption(composePage, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
+        await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(1);
+        // this test is using PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes"
+      })
+    );
+
+    test(
       'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
