@@ -32,13 +32,16 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
   };
 
   private getMaxAttachmentSizeAndOversizeNotice = async (): Promise<AttachmentLimits> => {
-    const sizeMb = 25;
+    // To prevent size bloating, it is recommended to set the attachment size limit to 19MB for Rich-text editor mode - https://github.com/FlowCrypt/flowcrypt-browser/issues/2538#issuecomment-1639926581
+    const sizeMb = this.view.inputModule.isRichText() ? 19 : 25;
     return {
       sizeMb,
       size: sizeMb * 1024 * 1024,
       count: 50,
       oversize: async (combinedSize: number) => {
-        await Ui.modal.warning('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
+        await Ui.modal.warning(
+          `Combined attachment size is limited to ${sizeMb} MB. The last file brings it to ` + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.'
+        );
       },
     };
   };
