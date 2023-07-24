@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Buf } from '../../../core/buf';
-import { Str } from '../../../core/common';
-import { GmailRes } from './gmail-parser';
+import { Buf } from '../../../core/buf.js';
+import { Str } from '../../../core/common.js';
+import { GmailRes } from './gmail-parser.js';
 
 export class OAuth {
   /**
