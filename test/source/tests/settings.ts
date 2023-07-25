@@ -538,7 +538,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // test for direct access at my_key_update.htm
         const myKeyUpdateFrame = await browser.newExtensionPage(
           t,
-          `chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`
+          `chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}&parentTabId=1`
         );
         await myKeyUpdateFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
         // test for direct access at my add_key.htm
