@@ -34,8 +34,8 @@ export namespace Bm {
     uid: string;
     stack: string;
   };
-  export type RawWindowMessageWithResponseDest = Raw & {
-    data: { bm: AnyRequest & { responseDest: Dest }; objUrls: Dict<string> };
+  export type RawWindowMessageWithSender = Raw & {
+    data: { bm: AnyRequest & { messageSender: Dest }; objUrls: Dict<string> };
     responseName?: string;
   };
 
@@ -87,10 +87,10 @@ export namespace Bm {
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowConfirmation = { text: string; isHTML: boolean; responseDest: string; requestUid: string; footer?: string };
+  export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: string; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
   export type PgpBlockRetry = { frameId: string };
-  export type PgpBlockReady = { frameId: string; responseDest: Dest };
+  export type PgpBlockReady = { frameId: string; messageSender: Dest };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -346,11 +346,11 @@ export class BrowserMsg {
     const allowedOrigin = Env.getExtensionOrigin();
     window.addEventListener('message', e => {
       if (e.origin === allowedOrigin) {
-        const msg = e.data as Bm.RawWindowMessageWithResponseDest;
+        const msg = e.data as Bm.RawWindowMessageWithSender;
         BrowserMsg.handleMsg(msg, {}, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName) {
             // send response as a new request
-            BrowserMsg.sendRaw(msg.data.bm.responseDest, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
+            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
           }
         });
       }
@@ -430,8 +430,8 @@ export class BrowserMsg {
     });
   };
 
-  private static sendToParentWindow = (name: string, bm: Dict<unknown> & { responseDest: Bm.Dest }, responseName?: string) => {
-    const raw: Bm.RawWindowMessageWithResponseDest = {
+  private static sendToParentWindow = (name: string, bm: Dict<unknown> & { messageSender: Bm.Dest }, responseName?: string) => {
+    const raw: Bm.RawWindowMessageWithSender = {
       data: { bm, objUrls: {} },
       name,
       stack: '',

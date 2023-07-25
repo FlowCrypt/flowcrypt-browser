@@ -355,7 +355,7 @@ export class Ui {
             text,
             isHTML,
             footer,
-            responseDest: confirmationResultTracker.getDest(),
+            messageSender: confirmationResultTracker.getDest(),
             requestUid,
           });
         });
