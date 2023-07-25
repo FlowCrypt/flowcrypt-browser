@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Key, KeyInfoWithIdentity, KeyUtil, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity, KeyUtil } from '../../../js/common/core/crypto/key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { PgpArmor } from '../../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -19,10 +19,9 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
-import { KeyCanBeFixed, KeyImportUi, UserAlert } from '../../../js/common/ui/key-import-ui.js';
-import { saveKeysAndPassPhrase, setPassphraseForPrvs } from '../../../js/common/helpers.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
+import { KeyErrors } from '../../elements/shared/key_errors.js';
 
 View.run(
   class MyKeyUpdateView extends View {
@@ -34,6 +33,7 @@ View.run(
     private readonly showKeyUrl: string;
     private readonly inputPrivateKey = $('.input_private_key');
     private readonly prvHeaders = PgpArmor.headers('privateKey');
+    private readonly keyErrors: KeyErrors;
     private ki: KeyInfoWithIdentity | undefined;
     private clientConfiguration!: ClientConfiguration;
     private pubLookup!: PubLookup;
@@ -45,6 +45,7 @@ View.run(
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
       this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+      this.keyErrors = new KeyErrors(this.fesUrl || '', this.acctEmail, this.parentTabId, this.clientConfiguration);
     }
 
     public render = async () => {
@@ -82,49 +83,6 @@ View.run(
         this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler())
       );
       $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
-    };
-
-    private isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
-
-    private toggleCompatibilityView = (visible: boolean) => {
-      if (visible) {
-        $('#add_key_container').hide();
-        $('#compatibility_fix').show();
-      } else {
-        $('#add_key_container').show();
-        $('#compatibility_fix').hide();
-      }
-    };
-
-    private saveKeyAndContinue = async (key: Key) => {
-      await saveKeysAndPassPhrase(this.acctEmail, [key]); // resulting new_key checked above
-      /* eslint-disable @typescript-eslint/naming-convention */
-      await setPassphraseForPrvs(this.clientConfiguration, this.acctEmail, [key], {
-        passphrase: String($('.input_passphrase').val()),
-        passphrase_save: !!$('.input_passphrase_save').prop('checked'),
-        passphrase_ensure_single_copy: false, // we require KeyImportUi to rejectKnown keys
-      });
-      /* eslint-enable @typescript-eslint/naming-convention */
-      BrowserMsg.send.reload(this.parentTabId, { advanced: true });
-    };
-
-    private renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key) => {
-      let fixedPrv;
-      try {
-        this.toggleCompatibilityView(true);
-        fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-          this.acctEmail,
-          '#compatibility_fix',
-          origPrv,
-          String($('.input_passphrase').val()),
-          window.location.href.replace(/#$/, '')
-        );
-        await this.saveKeyAndContinue(fixedPrv);
-      } catch (e) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`, false, Ui.testCompatibilityLink);
-        this.toggleCompatibilityView(false);
-      }
     };
 
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
@@ -196,20 +154,7 @@ View.run(
           }
         }
       } catch (e) {
-        if (e instanceof UserAlert) {
-          return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
-        } else if (e instanceof KeyCanBeFixed) {
-          return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted);
-        } else if (e instanceof UnexpectedKeyTypeError) {
-          return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
-        } else {
-          Catch.reportErr(e);
-          return await Ui.modal.error(
-            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
-            false,
-            Ui.testCompatibilityLink
-          );
-        }
+        return await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
       }
     };
   }

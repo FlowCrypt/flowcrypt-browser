@@ -2,23 +2,21 @@
 
 'use strict';
 
-import { KeyCanBeFixed, KeyImportUi, UserAlert } from '../../../js/common/ui/key-import-ui.js';
+import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 import { Gmail } from '../../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { View } from '../../../js/common/view.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
-import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
+import { Key } from '../../../js/common/core/crypto/key.js';
 import { ClientConfiguration } from '../../../js/common/client-configuration.js';
-import { Lang } from '../../../js/common/lang.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { saveKeysAndPassPhrase, setPassphraseForPrvs } from '../../../js/common/helpers.js';
-import { Settings } from '../../../js/common/settings.js';
+import { KeyErrors } from '../../elements/shared/key_errors.js';
 
 View.run(
   class AddKeyView extends View {
@@ -27,6 +25,7 @@ View.run(
     private readonly parentTabId: string;
     private readonly keyImportUi = new KeyImportUi({ rejectKnown: true });
     private readonly gmail: Gmail;
+    private readonly keyErrors: KeyErrors;
     private clientConfiguration!: ClientConfiguration;
 
     public constructor() {
@@ -35,6 +34,7 @@ View.run(
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.gmail = new Gmail(this.acctEmail);
+      this.keyErrors = new KeyErrors(this.fesUrl || '', this.acctEmail, this.parentTabId, this.clientConfiguration);
     }
 
     public render = async () => {
@@ -72,8 +72,6 @@ View.run(
       $('.action_add_private_key').on('click', this.setHandlerPrevent('double', this.addPrivateKeyHandler));
       $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
     };
-
-    private isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
     private loadAndRenderKeyBackupsOrRenderError = async () => {
       try {
@@ -119,49 +117,7 @@ View.run(
           await this.saveKeyAndContinue(checked.encrypted);
         }
       } catch (e) {
-        if (e instanceof UserAlert) {
-          return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
-        } else if (e instanceof KeyCanBeFixed) {
-          return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted);
-        } else if (e instanceof UnexpectedKeyTypeError) {
-          return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
-        } else {
-          Catch.reportErr(e);
-          return await Ui.modal.error(
-            `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
-            false,
-            Ui.testCompatibilityLink
-          );
-        }
-      }
-    };
-
-    private toggleCompatibilityView = (visible: boolean) => {
-      if (visible) {
-        $('#add_key_container').hide();
-        $('#compatibility_fix').show();
-      } else {
-        $('#add_key_container').show();
-        $('#compatibility_fix').hide();
-      }
-    };
-
-    private renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key) => {
-      let fixedPrv;
-      try {
-        this.toggleCompatibilityView(true);
-        fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-          this.acctEmail,
-          '#compatibility_fix',
-          origPrv,
-          String($('.input_passphrase').val()),
-          window.location.href.replace(/#$/, '')
-        );
-        await this.saveKeyAndContinue(fixedPrv);
-      } catch (e) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`, false, Ui.testCompatibilityLink);
-        this.toggleCompatibilityView(false);
+        return await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
       }
     };
   }
