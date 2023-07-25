@@ -2021,6 +2021,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile1).length).to.equal(1);
+        expect(Object.keys(downloadedFile1)[0]).to.match(/demo.*\.bat/);
         await pgpBlockPage.waitAndClick('@preview-attachment');
         const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
@@ -2032,6 +2033,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile2).length).to.equal(1);
+        expect(Object.keys(downloadedFile2)[0]).to.match(/demo.*\.bat/);
         await inboxPage.close();
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
         const pgpBlockPage2 = await inboxPage2.getFrame(['pgp_block.htm']);
@@ -2044,6 +2046,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile3).length).to.equal(1);
+        expect(Object.keys(downloadedFile3)[0]).to.match(/demo.*\.bat/);
         await inboxPage2.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
@@ -2057,6 +2060,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile4).length).to.equal(1);
+        expect(Object.keys(downloadedFile4)[0]).to.match(/demo.*\.bat/);
         const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
         await attachmentFrame.waitAndClick('@attachment-container');
         const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
@@ -2069,6 +2073,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile5).length).to.equal(1);
+        expect(Object.keys(downloadedFile5)[0]).to.match(/demo.*\.bat/);
         await gmailPage.close();
         const gmailPage2 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId2}`, undefined, authHdr);
         const pgpBlockPage4 = await gmailPage2.getFrame(['pgp_block.htm']);
@@ -2081,6 +2086,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile6).length).to.equal(1);
+        expect(Object.keys(downloadedFile6)[0]).to.match(/demo.*\.bat/);
         await gmailPage2.close();
         // check warning modal for regular unencrypted attachment on FlowCrypt web extension page
         const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
@@ -2093,6 +2099,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile7).length).to.equal(1);
+        expect(Object.keys(downloadedFile7)[0]).to.match(/sample.*\.bat/);
         await attachmentFrame2.waitAndClick('@attachment-container');
         const attachmentPreviewPage3 = await inboxPage3.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage3.waitAndClick('@attachment-preview-download');
@@ -2103,6 +2110,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           })
         );
         expect(Object.entries(downloadedFile8).length).to.equal(1);
+        expect(Object.keys(downloadedFile8)[0]).to.match(/sample.*\.bat/);
       })
     );
   }

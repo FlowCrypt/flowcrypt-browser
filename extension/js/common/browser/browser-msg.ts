@@ -36,7 +36,7 @@ export namespace Bm {
   };
   export type RawWindowMessageWithResponseDest = Raw & {
     data: { bm: AnyRequest & { responseDest: Dest }; objUrls: Dict<string> };
-    responseName: string;
+    responseName?: string;
   };
 
   export type SetCss = { css: Dict<string>; traverseUp?: number; selector: string };
@@ -90,7 +90,7 @@ export namespace Bm {
   export type ShowConfirmation = { text: string; isHTML: boolean; responseDest: string; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
   export type PgpBlockRetry = { frameId: string };
-  export type PgpBlockReady = { frameId: string; tabId: Dest };
+  export type PgpBlockReady = { frameId: string; responseDest: Dest };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -126,7 +126,8 @@ export namespace Bm {
       | StoreGlobalGet
       | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk
-      | PgpKeyBinaryToArmored;
+      | PgpKeyBinaryToArmored
+      | ConfirmationResult;
   }
 
   export type AnyRequest =
@@ -232,7 +233,6 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
       },
     },
-    confirmationResult: (dest: Bm.Dest, bm: Bm.ConfirmationResult) => BrowserMsg.sendCatch(dest, 'confirmation_result', bm),
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
     openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
@@ -266,7 +266,7 @@ export class BrowserMsg {
     showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
     ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => BrowserMsg.sendCatch(dest, 'ajax_progress', bm),
     pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
-    pgpBlockReady: (dest: Bm.Dest, bm: Bm.PgpBlockReady) => BrowserMsg.sendCatch(dest, 'pgp_block_ready', bm),
+    pgpBlockReady: (bm: Bm.PgpBlockReady) => BrowserMsg.sendToParentWindow('pgp_block_ready', bm),
     pgpBlockRetry: (dest: Bm.Dest, bm: Bm.PgpBlockRetry) => BrowserMsg.sendCatch(dest, 'pgp_block_retry', bm),
   };
   private static readonly processed: string[] = [];
@@ -348,7 +348,10 @@ export class BrowserMsg {
       if (e.origin === allowedOrigin) {
         const msg = e.data as Bm.RawWindowMessageWithResponseDest;
         BrowserMsg.handleMsg(msg, {}, (rawResponse: Bm.RawResponse) => {
-          BrowserMsg.sendCatch(msg.data.bm.responseDest, msg.responseName, rawResponse);
+          if (msg.responseName) {
+            // send response as a new request
+            BrowserMsg.sendRaw(msg.data.bm.responseDest, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
+          }
         });
       }
     });
@@ -427,7 +430,7 @@ export class BrowserMsg {
     });
   };
 
-  private static sendToParentWindow = (name: string, bm: Dict<unknown> & { responseDest: Bm.Dest }, responseName: string) => {
+  private static sendToParentWindow = (name: string, bm: Dict<unknown> & { responseDest: Bm.Dest }, responseName?: string) => {
     const raw: Bm.RawWindowMessageWithResponseDest = {
       data: { bm, objUrls: {} },
       name,
@@ -504,12 +507,29 @@ export class BrowserMsg {
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
       return await handler(bm, 'background');
     }
-    return await new Promise((resolve, reject) => {
+    return await BrowserMsg.sendRaw(
+      destString,
+      name,
+      bm,
       // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
-      const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
+      BrowserMsg.replaceBufWithObjUrlInplace(bm),
+      awaitRes,
+      isBackgroundPage
+    );
+  };
+
+  private static sendRaw = async (
+    destString: string | undefined,
+    name: string,
+    bm: Dict<unknown>,
+    objUrls: Dict<string>,
+    awaitRes = false,
+    isBackgroundPage = false
+  ): Promise<Bm.Response> => {
+    return await new Promise((resolve, reject) => {
       const msg: Bm.Raw = {
         name,
-        data: { bm: bm!, objUrls }, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        data: { bm, objUrls },
         to: destString || null, // eslint-disable-line no-null/no-null
         uid: Str.sloppyRandom(10),
         stack: Catch.stackTrace(),

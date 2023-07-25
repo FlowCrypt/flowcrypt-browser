@@ -177,8 +177,8 @@ export class InboxView extends View {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
     BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
-    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, tabId }: Bm.PgpBlockReady) => {
-      this.relayManager.associate(frameId, tabId);
+    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, responseDest }: Bm.PgpBlockReady) => {
+      this.relayManager.associate(frameId, responseDest);
     });
     BrowserMsg.addListener('pgp_block_retry', async ({ frameId }: Bm.PgpBlockRetry) => {
       this.relayManager.retry(frameId);

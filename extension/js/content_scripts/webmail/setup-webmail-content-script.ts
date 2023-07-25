@@ -219,8 +219,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await factory.showAddPubkeyDialog(emails);
     });
-    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, tabId }: Bm.PgpBlockReady) => {
-      relayManager.associate(frameId, tabId);
+    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, responseDest }: Bm.PgpBlockReady) => {
+      relayManager.associate(frameId, responseDest);
     });
     BrowserMsg.addListener('pgp_block_retry', async ({ frameId }: Bm.PgpBlockRetry) => {
       relayManager.retry(frameId);

@@ -42,9 +42,9 @@ export class CommonHandlers {
   };
 
   // for specific types
-  public static showConfirmationHandler: Bm.AsyncResponselessHandler = async ({ text, isHTML, footer, responseDest, requestUid }: Bm.ShowConfirmation) => {
+  public static showConfirmationHandler: Bm.AsyncRespondingHandler = async ({ text, isHTML, footer, requestUid }: Bm.ShowConfirmation) => {
     const payload = await Ui.modal.confirm(text, isHTML, footer);
-    BrowserMsg.send.confirmationResult(responseDest, { payload, requestUid });
+    return { requestUid, payload };
   };
 }
 

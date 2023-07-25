@@ -62,7 +62,7 @@ export class PgpBlockView extends View {
     });
     BrowserMsg.addListener('confirmation_result', CommonHandlers.createAsyncResultHandler());
     BrowserMsg.listen(this.tabId);
-    BrowserMsg.send.pgpBlockReady(this.parentTabId, { frameId: this.frameId, tabId: this.tabId });
+    BrowserMsg.send.pgpBlockReady({ frameId: this.frameId, responseDest: this.tabId });
   };
 
   private processMessage = (data: RenderMessage) => {
