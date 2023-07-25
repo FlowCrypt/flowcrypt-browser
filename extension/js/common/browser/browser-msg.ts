@@ -89,7 +89,7 @@ export namespace Bm {
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: string; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
-  export type PgpBlockRetry = { frameId: string };
+  export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
 
   export namespace Res {
@@ -267,7 +267,7 @@ export class BrowserMsg {
     ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => BrowserMsg.sendCatch(dest, 'ajax_progress', bm),
     pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
     pgpBlockReady: (bm: Bm.PgpBlockReady) => BrowserMsg.sendToParentWindow('pgp_block_ready', bm),
-    pgpBlockRetry: (dest: Bm.Dest, bm: Bm.PgpBlockRetry) => BrowserMsg.sendCatch(dest, 'pgp_block_retry', bm),
+    pgpBlockRetry: (bm: Bm.PgpBlockRetry) => BrowserMsg.sendToParentWindow('pgp_block_retry', bm),
   };
   private static readonly processed: string[] = [];
   /* eslint-disable @typescript-eslint/naming-convention */

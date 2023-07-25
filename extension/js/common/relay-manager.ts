@@ -53,9 +53,11 @@ export class RelayManager implements RelayManagerInterface {
     relay.start();
   };
 
-  public retry = (frameId: string) => {
+  public retry = (frameId: string, messageSender: Bm.Dest) => {
     const frameData = this.frames.get(frameId);
-    frameData?.relay?.executeRetry();
+    if (frameData?.tabId === messageSender) {
+      frameData.relay?.executeRetry();
+    }
   };
 
   public renderProgress = (r: Bm.AjaxProgress) => {

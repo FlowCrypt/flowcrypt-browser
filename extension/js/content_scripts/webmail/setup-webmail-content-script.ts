@@ -222,8 +222,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
       relayManager.associate(frameId, messageSender);
     });
-    BrowserMsg.addListener('pgp_block_retry', async ({ frameId }: Bm.PgpBlockRetry) => {
-      relayManager.retry(frameId);
+    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+      relayManager.retry(frameId, messageSender);
     });
     BrowserMsg.addListener('notification_show', async ({ notification, callbacks, group }: Bm.NotificationShow) => {
       notifications.show(notification, callbacks, group);

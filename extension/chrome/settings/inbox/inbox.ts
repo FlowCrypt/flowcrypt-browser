@@ -180,8 +180,8 @@ export class InboxView extends View {
     BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
       this.relayManager.associate(frameId, messageSender);
     });
-    BrowserMsg.addListener('pgp_block_retry', async ({ frameId }: Bm.PgpBlockRetry) => {
-      this.relayManager.retry(frameId);
+    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+      this.relayManager.retry(frameId, messageSender);
     });
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {
