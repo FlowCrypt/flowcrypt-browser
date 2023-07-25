@@ -44,6 +44,12 @@ export type TestMessage = {
   signature?: string;
   encryption?: string;
   error?: string;
+  enterPp?: { passphrase: string; isForgetPpHidden?: boolean; isForgetPpChecked?: boolean };
+};
+
+export type TestMessageAndSession = TestMessage & {
+  finishSessionBeforeTesting?: boolean; // finish session before testing pgp_block
+  finishSessionAfterTesting?: boolean; // finish session after testing pgp_block and test that pgp_block now requires a passphrase
 };
 
 export type TestKeyInfo = {

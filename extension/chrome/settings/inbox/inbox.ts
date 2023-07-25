@@ -24,7 +24,6 @@ import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { RelayManager } from '../../../js/common/relay-manager.js';
 import { MessageRenderer } from '../../../js/common/message-renderer.js';
-import { Env } from '../../../js/common/browser/env.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -62,16 +61,11 @@ export class InboxView extends View {
     this.inboxNotificationModule = new InboxNotificationModule(this);
     this.inboxActiveThreadModule = new InboxActiveThreadModule(this);
     this.inboxListThreadsModule = new InboxListThreadsModule(this);
-    window.addEventListener('message', e => {
-      if (e.origin === Env.getExtensionOrigin()) {
-        this.relayManager.handleMessageFromFrame(e.data);
-      }
-    });
   }
 
   public render = async () => {
     this.tabId = await BrowserMsg.requiredTabId();
-    this.relayManager = new RelayManager(this.tabId, this.debug);
+    this.relayManager = new RelayManager(this.debug);
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
@@ -105,7 +99,9 @@ export class InboxView extends View {
 
   public setHandlers = () => {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
+    this.addBrowserMsgListeners();
     BrowserMsg.listen(this.tabId);
+    BrowserMsg.listenForWindowMessages(); // listen for direct messages from child iframes
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
     $('.action_open_settings').on(
       'click',
@@ -122,7 +118,6 @@ export class InboxView extends View {
       'click',
       this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
     );
-    this.addBrowserMsgListeners();
   };
 
   public redirectToUrl = (params: UrlParams) => {
@@ -182,6 +177,12 @@ export class InboxView extends View {
       await Ui.modal.attachmentPreview(iframeUrl);
     });
     BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
+    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
+      this.relayManager.associate(frameId, messageSender);
+    });
+    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+      this.relayManager.retry(frameId, messageSender);
+    });
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {
         console.log('received open_compose_window');
