@@ -43,7 +43,7 @@ export class AttachmentDownloadView extends View {
   private originalButtonHTML: string | undefined;
   private canClickOnAttachment = false;
   private downloadInProgress = false;
-  private tabId!: string;
+  private readonly tabId = BrowserMsg.generateTabId();
 
   public constructor() {
     super();
@@ -89,7 +89,6 @@ export class AttachmentDownloadView extends View {
   };
 
   public render = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
     const storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
     try {
@@ -320,7 +319,7 @@ export class AttachmentDownloadView extends View {
       errorDetailsOpened,
       this.frameId
     );
-    BrowserMsg.send.showAttachmentPreview(this.parentTabId, { iframeUrl });
+    BrowserMsg.send.showAttachmentPreview({ iframeUrl, messageSender: this.tabId });
   };
 
   private decryptAndSaveAttachmentToDownloads = async () => {

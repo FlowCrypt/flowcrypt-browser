@@ -17,7 +17,6 @@ import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
 import { Env } from './env.js';
-import { Time } from './time.js';
 import { RenderMessage } from '../render-message.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -68,7 +67,6 @@ export namespace Bm {
   export type ConfirmationResult = AsyncResult<boolean>;
   export type AuthWindowResult = { url?: string; error?: string };
   export type Db = { f: string; args: unknown[] };
-  export type _tab_ = { contentScript?: boolean }; // eslint-disable-line @typescript-eslint/naming-convention
   export type InMemoryStoreSet = {
     acctEmail: string;
     key: string;
@@ -86,8 +84,8 @@ export namespace Bm {
   export type Ajax = { req: JQuery.AjaxSettings<ApiCallContext>; stack: string };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
-  export type ShowAttachmentPreview = { iframeUrl: string };
-  export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: string; requestUid: string; footer?: string };
+  export type ShowAttachmentPreview = { iframeUrl: string; messageSender: Dest };
+  export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: Dest; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
@@ -108,7 +106,6 @@ export namespace Bm {
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
-    export type _tab_ = { tabId: string | null | undefined; contentScript?: boolean }; // eslint-disable-line @typescript-eslint/naming-convention
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,7 +113,6 @@ export namespace Bm {
 
     export type Any =
       | GetActiveTabInfo
-      | _tab_
       | ReconnectAcctAuthPopup
       | PgpMsgDecrypt
       | InMemoryStoreGet
@@ -131,7 +127,6 @@ export namespace Bm {
   }
 
   export type AnyRequest =
-    | _tab_
     | PassphraseEntry
     | OpenPage
     | OpenGoogleAuthDialog
@@ -207,8 +202,6 @@ export class TabIdRequiredError extends Error {}
 export class BrowserMsg {
   public static MAX_SIZE = 1024 * 1024; // 1MB
 
-  public static contentScriptsRegistry = new Set<string>();
-
   public static send = {
     // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
@@ -263,7 +256,7 @@ export class BrowserMsg {
     redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
     addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
     reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
-    showAttachmentPreview: (dest: Bm.Dest, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendCatch(dest, 'show_attachment_preview', bm),
+    showAttachmentPreview: (bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendToParentWindow('show_attachment_preview', bm),
     ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => BrowserMsg.sendCatch(dest, 'ajax_progress', bm),
     pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
     pgpBlockReady: (bm: Bm.PgpBlockReady) => BrowserMsg.sendToParentWindow('pgp_block_ready', bm),
@@ -305,29 +298,8 @@ export class BrowserMsg {
     window.document.body.appendChild(div);
   };
 
-  public static tabId = async (contentScript?: boolean): Promise<string | null | undefined> => {
-    try {
-      const { tabId } = (await BrowserMsg.sendAwait(undefined, '_tab_', { contentScript }, true)) as Bm.Res._tab_;
-      return tabId;
-    } catch (e) {
-      if (e instanceof BgNotReadyErr) {
-        return undefined;
-      }
-      throw e;
-    }
-  };
-
-  public static requiredTabId = async (contentScript?: boolean, attempts = 10, delay = 200): Promise<string> => {
-    let tabId;
-    for (let i = 0; i < attempts; i++) {
-      // sometimes returns undefined right after browser start due to BgNotReadyErr
-      tabId = await BrowserMsg.tabId(contentScript);
-      if (tabId) {
-        return tabId;
-      }
-      await Time.sleep(delay);
-    }
-    throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
+  public static generateTabId = (contentScript?: boolean) => {
+    return `${contentScript ? 'cs' : 'ex'}.${Str.sloppyRandom(10)}`;
   };
 
   public static addPgpListeners = () => {
@@ -396,18 +368,9 @@ export class BrowserMsg {
           if (msg.to === 'broadcast' && sender.tab?.id) {
             // bounce the broadcast message back to the sender tab to make it reach all the frames (in Firefox), fixes #4072
             void chrome.tabs.sendMessage(sender.tab.id, msg);
-            return true;
+            return true; // consumed
           }
-          const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
-          if (!tab) {
-            BrowserMsg.sendRawResponse(
-              Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:cannot parse destination tab in ${msg.to}`)),
-              respondIfPageStillOpen
-            );
-          } else {
-            chrome.tabs.sendMessage(tab, msg, { frameId: frame }, respondIfPageStillOpen);
-          }
-          return true; // will respond
+          return false; // no plans to respond
         } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
@@ -453,8 +416,6 @@ export class BrowserMsg {
           BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
             .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), rawRespond))
             .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
-        } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.listen error: handler "${msg.name}" not set`)), rawRespond);
         }
       } else {
         // sometimes received events get duplicated
@@ -485,7 +446,7 @@ export class BrowserMsg {
     if (Catch.browser().name !== 'chrome') {
       return true; // only chrome sends messages directly to extension frame parent (in addition to sending to bg)
     }
-    if (BrowserMsg.contentScriptsRegistry.has(destination)) {
+    if (destination.startsWith('cs.')) {
       return true; // not sending to a parent (must relay, browser does not send directly)
     }
     if (sender.url?.includes(chrome.runtime.id) && sender.tab.url?.startsWith('https://')) {
@@ -513,8 +474,7 @@ export class BrowserMsg {
       bm,
       // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
       BrowserMsg.replaceBufWithObjUrlInplace(bm),
-      awaitRes,
-      isBackgroundPage
+      awaitRes
     );
   };
 
@@ -523,8 +483,7 @@ export class BrowserMsg {
     name: string,
     bm: Dict<unknown>,
     objUrls: Dict<string>,
-    awaitRes = false,
-    isBackgroundPage = false
+    awaitRes = false
   ): Promise<Bm.Response> => {
     return await new Promise((resolve, reject) => {
       const msg: Bm.Raw = {
@@ -568,13 +527,7 @@ export class BrowserMsg {
         }
       };
       try {
-        if (isBackgroundPage) {
-          const { tab, frame } = BrowserMsg.browserMsgDestParse(msg.to);
-          if (!tab) {
-            throw new Error(`Cannot parse tab in ${msg.to}: ${tab} when sending ${msg.name}`);
-          }
-          chrome.tabs.sendMessage(tab, msg, { frameId: frame }, processRawMsgResponse);
-        } else if (chrome.runtime) {
+        if (chrome.runtime) {
           chrome.runtime.sendMessage(msg, processRawMsgResponse);
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
@@ -661,15 +614,5 @@ export class BrowserMsg {
     } catch (e) {
       rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
     }
-  };
-
-  private static browserMsgDestParse = (destString: string | null) => {
-    const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
-    if (destString) {
-      parsed.tab = Number(destString.split(':')[0]);
-      const parsedFrame = Number(destString.split(':')[1]);
-      parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
-    }
-    return parsed;
   };
 }

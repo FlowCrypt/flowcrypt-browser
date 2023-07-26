@@ -44,7 +44,7 @@ export class InboxView extends View {
   public messageRenderer!: MessageRenderer;
   public factory!: XssSafeFactory;
   public picture?: string;
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public relayManager!: RelayManager;
 
   public constructor() {
@@ -64,7 +64,6 @@ export class InboxView extends View {
   }
 
   public render = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
     this.relayManager = new RelayManager(this.debug);
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);

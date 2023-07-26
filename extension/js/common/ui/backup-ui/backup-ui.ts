@@ -32,7 +32,7 @@ export class BackupUi {
   public manualModule!: BackupUiManualModule;
   public automaticModule!: BackupUiAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public clientConfiguration!: ClientConfiguration;
   public fesUrl?: string;
   public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
@@ -71,7 +71,6 @@ export class BackupUi {
   };
 
   public renderBackupView = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
@@ -153,8 +152,8 @@ export class BackupUi {
           <label>
             <p class="m-0">
             <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.family}" data-id="${ki.id}" ${
-        ki.family === 'openpgp' ? 'checked' : 'disabled'
-      } />
+              ki.family === 'openpgp' ? 'checked' : 'disabled'
+            } />
             ${email}
             </p>
             <p class="m-0 prv_fingerprint"><span>${ki.family} - ${Str.spaced(ki.fingerprints[0])}</span></p>

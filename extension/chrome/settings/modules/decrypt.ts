@@ -35,7 +35,7 @@ View.run(
     }
 
     public render = async () => {
-      const tabId = await BrowserMsg.requiredTabId();
+      const tabId = BrowserMsg.generateTabId();
       this.factory = new XssSafeFactory(this.acctEmail, tabId);
       BrowserMsg.addListener('close_dialog', async () => {
         $('.passphrase_dialog').text('');

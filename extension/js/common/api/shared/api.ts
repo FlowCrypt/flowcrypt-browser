@@ -25,7 +25,7 @@ type RawAjaxErr = {
   status?: number;
   statusText?: string;
 };
-export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; tabId?: string };
+export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; tabId: string };
 export type ApiCallContext = ProgressDestFrame | undefined;
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;

@@ -40,7 +40,7 @@ View.run(
     }
 
     public render = async () => {
-      const tabId = await BrowserMsg.requiredTabId();
+      const tabId = BrowserMsg.generateTabId();
       BrowserMsg.listen(tabId); // set_css
       const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
       this.fesUrl = storage.fesUrl;

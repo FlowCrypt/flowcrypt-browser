@@ -27,7 +27,7 @@ export class PgpBlockView extends View {
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly printModule = new PgpBlockViewPrintModule();
-  private tabId!: string;
+  private readonly tabId = BrowserMsg.generateTabId();
 
   public constructor() {
     super();
@@ -49,7 +49,7 @@ export class PgpBlockView extends View {
   };
 
   public render = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
+    //
   };
 
   public setHandlers = () => {
