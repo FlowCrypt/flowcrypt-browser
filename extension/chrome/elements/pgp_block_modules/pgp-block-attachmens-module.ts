@@ -7,7 +7,7 @@ import { Attachment } from '../../../js/common/core/attachment.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { PgpBlockView } from '../pgp_block.js';
-import { CommonHandlers, Ui } from '../../../js/common/browser/ui.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
@@ -20,10 +20,6 @@ export class PgpBlockViewAttachmentsModule {
   public includedAttachments: Attachment[] = [];
 
   public constructor(private view: PgpBlockView) {}
-
-  public getParentTabId = () => {
-    return this.view.parentTabId;
-  };
 
   public renderInnerAttachments = (attachments: Attachment[], isEncrypted: boolean) => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
@@ -78,8 +74,6 @@ export class PgpBlockViewAttachmentsModule {
         }
       })
     );
-    BrowserMsg.addListener('confirmation_result', CommonHandlers.createConfirmationResultHandler(this));
-    BrowserMsg.listen(this.view.parentTabId);
   };
 
   private previewAttachmentClickedHandler = async (attachment: Attachment) => {
@@ -102,7 +96,7 @@ export class PgpBlockViewAttachmentsModule {
         type: encrypted.type,
         data: decrypted.content,
       });
-      if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachment, this)) {
+      if (await AttachmentWarnings.confirmSaveToDownloadsIfNeeded(attachment, this.view)) {
         Browser.saveToDownloads(attachment);
       }
     } else {
