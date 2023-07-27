@@ -2,21 +2,18 @@
 
 'use strict';
 
-import { Url } from '../../../core/common.js';
-import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
-import { ApiErr } from '../../shared/api-error.js';
-import { Api, ApiCallContext } from './../../shared/api.js';
-
-import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
-import { InMemoryStoreKeys } from '../../../core/const.js';
-import { OAuth2 } from '../../../oauth2/oauth2.js';
-import { Catch } from '../../../platform/catch.js';
-import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
-import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
-import { AccountServer } from '../../account-server.js';
-import { ExternalService } from '../../account-servers/external-service.js';
-import { GoogleAuthErr } from '../../shared/api-error.js';
-import { Assert, AssertError } from '../../../assert.js';
+import { Assert, AssertError } from '../../assert.js';
+import { GoogleAuthWindowResult$result, Bm } from '../../browser/browser-msg.js';
+import { Url } from '../../core/common.js';
+import { GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST, FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
+import { OAuth2 } from '../../oauth2/oauth2.js';
+import { Catch } from '../../platform/catch.js';
+import { AcctStore, AcctStoreDict } from '../../platform/store/acct-store.js';
+import { InMemoryStore } from '../../platform/store/in-memory-store.js';
+import { AccountServer } from '../account-server.js';
+import { ExternalService } from '../account-servers/external-service.js';
+import { GoogleAuthErr, ApiErr } from '../shared/api-error.js';
+import { Api, ApiCallContext } from '../shared/api.js';
 import { OAuth } from './oauth.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -181,7 +178,7 @@ export class GoogleAuth extends OAuth {
         // fetch and store ClientConfiguration (not authenticated)
         await (await AccountServer.init(authRes.acctEmail)).fetchAndSaveClientConfiguration();
       } catch (e) {
-        if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
+        if (this.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;
           return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined }; // eslint-disable-line @typescript-eslint/naming-convention
         }
@@ -240,7 +237,7 @@ export class GoogleAuth extends OAuth {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
       const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code) : await GoogleAuth.googleAuthGetTokens(code);
-      const { email } = GoogleAuth.parseIdToken(id_token);
+      const { email } = this.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
       }
@@ -282,7 +279,7 @@ export class GoogleAuth extends OAuth {
   };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse) => {
-    const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
+    const parsedOpenId = this.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']); // eslint-disable-line @typescript-eslint/naming-convention
     const googleTokenExpires = new Date().getTime() + ((tokensObj.expires_in as number) - 120) * 1000; // let our copy expire 2 minutes beforehand
     const toSave: AcctStoreDict = {
@@ -339,7 +336,7 @@ export class GoogleAuth extends OAuth {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   private static retrieveAndSaveAuthToken = async (authCode: string): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
-    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
+    const claims = this.parseIdToken(tokensObj.id_token);
     if (!claims.email) {
       throw new Error('Missing email address in id_token');
     }

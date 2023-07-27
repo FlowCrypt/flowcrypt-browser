@@ -16,7 +16,7 @@ import { Catch } from '../../../platform/catch.js';
 import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
 import { Google } from './google.js';
-import { GoogleAuth } from './google-auth.js';
+import { GoogleAuth } from '../../authentication/google-auth.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
 

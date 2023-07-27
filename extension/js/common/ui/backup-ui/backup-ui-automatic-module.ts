@@ -7,7 +7,7 @@ import { Settings } from '../../settings.js';
 import { UnreportableError } from '../../platform/catch.js';
 import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
-import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
+import { GoogleAuth } from '../../api/authentication/google-auth.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 import { KeyStoreUtil } from '../../core/crypto/key-store-util.js';
 import { BackupUi } from './backup-ui.js';

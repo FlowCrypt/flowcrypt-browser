@@ -1,10 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-'use strict';
-
-import { Buf } from '../../../core/buf.js';
-import { Str } from '../../../core/common.js';
-import { GmailRes } from './gmail-parser.js';
+import { Buf } from '../../core/buf.js';
+import { Str } from '../../core/common.js';
+import { GmailRes } from '../email-provider/gmail/gmail-parser.js';
 
 export class OAuth {
   /**
