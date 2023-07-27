@@ -59,6 +59,10 @@ export class GoogleAuth extends OAuth {
       gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
     },
   };
+
+  public constructor() {
+    super();
+  }
   /* eslint-enable @typescript-eslint/naming-convention */
 
   public static defaultScopes = (group: 'default' | 'contacts' = 'default') => {
@@ -178,7 +182,7 @@ export class GoogleAuth extends OAuth {
         // fetch and store ClientConfiguration (not authenticated)
         await (await AccountServer.init(authRes.acctEmail)).fetchAndSaveClientConfiguration();
       } catch (e) {
-        if (this.isFesUnreachableErr(e, authRes.acctEmail)) {
+        if (GoogleAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;
           return { result: 'Error', error, acctEmail: authRes.acctEmail, id_token: undefined }; // eslint-disable-line @typescript-eslint/naming-convention
         }
@@ -237,7 +241,7 @@ export class GoogleAuth extends OAuth {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
       const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code) : await GoogleAuth.googleAuthGetTokens(code);
-      const { email } = this.parseIdToken(id_token);
+      const { email } = GoogleAuth.parseIdToken(id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
       }
@@ -279,7 +283,7 @@ export class GoogleAuth extends OAuth {
   };
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse) => {
-    const parsedOpenId = this.parseIdToken(tokensObj.id_token);
+    const parsedOpenId = GoogleAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']); // eslint-disable-line @typescript-eslint/naming-convention
     const googleTokenExpires = new Date().getTime() + ((tokensObj.expires_in as number) - 120) * 1000; // let our copy expire 2 minutes beforehand
     const toSave: AcctStoreDict = {
@@ -336,7 +340,7 @@ export class GoogleAuth extends OAuth {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   private static retrieveAndSaveAuthToken = async (authCode: string): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
-    const claims = this.parseIdToken(tokensObj.id_token);
+    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
     if (!claims.email) {
       throw new Error('Missing email address in id_token');
     }
