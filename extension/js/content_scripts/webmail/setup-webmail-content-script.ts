@@ -104,7 +104,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const initInternalVars = async (acctEmail: string) => {
-    const tabId = await BrowserMsg.requiredTabId(30, 1000); // keep trying for 30 seconds
+    const tabId = await BrowserMsg.requiredTabId(true, 30, 1000); // keep trying for 30 seconds
     const notifications = new Notifications();
     const factory = new XssSafeFactory(acctEmail, tabId, win.reloadable_class, win.destroyable_class);
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
@@ -219,6 +219,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       await factory.showAddPubkeyDialog(emails);
     });
+    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
+      relayManager.associate(frameId, messageSender);
+    });
+    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+      relayManager.retry(frameId, messageSender);
+    });
     BrowserMsg.addListener('notification_show', async ({ notification, callbacks, group }: Bm.NotificationShow) => {
       notifications.show(notification, callbacks, group);
       $('body').one(
@@ -238,6 +244,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       relayManager.renderProgress(progress);
     });
     BrowserMsg.listen(tabId);
+    BrowserMsg.listenForWindowMessages(); // listen for direct messages from child iframes
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
@@ -420,7 +427,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
-      const relayManager = new RelayManager(tabId);
+      const relayManager = new RelayManager();
       browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       await startPullingKeysFromEkm(
@@ -430,11 +437,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      window.addEventListener('message', e => {
-        if (e.origin === Env.getExtensionOrigin()) {
-          relayManager.handleMessageFromFrame(e.data);
-        }
-      });
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {

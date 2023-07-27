@@ -4,7 +4,7 @@
 
 import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
-import { Dict, Url } from '../core/common.js';
+import { Dict, Str, Url } from '../core/common.js';
 import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
 import { Bm, BrowserMsg } from './browser-msg.js';
@@ -13,20 +13,38 @@ type NamedSels = Dict<JQuery<HTMLElement>>;
 
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>;
 
-export interface ConfirmationResultTracker {
-  getParentTabId: () => string;
-  confirmationResultResolver?: (confirm: boolean) => void;
+export interface BrowserMsgResponseTracker {
+  getDest: () => string;
 }
 
+export type ConfirmationResultTracker = BrowserMsgResponseTracker;
+
 export class CommonHandlers {
-  public static createConfirmationResultHandler: (view: ConfirmationResultTracker) => Bm.AsyncResponselessHandler = view => {
-    return async ({ confirm }: Bm.ConfirmationResult) => {
-      view.confirmationResultResolver?.(confirm);
+  protected static respondMap = new Map<string, (result: unknown) => void>();
+
+  public static createAsyncResultHandler = <T>() => {
+    return async ({ payload, requestUid }: Bm.AsyncResult<T>) => {
+      const respond = CommonHandlers.respondMap.get(requestUid);
+      if (respond) {
+        respond(payload);
+        CommonHandlers.respondMap.delete(requestUid);
+      }
     };
   };
-  public static showConfirmationHandler: Bm.AsyncResponselessHandler = async ({ text, isHTML, footer }: Bm.ShowConfirmation) => {
-    const confirm = await Ui.modal.confirm(text, isHTML, footer);
-    BrowserMsg.send.confirmationResult('broadcast', { confirm });
+
+  public static sendRequestAndHandleAsyncResult = async <T>(send: (requestUid: string) => void): Promise<T> => {
+    const requestUid = Str.sloppyRandom(10);
+    const p = new Promise((resolve: (value: T) => void) => {
+      CommonHandlers.respondMap.set(requestUid, resolve);
+    });
+    send(requestUid);
+    return await p;
+  };
+
+  // for specific types
+  public static showConfirmationHandler: Bm.AsyncRespondingHandler = async ({ text, isHTML, footer, requestUid }: Bm.ShowConfirmation) => {
+    const payload = await Ui.modal.confirm(text, isHTML, footer);
+    return { requestUid, payload };
   };
 }
 
@@ -331,12 +349,16 @@ export class Ui {
        * Presents a modal where user can respond with confirm or cancel.
        * Awaiting this will give you the users choice as a boolean.
        */
-      confirm: async (text: string, isHTML = false, footer?: string): Promise<boolean> => {
-        const p = new Promise((resolve: (value: boolean) => void) => {
-          confirmationResultTracker.confirmationResultResolver = resolve;
+      confirm: (text: string, isHTML = false, footer?: string): Promise<boolean> => {
+        return CommonHandlers.sendRequestAndHandleAsyncResult(requestUid => {
+          BrowserMsg.send.showConfirmation({
+            text,
+            isHTML,
+            footer,
+            messageSender: confirmationResultTracker.getDest(),
+            requestUid,
+          });
         });
-        BrowserMsg.send.showConfirmation(confirmationResultTracker.getParentTabId(), { text, isHTML, footer });
-        return await p;
       },
     };
   };

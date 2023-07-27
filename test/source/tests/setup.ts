@@ -12,7 +12,6 @@ import { Str, emailKeyIndex } from './../core/common';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { Key, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
-import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
@@ -1488,7 +1487,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const set4 = await retrieveAndCheckKeys(settingsPage, acct, 1);
         expect(set4[0].lastModified).to.equal(set3[0].lastModified); // no update
         // 4. Forget the passphrase, EKM the same version of the existing key, no prompt
-        await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
+        await BrowserRecipe.finishSession(gmailPage);
         await gmailPage.close();
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.noToastAppears(gmailPage);
@@ -1552,7 +1551,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
         // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
-        await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
+        await BrowserRecipe.finishSession(gmailPage);
         await gmailPage.close();
         t.context.mockApi!.configProvider.config.ekm!.keys = [testConstants.unprotectedPrvKey];
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
@@ -1587,7 +1586,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
         expect(mainKey12.length).to.equal(1);
         // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
-        await InboxPageRecipe.finishSessionOnInboxPage(gmailPage);
+        await BrowserRecipe.finishSession(gmailPage);
         await gmailPage.close();
         t.context.mockApi!.configProvider.config.ekm!.keys = [
           await updateAndArmorKey(set2[0]),

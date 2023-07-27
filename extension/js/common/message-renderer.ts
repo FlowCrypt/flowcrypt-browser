@@ -320,7 +320,7 @@ export class MessageRenderer {
           // we could change 'Getting file info..' to 'Loading signed message..' in attachment_loader element
           const raw = await this.downloader.msgGetRaw(msgId);
           loaderContext.hideAttachment(attachmentSel);
-          await this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.setMsgBodyAndStartProcessing(loaderContext, 'signedDetached', messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
             this.processMessageWithDetachedSignatureFromRaw(raw, renderModule, messageInfo.from?.email, body)
           );
           return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
@@ -349,8 +349,8 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        await this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, (renderModule, frameId) =>
-          this.processCryptoMessage(a, renderModule, frameId, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+        this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+          this.processCryptoMessage(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -372,14 +372,12 @@ export class MessageRenderer {
     }
   };
 
-  public startProcessingInlineBlocks = async (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
-    await Promise.all(
-      Object.entries(blocks).map(([frameId, block]) =>
-        this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
-        )
-      )
-    );
+  public startProcessingInlineBlocks = (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
+    for (const [frameId, block] of Object.entries(blocks)) {
+      this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
+        this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+      );
+    }
   };
 
   public deleteExpired = (): void => {
@@ -577,48 +575,41 @@ export class MessageRenderer {
     return isEncrypted ? { publicKeys } : {};
   };
 
-  private relayAndStartProcessing = async (
+  private relayAndStartProcessing = (
     relayManager: RelayManager,
     factory: XssSafeFactory,
     frameId: string,
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
-    cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
-  ): Promise<{ processor: Promise<unknown> }> => {
-    const renderModule = relayManager.createRelay(frameId);
-    if (printMailInfo) {
-      renderModule.setPrintMailInfo(printMailInfo);
-    }
-    const processor = cb(renderModule, frameId)
-      .then(async result => {
-        const appendAfter = $(`iframe#${frameId}`); // todo: review inbox-active-thread -- may fail
-        // todo: how publicKeys and needPassphrase interact?
-        for (const armoredPubkey of result.publicKeys ?? []) {
-          appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
-        }
-        while (result.needPassphrase && !renderModule.cancellation.cancel) {
-          // if we need passphrase, we have to be able to re-try decryption indefinitely on button presses,
-          // so we can only release resources when the frame is detached
-          await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, renderModule.cancellation);
-          if (renderModule.cancellation.cancel) {
-            if (this.debug) {
-              console.debug('Destination frame was detached -- stopping processing');
-            }
-            return;
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[]; needPassphrase?: string[] }>
+  ): void => {
+    relayManager.createAndStartRelay(frameId, async (renderModule: RenderInterface) => {
+      if (printMailInfo) {
+        renderModule.setPrintMailInfo(printMailInfo);
+      }
+      let result = await cb(renderModule);
+      // todo: review inbox-active-thread -- may fail if the frameId isn't in the DOM yet
+      // we may stop here and wait until renderModule is attached (receive a signal from RelayManager based on frameData)
+      const appendAfter = $(`iframe#${frameId}`);
+      // todo: how publicKeys and needPassphrase interact?
+      for (const armoredPubkey of result.publicKeys ?? []) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
+      }
+      while (result.needPassphrase && !renderModule.cancellation.cancel) {
+        // wait for either passphrase or cancellation
+        await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, renderModule.cancellation);
+        if (renderModule.cancellation.cancel) {
+          if (this.debug) {
+            console.debug('Destination frame was detached -- stopping processing');
           }
-          renderModule.clearErrorStatus();
-          renderModule.renderText('Decrypting...');
-          result = await cb(renderModule, frameId);
-          // I guess, no additional publicKeys will appear here for display...
+          return;
         }
-      })
-      .catch(e => {
-        // normally no exceptions come to this point so let's report it
-        Catch.reportErr(e);
-        renderModule.renderErr(Xss.escape(String(e)), undefined);
-      })
-      .finally(() => relayManager.done(frameId));
-    return { processor };
+        renderModule.clearErrorStatus();
+        renderModule.renderText('Decrypting...');
+        result = await cb(renderModule);
+        // I guess, no additional publicKeys will appear here for display...
+      }
+    });
   };
 
   private renderMsgBlock = async (
@@ -758,22 +749,21 @@ export class MessageRenderer {
     return {};
   };
 
-  private setMsgBodyAndStartProcessing = async (
+  private setMsgBodyAndStartProcessing = (
     loaderContext: LoaderContextInterface,
     type: string, // for diagnostics
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
-    cb: (renderModule: RenderInterface, frameId: string) => Promise<{ publicKeys?: string[] }>
-  ): Promise<{ processor: Promise<unknown> }> => {
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
+  ) => {
     const { frameId, frameXssSafe } = this.factory.embeddedMsg(type); // xss-safe-factory
     loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, 'set'); // xss-safe-value
-    return await this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
+    this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
   private processCryptoMessage = async (
     attachment: Attachment,
     renderModule: RenderInterface,
-    frameId: string,
     senderEmail: string | undefined,
     isPwdMsgBasedOnMsgSnippet: boolean | undefined,
     plainSubject: string | undefined
@@ -782,14 +772,8 @@ export class MessageRenderer {
       if (!attachment.hasData()) {
         // todo: implement cache similar to chunk downloads
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
-        this.relayManager.renderProgressText(frameId, 'Retrieving message...');
-        await this.gmail.fetchAttachment(attachment, expectedTransferSize => {
-          return {
-            frameId,
-            expectedTransferSize,
-            download: (percent, loaded, total) => this.relayManager.renderProgress({ frameId, percent, loaded, total, expectedTransferSize }), // shortcut
-          };
-        });
+        const progressFunction = renderModule.startProgressRendering('Retrieving message...');
+        await this.gmail.fetchAttachment(attachment, progressFunction);
       }
       const armoredMsg = PgpArmor.clip(attachment.getData().toUtfStr());
       if (!armoredMsg) {

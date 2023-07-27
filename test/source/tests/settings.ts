@@ -561,7 +561,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
       })
     );
@@ -585,7 +585,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             isForgetPpChecked: true,
             isForgetPpHidden: false,
           },
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
         // change pp - should not ask for pp because already in session
         await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
@@ -593,19 +593,19 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
         // test decrypt - should ask for new pass phrase
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
-          finishCurrentSession: true,
+          finishSessionBeforeTesting: true,
           enterPp: {
             passphrase: newPp,
             isForgetPpChecked: true,
             isForgetPpHidden: false,
           },
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
       })
     );
@@ -638,9 +638,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '179f6feb575df213',
-          finishCurrentSession: true,
+          finishSessionBeforeTesting: true,
           enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
         const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
           await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
@@ -654,15 +654,15 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '179f6feb575df213',
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
         // test decrypt - should ask for new pass phrase
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '179f6feb575df213',
-          finishCurrentSession: true,
+          finishSessionBeforeTesting: true,
           enterPp: { passphrase: newPp, isForgetPpHidden: true, isForgetPpChecked: true },
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
       })
     );
@@ -683,14 +683,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
-          expectedContent: 'changed correctly if this can be decrypted',
+          content: ['changed correctly if this can be decrypted'],
         });
         // test decrypt - should ask for new pass phrase
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
-          expectedContent: 'changed correctly if this can be decrypted',
-          finishCurrentSession: true,
+          content: ['changed correctly if this can be decrypted'],
+          finishSessionBeforeTesting: true,
           enterPp: { passphrase: newPp, isForgetPpChecked: true, isForgetPpHidden: false },
         });
       })
@@ -1207,7 +1207,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         await settingsPage.close();
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
           isSavePassphraseChecked: true,
           isSavePassphraseHidden: false,
@@ -1264,7 +1264,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         await inboxPage.close();
         const key98acfa1eadab5b92 = await KeyUtil.parse(testConstants.testKeyMultiple98acfa1eadab5b92);
         expect(await KeyUtil.decrypt(key98acfa1eadab5b92, '1234')).to.equal(true);
@@ -1307,7 +1307,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         await inboxPage.close();
         await settingsPage.waitAndClick('@action-open-backup-page');
         const backupFrame = await settingsPage.getFrame(['backup.htm']);

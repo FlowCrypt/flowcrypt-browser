@@ -4,7 +4,7 @@
 
 import { Url } from '../../js/common/core/common.js';
 import { Assert } from '../../js/common/assert.js';
-import { RenderMessage, RenderMessageWithFrameId } from '../../js/common/render-message.js';
+import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
@@ -12,9 +12,9 @@ import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-mod
 import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
-import { Ui } from '../../js/common/browser/ui.js';
+import { CommonHandlers, Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
-import { Bm } from '../../js/common/browser/browser-msg.js';
+import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 
 export class PgpBlockView extends View {
   public readonly acctEmail: string; // needed for attachment decryption, probably should be refactored out
@@ -27,6 +27,7 @@ export class PgpBlockView extends View {
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly printModule = new PgpBlockViewPrintModule();
+  private tabId!: string;
 
   public constructor() {
     super();
@@ -41,21 +42,14 @@ export class PgpBlockView extends View {
     this.quoteModule = new PgpBlockViewQuoteModule(this);
     this.errorModule = new PgpBlockViewErrorModule(this);
     this.renderModule = new PgpBlockViewRenderModule(this);
-    chrome.runtime.onMessage.addListener((message: Bm.Raw) => {
-      if (message.name === 'pgp_block_render') {
-        const msg = message.data.bm as RenderMessageWithFrameId;
-        if (msg.frameId === this.frameId) {
-          this.processMessage(msg);
-          return true;
-        }
-      }
-      return false;
-    });
-    window.addEventListener('load', () => window.parent.postMessage({ readyToReceive: this.frameId }, '*'));
   }
 
+  public getDest = () => {
+    return this.tabId;
+  };
+
   public render = async () => {
-    //
+    this.tabId = await BrowserMsg.requiredTabId();
   };
 
   public setHandlers = () => {
@@ -63,6 +57,12 @@ export class PgpBlockView extends View {
       'click',
       this.setHandler(() => this.printModule.printPGPBlock())
     );
+    BrowserMsg.addListener('pgp_block_render', async (msg: RenderMessage) => {
+      this.processMessage(msg);
+    });
+    BrowserMsg.addListener('confirmation_result', CommonHandlers.createAsyncResultHandler());
+    BrowserMsg.listen(this.tabId);
+    BrowserMsg.send.pgpBlockReady({ frameId: this.frameId, messageSender: this.tabId });
   };
 
   private processMessage = (data: RenderMessage) => {
