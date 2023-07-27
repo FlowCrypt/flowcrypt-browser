@@ -69,47 +69,6 @@ export class KeyErrors {
     }
   };
 
-  // private renderCompatibilityFix = async (origPrv: Key, options?: SetupOptions) => {
-  //   try {
-  //     return await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-  //       this.acctEmail,
-  //       '#step_3_compatibility_fix',
-  //       origPrv,
-  //       options?.passphrase || String($('.input_passphrase').val()),
-  //       window.location.href.replace(/#$/, '')
-  //     );
-  //   } catch (e) {
-  //     Catch.reportErr(e);
-  //     await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`, false, Ui.testCompatibilityLink);
-  //     if (this.setupView?.setupRender.displayBlock) {
-  //       // in Function 1
-  //       this.setupView.setupRender.displayBlock('step_2b_manual_enter');
-  //     } else {
-  //       // in Function 2
-  //       this.toggleCompatibilityView(false);
-  //     }
-  //     return;
-  //   }
-  // };
-
-  // private renderAndFinalizeSetup = async (origPrv: Key, options?: SetupOptions) => {
-  //   $('.ask_support_assistance_container').text(Lang.general.contactIfNeedAssistance(this.isCustomerUrlFesUsed()));
-  //   this.setupView?.setupRender.displayBlock('step_3_compatibility_fix');
-
-  //   const fixedPrv = await this.renderCompatibilityFix(origPrv, options);
-
-  //   if (this.setupView?.setupRender.renderSetupDone) {
-  //     // in Function 1
-  //     await saveKeysAndPassPhrase(this.setupView?.acctEmail, [fixedPrv!], options);
-  //     await this.setupView.submitPublicKeys(options!);
-  //     await this.setupView.finalizeSetup();
-  //     await this.setupView.setupRender.renderSetupDone();
-  //   } else {
-  //     // in Function 2
-  //     await this.saveKeyAndContinue(fixedPrv!);
-  //   }
-  // };
-
   private renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options?: SetupOptions) => {
     let fixedPrv;
     try {
