@@ -72,6 +72,6 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
   BrowserMsg.bgListen();
 
-  await BgHandlers.updateUninstallUrl({}, {});
+  await BgHandlers.updateUninstallUrl({});
   injectFcIntoWebmail();
 })().catch(Catch.reportErr);

@@ -319,7 +319,7 @@ export class AttachmentDownloadView extends View {
       errorDetailsOpened,
       this.frameId
     );
-    BrowserMsg.send.showAttachmentPreview({ iframeUrl, messageSender: this.tabId });
+    BrowserMsg.send.showAttachmentPreview(this, { iframeUrl });
   };
 
   private decryptAndSaveAttachmentToDownloads = async () => {
