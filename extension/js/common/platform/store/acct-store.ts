@@ -2,10 +2,8 @@
 
 import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
-import { BgNotReadyErr, BrowserMsg } from '../../browser/browser-msg.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
-import { Env } from '../../browser/env.js';
-import { Time } from '../../browser/time.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { Dict } from '../../core/common.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
@@ -85,22 +83,6 @@ export type AcctStoreDict = {
  */
 export class AcctStore extends AbstractStore {
   public static get = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
-    if (Env.isContentScript()) {
-      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // go through bg script to avoid such errors
-      for (let i = 0; i < 10; i++) {
-        // however backend may not be immediately ready to respond - retry
-        try {
-          return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
-        } catch (e) {
-          if (!(e instanceof BgNotReadyErr) || i === 9) {
-            throw e;
-          }
-          await Time.sleep(300);
-        }
-      }
-      throw new BgNotReadyErr('this should never happen');
-    }
     const storageObj = (await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
     const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
@@ -116,11 +98,6 @@ export class AcctStore extends AbstractStore {
   };
 
   public static set = async (acctEmail: string, values: AcctStoreDict): Promise<void> => {
-    if (Env.isContentScript()) {
-      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // always go through bg script to avoid such errors
-      return await BrowserMsg.send.bg.await.storeAcctSet({ acctEmail, values });
-    }
     const indexedUpdateFields: RawStore = {};
     const indexedRemoveFields: string[] = [];
     for (const key of Object.keys(values)) {
