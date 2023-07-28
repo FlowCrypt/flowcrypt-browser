@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { Env } from '../../browser/env.js';
 import { GmailRes } from '../../../common/api/email-provider/gmail/gmail-parser.js';
 import { RawStore, AbstractStore } from './abstract-store.js';
 import { Dict, Value } from '../../core/common.js';
@@ -48,11 +47,6 @@ export class GlobalStore extends AbstractStore {
   private static globalStorageScope = 'global' as const;
 
   public static set = async (values: GlobalStoreDict): Promise<void> => {
-    if (Env.isContentScript()) {
-      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // always go through bg script to avoid such errors
-      return await BrowserMsg.send.bg.await.storeGlobalSet({ values });
-    }
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
       const index = GlobalStore.singleScopeRawIndex(GlobalStore.globalStorageScope, key);
@@ -62,11 +56,6 @@ export class GlobalStore extends AbstractStore {
   };
 
   public static get = async (keys: GlobalIndex[]): Promise<GlobalStoreDict> => {
-    if (Env.isContentScript()) {
-      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // always go through bg script to avoid such errors
-      return await BrowserMsg.send.bg.await.storeGlobalGet({ keys });
-    }
     const storageObj = (await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
   };
