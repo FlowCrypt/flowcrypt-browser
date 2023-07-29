@@ -412,7 +412,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         );
         await settingsPage.notPresent('.swal2-container');
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, {
           encrypt: false,
@@ -607,11 +607,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '17c0e50966d7877c',
-          expectedContent: '1st key of of 2 keys with the same passphrase',
+          content: ['1st key of of 2 keys with the same passphrase'],
           enterPp: {
             passphrase,
             isForgetPpChecked: true,
@@ -621,7 +621,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '17c0e55caaa4abb3',
-          expectedContent: '2nd key of of 2 keys with the same passphrase',
+          content: ['2nd key of of 2 keys with the same passphrase'],
           // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
         });
         // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead
@@ -785,7 +785,7 @@ AfYUJUhqjgSuBctnpj0=
         while (frames.length !== 50) {
           frames = (inboxPage.target as Page).frames().filter(frame => frame.url().includes(frameName));
         }
-        await Promise.all(frames.map(frame => new ControllableFrame(frame).waitForSelTestState('ready', 60)));
+        await Promise.all(frames.map(frame => new ControllableFrame(frame, inboxPage).waitForSelTestState('ready', 60)));
         const stop = new Date();
         const diff = stop.getTime() - start.getTime();
         expect(diff).to.be.lessThan(20000);
