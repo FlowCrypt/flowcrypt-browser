@@ -51,8 +51,14 @@ export class SetupImportKeyModule {
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
-      this.keyErrors = new KeyErrors(this.view.storage.fesUrl || '', this.view.acctEmail, this.view.parentTabId || '', this.view.clientConfiguration);
-      await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
+      this.keyErrors = new KeyErrors(
+        this.view.storage.fesUrl || '',
+        this.view.acctEmail,
+        this.view.parentTabId || '',
+        this.view.clientConfiguration,
+        this.view
+      );
+      await this.keyErrors.handlePrivateKeyError(e, e.encrypted, options);
     }
   };
 }
