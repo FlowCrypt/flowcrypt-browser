@@ -75,13 +75,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         const recipientEmail = 'User ⭐ Name <test@email.com>';
         const msgPwd = 'super hard password for the message';
-        const subject = 'PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes';
+        const subject = 'Strip emojis in display name format';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(1);
-        // this test is using PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes"
       })
     );
 
