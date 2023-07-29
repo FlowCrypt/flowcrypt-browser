@@ -175,7 +175,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const forgottenPassphrase = 'this passphrase is forgotten';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, forgottenPassphrase, {}, false);
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         await inboxPage.close();
         await composePage.waitAndType('@input-password', forgottenPassphrase);
         await composePage.waitAndClick('@action-send', { delay: 1 });
@@ -1273,7 +1273,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           false
         );
         const inboxPage = await browser.newPage(t, t.context.urls?.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         const inboxTabId = await PageRecipe.getTabId(inboxPage);
         // send message from a different tab
         await PageRecipe.sendMessage(settingsPage, {
@@ -2170,7 +2170,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const passphrase = 'pa$$w0rd';
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
-        await InboxPageRecipe.finishSessionOnInboxPage(inboxPage);
+        await BrowserRecipe.finishSession(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
         await ComposePageRecipe.fillMsg(
           composeFrame,
@@ -3062,7 +3062,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           await Promise.all(
             attachmentFrames
               .filter(f => f.url().includes('attachment.htm'))
-              .map(async frame => await PageRecipe.getElementPropertyJson(await new ControllableFrame(frame).waitAny('@attachment-name'), 'textContent'))
+              .map(
+                async frame =>
+                  await PageRecipe.getElementPropertyJson(await new ControllableFrame(frame, composePage).waitAny('@attachment-name'), 'textContent')
+              )
           )
         ).to.eql(['small.txt.pgp', 'small.pdf.pgp']);
       })

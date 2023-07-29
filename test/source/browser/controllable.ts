@@ -503,7 +503,7 @@ abstract class ControllableBase {
       if (matchingFrames.length > 1) {
         throw Error(`More than one frame found: ${urlMatchables.join(',')}`);
       } else if (matchingFrames.length === 1) {
-        return new ControllableFrame(matchingFrames[0]);
+        return new ControllableFrame(matchingFrames[0], this.getPage());
       }
       await Util.sleep(1);
     }
@@ -518,7 +518,7 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
-      const page = 'page' in this.target ? this.target.page() : this.target;
+      const page = this.getPage().target;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
       await (page as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
@@ -669,6 +669,8 @@ abstract class ControllableBase {
       await Util.sleep(0.2);
     }
   };
+
+  public abstract getPage(): ControllablePage;
 }
 
 export class ControllableAlert {
@@ -692,16 +694,23 @@ export class ControllableAlert {
 
 class ConsoleEvent {
   // eslint-disable-next-line no-empty-function
-  public constructor(public type: string, public text: string) {}
+  public constructor(
+    public type: string,
+    public text: string
+  ) {}
 }
 
 export class ControllablePage extends ControllableBase {
+  public target: Page;
   public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
   private preventclose = false;
   private acceptUnloadAlert = false;
 
-  public constructor(public t: AvaContext, public page: Page) {
+  public constructor(
+    public t: AvaContext,
+    public page: Page
+  ) {
     super(page);
     page.on('console', console => {
       this.consoleMsgs.push(console);
@@ -863,6 +872,10 @@ export class ControllablePage extends ControllableBase {
     return result as Dict<unknown>;
   };
 
+  public getPage = () => {
+    return this;
+  };
+
   private dismissActiveAlerts = async (): Promise<void> => {
     const activeAlerts = this.alerts.filter(a => a.active);
     for (const alert of activeAlerts) {
@@ -879,12 +892,20 @@ export class ControllablePage extends ControllableBase {
 }
 
 export class ControllableFrame extends ControllableBase {
+  public target: Frame;
   public frame: Frame;
 
-  public constructor(frame: Frame) {
+  public constructor(
+    frame: Frame,
+    private page: ControllablePage
+  ) {
     super(frame);
     this.frame = frame;
   }
+
+  public getPage = () => {
+    return this.page;
+  };
 }
 
 export type Controllable = ControllableFrame | ControllablePage;
