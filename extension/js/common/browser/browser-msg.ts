@@ -315,10 +315,10 @@ export class BrowserMsg {
   };
 
   public static listen = (dest: Bm.Dest) => {
-    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+    chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
       if (msg.to === dest || msg.to === 'broadcast') {
-        BrowserMsg.handleMsg(msg, sender, rawRespond);
+        BrowserMsg.handleMsg(msg, rawRespond);
         return true;
       }
       return false; // will not respond
@@ -331,7 +331,7 @@ export class BrowserMsg {
   };
 
   public static bgListen = () => {
-    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
+    chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
         try {
           // avoiding unnecessary errors when target tab gets closed
@@ -348,25 +348,12 @@ export class BrowserMsg {
         }
       };
       try {
-        // console.debug(`bgListen: ${msg.name} from ${sender.tab?.id}:${sender.tab?.index} to ${msg.to}`);
-        if (BrowserMsg.shouldRelayMsgToOtherPage(sender, msg.to)) {
-          // message that has to be relayed through bg
-          if (msg.to === 'broadcast' && sender.tab?.id) {
-            // bounce the broadcast message back to the sender tab to make it reach all the frames (in Firefox), fixes #4072
-            void chrome.tabs.sendMessage(sender.tab.id, msg);
-            return true; // consumed
-          }
-          return false; // no plans to respond
-        } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
+        if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
           BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
             .then(bm => BrowserMsg.sendRawResponse(handler(bm), respondIfPageStillOpen))
             .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
-          return true; // will respond
-        } else if (!msg.to) {
-          // message meant for bg that we don't have a handler for
-          BrowserMsg.sendRawResponse(Promise.reject(new Error(`BrowserMsg.bgListen:${msg.name}:no such handler`)), respondIfPageStillOpen);
           return true; // will respond
         } else {
           // broadcast message that backend does not have a handler for - ignored
@@ -384,7 +371,7 @@ export class BrowserMsg {
       // todo: (e.origin === allowedOrigin) { const allowedOrigin = Env.getExtensionOrigin();
       const msg = e.data as Bm.RawWindowMessageWithSender;
       if (msg.to === dest || msg.to === 'broadcast') {
-        BrowserMsg.handleMsg(msg, {}, (rawResponse: Bm.RawResponse) => {
+        BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
             // send response as a new request
             BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
@@ -414,7 +401,7 @@ export class BrowserMsg {
     }
   };
 
-  private static handleMsg = (msg: Bm.Raw, sender: chrome.runtime.MessageSender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+  private static handleMsg = (msg: Bm.Raw, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
     try {
       if (!BrowserMsg.processed.includes(msg.uid)) {
         // todo: Set or ExpirationCache?
@@ -438,29 +425,6 @@ export class BrowserMsg {
     } catch (e) {
       BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
     }
-  };
-
-  /**
-   * When sending message from iframe within extension page, the browser will deliver the message to BOTH
-   *    the parent frame as well as the background (when we ment to just send to parent).
-   *    In such situations, we don't have to relay this message from bg to that frame, it already got it.
-   * When sending message from iframe within content script page (mail.google.com), the parent will NOT get such message
-   *    directly, and it will only be delivered to background page, from where we have to relay it around.
-   */
-  private static shouldRelayMsgToOtherPage = (sender: chrome.runtime.MessageSender, destination: string | null) => {
-    if (!sender.tab || !destination) {
-      return false; // messages meant to bg, or from unknown sender, should not be relayed
-    }
-    if (Catch.browser().name !== 'chrome') {
-      return true; // only chrome sends messages directly to extension frame parent (in addition to sending to bg)
-    }
-    if (destination.startsWith('cs.')) {
-      return true; // not sending to a parent (must relay, browser does not send directly)
-    }
-    if (sender.url?.includes(chrome.runtime.id) && sender.tab.url?.startsWith('https://')) {
-      return true; // sending to a parent content script (must relay, browser does not send directly)
-    }
-    return false; // sending to a parent that is an extension frame (do not relay, browser does send directly)
   };
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
