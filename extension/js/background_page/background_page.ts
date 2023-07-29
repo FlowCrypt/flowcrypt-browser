@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { GoogleAuth } from '../common/api/email-provider/gmail/google-auth.js';
+import { GoogleAuth } from '../common/api/authentication/google-auth.js';
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { emailKeyIndex } from '../common/core/common.js';
 import { VERSION } from '../common/core/const.js';
