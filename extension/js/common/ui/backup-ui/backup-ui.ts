@@ -76,7 +76,7 @@ export class BackupUi {
     const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
     this.emailProvider = storage.email_provider || 'gmail';
-    if (!this.clientConfiguration.canBackupKeys()) {
+    if (!this.clientConfiguration.canBackupKeys() && !this.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
@@ -153,8 +153,8 @@ export class BackupUi {
           <label>
             <p class="m-0">
             <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.family}" data-id="${ki.id}" ${
-        ki.family === 'openpgp' ? 'checked' : 'disabled'
-      } />
+              ki.family === 'openpgp' ? 'checked' : 'disabled'
+            } />
             ${email}
             </p>
             <p class="m-0 prv_fingerprint"><span>${ki.family} - ${Str.spaced(ki.fingerprints[0])}</span></p>

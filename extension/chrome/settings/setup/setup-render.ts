@@ -48,6 +48,8 @@ export class SetupRenderModule {
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
+    } else if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox() && !this.view.clientConfiguration.usesKeyManager()) {
+      this.displayBlock('step_0_backup_to_designated_mailbox');
     } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
         const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
@@ -128,13 +130,7 @@ export class SetupRenderModule {
         Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
       );
     }
-    if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
-      if (!this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
-        this.displayBlock('step_0_backup_to_designated_mailbox');
-      } else {
-        throw new Error("Client Configuration flag 'PRV_AUTOIMPORT_OR_AUTOGEN' cannot be used together with 'prv_backup_to_designated_mailbox' rule.");
-      }
-    } else if (keyserverRes.pubkeys.length) {
+    if (keyserverRes.pubkeys.length) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
