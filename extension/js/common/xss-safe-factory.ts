@@ -183,7 +183,7 @@ export class XssSafeFactory {
     const result = await Ui.modal.iframe(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase');
     if (result.dismiss) {
       // dialog is dismissed by user interaction, not by closeDialog()
-      BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
+      BrowserMsg.send.passphraseEntry({ entered: false });
     }
   };
 

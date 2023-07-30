@@ -26,8 +26,8 @@ type PassPhraseType = (typeof passPhraseTypes)[number];
 View.run(
   class PassphraseView extends View {
     public fesUrl?: string;
+    public readonly parentTabId: string;
     private readonly acctEmail: string;
-    private readonly parentTabId: string;
     private readonly longids: string[];
     private readonly type: PassPhraseType;
     private readonly initiatorFrameId?: string;
@@ -196,8 +196,8 @@ View.run(
     };
 
     private closeDialog = (entered = false, initiatorFrameId?: string) => {
-      BrowserMsg.send.closeDialog(this.parentTabId);
-      BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
+      BrowserMsg.send.closeDialog(this);
+      BrowserMsg.send.passphraseEntry({ entered, initiatorFrameId });
     };
 
     private submitHandler = async () => {
