@@ -48,7 +48,10 @@ export class SetupRenderModule {
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
-    } else if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox() && !this.view.clientConfiguration.usesKeyManager()) {
+    } else if (
+      this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox() &&
+      !this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()
+    ) {
       this.displayBlock('step_0_backup_to_designated_mailbox');
     } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
