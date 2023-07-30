@@ -31,6 +31,7 @@ type CreateKeyOpts = {
   enforcedAlgo?: string | boolean;
   selectKeyAlgo?: string;
   skipForPassphrase?: boolean;
+  backupPrvKeyToMailbox?: boolean;
   pageEvaluator?: () => void;
 };
 
@@ -45,12 +46,13 @@ export class SetupPageRecipe extends PageRecipe {
       enforcedAlgo = false,
       selectKeyAlgo = '',
       skipForPassphrase = false,
+      backupPrvKeyToMailbox = false,
       pageEvaluator,
       key,
     }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
-    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase });
+    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase, backupPrvKeyToMailbox });
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
@@ -348,11 +350,18 @@ export class SetupPageRecipe extends PageRecipe {
   private static createBegin = async (
     settingsPage: ControllablePage,
     keyTitle: string,
-    { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean } = {}
+    {
+      key,
+      usedPgpBefore = false,
+      skipForPassphrase = false,
+      backupPrvKeyToMailbox = false,
+    }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean; backupPrvKeyToMailbox?: boolean } = {}
   ) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create', { timeout: 30 });
+    } else if (backupPrvKeyToMailbox) {
+      await settingsPage.waitAndClick('@action-step0backup-key-to-mailbox-manual-create', { timeout: 30 });
     } else {
       if (skipForPassphrase) {
         await settingsPage.waitAndClick('#lost_pass_phrase');

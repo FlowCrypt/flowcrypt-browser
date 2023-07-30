@@ -30,6 +30,7 @@ import {
 import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
+import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2297,6 +2298,126 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           passphrase: 'test pp to encrypt unprotected key',
           longid: null, // eslint-disable-line no-null/no-null
         });
+      })
+    );
+
+    test(
+      'setup - Client configuration prv_backup_to_designated_mailbox test',
+      testWithBrowser(async (t, browser) => {
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT'],
+              prv_backup_to_designated_mailbox: pubkey,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-disable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.createKey(settingsPage, '', 'disabled', {
+          usedPgpBefore: false,
+          submitPubkey: false,
+          enforcedAlgo: false,
+          skipForPassphrase: true,
+          backupPrvKeyToMailbox: true,
+          key: {
+            passphrase: 'super difficult to guess passphrase',
+          },
+        });
+        // check sent backup here
+      })
+    );
+
+    test(
+      'setup - prv_backup_to_designated_mailbox will take precedence if set with NO_PRV_BACKUP',
+      testWithBrowser(async (t, browser) => {
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT', 'NO_PRV_BACKUP'],
+              prv_backup_to_designated_mailbox: pubkey,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-disable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.createKey(settingsPage, '', 'disabled', {
+          usedPgpBefore: false,
+          submitPubkey: false,
+          enforcedAlgo: false,
+          skipForPassphrase: true,
+          backupPrvKeyToMailbox: true,
+          key: {
+            passphrase: 'super difficult to guess passphrase',
+          },
+        });
+        // check sent backup here
+      })
+    );
+
+    test(
+      'setup - Ignore prv_backup_to_designated_mailbox if key_manager_url is set',
+      testWithBrowser(async (t, browser) => {
+        const port = t.context.urls?.port;
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN'],
+              prv_backup_to_designated_mailbox: pubkey,
+              key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-disable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await Util.sleep(3);
+        const rulesKey = `cryptup_${emailKeyIndex(acctEmail, 'rules')}`;
+        const clientConfiguration = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
+        expect(await settingsPage.isElementPresent('@ekm-setup-user-notify')).to.be.true;
+        expect(clientConfiguration.key_manager_url).not.empty;
+        expect(clientConfiguration.prv_backup_to_designated_mailbox).not.empty;
+      })
+    );
+
+    test(
+      'setup - Client error will occur if prv_backup_to_designated_mailbox and PRV_AUTOIMPORT_OR_AUTOGEN is set',
+      testWithBrowser(async (t, browser) => {
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN'],
+              prv_backup_to_designated_mailbox: pubkey,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-disable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await Util.sleep(3);
+        await settingsPage.waitAndRespondToModal(
+          'error',
+          'confirm',
+          'Combination of org rules not valid: prv_backup_to_designated_mailbox cannot be used together with PRV_AUTOIMPORT_OR_AUTOGEN'
+        );
       })
     );
   }
