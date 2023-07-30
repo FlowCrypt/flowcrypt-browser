@@ -2,22 +2,21 @@
 
 'use strict';
 
-import { Str, Url } from '../../core/common.js';
+import { Url } from '../../core/common.js';
 import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../core/const.js';
 import { ApiErr } from '../shared/api-error.js';
 import { Api, ApiCallContext } from '../shared/api.js';
 
 import { Bm, GoogleAuthWindowResult$result } from '../../browser/browser-msg.js';
-import { Buf } from '../../core/buf.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
 import { OAuth2 } from '../../oauth2/oauth2.js';
 import { Catch } from '../../platform/catch.js';
 import { AcctStore, AcctStoreDict } from '../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { AccountServer } from '../account-server.js';
+import { OAuth } from './oauth.js';
 import { ExternalService } from '../account-servers/external-service.js';
 import { GoogleAuthErr } from '../shared/api-error.js';
-import { GmailRes } from '../email-provider/gmail/gmail-parser.js';
 import { Assert, AssertError } from '../../assert.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -41,7 +40,7 @@ type GoogleTokenInfo = { email: string; scope: string; expires_in: number; token
 export type AuthRes = AuthResultSuccess | AuthResultError;
 /* eslint-enable @typescript-eslint/naming-convention */
 
-export class GoogleAuth {
+export class GoogleAuth extends OAuth {
   /* eslint-disable @typescript-eslint/naming-convention */
   public static OAUTH = {
     client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
@@ -195,32 +194,6 @@ export class GoogleAuth {
       }
     }
     return authRes;
-  };
-
-  /**
-   * Happens on enterprise builds
-   */
-  public static isFesUnreachableErr = (e: unknown, email: string): boolean => {
-    const domain = Str.getDomainFromEmailAddress(email);
-    const errString = String(e);
-    if (errString.includes(`-1 when GET-ing https://fes.${domain}/api/ `)) {
-      // the space is important to match the full url
-      return true; // err trying to reach FES itself at a predictable URL
-    }
-    return false;
-  };
-
-  // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
-  // check for things we actually use: photo/name/locale
-  public static parseIdToken = (idToken: string): GmailRes.OpenId => {
-    const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
-    if (claims.email) {
-      claims.email = claims.email.toLowerCase();
-      if (!claims.email_verified) {
-        throw new Error(`id_token email_verified is false for email ${claims.email}`);
-      }
-    }
-    return claims;
   };
 
   private static getAuthRes = async ({
