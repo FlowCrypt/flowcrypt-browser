@@ -37,9 +37,10 @@ export namespace Bm {
     uid: string;
     stack: string;
   };
-  export type RawWindowMessageWithSender = Raw & {
+  export type RawWithWindowExtensions = Raw & {
     data: { bm: AnyRequest & { messageSender?: Dest }; objUrls: Dict<string> };
     responseName?: string;
+    propagateToParent?: boolean;
   };
 
   export type SetCss = { css: Dict<string>; traverseUp?: number; selector: string };
@@ -263,7 +264,7 @@ export class BrowserMsg {
     pgpBlockReady: (frame: ChildFrame, bm: Bm.PgpBlockReady) => BrowserMsg.sendToParentWindow(frame, 'pgp_block_ready', bm),
     pgpBlockRetry: (frame: ChildFrame, bm: Bm.PgpBlockRetry) => BrowserMsg.sendToParentWindow(frame, 'pgp_block_retry', bm),
   };
-  private static readonly processed: string[] = [];
+  private static readonly processed = new Set<string>(); // or ExpirationCache?
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
@@ -369,32 +370,38 @@ export class BrowserMsg {
   protected static listenForWindowMessages = (dest: Bm.Dest) => {
     window.addEventListener('message', e => {
       // todo: (e.origin === allowedOrigin) { const allowedOrigin = Env.getExtensionOrigin();
-      const msg = e.data as Bm.RawWindowMessageWithSender;
+      const msg = e.data as Bm.RawWithWindowExtensions;
+      const firstArrived = !BrowserMsg.processed.has(msg.uid);
+      let handled = false;
       if (msg.to === dest || msg.to === 'broadcast') {
-        BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
+        handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
             // send response as a new request
             BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
           }
         });
       }
+      if (!handled && firstArrived && msg.propagateToParent) {
+        BrowserMsg.processed.add(msg.uid);
+        BrowserMsg.sendUpParentLine(msg);
+      }
     });
   };
 
-  private static sendToParentWindow = (frame: ChildFrame, name: string, bm: Dict<unknown> & { messageSender?: Bm.Dest }, responseName?: string) => {
-    const raw: Bm.RawWindowMessageWithSender = {
+  private static sendToParentWindow = (parentReference: ChildFrame, name: string, bm: Dict<unknown> & { messageSender?: Bm.Dest }, responseName?: string) => {
+    const raw: Bm.RawWithWindowExtensions = {
       data: { bm, objUrls: {} },
       name,
       stack: '',
-      to: frame.parentTabId,
+      to: parentReference.parentTabId,
       uid: Str.sloppyRandom(10),
       responseName,
     };
-    window.parent.postMessage(raw, '*');
+    BrowserMsg.sendUpParentLine(raw);
   };
 
   private static sendToChildren = (bm: Bm.Raw) => {
-    const raw: Bm.RawWindowMessageWithSender = bm;
+    const raw: Bm.RawWithWindowExtensions = bm;
     const childFrames = $(`iframe`).get() as HTMLIFrameElement[];
     for (const childFrame of childFrames) {
       childFrame.contentWindow?.postMessage(raw, '*');
@@ -403,14 +410,14 @@ export class BrowserMsg {
 
   private static handleMsg = (msg: Bm.Raw, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
     try {
-      if (!BrowserMsg.processed.includes(msg.uid)) {
-        // todo: Set or ExpirationCache?
-        BrowserMsg.processed.push(msg.uid);
+      if (!BrowserMsg.processed.has(msg.uid)) {
+        BrowserMsg.processed.add(msg.uid);
         if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
           BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
             .then(bm => BrowserMsg.sendRawResponse(handler(bm), rawRespond))
             .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
+          return true;
         }
       } else {
         // sometimes received events get duplicated
@@ -425,6 +432,7 @@ export class BrowserMsg {
     } catch (e) {
       BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
     }
+    return false;
   };
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
@@ -507,11 +515,7 @@ export class BrowserMsg {
         if (!Env.isBackgroundPage()) {
           BrowserMsg.sendToChildren(msg);
           window.postMessage(msg, '*');
-          let w: Window = window;
-          while (w.parent && w.parent !== w) {
-            w = w.parent;
-            window.parent.postMessage(msg, '*');
-          }
+          BrowserMsg.sendUpParentLine(msg);
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Extension context invalidated.') {
@@ -523,6 +527,14 @@ export class BrowserMsg {
     });
   };
 
+  private static sendUpParentLine = (raw: Bm.RawWithWindowExtensions) => {
+    const rawWithPropagationFlag: Bm.RawWithWindowExtensions = { ...raw, propagateToParent: true };
+    let w: Window = window;
+    while (w.parent && w.parent !== w) {
+      w = w.parent;
+      window.parent.postMessage(rawWithPropagationFlag, '*');
+    }
+  };
   /**
    * Browser messages cannot send a lot of data per message. This will replace Buf objects (which can be large) with an ObjectURL
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
