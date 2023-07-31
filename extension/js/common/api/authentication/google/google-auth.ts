@@ -2,22 +2,22 @@
 
 'use strict';
 
-import { Url } from '../../core/common.js';
-import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../core/const.js';
-import { ApiErr } from '../shared/api-error.js';
-import { Api, ApiCallContext } from '../shared/api.js';
+import { Url } from '../../../core/common.js';
+import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
+import { ApiErr } from '../../shared/api-error.js';
+import { Api, ApiCallContext } from '../../shared/api.js';
 
-import { Bm, GoogleAuthWindowResult$result } from '../../browser/browser-msg.js';
-import { InMemoryStoreKeys } from '../../core/const.js';
-import { OAuth2 } from '../../oauth2/oauth2.js';
-import { Catch } from '../../platform/catch.js';
-import { AcctStore, AcctStoreDict } from '../../platform/store/acct-store.js';
-import { InMemoryStore } from '../../platform/store/in-memory-store.js';
-import { AccountServer } from '../account-server.js';
-import { OAuth } from './oauth.js';
-import { ExternalService } from '../account-servers/external-service.js';
-import { GoogleAuthErr } from '../shared/api-error.js';
-import { Assert, AssertError } from '../../assert.js';
+import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
+import { InMemoryStoreKeys } from '../../../core/const.js';
+import { OAuth2 } from '../../../oauth2/oauth2.js';
+import { Catch } from '../../../platform/catch.js';
+import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
+import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
+import { AccountServer } from '../../account-server.js';
+import { OAuth } from '../oauth.js';
+import { ExternalService } from '../../account-servers/external-service.js';
+import { GoogleAuthErr } from '../../shared/api-error.js';
+import { Assert, AssertError } from '../../../assert.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 type GoogleAuthTokensResponse = {
