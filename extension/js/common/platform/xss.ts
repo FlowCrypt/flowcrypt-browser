@@ -4,10 +4,11 @@
 
 import * as DOMPurify from 'dompurify';
 
+import emojiRegex from 'emoji-regex';
+
 import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
 export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-PLAIN-TEXT';
-
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
  *  - in browser the implementation uses DOMPurify
@@ -231,10 +232,10 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    const emojiRegex = /[\u{1F300}-\u{1F64F}\u{2700}-\u{27B0}\u{23E9}-\u{23FA}\u{2194}-\u{21AA}\u261D\u26A1\u263A-\uD83E\uD83E]/gu;
+    const emojiPattern = emojiRegex();
     // regex for removing whitespace other form of whitespaces www.utf8-chartable.de/unicode-utf8-table.pl?start=65024&names=-
     const whitespaceRegex = /[\u{FE00}-\u{FE0F}]/gu;
-    str = str.replace(emojiRegex, '');
+    str = str.replace(emojiPattern, '');
     str = str.replace(whitespaceRegex, ''); //
     return this.escape(str);
   };
