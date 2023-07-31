@@ -14,19 +14,13 @@ import { UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key-import-ui.js
 import { SetupOptions, SetupView } from '../../settings/setup.js';
 
 export class KeyErrors {
-  protected fesUrl: string;
-  private readonly acctEmail: string;
-  private readonly parentTabId: string;
-  private readonly clientConfiguration: ClientConfiguration;
-  private readonly setupView?: SetupView;
-
-  public constructor(fesUrl: string, acctEmail: string, parentTabId: string, clientConfiguration: ClientConfiguration, setupView?: SetupView) {
-    this.fesUrl = fesUrl;
-    this.acctEmail = acctEmail;
-    this.parentTabId = parentTabId;
-    this.clientConfiguration = clientConfiguration;
-    this.setupView = setupView;
-  }
+  public constructor(
+    private fesUrl: string,
+    private acctEmail: string,
+    private parentTabId: string,
+    private clientConfiguration: ClientConfiguration,
+    private setupView?: SetupView
+  ) {}
 
   public handlePrivateKeyError = async (exception: unknown, origPrv: Key, setupOptions?: SetupOptions) => {
     if (exception instanceof UserAlert) {
