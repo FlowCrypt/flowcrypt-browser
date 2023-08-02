@@ -12,7 +12,7 @@ import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/email-provider/gmail/google.js';
-import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
+import { GoogleAuth } from '../../../js/common/api/authentication/google/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';

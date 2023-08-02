@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
+import { GoogleAuth } from '../../api/authentication/google/google-auth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
