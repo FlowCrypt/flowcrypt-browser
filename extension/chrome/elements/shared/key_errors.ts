@@ -23,7 +23,6 @@ export class KeyErrors {
   ) {}
 
   public handlePrivateKeyError = async (exception: unknown, origPrv: Key, setupOptions?: SetupOptions) => {
-    console.log('test');
     if (exception instanceof UserAlert) {
       return await Ui.modal.warning(exception.message, Ui.testCompatibilityLink);
     } else if (exception instanceof KeyCanBeFixed) {
