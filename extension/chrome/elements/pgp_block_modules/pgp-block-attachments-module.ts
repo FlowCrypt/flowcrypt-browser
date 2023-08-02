@@ -60,7 +60,7 @@ export class PgpBlockViewAttachmentsModule {
         event.stopPropagation();
         const attachment = this.includedAttachments[Number($(target).attr('index'))];
         if (attachment.hasData()) {
-          await this.downloadAttachment(attachment);
+          await this.decryptIfNeededAndDownloadAttachment(attachment);
         } else {
           Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -70,7 +70,7 @@ export class PgpBlockViewAttachmentsModule {
           if (!attachment.hasData()) attachment.setData(buf); // there may be some sort of a race
           await Ui.delay(100); // give browser time to render
           $(target).find('.progress').text('');
-          await this.downloadAttachment(attachment);
+          await this.decryptIfNeededAndDownloadAttachment(attachment);
         }
       })
     );
@@ -82,7 +82,7 @@ export class PgpBlockViewAttachmentsModule {
     BrowserMsg.send.showAttachmentPreview(this.view.parentTabId, { iframeUrl });
   };
 
-  private downloadAttachment = async (attachment: Attachment) => {
+  private decryptIfNeededAndDownloadAttachment = async (attachment: Attachment) => {
     if (attachment.treatAs(this.includedAttachments) === 'encryptedFile') {
       await this.decryptAndSaveAttachmentToDownloads(attachment);
     } else {
