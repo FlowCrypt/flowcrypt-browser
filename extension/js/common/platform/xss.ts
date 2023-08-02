@@ -235,7 +235,6 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    console.log('ci test');
     const emojiPattern = emojiRegex();
     // regex for removing whitespace other form of whitespaces www.utf8-chartable.de/unicode-utf8-table.pl?start=65024&names=-
     const whitespaceRegex = /[\u{FE00}-\u{FE0F}]/gu;
