@@ -6,7 +6,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
+import { GoogleAuth } from '../../../js/common/api/authentication/google/google-auth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';

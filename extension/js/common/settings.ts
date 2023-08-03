@@ -11,7 +11,7 @@ import { Buf } from './core/buf.js';
 import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
-import { GoogleAuth } from './api/email-provider/gmail/google-auth.js';
+import { GoogleAuth } from './api/authentication/google/google-auth.js';
 import { Lang } from './lang.js';
 import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';

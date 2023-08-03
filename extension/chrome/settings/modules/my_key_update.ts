@@ -21,6 +21,7 @@ import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
+import { KeyErrors } from '../../elements/shared/key_errors.js';
 
 View.run(
   class MyKeyUpdateView extends View {
@@ -28,9 +29,11 @@ View.run(
     private readonly acctEmail: string;
     private readonly keyImportUi = new KeyImportUi({});
     private readonly fingerprint: string;
+    private readonly parentTabId: string;
     private readonly showKeyUrl: string;
     private readonly inputPrivateKey = $('.input_private_key');
     private readonly prvHeaders = PgpArmor.headers('privateKey');
+    private readonly keyErrors: KeyErrors;
     private ki: KeyInfoWithIdentity | undefined;
     private clientConfiguration!: ClientConfiguration;
     private pubLookup!: PubLookup;
@@ -39,8 +42,10 @@ View.run(
       super();
       const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+      this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
       this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+      this.keyErrors = new KeyErrors(this.fesUrl || '', this.acctEmail, this.parentTabId, this.clientConfiguration);
     }
 
     public render = async () => {
@@ -103,49 +108,53 @@ View.run(
     };
 
     private updatePrivateKeyHandler = async () => {
-      const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-      const updatedKey = await KeyUtil.parse(KeyUtil.armor(updatedKeyEncrypted)); // create a "cloned" copy to decrypt later
-      const updatedKeyPassphrase = String($('.input_passphrase').val());
-      KeyImportUi.allowReselect();
-      if (typeof updatedKey === 'undefined') {
-        await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-      } else if (updatedKeyEncrypted.identities.length === 0) {
-        await Ui.modal.error(Lang.setup.prvHasUseridIssue);
-      } else if (updatedKey.isPublic) {
-        await Ui.modal.warning(
-          'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
-        );
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
-        await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
-      } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
-        await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
-      } else {
-        if (updatedKey.usableForEncryption) {
-          await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
-          return;
-        }
-        // cannot get a valid encryption key packet
-        if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
-          // known issues - key can be fixed
-          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-            this.acctEmail,
-            '.compatibility_fix_container',
-            updatedKeyEncrypted,
-            updatedKeyPassphrase,
-            this.showKeyUrl
-          );
-          await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
-        } else {
+      try {
+        const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+        const updatedKey = await KeyUtil.parse(KeyUtil.armor(updatedKeyEncrypted)); // create a "cloned" copy to decrypt later
+        const updatedKeyPassphrase = String($('.input_passphrase').val());
+        KeyImportUi.allowReselect();
+        if (typeof updatedKey === 'undefined') {
+          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+        } else if (updatedKeyEncrypted.identities.length === 0) {
+          await Ui.modal.error(Lang.setup.prvHasUseridIssue);
+        } else if (updatedKey.isPublic) {
           await Ui.modal.warning(
-            `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
-              !!this.fesUrl
-            )} to see why is that.`,
-            Ui.testCompatibilityLink
+            'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
           );
-          window.location.href = this.showKeyUrl;
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
+        } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
+          await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
+          await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
+        } else {
+          if (updatedKey.usableForEncryption) {
+            await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
+            return;
+          }
+          // cannot get a valid encryption key packet
+          if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
+            // known issues - key can be fixed
+            const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+              this.acctEmail,
+              '.compatibility_fix_container',
+              updatedKeyEncrypted,
+              updatedKeyPassphrase,
+              this.showKeyUrl
+            );
+            await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
+          } else {
+            await Ui.modal.warning(
+              `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
+                !!this.fesUrl
+              )} to see why is that.`,
+              Ui.testCompatibilityLink
+            );
+            window.location.href = this.showKeyUrl;
+          }
         }
+      } catch (e) {
+        return await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
       }
     };
   }

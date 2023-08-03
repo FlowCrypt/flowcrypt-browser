@@ -2,18 +2,15 @@
 
 'use strict';
 
-import { KeyCanBeFixed, UserAlert } from '../../../js/common/ui/key-import-ui.js';
 import { SetupOptions, SetupView } from '../setup.js';
 
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Key, UnexpectedKeyTypeError } from '../../../js/common/core/crypto/key.js';
-import { Lang } from '../../../js/common/lang.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
+import { KeyErrors } from '../../elements/shared/key_errors.js';
 
 export class SetupImportKeyModule {
+  private keyErrors: KeyErrors | undefined;
   public constructor(private view: SetupView) {}
 
   public actionImportPrivateKeyHandle = async (button: HTMLElement) => {
@@ -54,48 +51,14 @@ export class SetupImportKeyModule {
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
-      if (e instanceof UserAlert) {
-        return await Ui.modal.warning(e.message, Ui.testCompatibilityLink);
-      } else if (e instanceof KeyCanBeFixed) {
-        return await this.renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
-      } else if (e instanceof UnexpectedKeyTypeError) {
-        return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${e.message}`);
-      } else {
-        Catch.reportErr(e);
-        return await Ui.modal.error(
-          `An error happened when processing the key: ${String(e)}\n${Lang.general.contactForSupportSentence(this.view.isCustomerUrlFesUsed())}`,
-          false,
-          Ui.testCompatibilityLink
-        );
-      }
-    }
-  };
-
-  public renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: Key, options: SetupOptions) => {
-    $('.ask_support_assistance_container').text(Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed()));
-    this.view.setupRender.displayBlock('step_3_compatibility_fix');
-    let fixedPrv;
-    try {
-      fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+      this.keyErrors = new KeyErrors(
+        this.view.storage.fesUrl || '',
         this.view.acctEmail,
-        '#step_3_compatibility_fix',
-        origPrv,
-        options.passphrase,
-        window.location.href.replace(/#$/, '')
+        this.view.parentTabId || '',
+        this.view.clientConfiguration,
+        this.view
       );
-    } catch (e) {
-      Catch.reportErr(e);
-      await Ui.modal.error(
-        `Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.view.isCustomerUrlFesUsed())}`,
-        false,
-        Ui.testCompatibilityLink
-      );
-      this.view.setupRender.displayBlock('step_2b_manual_enter');
-      return;
+      await this.keyErrors.handlePrivateKeyError(e, e.encrypted, options);
     }
-    await saveKeysAndPassPhrase(this.view.acctEmail, [fixedPrv], options);
-    await this.view.submitPublicKeys(options);
-    await this.view.finalizeSetup();
-    await this.view.setupRender.renderSetupDone();
   };
 }
