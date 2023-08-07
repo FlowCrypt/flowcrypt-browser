@@ -163,6 +163,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
+      const blocksFromEmailContainer = Mime.processBody({ text: emailContainer.innerText });
+      if (blocksFromEmailContainer.length === 0 || (blocksFromEmailContainer.length === 1 && blocksFromEmailContainer[0].type === 'plainText')) {
+        // only has single block which is plain text
+        continue;
+      }
+      const { renderedXssSafe: renderedFromEmailContainerXssSafe } = this.messageRenderer.renderMsg({ blocks: blocksFromEmailContainer }, false); // xss-safe-value
+      const replacedEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       let blocks: MsgBlock[] = [];
       let messageInfo: MessageInfo | undefined;
       try {
@@ -170,27 +177,25 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       } catch (e) {
         this.handleException(e);
         // fill with fallback values from the element
-        blocks = Mime.processBody({ text: emailContainer.innerText });
+        blocks = blocksFromEmailContainer;
         // todo: print info for offline?
       }
       const setMessageInfo = messageInfo ?? {
         isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText),
         plainSubject: undefined, // todo: take from this.sel.subject?
       };
-      if (blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText')) {
-        // only has single block which is plain text
-        continue;
-      }
+
       if (!setMessageInfo.from) {
         setMessageInfo.from = this.getFrom(this.getMsgBodyEl(msgId));
       }
       const { renderedXssSafe, blocksInFrames } = this.messageRenderer.renderMsg({ blocks, senderEmail: setMessageInfo.from?.email }, false); // xss-safe-value
       if (!renderedXssSafe) continue;
       $(this.sel.translatePrompt).hide();
+
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
       }
-      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(replacedEmailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
