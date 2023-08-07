@@ -60,7 +60,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (selectKeyAlgo) {
       await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
     }
-    if (backup === 'disabled' && backupPrvKeyToMailbox === false) {
+    if (backup === 'disabled') {
       // user not given a backup choice due to NO_PRV_BACKUP ClientConfiguration
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
     } else {
@@ -91,7 +91,7 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup !== 'disabled') {
       throw new Error(`Unknown backup method: ${backup}`);
     }
-    if (backup !== 'disabled') {
+    if (backup !== 'disabled' && backupPrvKeyToMailbox !== true) {
       await settingsPage.waitAndClick('@action-backup-step3manual-continue');
       if (backup === 'file') {
         // explicit wait first with longer timeout - keygen can take a while, particularly with other tests in parallel
