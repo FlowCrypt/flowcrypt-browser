@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Buf } from '../../core/buf';
-import { MsgUtil } from '../../core/crypto/pgp/msg-util';
+import { DecryptSuccess, MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { FesClientConfiguration, FesConfig } from './shared-tenant-fes-endpoints';
 import { expect } from 'chai';
 
@@ -45,13 +45,14 @@ export const processMessageFromUser = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
-  const decrypted = await MsgUtil.decryptMessage({
+  const decrypted = (await MsgUtil.decryptMessage({
     kisWithPp: [],
     msgPwd: 'lousy pwdgO0d-pwd',
     encryptedData,
     verificationPubs: [],
-  });
+  })) as DecryptSuccess;
   expect(decrypted.success).to.equal(true);
+  expect(decrypted.signature?.signerLongids.length).to.equal(1);
   const decryptedMimeMsg = decrypted.content?.toUtfStr();
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - ID TOKEN'
