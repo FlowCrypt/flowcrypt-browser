@@ -12,7 +12,7 @@ import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
-import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
+import { GoogleAuth } from '../authentication/google/google-auth.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
 
 // todo - decide which tags to use

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
+import { AuthRes } from '../api/authentication/google/google-auth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';

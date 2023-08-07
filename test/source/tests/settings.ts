@@ -24,7 +24,7 @@ import { BrowserHandle, ControllablePage } from '../browser';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
-import { emailKeyIndex } from '../core/common';
+import { Dict, emailKeyIndex } from '../core/common';
 import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
@@ -538,7 +538,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // test for direct access at my_key_update.htm
         const myKeyUpdateFrame = await browser.newExtensionPage(
           t,
-          `chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}`
+          `chrome/settings/modules/my_key_update.htm?placement=settings&acctEmail=${acct}&fingerprint=${fingerprint}&parentTabId=1`
         );
         await myKeyUpdateFrame.waitForContent('@container-err-title', 'Error: Insufficient Permission');
         // test for direct access at my add_key.htm
@@ -799,23 +799,33 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       'settings - pgp/mime preview and download attachment',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const checkPage = async (page: ControllablePage) => {
+        const checkPage = async (page: ControllablePage, withPreview: boolean) => {
           const pgpBlockFrame = await page.getFrame(['pgp_block.htm']);
-          // check if download is awailable
           await pgpBlockFrame.waitAll('.download-attachment');
-          // and preview
-          await pgpBlockFrame.waitAndClick('.preview-attachment');
-          const attachmentPreviewImage = await page.getFrame(['attachment_preview.htm']);
-          await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
-          const downloadedFiles = await attachmentPreviewImage.awaitDownloadTriggeredByClicking(() =>
-            attachmentPreviewImage.waitAndClick('@attachment-preview-download')
-          );
+
+          let downloadedFiles: Dict<Buffer>;
+          if (withPreview) {
+            await pgpBlockFrame.waitAndClick('.preview-attachment');
+            const attachmentPreviewImage = await page.getFrame(['attachment_preview.htm']);
+            await attachmentPreviewImage.waitAll('#attachment-preview-container img.attachment-preview-img');
+            downloadedFiles = await attachmentPreviewImage.awaitDownloadTriggeredByClicking(() =>
+              attachmentPreviewImage.waitAndClick('@attachment-preview-download')
+            );
+          } else {
+            downloadedFiles = await pgpBlockFrame.awaitDownloadTriggeredByClicking(() => pgpBlockFrame.waitAndClick('@download-attachment-0'));
+          }
+
           expect(Object.keys(downloadedFiles)).contains('7 years.jpeg');
           await page.close();
         };
         const msgId = '16e8b01f136c3d28';
-        await checkPage(await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr));
-        await checkPage(await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${msgId}`));
+        for (const withPreview of [true, false]) {
+          await checkPage(await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${msgId}`, undefined, authHdr), withPreview);
+          await checkPage(
+            await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=${msgId}`),
+            withPreview
+          );
+        }
       })
     );
     const checkIfFileDownloadsCorrectly = async (t: AvaContext, browser: BrowserHandle, threadId: string, fileName: string) => {

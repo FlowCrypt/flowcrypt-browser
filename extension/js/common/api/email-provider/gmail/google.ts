@@ -7,7 +7,7 @@ import { Dict, Str, UrlParams } from '../../../core/common.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
-import { GoogleAuth } from './google-auth.js';
+import { GoogleAuth } from '../../authentication/google/google-auth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
 import { Catch } from '../../../platform/catch.js';
 
