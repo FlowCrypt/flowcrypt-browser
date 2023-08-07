@@ -3,7 +3,6 @@
 'use strict';
 
 import { AuthRes } from '../api/email-provider/gmail/google-auth.js';
-import { ApiCallContext } from '../api/shared/api.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
@@ -86,7 +85,6 @@ export namespace Bm {
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
-  export type Ajax = { req: JQuery.AjaxSettings<ApiCallContext>; stack: string };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
@@ -161,7 +159,6 @@ export namespace Bm {
     | StoreAcctGet
     | StoreAcctSet
     | PgpMsgDecrypt
-    | Ajax
     | AjaxProgress
     | ShowAttachmentPreview
     | ShowConfirmation
@@ -220,7 +217,6 @@ export class BrowserMsg {
         storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
         storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
-        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,

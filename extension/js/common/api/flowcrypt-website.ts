@@ -24,7 +24,8 @@ export class FlowCryptWebsite extends Api {
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
-    const xml = (await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', dataType: 'xml' }, Catch.stackTrace())) as XMLDocument;
+    const xmlString = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', method: 'GET', stack: Catch.stackTrace() }, 'text');
+    const xml = $.parseXML(xmlString);
     const posts: FlowCryptWebsiteRes.FcBlogPost[] = [];
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
       const children = Browser.arrFromDomNodeList(post.childNodes);

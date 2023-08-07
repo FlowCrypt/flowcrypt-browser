@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 'use strict';
 
-import { Api, ProgressCb, ProgressCbs, ReqFmt, ReqMethod } from '../shared/api.js';
+import { Api, ProgressCb, ProgressCbs } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Dict, Str } from '../../core/common.js';
 import { ErrorReport } from '../../platform/catch.js';
@@ -13,6 +13,7 @@ import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
+import { Serializable } from '../../platform/store/abstract-store.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -84,11 +85,11 @@ export class ExternalService extends Api {
   };
 
   public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
-    return await this.request<FesRes.ServiceInfo>('GET', `/api/`);
+    return await this.request<FesRes.ServiceInfo>(`/api/`);
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -97,28 +98,26 @@ export class ExternalService extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
+    await this.request<void>(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
   };
 
   public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
-    return await this.request<FesRes.HelpFeedback>('POST', `/api/${this.apiVersion}/account/feedback`, {}, { email, message });
+    return await this.request<FesRes.HelpFeedback>(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message } });
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>(
-      'POST',
-      `/api/${this.apiVersion}/log-collector/exception`,
-      {},
-      {
+    await this.request<void>(`/api/${this.apiVersion}/log-collector/exception`, {
+      fmt: 'JSON',
+      data: {
         tags,
         message,
         details,
-      }
-    );
+      },
+    });
   };
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, {}, {});
+    return await this.request<FesRes.ReplyToken>(`/api/${this.apiVersion}/message/new-reply-token`, { fmt: 'JSON', data: {} });
   };
 
   public webPortalMessageUpload = async (
@@ -147,50 +146,52 @@ export class ExternalService extends Api {
       ),
     });
     const multipartBody = { content, details };
-    return await this.request<FesRes.MessageUpload>('POST', `/api/${this.apiVersion}/message`, {}, multipartBody, { upload: progressCb });
+    return await this.request<FesRes.MessageUpload>(`/api/${this.apiVersion}/message`, { fmt: 'FORM', data: multipartBody }, { upload: progressCb });
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>(
-      'POST',
-      `/api/${this.apiVersion}/message/${externalId}/gateway`,
-      {},
-      {
+    await this.request<void>(`/api/${this.apiVersion}/message/${externalId}/gateway`, {
+      fmt: 'JSON',
+      data: {
         emailGatewayMessageId,
-      }
-    );
+      },
+    });
   };
 
-  private authHdr = async (): Promise<Dict<string>> => {
+  private authHdr = async (): Promise<{ authorization: string }> => {
     const idToken = await InMemoryStore.getUntilAvailable(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
-      return { Authorization: `Bearer ${idToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
+      return { authorization: `Bearer ${idToken}` };
     }
     // user will not actually see this message, they'll see a generic login prompt
     throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
-  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>, progress?: ProgressCbs): Promise<RT> => {
-    let reqFmt: ReqFmt | undefined;
-    if (progress) {
-      reqFmt = 'FORM';
-    } else if (method !== 'GET') {
-      reqFmt = 'JSON';
-    }
+  private request = async <RT>(
+    path: string,
+    vals?:
+      | {
+          data: Dict<string | Attachment>;
+          fmt: 'FORM';
+        }
+      | { data: Dict<Serializable>; fmt: 'JSON' },
+    progress?: ProgressCbs
+  ): Promise<RT> => {
+    const values:
+      | {
+          data: Dict<string | Attachment>;
+          fmt: 'FORM';
+          method: 'POST';
+        }
+      | { data: Dict<Serializable>; fmt: 'JSON'; method: 'POST' }
+      | undefined = vals
+      ? {
+          ...vals,
+          method: 'POST',
+        }
+      : undefined;
     try {
-      return await ExternalService.apiCall(
-        this.url,
-        path,
-        vals,
-        reqFmt,
-        progress,
-        {
-          ...headers,
-          ...(await this.authHdr()),
-        },
-        'json',
-        method
-      );
+      return await ExternalService.apiCall(this.url, path, values, progress, await this.authHdr(), 'json');
     } catch (firstAttemptErr) {
       const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
@@ -200,16 +201,12 @@ export class ExternalService extends Api {
           return await ExternalService.apiCall(
             this.url,
             path,
-            vals,
-            reqFmt,
+            values,
             progress,
             {
-              ...headers,
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              Authorization: await GoogleAuth.googleApiAuthHeader(email, true),
+              authorization: await GoogleAuth.googleApiAuthHeader(email, true),
             },
-            'json',
-            method
+            'json'
           );
         }
       }

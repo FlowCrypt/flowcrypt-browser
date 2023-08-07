@@ -30,12 +30,12 @@ export class GoogleAuthErr extends AuthErr {}
 export class BackendAuthErr extends AuthErr {}
 
 abstract class ApiCallErr extends Error {
-  protected static describeApiAction = (req: JQueryAjaxSettings) => {
+  protected static describeApiAction = (req: { url: string; method?: string; data?: unknown }) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
     return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
   };
 
-  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
+  private static getPayloadStructure = (req: { data?: unknown }): string => {
     if (typeof req.data === 'string') {
       try {
         return Object.keys(JSON.parse(req.data) as string).join(',');
@@ -69,7 +69,7 @@ export class AjaxErr extends ApiCallErr {
   }
 
   // no static props, else will get serialised into err reports. Static methods ok
-  public static fromXhr = (xhr: RawAjaxErr, req: JQueryAjaxSettings, stack: string) => {
+  public static fromXhr = (xhr: RawAjaxErr, req: { url: string; method?: string; data?: unknown }, stack: string) => {
     const responseText = xhr.responseText || '';
     stack += `\n\nprovided ajax call stack:\n${stack}`;
     const { resMsg, resDetails, resCode } = AjaxErr.parseResErr(responseText);

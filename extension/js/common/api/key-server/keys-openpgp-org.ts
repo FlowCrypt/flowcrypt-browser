@@ -20,16 +20,14 @@ export class KeysOpenpgpOrg extends Api {
       return { pubkeys: [] };
     }
     try {
-      const { responseText } = (await Api.apiCall(
+      const responseText: string = await Api.apiCall(
         KEYS_OPENPGP_ORG_API_HOST,
         `vks/v1/by-email/${encodeURIComponent(email)}`,
         undefined,
         undefined,
         undefined,
-        undefined,
-        'xhr',
-        'GET'
-      )) as XMLHttpRequest;
+        'text'
+      );
       return { pubkeys: [responseText] };
     } catch (e) {
       /**

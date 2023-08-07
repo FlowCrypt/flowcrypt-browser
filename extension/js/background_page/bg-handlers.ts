@@ -2,9 +2,8 @@
 
 'use strict';
 
-import { Api } from '../common/api/shared/api.js';
 import { BgUtils } from './bgutils.js';
-import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
+import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
@@ -27,19 +26,6 @@ export class BgHandlers {
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await dbFunc(db, ...request.args);
-  };
-
-  public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
-    if (r.req.context?.operationId) {
-      // progress updates were requested via messages
-      const destination = r.req.context.tabId;
-      const operationId = r.req.context.operationId;
-      const expectedTransferSize = r.req.context.expectedTransferSize;
-      r.req.xhr = Api.getAjaxProgressXhrFactory({
-        download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, operationId }),
-      });
-    }
-    return await Api.ajax(r.req, r.stack);
   };
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {

@@ -3,34 +3,43 @@
 'use strict';
 
 import { Attachment } from '../../core/attachment.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
-import { Dict, EmailParts } from '../../core/common.js';
-import { Env } from '../../browser/env.js';
+import { Dict, EmailParts, Str, Url, UrlParams } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
+import { Serializable } from '../../platform/store/abstract-store.js';
 
-export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
-type ResFmt = 'json' | 'xhr';
+export type ResFmt = 'json' | 'text' | undefined;
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type EmailProviderContact = EmailParts;
 type ProviderContactsResults = { new: EmailProviderContact[]; all: EmailProviderContact[] };
-type RawAjaxErr = {
-  // getAllResponseHeaders?: () => any,
-  // getResponseHeader?: (e: string) => any,
-  readyState: number;
-  responseText?: string;
-  status?: number;
-  statusText?: string;
-};
 export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; tabId: string };
-export type ApiCallContext = ProgressDestFrame | undefined;
+export type AjaxHeaders = {
+  authorization?: string;
+  ['api-version']?: string;
+};
+export type Ajax = {
+  url: string;
+  headers?: AjaxHeaders;
+  progress?: ProgressCbs;
+  timeout?: number; // todo: implement
+  stack: string;
+} & (
+  | { method: 'GET' | 'DELETE'; data?: UrlParams }
+  | { method: 'POST' }
+  | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
+  | { method: 'POST' | 'PUT'; contentType?: string; data: string; dataType: 'TEXT' }
+  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' } // todo: default application/x-www-form-urlencoded; charset=UTF-8 ?
+  | { method: never; data: never; contentType: never }
+);
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null };
+
+type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
 
 export class Api {
   public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
@@ -60,37 +69,89 @@ export class Api {
     });
   };
 
-  public static ajax = async (req: JQuery.AjaxSettings<ApiCallContext>, stack: string): Promise<unknown | JQuery.jqXHR<unknown>> => {
-    if (Env.isContentScript()) {
-      // content script CORS not allowed anymore, have to drag it through background page
-      // https://www.chromestatus.com/feature/5629709824032768
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return await BrowserMsg.send.bg.await.ajax({ req, stack });
-    }
+  public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
     try {
-      return await new Promise((resolve, reject) => {
-        Api.throwIfApiPathTraversalAttempted(req.url || '');
-        $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType })
-          .then((data, s, xhr) => {
-            if (req.dataType === 'xhr') {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
-              xhr.then = xhr.promise = undefined;
-              resolve(xhr);
-            } else {
-              resolve(data as unknown);
-            }
+      Api.throwIfApiPathTraversalAttempted(req.url);
+      const headersInit: [string, string][] = req.headers
+        ? Object.entries(req.headers).map(([key, value]) => {
+            return [Str.capitalize(key), value];
           })
-          .catch(reject);
-      });
+        : [];
+      let body: BodyInit | undefined;
+      let url: string;
+      if (req.method === 'GET' || req.method === 'DELETE') {
+        if (typeof req.data === 'undefined') {
+          url = req.url;
+        } else {
+          url = Url.create(req.url, req.data, false);
+        }
+      } else {
+        url = req.url;
+        if (req.method === 'PUT' || req.method === 'POST') {
+          if ('data' in req && typeof req.data !== 'undefined') {
+            if (req.dataType === 'JSON') {
+              body = JSON.stringify(req.data);
+              headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
+            } else if (req.dataType === 'TEXT') {
+              body = req.data;
+              if (typeof req.contentType === 'string') {
+                headersInit.push(['Content-Type', req.contentType]);
+              }
+            } else {
+              body = req.data; // todo: form data content-type?
+            }
+          }
+        }
+      }
+
+      const abortController = new AbortController();
+      const requestInit: RequestInit = {
+        method: req.method,
+        headers: headersInit,
+        body,
+        mode: 'cors',
+        signal: abortController.signal,
+      };
+      const responsePromises = [fetch(url, requestInit)];
+      if (req.timeout || typeof req.progress?.download === 'undefined') {
+        // todo: disable timeout on upload
+        responsePromises.push(
+          new Promise((_resolve, reject) => {
+            /* error-handled */ setTimeout(() => {
+              abortController.abort(); // Abort the fetch request
+              reject(new Error('Request timed out')); // Reject the promise with a timeout error
+            }, req.timeout ?? 20000);
+          })
+        );
+      }
+      const response = await Promise.race(responsePromises);
+      if (!response.ok) {
+        throw AjaxErr.fromXhr(
+          {
+            readyState: 2, // HEADERS_RECEIVED
+            status: response.status,
+            statusText: response.statusText,
+          },
+          {
+            url: req.url,
+            method: req.method,
+            data: body,
+          },
+          req.stack
+        );
+      }
+      if (resFmt === 'text') {
+        return (await response.text()) as FetchResult<T, RT>; // todo: progress
+      } else if (resFmt === 'json') {
+        return (await response.json()) as FetchResult<T, RT>; // todo: progress?
+      } else {
+        return undefined as FetchResult<T, RT>;
+      }
     } catch (e) {
       if (e instanceof Error) {
         throw e;
       }
-      if (Api.isRawAjaxErr(e)) {
-        throw AjaxErr.fromXhr(e, req, stack);
-      }
-      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
+      throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);
     }
   };
 
@@ -106,48 +167,6 @@ export class Api {
     }
   };
 
-  public static getAjaxProgressXhrFactory = (progressCbs: ProgressCbs | undefined): (() => XMLHttpRequest) | undefined => {
-    if (Env.isContentScript() || !progressCbs || !(progressCbs.upload || progressCbs.download)) {
-      // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
-      // thus no progress callbacks in bg or content scripts
-      // additionally no need to create this if there are no progressCbs defined
-      return undefined;
-    }
-    return () => {
-      // returning a factory
-      let lastProgressPercent = -1;
-      const progressPeportingXhr = new XMLHttpRequest();
-      if (progressCbs && typeof progressCbs.upload === 'function') {
-        progressPeportingXhr.upload.addEventListener(
-          'progress',
-          (evt: ProgressEvent) => {
-            const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
-            if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
-              lastProgressPercent = newProgressPercent;
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              progressCbs.upload!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
-            }
-          },
-          false
-        );
-      }
-      if (progressCbs && typeof progressCbs.download === 'function') {
-        progressPeportingXhr.addEventListener('progress', (evt: ProgressEvent) => {
-          // 100 because if the request takes less time than 1-2 seconds browsers trigger this function only once and when it's completed
-          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined;
-          if (typeof newProgressPercent === 'undefined' || newProgressPercent !== lastProgressPercent) {
-            if (newProgressPercent) {
-              lastProgressPercent = newProgressPercent;
-            }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            progressCbs.download!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
-          }
-        });
-      }
-      return progressPeportingXhr;
-    };
-  };
-
   public static randomFortyHexChars = (): string => {
     const bytes = Array.from(secureRandomBytes(20));
     return bytes.map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
@@ -157,62 +176,61 @@ export class Api {
     return ['to', 'cc', 'bcc'].includes(value);
   };
 
-  protected static apiCall = async <RT>(
+  protected static apiCall = async <T extends ResFmt, RT>(
     url: string,
     path: string,
-    fields?: Dict<unknown> | string,
-    fmt?: ReqFmt,
+    values:
+      | {
+          data: Dict<Serializable>;
+          fmt: 'JSON';
+          method?: 'POST' | 'PUT';
+        }
+      | {
+          data: string;
+          fmt: 'TEXT';
+          method?: 'POST' | 'PUT';
+        }
+      | {
+          data: Dict<string | Attachment>;
+          fmt: 'FORM';
+          method?: 'POST' | 'PUT';
+        }
+      | undefined,
     progress?: ProgressCbs,
-    headers?: Dict<string>,
-    resFmt: ResFmt = 'json',
-    method: ReqMethod = 'POST'
-  ): Promise<RT> => {
+    headers?: AjaxHeaders,
+    resFmt?: T
+  ): Promise<FetchResult<T, RT>> => {
     progress = progress || ({} as ProgressCbs);
     let formattedData: FormData | string | undefined;
-    let contentType: string | false;
-    if (fmt === 'JSON' && fields) {
-      formattedData = JSON.stringify(fields);
-      contentType = 'application/json; charset=UTF-8';
-    } else if (fmt === 'TEXT' && typeof fields === 'string') {
-      formattedData = fields;
-      contentType = false;
-    } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
-      formattedData = new FormData();
-      for (const formFieldName of Object.keys(fields)) {
-        const a: Attachment | string = fields[formFieldName] as Attachment | string;
-        if (a instanceof Attachment) {
-          formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
-        } else {
-          formattedData.append(formFieldName, a); // xss-none
+    let dataPart:
+      | { method: 'GET' }
+      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
+      | { method: 'POST' | 'PUT'; data: string; dataType: 'TEXT' }
+      | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' };
+    dataPart = { method: 'GET' };
+    if (values) {
+      if (values.fmt === 'JSON') {
+        dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'JSON' };
+      } else if (values.fmt === 'TEXT') {
+        dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'TEXT' };
+      } else if (values.fmt === 'FORM') {
+        formattedData = new FormData();
+        for (const [formFieldName, a] of Object.entries(values.data)) {
+          if (a instanceof Attachment) {
+            formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
+          } else {
+            formattedData.append(formFieldName, a); // xss-none
+          }
         }
+        dataPart = { method: values.method ?? 'POST', data: formattedData, dataType: 'FORM' };
       }
-      contentType = false;
-    } else if (!fmt && !fields && method === 'GET') {
-      formattedData = undefined;
-      contentType = false;
-    } else {
-      throw new Error('unknown format:' + String(fmt));
     }
-    const req: JQuery.AjaxSettings<ApiCallContext> = {
-      xhr: Api.getAjaxProgressXhrFactory(progress),
-      url: url + path,
-      method,
-      data: formattedData,
-      dataType: resFmt,
-      crossDomain: true,
-      headers,
-      processData: false,
-      contentType,
-      async: true,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
-    };
-    const res = await Api.ajax(req, Catch.stackTrace());
-    return res as RT;
-  };
-
-  private static isRawAjaxErr = (e: unknown): e is RawAjaxErr => {
-    return !!e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
+    const req: Ajax = { url: url + path, stack: Catch.stackTrace(), ...dataPart, headers };
+    if (typeof resFmt === 'undefined') {
+      const undefinedRes: undefined = await Api.ajax(req, undefined); // we should get an undefined
+      return undefinedRes as FetchResult<T, RT>;
+    }
+    return await Api.ajax(req, resFmt);
   };
 
   /**

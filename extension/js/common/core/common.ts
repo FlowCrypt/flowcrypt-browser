@@ -336,11 +336,11 @@ export class Url {
     return processedParams;
   };
 
-  public static create = (link: string, params: UrlParams) => {
+  public static create = (link: string, params: UrlParams, transform = true) => {
     for (const key of Object.keys(params)) {
       const value = params[key];
       if (typeof value !== 'undefined') {
-        const transformed = Value.obj.keyByValue(Url.URL_PARAM_DICT, value);
+        const transformed = transform ? Value.obj.keyByValue(Url.URL_PARAM_DICT, value) : undefined;
         link +=
           (link.includes('?') ? '&' : '?') +
           encodeURIComponent(key) +

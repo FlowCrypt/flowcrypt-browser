@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Api, ReqMethod } from './../shared/api.js';
-import { Dict, Url } from '../../core/common.js';
+import { Api } from './../shared/api.js';
+import { Url } from '../../core/common.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
 
@@ -16,23 +16,16 @@ export class KeyManager extends Api {
   }
 
   public getPrivateKeys = async (idToken: string): Promise<LoadPrvRes> => {
-    return (await this.request('GET', '/v1/keys/private', undefined, idToken)) as LoadPrvRes;
+    return await Api.apiCall(this.url, '/v1/keys/private', undefined, undefined, idToken ? { authorization: `Bearer ${idToken}` } : undefined, 'json');
   };
 
   public storePrivateKey = async (idToken: string, privateKey: string): Promise<void> => {
-    return await this.request('PUT', '/v1/keys/private', { privateKey }, idToken);
-  };
-
-  private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<unknown> | undefined, idToken?: string): Promise<RT> => {
-    return await Api.apiCall(
+    await Api.apiCall(
       this.url,
-      path,
-      vals,
-      vals ? 'JSON' : undefined,
+      '/v1/keys/private',
+      { data: { privateKey }, fmt: 'JSON', method: 'PUT' },
       undefined,
-      idToken ? { Authorization: `Bearer ${idToken}` } : undefined, // eslint-disable-line @typescript-eslint/naming-convention
-      undefined,
-      method
+      idToken ? { authorization: `Bearer ${idToken}` } : undefined
     );
   };
 }

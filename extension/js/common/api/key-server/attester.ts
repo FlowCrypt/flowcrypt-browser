@@ -2,15 +2,14 @@
 
 'use strict';
 
-import { Api, ReqMethod } from './../shared/api.js';
+import { Api } from './../shared/api.js';
 import { Dict, Str } from '../../core/common.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { AjaxErr, ApiErr } from '../shared/api-error.js';
 import { ClientConfiguration } from '../../client-configuration';
 import { ATTESTER_API_HOST } from '../../core/const.js';
 import { MsgBlockParser } from '../../core/msg-block-parser.js';
-
-type PubCallRes = { responseText: string; getResponseHeader: (n: string) => string | null };
+import { Serializable } from '../../platform/store/abstract-store.js';
 
 export class Attester extends Api {
   public constructor(private clientConfiguration: ClientConfiguration) {
@@ -75,7 +74,7 @@ export class Attester extends Api {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
-    await this.pubCall(`pub/${email}`, 'POST', pubkey, { authorization: `Bearer ${idToken}` });
+    await this.pubCall(`pub/${email}`, pubkey, { authorization: `Bearer ${idToken}` });
   };
 
   /**
@@ -87,26 +86,25 @@ export class Attester extends Api {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
-    const r = await this.pubCall(`pub/${email}`, 'POST', pubkey);
-    return r.responseText;
+    return await this.pubCall(`pub/${email}`, pubkey);
   };
 
   public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
-    return await this.jsonCall<{ sent: boolean }>('welcome-message', { email, pubkey }, 'POST', headers);
+    return await this.jsonPost<{ sent: boolean }>('welcome-message', { email, pubkey }, headers);
   };
 
-  private jsonCall = async <RT>(path: string, values?: Dict<unknown>, method: ReqMethod = 'POST', hdrs?: Dict<string>): Promise<RT> => {
-    return (await Api.apiCall(ATTESTER_API_HOST, path, values, 'JSON', undefined, { 'api-version': '3', ...(hdrs ?? {}) }, 'json', method)) as RT;
+  private jsonPost = async <RT>(path: string, values: Dict<Serializable>, hdrs?: Dict<string>): Promise<RT> => {
+    return (await Api.apiCall(ATTESTER_API_HOST, path, { data: values, fmt: 'JSON' }, undefined, { 'api-version': '3', ...(hdrs ?? {}) }, 'json')) as RT;
   };
 
-  private pubCall = async (resource: string, method: ReqMethod = 'GET', data?: string | undefined, hdrs?: Dict<string>): Promise<PubCallRes> => {
-    return await Api.apiCall(ATTESTER_API_HOST, resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, hdrs, 'xhr', method);
+  private pubCall = async (resource: string, data?: string, hdrs?: Dict<string>): Promise<string> => {
+    return await Api.apiCall(ATTESTER_API_HOST, resource, typeof data === 'string' ? { data, fmt: 'TEXT' } : undefined, undefined, hdrs, 'text');
   };
 
-  private getPubKeysSearchResult = async (r: PubCallRes): Promise<PubkeysSearchResult> => {
-    const { blocks } = MsgBlockParser.detectBlocks(r.responseText);
+  private getPubKeysSearchResult = async (r: string): Promise<PubkeysSearchResult> => {
+    const { blocks } = MsgBlockParser.detectBlocks(r);
     const pubkeys = blocks.filter(block => block.type === 'publicKey').map(block => Str.with(block.content));
     return { pubkeys };
   };
