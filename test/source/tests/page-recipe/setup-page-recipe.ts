@@ -60,7 +60,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (selectKeyAlgo) {
       await settingsPage.selectOption('@input-step2bmanualcreate-key-type', selectKeyAlgo);
     }
-    if (backup === 'disabled') {
+    if (backup === 'disabled' && backupPrvKeyToMailbox === false) {
       // user not given a backup choice due to NO_PRV_BACKUP ClientConfiguration
       await settingsPage.notPresent('@input-step2bmanualcreate-backup-inbox');
     } else {
