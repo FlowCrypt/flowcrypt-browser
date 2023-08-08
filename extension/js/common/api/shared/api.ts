@@ -126,9 +126,18 @@ export class Api {
       }
       const response = await Promise.race(responsePromises);
       if (!response.ok) {
+        let responseText: string | undefined;
+        let readyState = 2; // HEADERS_RECEIVED
+        try {
+          responseText = await response.text();
+          readyState = 4; // DONE
+        } catch {
+          // continue processing without reponseText
+        }
         throw AjaxErr.fromXhr(
           {
-            readyState: 2, // HEADERS_RECEIVED
+            readyState,
+            responseText,
             status: response.status,
             statusText: response.statusText,
           },
