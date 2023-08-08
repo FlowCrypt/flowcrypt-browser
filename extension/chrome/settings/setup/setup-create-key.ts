@@ -46,9 +46,9 @@ export class SetupCreateKeyModule {
           const msgEncryptionKey = await KeyUtil.parse(pubkey);
           const destinationEmail = msgEncryptionKey.emails[0];
           try {
-            const prvKeyAttachment = await KeyStore.get(this.view.acctEmail);
-            const primaryKeyId = await prvKeyAttachment[0].id;
-            const primaryUserId = prvKeyAttachment[0].emails![0];
+            const userPrvKey = await KeyStore.get(this.view.acctEmail);
+            const primaryKeyId = await userPrvKey[0].id;
+            const primaryUserId = userPrvKey[0].emails![0];
             await this.view.backupUi.initialize({
               acctEmail: this.view.acctEmail,
               action: 'setup_automatic',
@@ -60,11 +60,10 @@ export class SetupCreateKeyModule {
                 await this.view.setupRender.renderSetupDone();
               },
             });
-            const key = prvKeyAttachment[0].private;
-            const prvKey = await KeyUtil.parse(key);
+            const prvKey = await KeyUtil.parse(userPrvKey[0].private);
             await OpenPGPKey.decryptKey(prvKey, opts.passphrase);
             const armoredPrvKey = KeyUtil.armor(prvKey);
-            const encrypted = await MsgUtil.encryptMessage({
+            const encryptedPrvKey = await MsgUtil.encryptMessage({
               pubkeys: [msgEncryptionKey],
               data: await Buf.fromUtfStr(armoredPrvKey),
               armor: false,
@@ -72,7 +71,7 @@ export class SetupCreateKeyModule {
             const attachment = new Attachment({
               name: `0x${primaryKeyId}.asc.pgp`,
               type: 'application/pgp-encrypted',
-              data: encrypted.data,
+              data: encryptedPrvKey.data,
             });
             await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(primaryUserId, msgEncryptionKey, attachment, destinationEmail, primaryKeyId);
           } catch (e) {
