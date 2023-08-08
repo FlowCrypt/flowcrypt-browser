@@ -31,6 +31,8 @@ import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
 import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
+import { GoogleData } from '../mock/google/google-data';
+import Parse from '../util/parse';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2306,6 +2308,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
         const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        const adminEmail = 'admin@prv-backup-to-designated-mailbox.flowcrypt.test';
         /* eslint-disable @typescript-eslint/naming-convention */
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           fes: {
@@ -2326,7 +2329,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             passphrase: 'super difficult to guess passphrase',
           },
         });
-        // check sent backup here
+        const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user`;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject);
+        const raw = await Parse.convertBase64ToMimeMsg(sentMsg[0]!.raw || '');
+        const toRecipientField = raw.headerLines[3].line;
+        expect(toRecipientField.includes(adminEmail)).to.equal(true);
+        // decrypt encrypted message and attachment using admin's private key
       })
     );
 
