@@ -68,19 +68,18 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
   public doBackupOnDesignatedMailbox = async (
     userEmail: string,
     msgEncryptionKey: Key,
-    decryptedPrvs: KeyInfoWithIdentity[],
+    privateKeyAttachment: Attachment,
     destinationEmail: string,
     fingerprint: string
   ) => {
     const emailMsg = Lang.setup.prvBackupToDesignatedMailboxEmailBody;
-    const emailAttachments = decryptedPrvs.map(prv => this.asBackupFile(prv));
     const headers = {
       from: this.ui.acctEmail,
       recipients: { to: [{ email: destinationEmail }] },
-      subject: Lang.setup.prvBackupToDesignatedMailboxEmailSubject(destinationEmail, fingerprint),
+      subject: Lang.setup.prvBackupToDesignatedMailboxEmailSubject(userEmail, fingerprint),
     };
     const encryptedMsg = await MsgUtil.encryptMessage({ pubkeys: [msgEncryptionKey], data: Buf.fromUtfStr(emailMsg), armor: true });
-    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/plain': encryptedMsg.data.toString() }, emailAttachments);
+    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/plain': encryptedMsg.data.toString() }, [privateKeyAttachment]);
     if (this.ui.emailProvider === 'gmail') {
       return await this.ui.gmail.msgSend(msg);
     } else {

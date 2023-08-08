@@ -13,6 +13,9 @@ import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { Buf } from '../../../js/common/core/buf.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 
 export class SetupCreateKeyModule {
   public constructor(private view: SetupView) {}
@@ -57,13 +60,21 @@ export class SetupCreateKeyModule {
                 await this.view.setupRender.renderSetupDone();
               },
             });
-            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(
-              primaryUserId,
-              msgEncryptionKey,
-              prvKeyAttachment,
-              destinationEmail,
-              primaryKeyId
-            );
+            const key = prvKeyAttachment[0].private;
+            const prvKey = await KeyUtil.parse(key);
+            await OpenPGPKey.decryptKey(prvKey, opts.passphrase);
+            const armoredPrvKey = KeyUtil.armor(prvKey);
+            const encrypted = await MsgUtil.encryptMessage({
+              pubkeys: [msgEncryptionKey],
+              data: await Buf.fromUtfStr(armoredPrvKey),
+              armor: false,
+            });
+            const attachment = new Attachment({
+              name: `0x${primaryKeyId}.asc.pgp`,
+              type: 'application/pgp-encrypted',
+              data: encrypted.data,
+            });
+            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(primaryUserId, msgEncryptionKey, attachment, destinationEmail, primaryKeyId);
           } catch (e) {
             if (ApiErr.isNetErr(e)) {
               await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
