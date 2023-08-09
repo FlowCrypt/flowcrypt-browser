@@ -49,8 +49,8 @@ export const Lang = {
     prvHasUseridIssue: 'The set of User IDs in this key is not supported.',
     ppMatchAllSet: "Your pass phrase matches. Good job! You're all set.",
     noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
-    prvBackupToDesignatedMailboxEmailSubject: (userEmail: string, primaryFingerprint: string) =>
-      `FlowCrypt OpenPGP Private Key backup for user ${userEmail} with id ${primaryFingerprint}`,
+    prvBackupToDesignatedMailboxEmailSubject: (acctEmail: string, fingerprint: string) =>
+      `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${fingerprint}`,
     prvBackupToDesignatedMailboxEmailBody:
       "Please keep this email and attachment in the mailbox for safekeeping. It will be needed if the user ever needs to set up FlowCrypt again or forgets their pass phrase. Without this, the user won't be able to read their emails.\n\nSee https://flowcrypt.com/docs/technical/enterprise/configuration/backup-to-designated-mailbox.html#recovery.",
   },
