@@ -10,7 +10,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str, emailKeyIndex } from './../core/common';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { Key, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
+import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { BrowserHandle, ControllablePage } from '../browser';
@@ -33,6 +33,7 @@ import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-ur
 import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from '../util/parse';
+import { MsgUtil } from '../core/crypto/pgp/msg-util';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2330,11 +2331,33 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
         });
         const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user`;
-        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject);
-        const raw = await Parse.convertBase64ToMimeMsg(sentMsg[0]!.raw || '');
-        const toRecipientField = raw.headerLines[3].line;
-        expect(toRecipientField.includes(adminEmail)).to.equal(true);
-        // decrypt encrypted message and attachment using admin's private key
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject)[0];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const raw = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
+        const fromEmailHeader = raw.headerLines[2].line;
+        const toEmailHeader = raw.headerLines[3].line;
+        const subjectLine = String(raw.headers.get('subject'));
+        const adminPrvKey = testConstants.prvBackupToDesignatedMailboxTestPrvKey;
+        const parsed = await KeyUtil.parse(adminPrvKey);
+        const passphrase = 'super hard to guess passphrase';
+        const encryptedMsg = raw.text!;
+        const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ...(await KeyUtil.keyInfoObj(parsed)), family: parsed.family, passphrase }];
+        const decrypted = await MsgUtil.decryptMessage({
+          kisWithPp,
+          encryptedData: encryptedMsg,
+          verificationPubs: [pubkey],
+        });
+        const encryptedAttachment = raw.attachments[0].content;
+        const decryptedAttachment = await MsgUtil.decryptMessage({
+          kisWithPp,
+          encryptedData: encryptedAttachment,
+          verificationPubs: [pubkey],
+        });
+        expect(fromEmailHeader.includes(acctEmail)).to.equal(true);
+        expect(toEmailHeader.includes(adminEmail)).to.equal(true);
+        expect(subjectLine.includes(acctEmail)).to.equal(true);
+        expect(decrypted.success).to.equal(true);
+        expect(decryptedAttachment.success).to.equal(true);
       })
     );
 
@@ -2343,6 +2366,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
         const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        const adminEmail = 'admin@prv-backup-to-designated-mailbox.flowcrypt.test';
         /* eslint-disable @typescript-eslint/naming-convention */
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           fes: {
@@ -2363,7 +2387,34 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             passphrase: 'super difficult to guess passphrase',
           },
         });
-        // check sent backup here
+        const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user`;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject)[0];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const raw = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
+        const fromEmailHeader = raw.headerLines[2].line;
+        const toEmailHeader = raw.headerLines[3].line;
+        const subjectLine = String(raw.headers.get('subject'));
+        const adminPrvKey = testConstants.prvBackupToDesignatedMailboxTestPrvKey;
+        const parsed = await KeyUtil.parse(adminPrvKey);
+        const passphrase = 'super hard to guess passphrase';
+        const encryptedMsg = raw.text!;
+        const kisWithPp: KeyInfoWithIdentityAndOptionalPp[] = [{ ...(await KeyUtil.keyInfoObj(parsed)), family: parsed.family, passphrase }];
+        const decrypted = await MsgUtil.decryptMessage({
+          kisWithPp,
+          encryptedData: encryptedMsg,
+          verificationPubs: [pubkey],
+        });
+        const encryptedAttachment = raw.attachments[0].content;
+        const decryptedAttachment = await MsgUtil.decryptMessage({
+          kisWithPp,
+          encryptedData: encryptedAttachment,
+          verificationPubs: [pubkey],
+        });
+        expect(fromEmailHeader.includes(acctEmail)).to.equal(true);
+        expect(toEmailHeader.includes(adminEmail)).to.equal(true);
+        expect(subjectLine.includes(acctEmail)).to.equal(true);
+        expect(decrypted.success).to.equal(true);
+        expect(decryptedAttachment.success).to.equal(true);
       })
     );
 
