@@ -41,14 +41,14 @@ export class SetupCreateKeyModule {
       const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
       if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
-        const pubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
-        if (pubkey) {
-          const msgEncryptionKey = await KeyUtil.parse(pubkey);
+        const adminPubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
+        if (adminPubkey) {
+          const msgEncryptionKey = await KeyUtil.parse(adminPubkey);
           const destinationEmail = msgEncryptionKey.emails[0];
           try {
-            const userPrvKey = await KeyStore.get(this.view.acctEmail);
-            const primaryKeyId = await userPrvKey[0].id;
-            const primaryUserId = userPrvKey[0].emails![0];
+            const privateKey = await KeyStore.get(this.view.acctEmail);
+            const primaryKeyId = await privateKey[0].id;
+            const primaryUserId = privateKey[0].emails![0];
             await this.view.backupUi.initialize({
               acctEmail: this.view.acctEmail,
               action: 'setup_automatic',
@@ -60,20 +60,26 @@ export class SetupCreateKeyModule {
                 await this.view.setupRender.renderSetupDone();
               },
             });
-            const prvKey = await KeyUtil.parse(userPrvKey[0].private);
-            await OpenPGPKey.decryptKey(prvKey, opts.passphrase);
-            const armoredPrvKey = KeyUtil.armor(prvKey);
-            const encryptedPrvKey = await MsgUtil.encryptMessage({
+            const parsedPrivateKey = await KeyUtil.parse(privateKey[0].private);
+            await OpenPGPKey.decryptKey(parsedPrivateKey, opts.passphrase);
+            const armoredPrivateKey = KeyUtil.armor(parsedPrivateKey);
+            const encryptedPrivateKey = await MsgUtil.encryptMessage({
               pubkeys: [msgEncryptionKey],
-              data: await Buf.fromUtfStr(armoredPrvKey),
+              data: await Buf.fromUtfStr(armoredPrivateKey),
               armor: false,
             });
-            const attachment = new Attachment({
+            const privateKeyAttachment = new Attachment({
               name: `0x${primaryKeyId}.asc.pgp`,
               type: 'application/pgp-encrypted',
-              data: encryptedPrvKey.data,
+              data: encryptedPrivateKey.data,
             });
-            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(primaryUserId, msgEncryptionKey, attachment, destinationEmail, primaryKeyId);
+            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(
+              primaryUserId,
+              msgEncryptionKey,
+              privateKeyAttachment,
+              destinationEmail,
+              primaryKeyId
+            );
           } catch (e) {
             if (ApiErr.isNetErr(e)) {
               await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
