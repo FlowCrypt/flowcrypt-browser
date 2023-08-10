@@ -7,7 +7,7 @@ import { Assert } from '../../js/common/assert.js';
 import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
+import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachments-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
 import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
