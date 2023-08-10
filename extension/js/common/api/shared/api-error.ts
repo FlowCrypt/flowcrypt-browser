@@ -68,10 +68,14 @@ export class AjaxErr extends ApiCallErr {
     super(message);
   }
 
+  public static fromNetErr = (message: string, stack?: string, url?: string) => {
+    return new AjaxErr(message, stack ?? 'no stack trace available', 0, Catch.censoredUrl(url), '', '(no status text)', undefined, undefined);
+  };
+
   // no static props, else will get serialised into err reports. Static methods ok
-  public static fromXhr = (xhr: RawAjaxErr, req: { url: string; method?: string; data?: unknown }, stack: string) => {
+  public static fromXhr = (xhr: RawAjaxErr, req: { url: string; stack: string; method?: string; data?: unknown }) => {
     const responseText = xhr.responseText || '';
-    stack += `\n\nprovided ajax call stack:\n${stack}`;
+    let stack = `\n\nprovided ajax call stack:\n${req.stack}`;
     const { resMsg, resDetails, resCode } = AjaxErr.parseResErr(responseText);
     const status = resCode || (typeof xhr.status === 'number' ? xhr.status : -1);
     if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {

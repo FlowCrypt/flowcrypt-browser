@@ -5,7 +5,7 @@
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
-import { Dict, EmailParts, Str, Url, UrlParams } from '../../core/common.js';
+import { Dict, EmailParts, Url, UrlParams } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
@@ -59,7 +59,7 @@ export class Api {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
         } else {
           const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET', stack: Catch.stackTrace() }));
         }
       };
       request.onerror = errHandler;
@@ -70,48 +70,46 @@ export class Api {
   };
 
   public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
-    try {
-      Api.throwIfApiPathTraversalAttempted(req.url);
-      const headersInit: [string, string][] = req.headers
-        ? Object.entries(req.headers).map(([key, value]) => {
-            return [Str.capitalize(key), value];
-          })
-        : [];
-      let body: BodyInit | undefined;
-      let url: string;
-      if (req.method === 'GET' || req.method === 'DELETE') {
-        if (typeof req.data === 'undefined') {
-          url = req.url;
-        } else {
-          url = Url.create(req.url, req.data, false);
-        }
-      } else {
+    Api.throwIfApiPathTraversalAttempted(req.url);
+    const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
+    // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })
+    let body: BodyInit | undefined;
+    let url: string;
+    if (req.method === 'GET' || req.method === 'DELETE') {
+      if (typeof req.data === 'undefined') {
         url = req.url;
-        if (req.method === 'PUT' || req.method === 'POST') {
-          if ('data' in req && typeof req.data !== 'undefined') {
-            if (req.dataType === 'JSON') {
-              body = JSON.stringify(req.data);
-              headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
-            } else if (req.dataType === 'TEXT') {
-              body = req.data;
-              if (typeof req.contentType === 'string') {
-                headersInit.push(['Content-Type', req.contentType]);
-              }
-            } else {
-              body = req.data; // todo: form data content-type?
+      } else {
+        url = Url.create(req.url, req.data, false);
+      }
+    } else {
+      url = req.url;
+      if (req.method === 'PUT' || req.method === 'POST') {
+        if ('data' in req && typeof req.data !== 'undefined') {
+          if (req.dataType === 'JSON') {
+            body = JSON.stringify(req.data);
+            headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
+          } else if (req.dataType === 'TEXT') {
+            body = req.data;
+            if (typeof req.contentType === 'string') {
+              headersInit.push(['Content-Type', req.contentType]);
             }
+          } else {
+            body = req.data; // todo: form data content-type?
           }
         }
       }
-
-      const abortController = new AbortController();
-      const requestInit: RequestInit = {
-        method: req.method,
-        headers: headersInit,
-        body,
-        mode: 'cors',
-        signal: abortController.signal,
-      };
+    }
+    const abortController = new AbortController();
+    const requestInit: RequestInit = {
+      method: req.method,
+      headers: headersInit,
+      body,
+      mode: 'cors',
+      signal: abortController.signal,
+    };
+    let readyState = 1; // OPENED
+    const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
+    try {
       const responsePromises = [fetch(url, requestInit)];
       if (req.timeout || typeof req.progress?.download === 'undefined') {
         // todo: disable timeout on upload
@@ -119,7 +117,7 @@ export class Api {
           new Promise((_resolve, reject) => {
             /* error-handled */ setTimeout(() => {
               abortController.abort(); // Abort the fetch request
-              reject(new Error('Request timed out')); // Reject the promise with a timeout error
+              reject(AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext)); // Reject the promise with a timeout error
             }, req.timeout ?? 20000);
           })
         );
@@ -127,8 +125,9 @@ export class Api {
       const response = await Promise.race(responsePromises);
       if (!response.ok) {
         let responseText: string | undefined;
-        let readyState = 2; // HEADERS_RECEIVED
+        readyState = 2; // HEADERS_RECEIVED
         try {
+          readyState = 3; // LOADING
           responseText = await response.text();
           readyState = 4; // DONE
         } catch {
@@ -141,12 +140,7 @@ export class Api {
             status: response.status,
             statusText: response.statusText,
           },
-          {
-            url: req.url,
-            method: req.method,
-            data: body,
-          },
-          req.stack
+          reqContext
         );
       }
       if (resFmt === 'text') {
@@ -158,6 +152,10 @@ export class Api {
       }
     } catch (e) {
       if (e instanceof Error) {
+        if (e.name === 'AbortError') {
+          // we assume there was a timeout
+          throw AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext);
+        }
         throw e;
       }
       throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);

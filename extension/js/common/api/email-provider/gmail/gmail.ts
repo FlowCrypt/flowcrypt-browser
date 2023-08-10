@@ -226,7 +226,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
               // headers, loading
               status = r.status;
               if (status >= 300) {
-                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url, stack }));
                 window.clearInterval(responsePollInterval);
                 r.abort();
               }
@@ -242,7 +242,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
                 }
               } else {
                 // done as a fail - reject
-                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
+                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url, stack }));
                 window.clearInterval(responsePollInterval);
               }
             }
