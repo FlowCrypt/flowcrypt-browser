@@ -20,11 +20,11 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { KeyStoreUtil } from '../../../js/common/core/crypto/key-store-util.js';
 import { ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
-import { ReplyOptions } from './compose-reply-btn-popover-module.js';
+import { ReplyOption } from './compose-reply-btn-popover-module.js';
 
 export class ComposeRenderModule extends ViewModule<ComposeView> {
   private responseMethod: 'reply' | 'forward' | undefined;
-  private previousReplyOption: ReplyOptions | undefined;
+  private previousReplyOption: ReplyOption | undefined;
 
   public initComposeBox = async () => {
     if (this.view.isReplyBox) {
@@ -46,12 +46,16 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
     } else {
       if (this.view.isReplyBox && this.view.replyParams) {
-        const recipients: Recipients = {
-          to: this.view.replyParams.to,
-          cc: this.view.replyParams.cc,
-          bcc: this.view.replyParams.bcc,
-        };
-        this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
+        if (this.view.composeType !== 'forward') {
+          const isReplyAll = this.view.composeType === 'reply_all';
+          const recipients: Recipients = {
+            to: isReplyAll ? this.view.replyParams.to : [this.view.replyParams.from!],
+            cc: isReplyAll ? this.view.replyParams.cc : [],
+            bcc: isReplyAll ? this.view.replyParams.bcc : [],
+          };
+          this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
+        }
+
         if (this.view.skipClickPrompt) {
           // TODO: fix issue when loading recipients
           await this.view.recipientsModule.clearRecipientsForReply();
@@ -215,7 +219,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  public changeReplyOption = async (option: ReplyOptions) => {
+  public changeReplyOption = async (option: ReplyOption) => {
     if (!this.view.replyParams) {
       return;
     }
@@ -258,12 +262,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
-    const method = $(target).attr('id') as ReplyOptions;
-    this.view.replyPopoverModule.changeOptionImage(method);
-    if (method === 'a_forward') {
+    const replyOption = $(target).attr('id') as ReplyOption;
+    this.view.replyPopoverModule.changeOptionImage(replyOption);
+    if (replyOption === 'a_forward') {
       this.responseMethod = 'forward';
       this.view.recipientsModule.clearRecipients();
-    } else if (method === 'a_reply') {
+    } else if (replyOption === 'a_reply') {
       await this.view.recipientsModule.clearRecipientsForReply();
     }
     await this.renderReplyMsgComposeTable();
@@ -392,7 +396,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  private onRecipientPasteHandler = async (elem: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => {
+  private onRecipientPasteHandler = async (_: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => {
     if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
       const textData = event.originalEvent.clipboardData.getData('text/plain');
       const keyImportUi = new KeyImportUi({ checkEncryption: true });

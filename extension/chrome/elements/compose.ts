@@ -44,6 +44,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public readonly composeType: string;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
@@ -145,6 +146,7 @@ export class ComposeView extends View {
       'debug',
       'removeAfterClose',
       'replyPubkeyMismatch',
+      'composeType',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -152,6 +154,7 @@ export class ComposeView extends View {
     this.skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
     this.ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
     this.removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
+    this.composeType = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeType') || 'reply';
     this.disableDraftSaving = false;
     this.debug = uncheckedUrlParams.debug === true;
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;

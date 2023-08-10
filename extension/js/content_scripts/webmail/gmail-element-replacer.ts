@@ -39,6 +39,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
+  private replyComposeType: 'reply' | 'reply_all' | 'forward';
 
   private sel = {
     // gmail_variant=standard|new
@@ -54,6 +55,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachmentsContainerInner: 'div.aQH',
     translatePrompt: '.adI',
     standardComposeWin: '.aaZ:visible',
+    composeTypeImg: 'div.J-JN-M-I-Jm',
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
@@ -588,6 +590,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             this.removeNextReplyBoxBorders = false;
           }
           if (!midConvoDraft) {
+            const composeType = this.parseComposeMessageType(replyBox);
+            if (composeType) {
+              this.replyComposeType = composeType;
+            }
+            replyParams.composeType = this.replyComposeType;
             // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
@@ -636,11 +643,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private showSwitchToEncryptedReplyWarningIfNeeded = (reployBox: JQueryEl) => {
-    const showSwitchToEncryptedReplyWarning = reployBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+  private showSwitchToEncryptedReplyWarningIfNeeded = (replyBox: JQueryEl) => {
+    const showSwitchToEncryptedReplyWarning = replyBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+
     if (showSwitchToEncryptedReplyWarning) {
-      const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-      const switchToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
+      const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a message without encryption. </div>');
+      const switchToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted compose</a>');
       switchToEncryptedReply.on(
         'click',
         Ui.event.handle((el, ev: JQuery.Event) => {
@@ -652,8 +660,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         })
       );
       notification.append(switchToEncryptedReply); // xss-direct
-      reployBox.prepend(notification); // xss-direct
+      replyBox.prepend(notification); // xss-direct
     }
+  };
+
+  private parseComposeMessageType = (replyBox: JQueryEl) => {
+    const replyBoxTypeImgClass = replyBox.find(this.sel.composeTypeImg).find('img').attr('class');
+    if (replyBoxTypeImgClass?.includes('mK')) {
+      return 'reply_all';
+    } else if (replyBoxTypeImgClass?.includes('mI')) {
+      return 'forward';
+    } else if (replyBoxTypeImgClass?.includes('mL')) {
+      return 'reply';
+    }
+    return undefined;
   };
 
   private evaluateStandardComposeRecipients = async () => {

@@ -25,6 +25,7 @@ export type FactoryReplyParams = {
   draftId?: string;
   subject?: string;
   removeAfterClose?: boolean;
+  composeType?: string;
 };
 
 export class XssSafeFactory {
@@ -167,6 +168,7 @@ export class XssSafeFactory {
       replyMsgId: convoParams.replyMsgId,
       draftId: convoParams.draftId,
       removeAfterClose: convoParams.removeAfterClose,
+      composeType: convoParams.composeType,
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   };
