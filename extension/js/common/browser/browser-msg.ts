@@ -315,10 +315,13 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   };
 
-  public static listen = (dest: Bm.Dest) => {
+  public static listen = (dest: Bm.Dest[] | string) => {
+    if (typeof dest === 'string') {
+      dest = [dest];
+    }
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
-      if (msg.to === dest || msg.to === 'broadcast') {
+      if (msg.to && [...dest, 'broadcast'].includes(msg.to)) {
         BrowserMsg.handleMsg(msg, rawRespond);
         return true;
       }
@@ -367,13 +370,13 @@ export class BrowserMsg {
     });
   };
 
-  protected static listenForWindowMessages = (dest: Bm.Dest) => {
+  protected static listenForWindowMessages = (dest: Bm.Dest[]) => {
     window.addEventListener('message', e => {
       // todo: (e.origin === allowedOrigin) { const allowedOrigin = Env.getExtensionOrigin();
       const msg = e.data as Bm.RawWithWindowExtensions;
       const firstArrived = !BrowserMsg.processed.has(msg.uid);
       let handled = false;
-      if (msg.to === dest || msg.to === 'broadcast') {
+      if (msg.to && [...dest, 'broadcast'].includes(msg.to)) {
         handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
             // send response as a new request

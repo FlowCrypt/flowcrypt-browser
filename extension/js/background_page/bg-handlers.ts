@@ -32,11 +32,11 @@ export class BgHandlers {
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
     if (r.req.context?.operationId) {
       // progress updates were requested via messages
-      const destination = r.req.context.tabId;
+      const frameId = r.req.context.frameId;
       const operationId = r.req.context.operationId;
       const expectedTransferSize = r.req.context.expectedTransferSize;
       r.req.xhr = Api.getAjaxProgressXhrFactory({
-        download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, operationId }),
+        download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(frameId, { percent, loaded, total, expectedTransferSize, operationId }),
       });
     }
     return await Api.ajax(r.req, r.stack);
