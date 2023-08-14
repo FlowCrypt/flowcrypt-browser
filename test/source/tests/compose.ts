@@ -1289,7 +1289,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
           hasReplyPrompt: true,
-          skipClickPropt: true,
+          skipClickPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
@@ -1350,7 +1350,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
           hasReplyPrompt: true,
-          skipClickPropt: true,
+          skipClickPrompt: true,
         });
         await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
         await expectRecipientElements(composePage, {

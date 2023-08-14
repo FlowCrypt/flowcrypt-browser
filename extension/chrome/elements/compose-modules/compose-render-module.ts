@@ -46,19 +46,21 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
     } else {
       if (this.view.isReplyBox && this.view.replyParams) {
-        if (this.view.composeType !== 'forward') {
-          const isReplyAll = this.view.composeType === 'reply_all';
-          const recipients: Recipients = {
-            to: isReplyAll ? this.view.replyParams.to : [this.view.replyParams.from!],
-            cc: isReplyAll ? this.view.replyParams.cc : [],
-            bcc: isReplyAll ? this.view.replyParams.bcc : [],
-          };
-          this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
-        }
+        const recipients: Recipients = {
+          to: this.view.replyParams.to,
+          cc: this.view.replyParams.cc,
+          bcc: this.view.replyParams.bcc,
+        };
+        this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
 
         if (this.view.skipClickPrompt) {
           // TODO: fix issue when loading recipients
-          await this.view.recipientsModule.clearRecipientsForReply();
+          if (this.view.composeType === 'reply') {
+            await this.view.recipientsModule.clearRecipientsForReply();
+          } else if (this.view.composeType === 'forward') {
+            this.view.recipientsModule.clearRecipients();
+          }
+
           await this.renderReplyMsgComposeTable();
         } else {
           $('#a_reply,#a_reply_all,#a_forward').on(
@@ -224,6 +226,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       return;
     }
     this.view.recipientsModule.clearRecipients();
+    this.view.composeType = option.replace('a_', '');
     if (option === 'a_forward') {
       await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward', true);
     } else {
@@ -240,6 +243,17 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }, 10);
     }
     this.previousReplyOption = option;
+  };
+
+  public activateReplyOption = async (replyOption: ReplyOption) => {
+    this.view.replyPopoverModule.changeOptionImage(replyOption);
+    if (replyOption === 'a_forward') {
+      this.responseMethod = 'forward';
+      this.view.recipientsModule.clearRecipients();
+    } else if (replyOption === 'a_reply') {
+      await this.view.recipientsModule.clearRecipientsForReply();
+    }
+    await this.renderReplyMsgComposeTable();
   };
 
   private initComposeBoxStyles = () => {
@@ -263,14 +277,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private actionActivateReplyBoxHandler = async (target: HTMLElement) => {
     const replyOption = $(target).attr('id') as ReplyOption;
-    this.view.replyPopoverModule.changeOptionImage(replyOption);
-    if (replyOption === 'a_forward') {
-      this.responseMethod = 'forward';
-      this.view.recipientsModule.clearRecipients();
-    } else if (replyOption === 'a_reply') {
-      await this.view.recipientsModule.clearRecipientsForReply();
-    }
-    await this.renderReplyMsgComposeTable();
+    await this.activateReplyOption(replyOption);
   };
 
   private renderReplyMsgAsReplyPubkeyMismatch = async () => {
