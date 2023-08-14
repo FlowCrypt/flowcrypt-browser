@@ -47,8 +47,7 @@ export class SetupCreateKeyModule {
           const destinationEmail = msgEncryptionKey.emails[0];
           try {
             const privateKey = await KeyStore.get(this.view.acctEmail);
-            const primaryKeyId = await privateKey[0].id;
-            const primaryUserId = privateKey[0].emails![0];
+            const primaryKeyId = privateKey[0].id;
             await this.view.backupUi.initialize({
               acctEmail: this.view.acctEmail,
               action: 'setup_automatic',
@@ -65,7 +64,7 @@ export class SetupCreateKeyModule {
             const armoredPrivateKey = KeyUtil.armor(parsedPrivateKey);
             const encryptedPrivateKey = await MsgUtil.encryptMessage({
               pubkeys: [msgEncryptionKey],
-              data: await Buf.fromUtfStr(armoredPrivateKey),
+              data: Buf.fromUtfStr(armoredPrivateKey),
               armor: false,
             });
             const privateKeyAttachment = new Attachment({
@@ -73,13 +72,7 @@ export class SetupCreateKeyModule {
               type: 'application/pgp-encrypted',
               data: encryptedPrivateKey.data,
             });
-            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(
-              primaryUserId,
-              msgEncryptionKey,
-              privateKeyAttachment,
-              destinationEmail,
-              primaryKeyId
-            );
+            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(msgEncryptionKey, privateKeyAttachment, destinationEmail, primaryKeyId);
           } catch (e) {
             if (ApiErr.isNetErr(e)) {
               await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
