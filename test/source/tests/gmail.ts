@@ -384,7 +384,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
-          'The last message was encrypted, but you are composing a reply without encryption.'
+          'The last message was encrypted, but you are composing a message without encryption.'
         );
         await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
@@ -415,7 +415,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
-          'The last message was encrypted, but you are composing a reply without encryption.'
+          'The last message was encrypted, but you are composing a message without encryption.'
         );
 
         const secureReplyButton = await messages[0].$('[data-tooltip="Secure Reply"]');
