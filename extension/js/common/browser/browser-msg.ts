@@ -18,6 +18,7 @@ import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
+import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -38,9 +39,9 @@ export namespace Bm {
     stack: string;
   };
   export type RawWithWindowExtensions = Raw & {
+    to: Dest;
     data: { bm: AnyRequest & { messageSender?: Dest }; objUrls: Dict<string> };
     responseName?: string;
-    propagateToParent?: boolean;
   };
 
   export type SetCss = { css: Dict<string>; traverseUp?: number; selector: string };
@@ -371,12 +372,13 @@ export class BrowserMsg {
   };
 
   protected static listenForWindowMessages = (dest: Bm.Dest[]) => {
-    window.addEventListener('message', e => {
+    window.addEventListener('message', async e => {
       // todo: (e.origin === allowedOrigin) { const allowedOrigin = Env.getExtensionOrigin();
-      const msg = e.data as Bm.RawWithWindowExtensions;
-      const firstArrived = !BrowserMsg.processed.has(msg.uid);
+      const encryptedMsg = e.data as SymEncryptedMessage;
+      if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
       let handled = false;
-      if (msg.to && [...dest, 'broadcast'].includes(msg.to)) {
+      if ([...dest, 'broadcast'].includes(encryptedMsg.to)) {
+        const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
         handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
             // send response as a new request
@@ -384,9 +386,9 @@ export class BrowserMsg {
           }
         });
       }
-      if (!handled && firstArrived && msg.propagateToParent) {
-        BrowserMsg.processed.add(msg.uid);
-        BrowserMsg.sendUpParentLine(msg);
+      if (!handled && encryptedMsg.propagateToParent) {
+        BrowserMsg.processed.add(encryptedMsg.uid);
+        BrowserMsg.sendUpParentLine(encryptedMsg);
       }
     });
   };
@@ -397,17 +399,16 @@ export class BrowserMsg {
       name,
       stack: '',
       to: parentReference.parentTabId,
-      uid: Str.sloppyRandom(10),
+      uid: SymmetricMessageEncryption.generateIV(),
       responseName,
     };
-    BrowserMsg.sendUpParentLine(raw);
+    Catch.try(async () => BrowserMsg.sendUpParentLine(await SymmetricMessageEncryption.encrypt(raw)))();
   };
 
-  private static sendToChildren = (bm: Bm.Raw) => {
-    const raw: Bm.RawWithWindowExtensions = bm;
+  private static sendToChildren = (encryptedMsg: SymEncryptedMessage) => {
     const childFrames = $(`iframe`).get() as HTMLIFrameElement[];
     for (const childFrame of childFrames) {
-      childFrame.contentWindow?.postMessage(raw, '*');
+      childFrame.contentWindow?.postMessage(encryptedMsg, '*');
     }
   };
 
@@ -461,21 +462,27 @@ export class BrowserMsg {
     );
   };
 
-  private static sendRaw = async (
-    destString: string | undefined,
-    name: string,
-    bm: Dict<unknown>,
-    objUrls: Dict<string>,
-    awaitRes = false
-  ): Promise<Bm.Response> => {
-    return await new Promise((resolve, reject) => {
-      const msg: Bm.Raw = {
-        name,
-        data: { bm, objUrls },
-        to: destString || null, // eslint-disable-line no-null/no-null
-        uid: Str.sloppyRandom(10),
-        stack: Catch.stackTrace(),
-      };
+  private static sendRaw = (destString: string | undefined, name: string, bm: Dict<unknown>, objUrls: Dict<string>, awaitRes = false): Promise<Bm.Response> => {
+    const msg: Bm.Raw = {
+      name,
+      data: { bm, objUrls },
+      to: destString || null, // eslint-disable-line no-null/no-null
+      uid: SymmetricMessageEncryption.generateIV(),
+      stack: Catch.stackTrace(),
+    };
+    // eslint-disable-next-line no-null/no-null
+    if (!Env.isBackgroundPage() && msg.to !== null) {
+      const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
+      // send via window messaging in parallel
+      Catch.try(async () => {
+        // todo: can objUrls be deleted by another recipient?
+        const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
+        BrowserMsg.sendToChildren(encryptedMsg);
+        window.postMessage(encryptedMsg, '*');
+        BrowserMsg.sendUpParentLine(encryptedMsg);
+      })();
+    }
+    return new Promise((resolve, reject) => {
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve(undefined);
@@ -515,11 +522,6 @@ export class BrowserMsg {
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }
-        if (!Env.isBackgroundPage()) {
-          BrowserMsg.sendToChildren(msg);
-          window.postMessage(msg, '*');
-          BrowserMsg.sendUpParentLine(msg);
-        }
       } catch (e) {
         if (e instanceof Error && e.message === 'Extension context invalidated.') {
           BrowserMsg.renderFatalErrCorner('Restart browser to re-enable FlowCrypt', 'GREEN-NOTIFICATION');
@@ -530,12 +532,12 @@ export class BrowserMsg {
     });
   };
 
-  private static sendUpParentLine = (raw: Bm.RawWithWindowExtensions) => {
-    const rawWithPropagationFlag: Bm.RawWithWindowExtensions = { ...raw, propagateToParent: true };
+  private static sendUpParentLine = (encryptedMsg: SymEncryptedMessage) => {
+    const encryptedWithPropagationFlag: SymEncryptedMessage = { ...encryptedMsg, propagateToParent: true };
     let w: Window = window;
     while (w.parent && w.parent !== w) {
       w = w.parent;
-      window.parent.postMessage(rawWithPropagationFlag, '*');
+      window.parent.postMessage(encryptedWithPropagationFlag, '*');
     }
   };
   /**
