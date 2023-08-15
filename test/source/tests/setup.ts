@@ -2321,7 +2321,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             },
           },
         });
-        /* eslint-disable @typescript-eslint/naming-convention */
+        /* eslint-enable @typescript-eslint/naming-convention */
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.createKey(settingsPage, '', 'email', {
           skipForPassphrase: true,
@@ -2440,7 +2440,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             },
           },
         });
-        /* eslint-disable @typescript-eslint/naming-convention */
+        /* eslint-enable @typescript-eslint/naming-convention */
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await Util.sleep(3);
         const rulesKey = `cryptup_${emailKeyIndex(acctEmail, 'rules')}`;
@@ -2467,7 +2467,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             },
           },
         });
-        /* eslint-disable @typescript-eslint/naming-convention */
+        /* eslint-enable @typescript-eslint/naming-convention */
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await Util.sleep(3);
         await settingsPage.waitAndRespondToModal(
