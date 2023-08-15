@@ -408,7 +408,7 @@ export class BrowserMsg {
   private static sendToChildren = (encryptedMsg: SymEncryptedMessage) => {
     const childFrames = $(`iframe`).get() as HTMLIFrameElement[];
     for (const childFrame of childFrames) {
-      childFrame.contentWindow?.postMessage(encryptedMsg, '*');
+      childFrame.contentWindow?.postMessage(encryptedMsg, Env.getExtensionOrigin());
     }
   };
 
