@@ -30,7 +30,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
-import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
+import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
@@ -198,10 +198,6 @@ export class ComposeView extends View {
     if (this.replyMsgId) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
-    }
-    if (this.composeType) {
-      const replyOption = 'a_' + this.composeType;
-      await this.renderModule.activateReplyOption(replyOption as ReplyOption);
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();

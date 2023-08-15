@@ -433,10 +433,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
-        await gmailPage.waitAndClick('[act="94"]', { delay: 1 });
+        await gmailPage.waitAndClick('[act="24"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
         await gmailPage.waitAll('.reply_message_evaluated .error_notification');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
@@ -447,6 +447,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com,flowcrypt.compatibility@gmail.com');
       })
     );
 
