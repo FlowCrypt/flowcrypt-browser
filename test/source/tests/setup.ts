@@ -2330,7 +2330,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             passphrase: 'super difficult to guess passphrase',
           },
         });
-        const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user`;
+        const currentKey = await retrieveAndCheckKeys(settingsPage, acctEmail, 1);
+        const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${currentKey[0].id}`;
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject)[0];
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
@@ -2355,6 +2356,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           encryptedData: encryptedAttachmentContent,
           verificationPubs: [pubkey],
         });
+        const key = await KeyUtil.parse(decryptedAttachmentContent.content!.toUtfStr());
+        expect(key.isPrivate).to.equal(true);
+        expect(key.fullyEncrypted).to.equal(false);
+        expect(currentKey[0].id).to.equal(key.id);
         expect(fromEmailHeaderLine.includes(acctEmail)).to.equal(true);
         expect(toEmailHeaderLine.includes(adminEmail)).to.equal(true);
         expect(subjectLine.includes(acctEmail)).to.equal(true);
