@@ -13,19 +13,25 @@ export interface SymEncryptedMessage {
 }
 
 export class SymmetricMessageEncryption {
+  private static algoName = 'AES-GCM' as const;
+  private static cryptoKeyBytesLength = 32 as const; // 256 bit
+  private static ivBytesLength = 12 as const; // 96 bit
+
   private static cryptoKey: CryptoKey | undefined;
   public static generateIV = (): string => {
-    return Buf.fromUint8(secureRandomBytes(12)).toBase64Str(); // 96 bit
+    return Buf.fromUint8(secureRandomBytes(SymmetricMessageEncryption.ivBytesLength)).toBase64Str();
   };
   public static encrypt = async (msg: Bm.RawWithWindowExtensions): Promise<SymEncryptedMessage> => {
     if (!SymmetricMessageEncryption.cryptoKey) {
-      SymmetricMessageEncryption.cryptoKey = await SymmetricMessageEncryption.fromBytes(await EncryptionKeyStore.get(32));
+      SymmetricMessageEncryption.cryptoKey = await SymmetricMessageEncryption.fromBytes(
+        await EncryptionKeyStore.get(SymmetricMessageEncryption.cryptoKeyBytesLength)
+      );
     }
     const iv = Buf.fromBase64Str(msg.uid);
     const data = Buf.with(JSON.stringify(msg));
     const encryptedData = await crypto.subtle.encrypt(
       {
-        name: 'AES-GCM',
+        name: SymmetricMessageEncryption.algoName,
         iv,
       },
       SymmetricMessageEncryption.cryptoKey,
@@ -40,7 +46,7 @@ export class SymmetricMessageEncryption {
     const iv = Buf.fromBase64Str(msg.uid);
     const decryptedBytes = await crypto.subtle.decrypt(
       {
-        name: 'AES-GCM',
+        name: SymmetricMessageEncryption.algoName,
         iv,
       },
       SymmetricMessageEncryption.cryptoKey,
@@ -55,7 +61,7 @@ export class SymmetricMessageEncryption {
       encryptionKeyBuffer, // ArrayBuffer containing the key material
       {
         // Key algorithm parameters
-        name: 'AES-GCM',
+        name: SymmetricMessageEncryption.algoName,
         length: new Uint8Array(encryptionKeyBuffer).length * 8, // Key length in bits
       },
       false, // Whether the key is extractable (can be exported)

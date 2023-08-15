@@ -373,7 +373,6 @@ export class BrowserMsg {
 
   protected static listenForWindowMessages = (dest: Bm.Dest[]) => {
     window.addEventListener('message', async e => {
-      // todo: (e.origin === allowedOrigin) { const allowedOrigin = Env.getExtensionOrigin();
       const encryptedMsg = e.data as SymEncryptedMessage;
       if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
       let handled = false;
