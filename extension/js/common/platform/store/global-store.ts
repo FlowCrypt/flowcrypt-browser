@@ -7,8 +7,6 @@ import { Dict, Value } from '../../core/common.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../browser/chrome.js';
 import { Catch } from '../catch.js';
 
-export type StoredAdminCode = { date: number; codes: string[] };
-
 export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number; acctEmail: string };
 
 /* eslint-disable @typescript-eslint/naming-convention */

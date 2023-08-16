@@ -246,11 +246,11 @@ abstract class ControllableBase {
   };
 
   public read = async (selector: string, onlyVisible = false): Promise<string | undefined> => {
-    selector = this.selector(selector);
+    const translatedSelector = this.selector(selector);
     if (onlyVisible) {
-      return (await this.readAll(selector)).find(el => el.visible)?.innerText;
+      return (await this.readAll(translatedSelector)).find(el => el.visible)?.innerText;
     } else {
-      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, this.selector(selector));
+      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, translatedSelector);
     }
   };
 

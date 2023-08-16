@@ -8,7 +8,6 @@ import { emailKeyIndex } from '../common/core/common.js';
 import { VERSION } from '../common/core/const.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { Catch } from '../common/platform/catch.js';
-import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-store.js';
 import { BgHandlers } from './bg-handlers.js';
@@ -55,10 +54,6 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
   BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
   BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));
-  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => GlobalStore.get(r.keys));
-  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => GlobalStore.set(r.values));
-  BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => AcctStore.get(r.acctEmail, r.keys));
-  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => AcctStore.set(r.acctEmail, r.values));
 
   // todo - when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560
   //   is fixed, this can be moved to the gmail content script, and some may be removed

@@ -11,8 +11,6 @@ import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
 import { DecryptResult, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
-import { AccountIndex, AcctStoreDict } from '../platform/store/acct-store.js';
-import { GlobalIndex, GlobalStoreDict } from '../platform/store/global-store.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
 import { Browser } from './browser.js';
@@ -80,10 +78,6 @@ export namespace Bm {
     expiration: number | undefined;
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
-  export type StoreGlobalGet = { keys: GlobalIndex[] };
-  export type StoreGlobalSet = { values: GlobalStoreDict };
-  export type StoreAcctGet = { acctEmail: string; keys: AccountIndex[] };
-  export type StoreAcctSet = { acctEmail: string; values: AcctStoreDict };
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
@@ -104,10 +98,6 @@ export namespace Bm {
     };
     export type InMemoryStoreGet = string | null;
     export type InMemoryStoreSet = void;
-    export type StoreGlobalGet = GlobalStoreDict;
-    export type StoreGlobalSet = void;
-    export type StoreAcctGet = AcctStoreDict;
-    export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
@@ -123,10 +113,6 @@ export namespace Bm {
       | PgpMsgDecrypt
       | InMemoryStoreGet
       | InMemoryStoreSet
-      | StoreAcctGet
-      | StoreAcctSet
-      | StoreGlobalGet
-      | StoreGlobalSet
       | AjaxGmailAttachmentGetChunk
       | PgpKeyBinaryToArmored
       | ConfirmationResult;
@@ -157,10 +143,6 @@ export namespace Bm {
     | Db
     | InMemoryStoreSet
     | InMemoryStoreGet
-    | StoreGlobalGet
-    | StoreGlobalSet
-    | StoreAcctGet
-    | StoreAcctSet
     | PgpMsgDecrypt
     | Ajax
     | AjaxProgress
@@ -216,10 +198,6 @@ export class BrowserMsg {
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
-        storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
-        storeGlobalSet: (bm: Bm.StoreGlobalSet) => BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
-        storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
-        storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>

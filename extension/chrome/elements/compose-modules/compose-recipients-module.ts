@@ -857,8 +857,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       .on(
         'click',
         this.view.setHandler(async () => {
-          // Need to use BrowserMsg.send.bg because chrome.windows is undefined in gmail page
-          const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({
+          const authResult = await GoogleAuth.newAuthPopup({
             acctEmail: this.view.acctEmail,
             scopes: GoogleAuth.defaultScopes('contacts'),
           });
