@@ -17,7 +17,7 @@ export interface RenderInterfaceBase {
 
 export interface RenderInterface extends RenderInterfaceBase {
   cancellation: PromiseCancellation;
-  startProgressRendering(text: string): (expectedTransferSize: number) => { download: ProgressCb } | ProgressDestFrame;
+  startProgressRendering(text: string): (expectedTransferSize: number) => { download: ProgressCb } & ProgressDestFrame;
   renderAsRegularContent(content: string): void;
   setPrintMailInfo(info: PrintMailInfo): void;
   clearErrorStatus(): void;

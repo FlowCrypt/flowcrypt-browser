@@ -62,16 +62,6 @@ export abstract class PageRecipe {
     );
   };
 
-  public static getTabId = async (controllable: Controllable): Promise<string> => {
-    const result = await PageRecipe.sendMessage(controllable, {
-      name: '_tab_',
-      data: { bm: {}, objUrls: {} },
-      to: null, // eslint-disable-line no-null/no-null
-      uid: '1',
-    });
-    return (result as { result: { tabId: string } }).result.tabId;
-  };
-
   public static addPubkey = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, pubkey: string, email?: string) => {
     const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(pubkey)}&acctEmail=${encodeURIComponent(
       acctEmail

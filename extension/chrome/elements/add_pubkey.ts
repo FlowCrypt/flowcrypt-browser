@@ -19,8 +19,8 @@ import { KeyUtil } from '../../js/common/core/crypto/key.js';
 
 View.run(
   class AddPubkeyView extends View {
+    public readonly parentTabId: string;
     private readonly acctEmail: string;
-    private readonly parentTabId: string;
     private readonly missingPubkeyEmails: string[];
     private readonly fetchKeyUi = new FetchKeyUI();
     private readonly attachmentUI = new AttachmentUI(() =>
@@ -86,7 +86,7 @@ View.run(
     };
 
     private closeDialog = () => {
-      BrowserMsg.send.closeDialog(this.parentTabId);
+      BrowserMsg.send.closeDialog(this);
     };
 
     private copyFromEmailHandler = async (fromSelect: HTMLElement) => {

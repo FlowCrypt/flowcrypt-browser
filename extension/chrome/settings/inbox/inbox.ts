@@ -44,7 +44,7 @@ export class InboxView extends View {
   public messageRenderer!: MessageRenderer;
   public factory!: XssSafeFactory;
   public picture?: string;
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public relayManager!: RelayManager;
 
   public constructor() {
@@ -64,7 +64,6 @@ export class InboxView extends View {
   }
 
   public render = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
     this.relayManager = new RelayManager(this.debug);
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
@@ -101,7 +100,6 @@ export class InboxView extends View {
     // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
     this.addBrowserMsgListeners();
     BrowserMsg.listen(this.tabId);
-    BrowserMsg.listenForWindowMessages(); // listen for direct messages from child iframes
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
     $('.action_open_settings').on(
       'click',
