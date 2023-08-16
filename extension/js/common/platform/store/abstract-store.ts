@@ -12,7 +12,7 @@ import { UnreportableError, Catch } from '../catch.js';
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
-type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | GmailRes.OpenId | ClientConfigurationJson | ArrayBuffer[];
+type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | GmailRes.OpenId | ClientConfigurationJson;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
