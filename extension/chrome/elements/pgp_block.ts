@@ -28,6 +28,10 @@ export class PgpBlockView extends View {
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly printModule = new PgpBlockViewPrintModule();
   private readonly tabId = BrowserMsg.generateTabId();
+  private progressOperation?: {
+    text: string;
+    operationId: string; // to ignore possible stray notifications, we generate an id for each operation
+  };
 
   public constructor() {
     super();
@@ -61,11 +65,26 @@ export class PgpBlockView extends View {
       this.processMessage(msg);
     });
     BrowserMsg.addListener('confirmation_result', CommonHandlers.createAsyncResultHandler());
-    BrowserMsg.listen(this.tabId);
-    BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.tabId });
+    BrowserMsg.listen(this.getDest());
+    BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
+  };
+
+  private renderProgress = ({ operationId, text, perc, init }: { operationId: string; text: string; perc?: number; init?: boolean }) => {
+    if (init) {
+      this.progressOperation = { operationId, text };
+    } else if (this.progressOperation?.operationId !== operationId) {
+      return;
+    }
+    const renderText = perc ? `${text} ${perc}%` : text;
+    this.renderModule.renderText(renderText);
   };
 
   private processMessage = (data: RenderMessage) => {
+    if (data?.progressOperation) {
+      this.renderProgress(data.progressOperation);
+    } else {
+      this.progressOperation = undefined;
+    }
     // messages aren't merged when queueing, so the order is arbitrary
     if (data?.renderEncryptionStatus) {
       this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);

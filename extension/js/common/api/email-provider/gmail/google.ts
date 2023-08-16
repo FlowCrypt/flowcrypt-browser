@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Ajax, ProgressCbs, ProgressDestFrame } from '../../shared/api.js';
+import { Ajax, ProgressCbs } from '../../shared/api.js';
 import { Dict, Str, UrlParams } from '../../../core/common.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
@@ -36,7 +36,7 @@ export class Google {
           data?: UrlParams;
         }
       | { method: 'DELETE' },
-    progress?: ProgressCbs | ProgressDestFrame
+    progress?: ProgressCbs
   ): Promise<RT> => {
     progress = progress || {};
     let url;

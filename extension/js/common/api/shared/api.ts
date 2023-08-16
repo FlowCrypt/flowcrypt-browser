@@ -15,7 +15,6 @@ export type ResFmt = 'json' | 'text' | undefined;
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type EmailProviderContact = EmailParts;
 type ProviderContactsResults = { new: EmailProviderContact[]; all: EmailProviderContact[] };
-export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; tabId: string };
 export type AjaxHeaders = {
   authorization?: string;
   ['api-version']?: string;

@@ -3,7 +3,7 @@
 'use strict';
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
-import { ChunkedCb, ProgressCb, EmailProviderContact, ProgressDestFrame } from '../../shared/api.js';
+import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
 import { Dict, Str, Value } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GMAIL_GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
@@ -144,7 +144,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'labels', { method: 'GET' });
   };
 
-  public attachmentGet = async (msgId: string, attId: string, progress: { download: ProgressCb } | ProgressDestFrame): Promise<GmailRes.GmailAttachment> => {
+  public attachmentGet = async (msgId: string, attId: string, progress: { download: ProgressCb }): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string; size: number; data: string };
     const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(
       this.acctEmail,
@@ -284,7 +284,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
   };
 
-  public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransferSize: number) => { download: ProgressCb } | ProgressDestFrame) => {
+  public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransferSize: number) => { download: ProgressCb }) => {
     const expectedTransferSize = a.length * 1.33; // todo: remove code duplication
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const response = await this.attachmentGet(a.msgId!, a.id!, progressFunction(expectedTransferSize));

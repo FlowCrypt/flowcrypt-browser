@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ProgressCb, ProgressDestFrame } from './api/shared/api.js';
+import { ProgressCb } from './api/shared/api.js';
 import { TransferableAttachment } from './core/attachment.js';
 import { PromiseCancellation } from './core/common.js';
 import { PrintMailInfo } from './render-message.js';
@@ -17,7 +17,7 @@ export interface RenderInterfaceBase {
 
 export interface RenderInterface extends RenderInterfaceBase {
   cancellation: PromiseCancellation;
-  startProgressRendering(text: string): (expectedTransferSize: number) => { download: ProgressCb } | ProgressDestFrame;
+  startProgressRendering(text: string): (expectedTransferSize: number) => { download: ProgressCb };
   renderAsRegularContent(content: string): void;
   setPrintMailInfo(info: PrintMailInfo): void;
   clearErrorStatus(): void;
