@@ -2345,7 +2345,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const kisWithPassphrase: KeyInfoWithIdentityAndOptionalPp[] = [
           { ...(await KeyUtil.keyInfoObj(parsedAdminPrivateKey)), family: parsedAdminPrivateKey.family, passphrase },
         ];
-        const decrypted = await MsgUtil.decryptMessage({
+        const decryptedMessage = await MsgUtil.decryptMessage({
           kisWithPp: kisWithPassphrase,
           encryptedData: encryptedBodyText,
           verificationPubs: [pubkey],
@@ -2358,12 +2358,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         });
         const key = await KeyUtil.parse(decryptedAttachmentContent.content!.toUtfStr());
         expect(key.isPrivate).to.equal(true);
-        expect(key.fullyEncrypted).to.equal(false);
+        expect(key.fullyDecrypted).to.equal(true);
         expect(currentKey[0].id).to.equal(key.id);
         expect(fromEmailHeaderLine.includes(acctEmail)).to.equal(true);
         expect(toEmailHeaderLine.includes(adminEmail)).to.equal(true);
         expect(subjectLine.includes(acctEmail)).to.equal(true);
-        expect(decrypted.success).to.equal(true);
+        expect(decryptedMessage.success).to.equal(true);
         expect(decryptedAttachmentContent.success).to.equal(true);
       })
     );
