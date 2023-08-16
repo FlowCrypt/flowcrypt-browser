@@ -29,26 +29,15 @@ export class BgHandlers {
     return await dbFunc(db, ...request.args);
   };
 
-  public static ajaxHandler = async (r: Bm.Ajax, sender: Bm.Sender): Promise<Bm.Res.Ajax> => {
+  public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
     if (r.req.context?.operationId) {
       // progress updates were requested via messages
-      let dest = r.req.context.tabId;
-      if (typeof dest === 'undefined') {
-        // detect tabId from sender
-        if (sender !== 'background') {
-          if (typeof sender?.tab?.id !== 'undefined') {
-            dest = `${sender.tab.id}:0`;
-          }
-        }
-      }
-      if (typeof dest !== 'undefined') {
-        const destination = dest;
-        const operationId = r.req.context.operationId;
-        const expectedTransferSize = r.req.context.expectedTransferSize;
-        r.req.xhr = Api.getAjaxProgressXhrFactory({
-          download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(destination, { percent, loaded, total, expectedTransferSize, operationId }),
-        });
-      }
+      const frameId = r.req.context.frameId;
+      const operationId = r.req.context.operationId;
+      const expectedTransferSize = r.req.context.expectedTransferSize;
+      r.req.xhr = Api.getAjaxProgressXhrFactory({
+        download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(frameId, { percent, loaded, total, expectedTransferSize, operationId }),
+      });
     }
     return await Api.ajax(r.req, r.stack);
   };
@@ -90,21 +79,4 @@ export class BgHandlers {
         }
       });
     });
-
-  public static respondWithSenderTabId = async (r: Bm._tab_, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
-    if (sender === 'background') {
-      return { tabId: null }; // eslint-disable-line no-null/no-null
-    } else if (typeof sender.tab?.id === 'number' && sender.tab.id > 0) {
-      const tabId = `${sender.tab.id}:${sender.frameId}`;
-      if (r.contentScript) {
-        BrowserMsg.contentScriptsRegistry.add(tabId);
-      }
-      return { tabId };
-    } else {
-      // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
-      // https://developers.chrome.com/extensions/runtime#type-MessageSender
-      // MDN says the same - thus this is most likely a background script, through browser message passing
-      return { tabId: null }; // eslint-disable-line no-null/no-null
-    }
-  };
 }

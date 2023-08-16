@@ -50,7 +50,7 @@ export class ComposeView extends View {
   public threadId = '';
   public ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
@@ -170,7 +170,6 @@ export class ComposeView extends View {
       opgp.config.showVersion = false;
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
-    this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.draftModule = new ComposeDraftModule(this);
     this.quoteModule = new ComposeQuoteModule(this);
