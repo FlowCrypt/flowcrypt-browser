@@ -303,6 +303,15 @@ export class Value {
     hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60,
   };
 
+  public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
+    if (typeof percent === 'undefined') {
+      if (total || expectedTransferSize) {
+        percent = Math.round((loaded / (total || expectedTransferSize)) * 100);
+      }
+    }
+    return percent;
+  };
+
   public static noop = (): void => undefined;
 }
 
