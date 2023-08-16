@@ -30,7 +30,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
-import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
+import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
@@ -201,6 +201,10 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
+    if (this.composeType) {
+      const replyOption = 'a_' + this.composeType;
+      await this.renderModule.activateReplyOption(replyOption as ReplyOption);
+    }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
   };
 

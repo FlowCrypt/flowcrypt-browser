@@ -438,7 +438,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
         await gmailPage.waitAndClick('[act="24"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
-        await gmailPage.waitAll('.reply_message_evaluated .error_notification');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',

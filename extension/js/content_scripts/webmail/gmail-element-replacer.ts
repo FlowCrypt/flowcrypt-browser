@@ -87,7 +87,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   public setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
-      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
+      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getConvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
       await this.replaceStandardReplyBox(undefined, true);
     }
@@ -527,7 +527,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   };
 
-  private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
+  private getConvoRootEl = (anyInnerElement: HTMLElement) => {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   };
 
@@ -548,7 +548,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
+      const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
       if (msgId) {
         replyParams.replyMsgId = msgId;
