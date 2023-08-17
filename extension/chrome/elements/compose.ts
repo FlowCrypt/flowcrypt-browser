@@ -44,7 +44,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
-  public composeType?: string;
+  public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
@@ -146,7 +146,7 @@ export class ComposeView extends View {
       'debug',
       'removeAfterClose',
       'replyPubkeyMismatch',
-      'composeType',
+      'replyOption',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -154,7 +154,7 @@ export class ComposeView extends View {
     this.skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
     this.ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
     this.removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
-    this.composeType = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeType');
+    this.replyOption = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyOption') as ReplyOption;
     this.disableDraftSaving = false;
     this.debug = uncheckedUrlParams.debug === true;
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
@@ -200,9 +200,8 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
-    if (this.composeType) {
-      const replyOption = 'a_' + this.composeType;
-      await this.renderModule.activateReplyOption(replyOption as ReplyOption);
+    if (this.replyOption) {
+      await this.renderModule.activateReplyOption(this.replyOption);
     }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
   };

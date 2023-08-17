@@ -55,9 +55,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
         if (this.view.skipClickPrompt) {
           // TODO: fix issue when loading recipients
-          if (this.view.composeType === 'reply') {
+          if (this.view.replyOption === 'a_reply') {
             await this.view.recipientsModule.clearRecipientsForReply();
-          } else if (this.view.composeType === 'forward') {
+          } else if (this.view.replyOption === 'a_forward') {
             this.view.recipientsModule.clearRecipients();
           }
 
@@ -227,7 +227,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       return;
     }
     this.view.recipientsModule.clearRecipients();
-    this.view.composeType = option.replace('a_', '');
+    this.view.replyOption = option;
     if (option === 'a_forward') {
       await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward', true);
     } else {
