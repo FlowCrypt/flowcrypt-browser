@@ -5,7 +5,7 @@
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
-import { Dict, EmailParts, Url, UrlParams } from '../../core/common.js';
+import { Dict, EmailParts, Url, UrlParams, Value } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
@@ -108,19 +108,16 @@ export class Api {
     };
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
+    const newTimeoutPromise = (): Promise<never> => {
+      return new Promise((_resolve, reject) => {
+        /* error-handled */ setTimeout(() => {
+          reject(AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext)); // Reject the promise with a timeout error
+        }, req.timeout ?? 20000);
+      });
+    };
     try {
-      const responsePromises = [fetch(url, requestInit)];
-      if (req.timeout || typeof req.progress?.download === 'undefined') {
-        // todo: disable timeout on upload
-        responsePromises.push(
-          new Promise((_resolve, reject) => {
-            /* error-handled */ setTimeout(() => {
-              abortController.abort(); // Abort the fetch request
-              reject(AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext)); // Reject the promise with a timeout error
-            }, req.timeout ?? 20000);
-          })
-        );
-      }
+      const responsePromises = [fetch(url, requestInit), newTimeoutPromise()];
+      // todo: disable timeout on upload
       const response = await Promise.race(responsePromises);
       if (!response.ok) {
         let responseText: string | undefined;
@@ -142,10 +139,43 @@ export class Api {
           reqContext
         );
       }
+      const transformResponseWithProgressAndTimeout = () => {
+        if (req.progress?.download && response.body) {
+          const contentLength = response.headers.get('content-length');
+          const total = contentLength ? parseInt(contentLength) : 0;
+          const transformStream = new TransformStream();
+          const transformWriter = transformStream.writable.getWriter();
+          const reader = response.body.getReader();
+          const downloadProgress = req.progress.download;
+          return {
+            pipe: async () => {
+              let downloadedBytes = 0;
+              while (true) {
+                const { done, value } = await Promise.race([reader.read(), newTimeoutPromise()]);
+                if (done) {
+                  await transformWriter.close();
+                  return;
+                }
+                downloadedBytes += value.length;
+                downloadProgress(undefined, downloadedBytes, total);
+                await transformWriter.write(value);
+              }
+            },
+            response: new Response(transformStream.readable, {
+              status: response.status,
+              headers: response.headers,
+            }),
+          };
+        } else {
+          return { response, pipe: Value.noop }; // original response
+        }
+      };
       if (resFmt === 'text') {
-        return (await response.text()) as FetchResult<T, RT>; // todo: progress
+        const transformed = transformResponseWithProgressAndTimeout();
+        return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
       } else if (resFmt === 'json') {
-        return (await response.json()) as FetchResult<T, RT>; // todo: progress?
+        const transformed = transformResponseWithProgressAndTimeout();
+        return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
       } else {
         return undefined as FetchResult<T, RT>;
       }
@@ -158,6 +188,8 @@ export class Api {
         throw e;
       }
       throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);
+    } finally {
+      abortController.abort();
     }
   };
 
