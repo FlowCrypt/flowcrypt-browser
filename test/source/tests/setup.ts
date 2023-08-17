@@ -10,7 +10,7 @@ import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
 import { ComposePageRecipe } from './page-recipe/compose-page-recipe';
 import { Str, emailKeyIndex } from './../core/common';
 import { BrowserRecipe } from './tooling/browser-recipe';
-import { Key, KeyInfoWithIdentity, KeyUtil } from '../core/crypto/key';
+import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key';
 import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { BrowserHandle, ControllablePage } from '../browser';
@@ -30,6 +30,10 @@ import {
 import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
+import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
+import { GoogleData } from '../mock/google/google-data';
+import Parse from '../util/parse';
+import { MsgUtil } from '../core/crypto/pgp/msg-util';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2297,6 +2301,182 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           passphrase: 'test pp to encrypt unprotected key',
           longid: null, // eslint-disable-line no-null/no-null
         });
+      })
+    );
+
+    test(
+      'setup - Client configuration prv_backup_to_designated_mailbox test',
+      testWithBrowser(async (t, browser) => {
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        const adminEmail = 'admin@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT'],
+              prv_backup_to_designated_mailbox: pubkey,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-enable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.createKey(settingsPage, '', 'email', {
+          skipForPassphrase: true,
+          backupPrvKeyToMailbox: true,
+          key: {
+            passphrase: 'super difficult to guess passphrase',
+          },
+        });
+        const currentKey = await retrieveAndCheckKeys(settingsPage, acctEmail, 1);
+        const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${currentKey[0].id}`;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject)[0];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
+        const fromEmailHeaderLine = rawMessage.headerLines[2].line;
+        const toEmailHeaderLine = rawMessage.headerLines[3].line;
+        const subjectLine = String(rawMessage.headers.get('subject'));
+        const adminPrivateKey = testConstants.prvBackupToDesignatedMailboxTestPrvKey;
+        const parsedAdminPrivateKey = await KeyUtil.parse(adminPrivateKey);
+        const passphrase = 'super hard to guess passphrase';
+        const encryptedBodyText = rawMessage.text!;
+        const kisWithPassphrase: KeyInfoWithIdentityAndOptionalPp[] = [
+          { ...(await KeyUtil.keyInfoObj(parsedAdminPrivateKey)), family: parsedAdminPrivateKey.family, passphrase },
+        ];
+        const decryptedMessage = await MsgUtil.decryptMessage({
+          kisWithPp: kisWithPassphrase,
+          encryptedData: encryptedBodyText,
+          verificationPubs: [pubkey],
+        });
+        const encryptedAttachmentContent = rawMessage.attachments[0].content;
+        const decryptedAttachmentContent = await MsgUtil.decryptMessage({
+          kisWithPp: kisWithPassphrase,
+          encryptedData: encryptedAttachmentContent,
+          verificationPubs: [pubkey],
+        });
+        const armoredPrivateKey = decryptedAttachmentContent.content!.toUtfStr();
+        const key = await KeyUtil.parse(armoredPrivateKey);
+        expect(key.isPrivate).to.equal(true);
+        expect(key.fullyDecrypted).to.equal(true);
+        expect(currentKey[0].id).to.equal(key.id);
+        expect(fromEmailHeaderLine.includes(acctEmail)).to.equal(true);
+        expect(toEmailHeaderLine.includes(adminEmail)).to.equal(true);
+        expect(subjectLine.includes(acctEmail)).to.equal(true);
+        expect(decryptedMessage.success).to.equal(true);
+        expect(decryptedAttachmentContent.success).to.equal(true);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const experimentalPage = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+        await experimentalPage.waitAndClick('@action-reset-account');
+        await SettingsPageRecipe.waitForModalAndRespond(experimentalPage, 'confirm', {
+          contentToCheck: `This will remove all your FlowCrypt settings for ${acctEmail} including your keys.`,
+          clickOn: 'confirm',
+        });
+        await SettingsPageRecipe.waitForModalAndRespond(experimentalPage, 'confirm', { clickOn: 'confirm' });
+        await settingsPage.close();
+        const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.manualEnter(setupPage, '', {
+          prvBackupToMailbox: true,
+          naked: true,
+          genPp: true,
+          noPubSubmitRule: true,
+          key: {
+            title: '',
+            armored: armoredPrivateKey,
+            passphrase: '',
+            longid: key.id,
+          },
+        });
+        const existingKey = await retrieveAndCheckKeys(setupPage, acctEmail, 1);
+        expect(currentKey[0].id).to.equal(existingKey[0].id);
+      })
+    );
+
+    test(
+      'setup - prv_backup_to_designated_mailbox will take precedence if set with NO_PRV_BACKUP',
+      testWithBrowser(async (t, browser) => {
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT', 'NO_PRV_BACKUP'],
+              prv_backup_to_designated_mailbox: pubkey,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-disable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.createKey(settingsPage, '', 'disabled', {
+          skipForPassphrase: true,
+          backupPrvKeyToMailbox: true,
+          key: {
+            passphrase: 'super difficult to guess passphrase',
+          },
+        });
+        const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user`;
+        const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject)[0];
+        expect(sentMsg.raw!).to.be.not.empty;
+      })
+    );
+
+    test(
+      'setup - Ignore prv_backup_to_designated_mailbox if key_manager_url is set',
+      testWithBrowser(async (t, browser) => {
+        const port = t.context.urls?.port;
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_PRV_CREATE', 'NO_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN'],
+              prv_backup_to_designated_mailbox: pubkey,
+              key_manager_url: `https://localhost:${port}/flowcrypt-email-key-manager`,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-enable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await Util.sleep(3);
+        const rulesKey = `cryptup_${emailKeyIndex(acctEmail, 'rules')}`;
+        const clientConfiguration = (await settingsPage.getFromLocalStorage([rulesKey]))[rulesKey] as FesClientConfiguration;
+        expect(await settingsPage.isElementPresent('@ekm-setup-user-notify')).to.be.true;
+        expect(clientConfiguration.key_manager_url).to.be.not.empty;
+        expect(clientConfiguration.prv_backup_to_designated_mailbox).to.be.not.empty;
+      })
+    );
+
+    test(
+      'setup - Client error will occur if prv_backup_to_designated_mailbox and PRV_AUTOIMPORT_OR_AUTOGEN is set',
+      testWithBrowser(async (t, browser) => {
+        const pubkey = testConstants.prvBackupToDesignatedMailBoxTestPubKey;
+        const acctEmail = 'user@prv-backup-to-designated-mailbox.flowcrypt.test';
+        /* eslint-disable @typescript-eslint/naming-convention */
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT', 'PRV_AUTOIMPORT_OR_AUTOGEN'],
+              prv_backup_to_designated_mailbox: pubkey,
+              enforce_keygen_algo: 'ecc25519',
+              enforce_keygen_expire_months: 6,
+            },
+          },
+        });
+        /* eslint-enable @typescript-eslint/naming-convention */
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await Util.sleep(3);
+        await settingsPage.waitAndRespondToModal(
+          'error',
+          'confirm',
+          'Combination of org rules not valid: prv_backup_to_designated_mailbox cannot be used together with PRV_AUTOIMPORT_OR_AUTOGEN'
+        );
       })
     );
   }

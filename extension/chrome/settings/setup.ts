@@ -207,6 +207,14 @@ export class SetupView extends View {
       'click',
       this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
     );
+    $('#step_0_backup_to_designated_mailbox .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
+      'click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
+    );
+    $('#step_0_backup_to_designated_mailbox .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on(
+      'click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
+    );
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
       'click',
       this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))

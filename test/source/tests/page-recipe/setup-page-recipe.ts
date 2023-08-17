@@ -17,6 +17,7 @@ type ManualEnterOpts = {
   simulateRetryOffline?: boolean;
   noPrvCreateClientConfiguration?: boolean;
   enforceAttesterSubmitClientConfiguration?: boolean;
+  prvBackupToMailbox?: boolean;
   noPubSubmitRule?: boolean;
   fillOnly?: boolean;
   isInvalidKey?: boolean | undefined;
@@ -31,6 +32,7 @@ type CreateKeyOpts = {
   enforcedAlgo?: string | boolean;
   selectKeyAlgo?: string;
   skipForPassphrase?: boolean;
+  backupPrvKeyToMailbox?: boolean;
   pageEvaluator?: () => void;
 };
 
@@ -45,12 +47,13 @@ export class SetupPageRecipe extends PageRecipe {
       enforcedAlgo = false,
       selectKeyAlgo = '',
       skipForPassphrase = false,
+      backupPrvKeyToMailbox = false,
       pageEvaluator,
       key,
     }: CreateKeyOpts = {},
     checks: SavePassphraseChecks = {}
   ) => {
-    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase });
+    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { key, usedPgpBefore, skipForPassphrase, backupPrvKeyToMailbox });
     if (enforcedAlgo) {
       expect(await settingsPage.value('@input-step2bmanualcreate-key-type')).to.equal(enforcedAlgo);
       expect(await settingsPage.isDisabled('@input-step2bmanualcreate-key-type')).to.equal(true);
@@ -89,7 +92,7 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup !== 'disabled') {
       throw new Error(`Unknown backup method: ${backup}`);
     }
-    if (backup !== 'disabled') {
+    if (backup !== 'disabled' && backupPrvKeyToMailbox !== true) {
       await settingsPage.waitAndClick('@action-backup-step3manual-continue');
       if (backup === 'file') {
         // explicit wait first with longer timeout - keygen can take a while, particularly with other tests in parallel
@@ -115,6 +118,7 @@ export class SetupPageRecipe extends PageRecipe {
       simulateRetryOffline = false,
       noPrvCreateClientConfiguration = false,
       enforceAttesterSubmitClientConfiguration = false,
+      prvBackupToMailbox = false,
       fillOnly = false,
       noPubSubmitRule = false,
       key,
@@ -125,6 +129,8 @@ export class SetupPageRecipe extends PageRecipe {
     if (!noPrvCreateClientConfiguration) {
       if (usedPgpBefore) {
         await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { timeout: 30, retryErrs: true });
+      } else if (prvBackupToMailbox) {
+        await settingsPage.waitAndClick('@action-step0backup-key-to-mailbox-manual-enter', { timeout: 30, retryErrs: true });
       } else {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', {
           timeout: 30,
@@ -348,11 +354,18 @@ export class SetupPageRecipe extends PageRecipe {
   private static createBegin = async (
     settingsPage: ControllablePage,
     keyTitle: string,
-    { key, usedPgpBefore = false, skipForPassphrase = false }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean } = {}
+    {
+      key,
+      usedPgpBefore = false,
+      skipForPassphrase = false,
+      backupPrvKeyToMailbox = false,
+    }: { key?: { passphrase: string }; usedPgpBefore?: boolean; skipForPassphrase?: boolean; backupPrvKeyToMailbox?: boolean } = {}
   ) => {
     const k = key || Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create', { timeout: 30 });
+    } else if (backupPrvKeyToMailbox) {
+      await settingsPage.waitAndClick('@action-step0backup-key-to-mailbox-manual-create', { timeout: 30 });
     } else {
       if (skipForPassphrase) {
         await settingsPage.waitAndClick('#lost_pass_phrase');

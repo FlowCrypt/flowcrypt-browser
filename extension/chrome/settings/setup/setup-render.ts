@@ -48,6 +48,14 @@ export class SetupRenderModule {
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
       }
+    } else if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox() && !this.view.clientConfiguration.usesKeyManager()) {
+      if (!this.view.clientConfiguration.prvKeyAutoImportOrAutogen()) {
+        this.displayBlock('step_0_backup_to_designated_mailbox');
+      } else {
+        await Ui.modal.error('Combination of org rules not valid: prv_backup_to_designated_mailbox cannot be used together with PRV_AUTOIMPORT_OR_AUTOGEN.');
+        window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+        return;
+      }
     } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
         const notSupportedErr = 'Combination of org rules not valid: PASS_PHRASE_QUIET_AUTOGEN cannot be used together with FORBID_STORING_PASS_PHRASE.';
@@ -90,6 +98,7 @@ export class SetupRenderModule {
   public displayBlock = (name: string) => {
     const blocks = [
       'loading',
+      'step_0_backup_to_designated_mailbox',
       'step_0_found_key',
       'step_1_easy_or_manual',
       'step_2a_manual_create',
