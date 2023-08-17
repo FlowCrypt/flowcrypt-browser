@@ -449,7 +449,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
         const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
-        expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com,flowcrypt.compatibility@gmail.com');
+        expect(await replyBox.read('@recipients-preview')).to.equal(['flowcrypt.compatibility@gmail.com', 'e2e.enterprise.test@flowcrypt.com'].join());
       })
     );
 
