@@ -648,8 +648,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const showSwitchToEncryptedReplyWarning = replyBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
 
     if (showSwitchToEncryptedReplyWarning) {
-      const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a message without encryption. </div>');
-      const switchToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted compose</a>');
+      const isForward = this.parseReplyOption(replyBox) === 'a_forward';
+      const notification = $(
+        `<div class="error_notification">The last message was encrypted, but you are composing a ${isForward ? 'message' : 'reply'} without encryption. </div>`
+      );
+      const switchToEncryptedReply = $(`<a href id="switch_to_encrypted_reply">Switch to encrypted ${isForward ? 'compose' : 'reply'}</a>`);
       switchToEncryptedReply.on(
         'click',
         Ui.event.handle((el, ev: JQuery.Event) => {

@@ -54,7 +54,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         this.view.recipientsModule.addRecipients(recipients, false).catch(Catch.reportErr);
 
         if (this.view.skipClickPrompt) {
-          // TODO: fix issue when loading recipients
           if (this.view.replyOption === 'a_reply') {
             await this.view.recipientsModule.clearRecipientsForReply();
           } else if (this.view.replyOption === 'a_forward') {
