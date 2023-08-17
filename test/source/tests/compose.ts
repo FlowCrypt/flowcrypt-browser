@@ -1255,12 +1255,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         const inboxPage = await browser.newPage(t, t.context.urls?.extensionInbox(acctEmail) + '&labelId=DRAFT&debug=___cu_true___');
         await BrowserRecipe.finishSession(inboxPage);
-        const inboxTabId = await PageRecipe.getTabId(inboxPage);
         // send message from a different tab
         await PageRecipe.sendMessage(settingsPage, {
           name: 'open_compose_window',
           data: { bm: { draftId: '17c041fd27858466' }, objUrls: {} },
-          to: inboxTabId,
+          to: 'broadcast',
           uid: '2',
         });
         await inboxPage.waitAll('@container-new-message');

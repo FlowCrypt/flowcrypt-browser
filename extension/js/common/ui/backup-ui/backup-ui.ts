@@ -32,7 +32,7 @@ export class BackupUi {
   public manualModule!: BackupUiManualModule;
   public automaticModule!: BackupUiAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public clientConfiguration!: ClientConfiguration;
   public fesUrl?: string;
   public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
@@ -71,7 +71,6 @@ export class BackupUi {
   };
 
   public renderBackupView = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;

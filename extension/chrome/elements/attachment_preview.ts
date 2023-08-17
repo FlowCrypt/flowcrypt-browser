@@ -73,7 +73,7 @@ View.run(
           }
           $('body').on('click', e => {
             if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
-              BrowserMsg.send.closeDialog(this.parentTabId);
+              BrowserMsg.send.closeDialog(this);
             }
           });
           $('#attachment-preview-download')
