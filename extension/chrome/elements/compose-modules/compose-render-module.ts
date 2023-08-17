@@ -227,7 +227,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       return;
     }
     this.view.recipientsModule.clearRecipients();
-    this.view.replyOption = option;
     if (option === 'a_forward') {
       await this.view.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(this.view.replyMsgId, 'forward', true);
     } else {
@@ -246,11 +245,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.previousReplyOption = option;
   };
 
-  public activateReplyOption = async (replyOption: ReplyOption) => {
+  public activateReplyOption = async (replyOption: ReplyOption, fromCompose = false) => {
     this.view.replyPopoverModule.changeOptionImage(replyOption);
     if (replyOption === 'a_forward') {
       this.responseMethod = 'forward';
-      this.view.recipientsModule.clearRecipients();
+      if (!fromCompose) {
+        this.view.recipientsModule.clearRecipients();
+      }
     } else if (replyOption === 'a_reply') {
       await this.view.recipientsModule.clearRecipientsForReply();
     }

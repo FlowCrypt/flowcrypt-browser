@@ -427,7 +427,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // eslint-disable-next-line no-only-tests/no-only-tests
-    test.only(
+    test(
       'mail.google.com - plain reply with dot menu',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -449,7 +449,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
         const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
-        expect(await replyBox.read('@recipients-preview')).to.equal(['flowcrypt.compatibility@gmail.com', 'e2e.enterprise.test@flowcrypt.com'].join());
+        expect(await replyBox.read('@recipients-preview')).to.equal(['flowcrypt.compatibility@gmail.com', 'e2e.enterprise.test@flowcrypt.com'].join(''));
       })
     );
 
