@@ -17,6 +17,7 @@ type ManualEnterOpts = {
   simulateRetryOffline?: boolean;
   noPrvCreateClientConfiguration?: boolean;
   enforceAttesterSubmitClientConfiguration?: boolean;
+  prvBackupToMailbox?: boolean;
   noPubSubmitRule?: boolean;
   fillOnly?: boolean;
   isInvalidKey?: boolean | undefined;
@@ -117,6 +118,7 @@ export class SetupPageRecipe extends PageRecipe {
       simulateRetryOffline = false,
       noPrvCreateClientConfiguration = false,
       enforceAttesterSubmitClientConfiguration = false,
+      prvBackupToMailbox = false,
       fillOnly = false,
       noPubSubmitRule = false,
       key,
@@ -127,6 +129,8 @@ export class SetupPageRecipe extends PageRecipe {
     if (!noPrvCreateClientConfiguration) {
       if (usedPgpBefore) {
         await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { timeout: 30, retryErrs: true });
+      } else if (prvBackupToMailbox) {
+        await settingsPage.waitAndClick('@action-step0backup-key-to-mailbox-manual-enter', { timeout: 30, retryErrs: true });
       } else {
         await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', {
           timeout: 30,

@@ -2356,7 +2356,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           encryptedData: encryptedAttachmentContent,
           verificationPubs: [pubkey],
         });
-        const key = await KeyUtil.parse(decryptedAttachmentContent.content!.toUtfStr());
+        const armoredPrivateKey = decryptedAttachmentContent.content!.toUtfStr();
+        const key = await KeyUtil.parse(armoredPrivateKey);
         expect(key.isPrivate).to.equal(true);
         expect(key.fullyDecrypted).to.equal(true);
         expect(currentKey[0].id).to.equal(key.id);
@@ -2365,6 +2366,30 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(subjectLine.includes(acctEmail)).to.equal(true);
         expect(decryptedMessage.success).to.equal(true);
         expect(decryptedAttachmentContent.success).to.equal(true);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const experimentalPage = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-module-experimental', ['experimental.htm']);
+        await experimentalPage.waitAndClick('@action-reset-account');
+        await SettingsPageRecipe.waitForModalAndRespond(experimentalPage, 'confirm', {
+          contentToCheck: `This will remove all your FlowCrypt settings for ${acctEmail} including your keys.`,
+          clickOn: 'confirm',
+        });
+        await SettingsPageRecipe.waitForModalAndRespond(experimentalPage, 'confirm', { clickOn: 'confirm' });
+        await settingsPage.close();
+        const setupPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.manualEnter(setupPage, '', {
+          prvBackupToMailbox: true,
+          naked: true,
+          genPp: true,
+          noPubSubmitRule: true,
+          key: {
+            title: '',
+            armored: armoredPrivateKey,
+            passphrase: '',
+            longid: key.id,
+          },
+        });
+        const existingKey = await retrieveAndCheckKeys(setupPage, acctEmail, 1);
+        expect(currentKey[0].id).to.equal(existingKey[0].id);
       })
     );
 
