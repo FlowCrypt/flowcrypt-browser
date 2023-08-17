@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../../../../js/common/browser/browser-msg.js';
 
 import { Dict } from '../../../../js/common/core/common.js';
-import { GoogleAuth } from '../../../../js/common/api/authentication/google/google-auth.js';
+import { GoogleOAuth } from '../../../../js/common/api/authentication/google/google-oauth.js';
 import { InboxView } from '../inbox.js';
 import { NotificationGroupType, Notifications } from '../../../../js/common/notifications.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
@@ -29,7 +29,7 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
       msg = `Permission missing to load inbox <a href="#" class="action_add_permission">Revise Permissions</a>`;
     }
     const newAuthPopup = async () => {
-      await GoogleAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
+      await GoogleOAuth.newAuthPopup({ acctEmail: this.view.acctEmail });
       window.location.reload();
     };
     // eslint-disable-next-line @typescript-eslint/naming-convention
