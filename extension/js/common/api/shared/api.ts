@@ -185,6 +185,10 @@ export class Api {
           // we assume there was a timeout
           throw AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext);
         }
+        if (e.name === 'TypeError' && ApiErr.isNetErr(e)) {
+          // generic failed to fetch
+          throw AjaxErr.fromXhr({ readyState, status: 0, statusText: 'error' }, reqContext);
+        }
         throw e;
       }
       throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);
