@@ -70,6 +70,9 @@ export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
       $('.status_summary').text('Your account keys are backed up and loaded correctly.');
       this.renderGoManualButton('SEE BACKUP OPTIONS');
     }
+    if ($('.status_summary').text()) {
+      $('.status_summary').show();
+    }
   };
 
   private renderBackupDetailsText = (backups: Backups) => {
@@ -84,6 +87,9 @@ export class BackupUiStatusModule extends BackupUiModule<BackupUi> {
       detailLines.push(`Keys missing backup: ${backups.keyinfos.importedNotBackedUp.length}`);
     }
     $('pre.status_details').text(detailLines.join('\n'));
+    if ($('pre.status_details').text()) {
+      $('pre.status_details').show();
+    }
   };
 
   private describeBackupCounts = (longids: string[], keyinfos: KeyInfoWithIdentity[]) => {

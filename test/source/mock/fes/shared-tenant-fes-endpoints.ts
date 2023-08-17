@@ -48,6 +48,7 @@ export type FesClientConfiguration = {
   enforce_keygen_expire_months?: number;
   allow_keys_openpgp_org_search_only_for_domains?: string[];
   disallow_keys_openpgp_org_search_for_domains?: string[];
+  prv_backup_to_designated_mailbox?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
