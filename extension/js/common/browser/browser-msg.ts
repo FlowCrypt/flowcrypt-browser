@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { AuthRes } from '../api/authentication/google/google-auth.js';
+import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { ApiCallContext } from '../api/shared/api.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
