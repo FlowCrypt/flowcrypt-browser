@@ -33,16 +33,14 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
 
   public createFooterHtml = (footer: string) => {
     const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
-    let sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
-    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
+    const footerFirstLine = sanitizedPlainFooter.split('\n')[0]?.replace('&nbsp;', '');
     if (!footerFirstLine) {
       return '';
     }
     if (/^[*\-_=+#~ ]+$/.test(footerFirstLine)) {
       return sanitizedHtmlFooter; // first line of footer is already a footer separator, made of special characters
     }
-    sanitizedHtmlFooter =
-      sanitizedHtmlFooter.startsWith('&nbsp;--') || sanitizedHtmlFooter.startsWith('--') ? sanitizedHtmlFooter.replace('--', '') : sanitizedHtmlFooter;
     return `--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   };
 }
