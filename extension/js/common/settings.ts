@@ -11,7 +11,7 @@ import { Buf } from './core/buf.js';
 import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
-import { GoogleAuth } from './api/authentication/google/google-auth.js';
+import { GoogleOAuth } from './api/authentication/google/google-oauth.js';
 import { Lang } from './lang.js';
 import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/key.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
@@ -339,7 +339,7 @@ export class Settings {
 
   public static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) => {
     try {
-      const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
+      const response = await GoogleOAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await GlobalStore.acctEmailsAdd(response.acctEmail);
         const storage = await AcctStore.get(response.acctEmail, ['setup_done']);

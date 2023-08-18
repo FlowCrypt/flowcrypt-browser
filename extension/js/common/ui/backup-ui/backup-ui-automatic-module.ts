@@ -7,7 +7,7 @@ import { Settings } from '../../settings.js';
 import { UnreportableError } from '../../platform/catch.js';
 import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
-import { GoogleAuth } from '../../api/authentication/google/google-auth.js';
+import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 import { KeyStoreUtil } from '../../core/crypto/key-store-util.js';
 import { BackupUi } from './backup-ui.js';
@@ -39,7 +39,7 @@ export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         await Ui.modal.info('Authorization Error. FlowCrypt needs to reconnect your Gmail account');
-        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail: this.ui.acctEmail });
+        const connectResult = await GoogleOAuth.newAuthPopup({ acctEmail: this.ui.acctEmail });
         if (!connectResult.error) {
           await this.setupCreateSimpleAutomaticInboxBackup();
         } else {

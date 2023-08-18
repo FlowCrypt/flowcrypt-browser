@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { GoogleAuth } from '../common/api/authentication/google/google-auth.js';
+import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
 import { emailKeyIndex } from '../common/core/common.js';
 import { VERSION } from '../common/core/const.js';
@@ -63,7 +63,7 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
-  BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
+  BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
   BrowserMsg.bgListen();
 
   await BgHandlers.updateUninstallUrl({});

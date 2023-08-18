@@ -75,7 +75,7 @@ export class BackupUi {
     const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
     this.emailProvider = storage.email_provider || 'gmail';
-    if (!this.clientConfiguration.canBackupKeys()) {
+    if (!this.clientConfiguration.canBackupKeys() && !this.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
