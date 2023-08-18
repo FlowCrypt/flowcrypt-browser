@@ -5,7 +5,7 @@
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { Catch } from '../../platform/catch.js';
-import { Dict, EmailParts, Url, UrlParams, Value } from '../../core/common.js';
+import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
@@ -134,7 +134,7 @@ export class Api {
             readyState,
             responseText,
             status: response.status,
-            statusText: response.statusText,
+            statusText: response.statusText || HTTP_STATUS_TEXTS[response.status],
           },
           reqContext
         );

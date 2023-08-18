@@ -159,7 +159,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     // below for test "decrypt - failure retrieving chunk download - next request will try anew"
     .filter(
       e =>
-        !/\(no status text\): 400 when GET-ing https:\/\/.*localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
+        !/400 when GET-ing https:\/\/.*localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
           e.message
         )
     )
