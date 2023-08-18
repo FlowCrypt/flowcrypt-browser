@@ -2,6 +2,7 @@
 
 import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
@@ -75,6 +76,7 @@ export type AcctStoreDict = {
   fesUrl?: string; // url where FlowCrypt External Service is deployed
   failedPassphraseAttempts?: number;
   lastUnsuccessfulPassphraseAttempt?: number;
+  authentication?: AuthenticationConfiguration;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
