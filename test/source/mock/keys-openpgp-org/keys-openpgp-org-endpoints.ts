@@ -10,7 +10,7 @@ export const getMockKeysOpenPGPOrgEndpoints = (keysOpenPGPOrgConfig: KeysOpenPGP
   return {
     '/keys-openpgp-org/vks/v1/by-email/?': async ({}, req) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const email = decodeURIComponent(req.url!.split('/').pop()!.toLowerCase().trim());
+      const email = decodeURIComponent(req.url.split('/').pop()!.toLowerCase().trim());
       if (!isGet(req)) {
         throw new HttpClientErr(`Not implemented: ${req.method}`);
       }

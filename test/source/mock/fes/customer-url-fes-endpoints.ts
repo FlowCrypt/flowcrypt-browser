@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { expect } from 'chai';
-import { IncomingMessage } from 'http';
+import { IncomingHttpHeaders } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { messageIdRegex, parsePort } from '../lib/mock-util';
@@ -116,7 +116,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
   };
 };
 
-const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
+const authenticate = (req: { headers: IncomingHttpHeaders }, type: 'oidc' | 'fes'): string => {
   const jwt = (req.headers.authorization || '').replace('Bearer ', '');
   if (!jwt) {
     throw new Error('Mock FES missing authorization header');

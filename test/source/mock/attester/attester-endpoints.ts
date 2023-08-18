@@ -25,7 +25,7 @@ export const getMockAttesterEndpoints = (oauth: OauthMock, attesterConfig: Attes
   return {
     '/attester/pub/?': async ({ body }, req) => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
+      const emailOrLongid = req.url.split('/').pop()!.toLowerCase().trim();
       if (isGet(req)) {
         if (!attesterConfig?.pubkeyLookup) {
           throw new HttpClientErr('Method not allowed', 405);
