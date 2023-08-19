@@ -52,6 +52,14 @@ export type FesClientConfiguration = {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
+export type FesAuthenticationConfiguration = {
+  clientId: string;
+  clientSecret: string;
+  redirectUrl: string;
+  authCodeUrl: string;
+  tokensUrl: string;
+};
+
 export interface FesMessageReturnType {
   url: string;
   externalId: string;
@@ -61,6 +69,7 @@ export interface FesConfig {
   returnError?: HttpClientErr;
   apiEndpointReturnError?: HttpClientErr;
   clientConfiguration?: FesClientConfiguration;
+  authenticationConfiguration?: FesAuthenticationConfiguration;
   messagePostValidator?: (body: string, fesUrl: string) => Promise<FesMessageReturnType>;
 }
 
@@ -101,6 +110,17 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
           flags: [],
         },
       };
+    },
+    '/shared-tenant-fes/api/v1/client-configuration/authentication': async ({}, req) => {
+      if (req.method !== 'GET') {
+        throw new HttpClientErr('Unsupported method');
+      }
+      if (config?.authenticationConfiguration) {
+        return {
+          oauth: config.authenticationConfiguration,
+        };
+      }
+      return {};
     },
     '/shared-tenant-fes/api/v1/log-collector/exception': async ({ body }) => {
       reportedErrors.push(body as ReportedError);

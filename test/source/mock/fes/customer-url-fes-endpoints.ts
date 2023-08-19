@@ -50,6 +50,11 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       if (req.method !== 'GET') {
         throw new HttpClientErr('Unsupported method');
       }
+      if (config?.authenticationConfiguration) {
+        return {
+          oauth: config.authenticationConfiguration,
+        };
+      }
       return {};
     },
     '/api/v1/message/new-reply-token': async ({}, req) => {
