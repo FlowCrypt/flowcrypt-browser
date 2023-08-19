@@ -45,7 +45,8 @@ export type AccountIndex =
   | 'rules'
   | 'fesUrl'
   | 'failedPassphraseAttempts'
-  | 'lastUnsuccessfulPassphraseAttempt';
+  | 'lastUnsuccessfulPassphraseAttempt'
+  | 'authentication';
 
 export type SendAsAlias = {
   isPrimary: boolean;

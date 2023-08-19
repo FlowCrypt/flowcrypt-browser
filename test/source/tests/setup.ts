@@ -30,7 +30,7 @@ import {
 import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
-import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
+import { FesAuthenticationConfiguration, FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from '../util/parse';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
@@ -2482,6 +2482,36 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
   }
 
   if (testVariant === 'CONSUMER-MOCK') {
+    test(
+      'setup - check custom authentication config from the local store',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            authenticationConfiguration: {
+              redirectUrl: 'https://example.com/redirect',
+              clientId: 'your-client-id',
+              clientSecret: 'your-client-secret',
+              authCodeUrl: 'https://example.com/auth',
+              tokensUrl: 'https://example.com/tokens',
+            },
+          },
+        });
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+        await debugFrame.waitForContent('@container-pre', 'authentication');
+        const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
+        const auth = (await settingsPage.getFromLocalStorage([key]))[key];
+        const authenticationConfiguration = auth as FesAuthenticationConfiguration;
+        expect(authenticationConfiguration.clientId).to.be.not.empty;
+        expect(authenticationConfiguration.clientSecret).to.be.not.empty;
+        expect(authenticationConfiguration.redirectUrl).to.be.not.empty;
+        expect(authenticationConfiguration.authCodeUrl).to.be.not.empty;
+        expect(authenticationConfiguration.tokensUrl).to.be.not.empty;
+      })
+    );
+
     test(
       'setup - imported key with multiple alias should show checkbox per alias',
       testWithBrowser(async (t, browser) => {
