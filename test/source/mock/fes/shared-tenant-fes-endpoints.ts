@@ -5,7 +5,7 @@ import { IncomingHttpHeaders } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
-import { messageIdRegex, parsePort } from '../lib/mock-util';
+import { messageIdRegex, parseAuthority, parsePort } from '../lib/mock-util';
 
 export interface ReportedError {
   name: string;
@@ -81,7 +81,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       if (config?.apiEndpointReturnError) {
         throw config.apiEndpointReturnError;
       }
-      throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`);
+      throw new HttpClientErr(`Not running any FES here: ${parseAuthority(req)}`);
     },
     '/shared-tenant-fes/api/v1/client-configuration': async ({}, req) => {
       // individual ClientConfiguration is tested using FlowCrypt backend mock, see BackendData.getClientConfiguration
