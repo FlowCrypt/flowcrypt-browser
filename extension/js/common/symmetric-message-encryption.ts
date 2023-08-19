@@ -8,7 +8,7 @@ import { secureRandomBytes } from './platform/util.js';
 export interface SymEncryptedMessage {
   to: string;
   uid: string;
-  encryptedData: ArrayBuffer;
+  encryptedData: string;
   propagateToParent?: boolean;
 }
 
@@ -37,7 +37,7 @@ export class SymmetricMessageEncryption {
       SymmetricMessageEncryption.cryptoKey,
       data
     );
-    return { to: msg.to, uid: msg.uid, encryptedData };
+    return { to: msg.to, uid: msg.uid, encryptedData: new Buf(encryptedData).toBase64Str() };
   };
   public static decrypt = async (msg: SymEncryptedMessage): Promise<Bm.RawWithWindowExtensions> => {
     if (!SymmetricMessageEncryption.cryptoKey) {
@@ -47,17 +47,22 @@ export class SymmetricMessageEncryption {
     if (iv.length !== SymmetricMessageEncryption.ivBytesLength) {
       throw new Error(`IV is ${iv.length} bytes length (${this.ivBytesLength} expected)`);
     }
-    const decryptedBytes = await crypto.subtle.decrypt(
+    const decryptedBytes = await this.doDecrypt(iv, Buf.fromBase64Str(msg.encryptedData), SymmetricMessageEncryption.cryptoKey);
+    const bm: Bm.RawWithWindowExtensions = JSON.parse(new Buf(decryptedBytes).toUtfStr());
+    return bm;
+  };
+
+  private static doDecrypt = (iv: Buf, encryptedData: Buf, cryptoKey: CryptoKey) => {
+    return crypto.subtle.decrypt(
       {
         name: SymmetricMessageEncryption.algoName,
         iv,
       },
-      SymmetricMessageEncryption.cryptoKey,
-      msg.encryptedData
+      cryptoKey,
+      encryptedData
     );
-    const bm: Bm.RawWithWindowExtensions = JSON.parse(new Buf(decryptedBytes).toUtfStr());
-    return bm;
   };
+
   private static fromBytes = async (encryptionKeyBuffer: ArrayBuffer) => {
     return await crypto.subtle.importKey(
       'raw', // Format of the input key material
