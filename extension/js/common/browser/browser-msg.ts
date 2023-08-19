@@ -345,25 +345,27 @@ export class BrowserMsg {
 
   protected static listenForWindowMessages = (dest: Bm.Dest) => {
     const extensionOrigin = Env.getExtensionOrigin();
-    window.addEventListener('message', async e => {
-      if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
-      const encryptedMsg = e.data as SymEncryptedMessage;
-      if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
-      let handled = false;
-      if ([dest, 'broadcast'].includes(encryptedMsg.to)) {
-        const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
-        handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
-          if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
-            // send response as a new request
-            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
-          }
-        });
-      }
-      if (!handled && encryptedMsg.propagateToParent) {
-        BrowserMsg.processed.add(encryptedMsg.uid);
-        BrowserMsg.sendUpParentLine(encryptedMsg);
-      }
-    });
+    window.addEventListener('message', e =>
+      Catch.try(async () => {
+        if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
+        const encryptedMsg = e.data as SymEncryptedMessage;
+        if (typeof encryptedMsg?.uid !== 'string' || BrowserMsg.processed.has(encryptedMsg.uid)) return;
+        let handled = false;
+        if ([dest, 'broadcast'].includes(encryptedMsg.to)) {
+          const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
+          handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
+            if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
+              // send response as a new request
+              BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
+            }
+          });
+        }
+        if (!handled && encryptedMsg.propagateToParent) {
+          BrowserMsg.processed.add(encryptedMsg.uid);
+          BrowserMsg.sendUpParentLine(encryptedMsg);
+        }
+      })()
+    );
   };
 
   private static sendToParentWindow = (parentReference: ChildFrame, name: string, bm: Dict<unknown> & { messageSender?: Bm.Dest }, responseName?: string) => {

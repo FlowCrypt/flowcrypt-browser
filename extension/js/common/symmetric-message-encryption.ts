@@ -44,6 +44,9 @@ export class SymmetricMessageEncryption {
       SymmetricMessageEncryption.cryptoKey = await SymmetricMessageEncryption.fromBytes(await EncryptionKeyStore.get());
     }
     const iv = Buf.fromBase64Str(msg.uid);
+    if (iv.length !== SymmetricMessageEncryption.ivBytesLength) {
+      throw new Error(`IV is ${iv.length} bytes length (${this.ivBytesLength} expected)`);
+    }
     const decryptedBytes = await crypto.subtle.decrypt(
       {
         name: SymmetricMessageEncryption.algoName,
