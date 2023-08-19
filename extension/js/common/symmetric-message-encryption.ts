@@ -39,9 +39,14 @@ export class SymmetricMessageEncryption {
     );
     return { to: msg.to, uid: msg.uid, encryptedData: new Buf(encryptedData).toBase64Str() };
   };
+
   public static decrypt = async (msg: SymEncryptedMessage): Promise<Bm.RawWithWindowExtensions> => {
     if (!SymmetricMessageEncryption.cryptoKey) {
-      SymmetricMessageEncryption.cryptoKey = await SymmetricMessageEncryption.fromBytes(await EncryptionKeyStore.get());
+      const keyBytes = await EncryptionKeyStore.get();
+      if (keyBytes.length !== SymmetricMessageEncryption.cryptoKeyBytesLength) {
+        throw new Error(`Crypto key is ${keyBytes.length} bytes length (${this.cryptoKeyBytesLength} expected)`);
+      }
+      SymmetricMessageEncryption.cryptoKey = await SymmetricMessageEncryption.fromBytes(keyBytes);
     }
     const iv = Buf.fromBase64Str(msg.uid);
     if (iv.length !== SymmetricMessageEncryption.ivBytesLength) {
