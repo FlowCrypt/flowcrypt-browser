@@ -204,7 +204,7 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
       },
     },
-    passphraseEntry: (bm: Bm.PassphraseEntry, sendCallback = Value.noop) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm, sendCallback),
+    passphraseEntry: (bm: Bm.PassphraseEntry, sendCallback = Value.noop) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm, sendCallback, false),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
     openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
     setCss: (dest: Bm.Dest, bm: Bm.SetCss) => BrowserMsg.sendCatch(dest, 'set_css', bm),
@@ -414,8 +414,8 @@ export class BrowserMsg {
     return false;
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>, sendCallback = Value.noop) => {
-    BrowserMsg.sendAwait(dest, name, bm, false, sendCallback).catch(Catch.reportErr);
+  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>, sendCallback = Value.noop, postToSelf = true) => {
+    BrowserMsg.sendAwait(dest, name, bm, false, sendCallback, postToSelf).catch(Catch.reportErr);
   };
 
   private static sendAwait = async (
@@ -423,7 +423,8 @@ export class BrowserMsg {
     name: string,
     bm?: Dict<unknown>,
     awaitRes = false,
-    sendCallback = Value.noop
+    sendCallback = Value.noop,
+    postToSelf = true
   ): Promise<Bm.Response> => {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
@@ -440,7 +441,8 @@ export class BrowserMsg {
       // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
       BrowserMsg.replaceBufWithObjUrlInplace(bm),
       awaitRes,
-      sendCallback
+      sendCallback,
+      postToSelf
     );
   };
 
@@ -450,7 +452,8 @@ export class BrowserMsg {
     bm: Dict<unknown>,
     objUrls: Dict<string>,
     awaitRes = false,
-    sendCallback = Value.noop
+    sendCallback = Value.noop,
+    postToSelf = true
   ): Promise<Bm.Response> => {
     const msg: Bm.Raw = {
       name,
@@ -514,7 +517,9 @@ export class BrowserMsg {
       // todo: can objUrls be deleted by another recipient?
       const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
       BrowserMsg.sendToChildren(encryptedMsg);
-      window.postMessage(encryptedMsg, '*');
+      if (postToSelf) {
+        window.postMessage(encryptedMsg, '*');
+      }
       BrowserMsg.sendUpParentLine(encryptedMsg);
     }
     sendCallback();
