@@ -30,7 +30,7 @@ export type Ajax = {
   | { method: 'POST' }
   | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
   | { method: 'POST' | 'PUT'; contentType?: string; data: string; dataType: 'TEXT' }
-  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' } // todo: default application/x-www-form-urlencoded; charset=UTF-8 ?
+  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' }
   | { method: never; data: never; contentType: never }
 );
 
@@ -39,6 +39,21 @@ export type ProgressCb = (percent: number | undefined, loaded: number, total: nu
 export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null };
 
 type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
+
+export const supportsRequestStreams = (() => {
+  let duplexAccessed = false;
+
+  const hasContentType = new Request('', {
+    body: new ReadableStream(),
+    method: 'POST',
+    get duplex() {
+      duplexAccessed = true;
+      return 'half';
+    },
+  } as RequestInit).headers.has('Content-Type');
+
+  return duplexAccessed && !hasContentType;
+})();
 
 export class Api {
   public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
@@ -72,7 +87,16 @@ export class Api {
     Api.throwIfApiPathTraversalAttempted(req.url);
     const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
     // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })
+    const newTimeoutPromise = (): Promise<never> => {
+      return new Promise((_resolve, reject) => {
+        /* error-handled */ setTimeout(() => {
+          reject(AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext)); // Reject the promise with a timeout error
+        }, req.timeout ?? 20000);
+      });
+    };
     let body: BodyInit | undefined;
+    let duplex: 'half' | undefined;
+    let uploadPromise: () => void | Promise<void> = Value.noop;
     let url: string;
     if (req.method === 'GET' || req.method === 'DELETE') {
       if (typeof req.data === 'undefined') {
@@ -88,7 +112,24 @@ export class Api {
             body = JSON.stringify(req.data);
             headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
           } else if (req.dataType === 'TEXT') {
-            body = req.data;
+            if (supportsRequestStreams && req.progress?.upload) {
+              const upload = req.progress?.upload;
+              const transformStream = new TransformStream();
+              uploadPromise = async () => {
+                const transformWriter = transformStream.writable.getWriter();
+                for (let offset = 0; offset < req.data.length; ) {
+                  const chunkSize = Math.min(1000, req.data.length - offset);
+                  await Promise.race([transformWriter.write(Buf.fromRawBytesStr(req.data, offset, offset + chunkSize)), newTimeoutPromise()]);
+                  upload((offset / req.data.length) * 100, offset, req.data.length);
+                  offset += chunkSize;
+                }
+                await Promise.race([transformWriter.close(), newTimeoutPromise()]);
+              };
+              body = transformStream.readable;
+              duplex = 'half'; // activate upload progress mode
+            } else {
+              body = req.data;
+            }
             if (typeof req.contentType === 'string') {
               headersInit.push(['Content-Type', req.contentType]);
             }
@@ -99,26 +140,20 @@ export class Api {
       }
     }
     const abortController = new AbortController();
-    const requestInit: RequestInit = {
+    const requestInit: RequestInit & { duplex?: 'half' } = {
       method: req.method,
       headers: headersInit,
       body,
+      duplex,
       mode: 'cors',
       signal: abortController.signal,
     };
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
-    const newTimeoutPromise = (): Promise<never> => {
-      return new Promise((_resolve, reject) => {
-        /* error-handled */ setTimeout(() => {
-          reject(AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext)); // Reject the promise with a timeout error
-        }, req.timeout ?? 20000);
-      });
-    };
     try {
-      const responsePromises = [fetch(url, requestInit), newTimeoutPromise()];
-      // todo: disable timeout on upload
-      const response = await Promise.race(responsePromises);
+      const fetchPromise = fetch(url, requestInit);
+      await uploadPromise();
+      const response = await Promise.race([fetchPromise, newTimeoutPromise()]);
       if (!response.ok) {
         let responseText: string | undefined;
         readyState = 2; // HEADERS_RECEIVED
