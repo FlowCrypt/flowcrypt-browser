@@ -345,11 +345,11 @@ export class BrowserMsg {
 
   protected static listenForWindowMessages = (dest: Bm.Dest) => {
     const extensionOrigin = Env.getExtensionOrigin();
-    window.addEventListener('message', e =>
+    window.addEventListener('message', e => {
+      if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
+      const encryptedMsg = e.data as SymEncryptedMessage;
+      if (!encryptedMsg || typeof encryptedMsg.uid !== 'string' || BrowserMsg.processed.has(encryptedMsg.uid)) return;
       Catch.try(async () => {
-        if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
-        const encryptedMsg = e.data as SymEncryptedMessage;
-        if (typeof encryptedMsg?.uid !== 'string' || BrowserMsg.processed.has(encryptedMsg.uid)) return;
         let handled = false;
         if ([dest, 'broadcast'].includes(encryptedMsg.to)) {
           const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
@@ -364,8 +364,8 @@ export class BrowserMsg {
           BrowserMsg.processed.add(encryptedMsg.uid);
           BrowserMsg.sendUpParentLine(encryptedMsg);
         }
-      })()
-    );
+      })();
+    });
   };
 
   private static sendToParentWindow = (parentReference: ChildFrame, name: string, bm: Dict<unknown> & { messageSender?: Bm.Dest }, responseName?: string) => {
