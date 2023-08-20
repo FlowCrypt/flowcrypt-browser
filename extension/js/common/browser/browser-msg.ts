@@ -5,7 +5,7 @@
 import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
+import { Dict, Str, UrlParams, Value } from '../core/common.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
 import { DecryptResult, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
@@ -204,7 +204,7 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
       },
     },
-    passphraseEntry: (bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm),
+    passphraseEntry: (bm: Bm.PassphraseEntry, sendCallback = Value.noop) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm, sendCallback),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
     openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
     setCss: (dest: Bm.Dest, bm: Bm.SetCss) => BrowserMsg.sendCatch(dest, 'set_css', bm),
@@ -414,11 +414,17 @@ export class BrowserMsg {
     return false;
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
-    BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
+  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>, sendCallback = Value.noop) => {
+    BrowserMsg.sendAwait(dest, name, bm, false, sendCallback).catch(Catch.reportErr);
   };
 
-  private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
+  private static sendAwait = async (
+    destString: string | undefined,
+    name: string,
+    bm?: Dict<unknown>,
+    awaitRes = false,
+    sendCallback = Value.noop
+  ): Promise<Bm.Response> => {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
     const isBackgroundPage = Env.isBackgroundPage();
@@ -433,11 +439,19 @@ export class BrowserMsg {
       bm,
       // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
       BrowserMsg.replaceBufWithObjUrlInplace(bm),
-      awaitRes
+      awaitRes,
+      sendCallback
     );
   };
 
-  private static sendRaw = (destString: string | undefined, name: string, bm: Dict<unknown>, objUrls: Dict<string>, awaitRes = false): Promise<Bm.Response> => {
+  private static sendRaw = async (
+    destString: string | undefined,
+    name: string,
+    bm: Dict<unknown>,
+    objUrls: Dict<string>,
+    awaitRes = false,
+    sendCallback = Value.noop
+  ): Promise<Bm.Response> => {
     const msg: Bm.Raw = {
       name,
       data: { bm, objUrls },
@@ -445,19 +459,7 @@ export class BrowserMsg {
       uid: SymmetricMessageEncryption.generateIV(),
       stack: Catch.stackTrace(),
     };
-    // eslint-disable-next-line no-null/no-null
-    if (!Env.isBackgroundPage() && msg.to !== null) {
-      const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
-      // send via window messaging in parallel
-      Catch.try(async () => {
-        // todo: can objUrls be deleted by another recipient?
-        const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
-        BrowserMsg.sendToChildren(encryptedMsg);
-        window.postMessage(encryptedMsg, '*');
-        BrowserMsg.sendUpParentLine(encryptedMsg);
-      })();
-    }
-    return new Promise((resolve, reject) => {
+    const runtimeMessagePromise = new Promise((resolve, reject) => {
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve(undefined);
@@ -505,6 +507,19 @@ export class BrowserMsg {
         }
       }
     });
+    // eslint-disable-next-line no-null/no-null
+    if (!Env.isBackgroundPage() && msg.to !== null) {
+      // send via window messaging in parallel
+      const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
+      // todo: can objUrls be deleted by another recipient?
+      const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
+      BrowserMsg.sendToChildren(encryptedMsg);
+      window.postMessage(encryptedMsg, '*');
+      BrowserMsg.sendUpParentLine(encryptedMsg);
+    }
+    sendCallback();
+    // only runtimeMessagePromise can potentially yield a result
+    return runtimeMessagePromise;
   };
 
   private static sendUpParentLine = (encryptedMsg: SymEncryptedMessage) => {
