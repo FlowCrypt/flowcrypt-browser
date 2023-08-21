@@ -2479,11 +2479,9 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
       })
     );
-  }
 
-  if (testVariant === 'CONSUMER-MOCK') {
     test(
-      'setup - check custom authentication config from the local store',
+      'setup - check custom authentication config from the local store (customer url fes)',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           fes: {
@@ -2498,8 +2496,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             },
           },
         });
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const acctEmail = 'user@authentication-config-test.flowcrypt.test';
+        await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
         await debugFrame.waitForContent('@container-pre', 'authentication');
@@ -2511,6 +2509,24 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(oauth.redirectUrl).to.be.not.empty;
         expect(oauth.authCodeUrl).to.be.not.empty;
         expect(oauth.tokensUrl).to.be.not.empty;
+      })
+    );
+  }
+
+  if (testVariant === 'CONSUMER-MOCK') {
+    test(
+      'setup - check custom authentication config from the local store (shared tenant fes)',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+        await debugFrame.waitForContent('@container-pre', 'authentication');
+        const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
+        const auth = (await settingsPage.getFromLocalStorage([key]))[key];
+        const authenticationConfiguration = auth as FesAuthenticationConfiguration;
+        console.log(authenticationConfiguration);
+        // expect(oauth).
       })
     );
 
