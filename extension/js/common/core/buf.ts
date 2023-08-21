@@ -32,8 +32,8 @@ export class Buf extends Uint8Array {
 
   public static fromRawBytesStr = (rawStr: string, start = 0, end = rawStr.length): Buf => {
     const buf = new Buf(end - start);
-    for (let i = start; i < end; i++) {
-      buf[i] = rawStr.charCodeAt(i);
+    for (let i = 0; i < end - start; i++) {
+      buf[i] = rawStr.charCodeAt(i + start);
     }
     return buf;
   };
