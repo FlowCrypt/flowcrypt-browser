@@ -53,11 +53,13 @@ export type FesClientConfiguration = {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export type FesAuthenticationConfiguration = {
-  clientId: string;
-  clientSecret: string;
-  redirectUrl: string;
-  authCodeUrl: string;
-  tokensUrl: string;
+  oauth: {
+    clientId: string;
+    clientSecret: string;
+    redirectUrl: string;
+    authCodeUrl: string;
+    tokensUrl: string;
+  };
 };
 
 export interface FesMessageReturnType {
@@ -116,9 +118,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
         throw new HttpClientErr('Unsupported method');
       }
       if (config?.authenticationConfiguration) {
-        return {
-          oauth: config.authenticationConfiguration,
-        };
+        return config.authenticationConfiguration;
       }
       return {};
     },

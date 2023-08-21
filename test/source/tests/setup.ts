@@ -2488,11 +2488,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           fes: {
             authenticationConfiguration: {
-              redirectUrl: 'https://example.com/redirect',
-              clientId: 'your-client-id',
-              clientSecret: 'your-client-secret',
-              authCodeUrl: 'https://example.com/auth',
-              tokensUrl: 'https://example.com/tokens',
+              oauth: {
+                redirectUrl: 'https://example.com/redirect',
+                clientId: 'your-client-id',
+                clientSecret: 'your-client-secret',
+                authCodeUrl: 'https://example.com/auth',
+                tokensUrl: 'https://example.com/tokens',
+              },
             },
           },
         });
@@ -2503,12 +2505,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await debugFrame.waitForContent('@container-pre', 'authentication');
         const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
         const auth = (await settingsPage.getFromLocalStorage([key]))[key];
-        const authenticationConfiguration = auth as FesAuthenticationConfiguration;
-        expect(authenticationConfiguration.clientId).to.be.not.empty;
-        expect(authenticationConfiguration.clientSecret).to.be.not.empty;
-        expect(authenticationConfiguration.redirectUrl).to.be.not.empty;
-        expect(authenticationConfiguration.authCodeUrl).to.be.not.empty;
-        expect(authenticationConfiguration.tokensUrl).to.be.not.empty;
+        const { oauth } = auth as FesAuthenticationConfiguration;
+        expect(oauth.clientId).to.be.not.empty;
+        expect(oauth.clientSecret).to.be.not.empty;
+        expect(oauth.redirectUrl).to.be.not.empty;
+        expect(oauth.authCodeUrl).to.be.not.empty;
+        expect(oauth.tokensUrl).to.be.not.empty;
       })
     );
 

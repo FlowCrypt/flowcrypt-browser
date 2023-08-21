@@ -51,9 +51,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
         throw new HttpClientErr('Unsupported method');
       }
       if (config?.authenticationConfiguration) {
-        return {
-          oauth: config.authenticationConfiguration,
-        };
+        return config.authenticationConfiguration;
       }
       return {};
     },
