@@ -391,7 +391,7 @@ export class BrowserMsg {
       try {
         const iframeOrigin = new URL(iframe.src).origin;
         return iframeOrigin === extensionOrigin;
-      } catch (error) {
+      } catch {
         return false;
       }
     });
