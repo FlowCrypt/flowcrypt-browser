@@ -11,6 +11,11 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { Buf } from '../../../js/common/core/buf.js';
+import { Attachment } from '../../../js/common/core/attachment.js';
 
 export class SetupCreateKeyModule {
   public constructor(private view: SetupView) {}
@@ -35,7 +40,49 @@ export class SetupCreateKeyModule {
       /* eslint-enable @typescript-eslint/naming-convention */
       const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
-      if (this.view.clientConfiguration.canBackupKeys()) {
+      if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
+        const adminPubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
+        if (adminPubkey) {
+          const msgEncryptionKey = await KeyUtil.parse(adminPubkey);
+          const destinationEmail = msgEncryptionKey.emails[0];
+          try {
+            const privateKey = await KeyStore.get(this.view.acctEmail);
+            const primaryKeyId = privateKey[0].id;
+            await this.view.backupUi.initialize({
+              acctEmail: this.view.acctEmail,
+              action: 'setup_automatic',
+              keyIdentity,
+              onBackedUpFinished: async () => {
+                $('pre.status_details').remove();
+                $('#backup-template-container').remove();
+                await this.view.finalizeSetup();
+                await this.view.setupRender.renderSetupDone();
+              },
+            });
+            const parsedPrivateKey = await KeyUtil.parse(privateKey[0].private);
+            await OpenPGPKey.decryptKey(parsedPrivateKey, opts.passphrase);
+            const armoredPrivateKey = KeyUtil.armor(parsedPrivateKey);
+            const encryptedPrivateKey = await MsgUtil.encryptMessage({
+              pubkeys: [msgEncryptionKey],
+              data: Buf.fromUtfStr(armoredPrivateKey),
+              armor: false,
+            });
+            const privateKeyAttachment = new Attachment({
+              name: `0x${primaryKeyId}.asc.pgp`,
+              type: 'application/pgp-encrypted',
+              data: encryptedPrivateKey.data,
+            });
+            await this.view.backupUi.manualModule.doBackupOnDesignatedMailbox(msgEncryptionKey, privateKeyAttachment, destinationEmail, primaryKeyId);
+          } catch (e) {
+            if (ApiErr.isNetErr(e)) {
+              await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
+            } else {
+              Catch.reportErr(e);
+              await Ui.modal.error(`Error happened: ${String(e)}`);
+            }
+          }
+        }
+      } else if (this.view.clientConfiguration.canBackupKeys()) {
         await this.view.submitPublicKeys(opts);
         const action = $('#step_2a_manual_create .input_backup_inbox').prop('checked') ? 'setup_automatic' : 'setup_manual';
         // only finalize after backup is done.

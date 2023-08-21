@@ -6,7 +6,7 @@ import { Xss } from '../../platform/xss.js';
 import { Attachment } from '../../core/attachment.js';
 import { SendableMsg } from '../../api/email-provider/sendable-msg.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../core/const.js';
-import { KeyUtil, KeyInfoWithIdentity } from '../../core/crypto/key.js';
+import { KeyUtil, KeyInfoWithIdentity, Key } from '../../core/crypto/key.js';
 import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { BrowserMsg, Bm } from '../../browser/browser-msg.js';
@@ -19,6 +19,8 @@ import { PassphraseStore } from '../../platform/store/passphrase-store.js';
 import { KeyStore } from '../../platform/store/key-store.js';
 import { BackupUi } from './backup-ui.js';
 import { BackupUiModule } from './backup-ui-module.js';
+import { Lang } from '../../../../js/common/lang.js';
+import { MsgUtil } from '../../core/crypto/pgp/msg-util.js';
 
 const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
 export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
@@ -56,6 +58,22 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       subject: GMAIL_RECOVERY_EMAIL_SUBJECTS[0],
     };
     const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/html': emailMsg }, emailAttachments);
+    if (this.ui.emailProvider === 'gmail') {
+      return await this.ui.gmail.msgSend(msg);
+    } else {
+      throw Error(`Backup method not implemented for ${this.ui.emailProvider}`);
+    }
+  };
+
+  public doBackupOnDesignatedMailbox = async (msgEncryptionKey: Key, privateKeyAttachment: Attachment, destinationEmail: string, fingerprint: string) => {
+    const emailBody = Lang.setup.prvBackupToDesignatedMailboxEmailBody;
+    const headers = {
+      from: this.ui.acctEmail,
+      recipients: { to: [{ email: destinationEmail }] },
+      subject: Lang.setup.prvBackupToDesignatedMailboxEmailSubject(this.ui.acctEmail, fingerprint),
+    };
+    const encryptedMsg = await MsgUtil.encryptMessage({ pubkeys: [msgEncryptionKey], data: Buf.fromUtfStr(emailBody), armor: true });
+    const msg = await SendableMsg.createPlain(this.ui.acctEmail, headers, { 'text/plain': encryptedMsg.data.toString() }, [privateKeyAttachment]);
     if (this.ui.emailProvider === 'gmail') {
       return await this.ui.gmail.msgSend(msg);
     } else {

@@ -7,7 +7,11 @@ import { JQueryEl, LoaderContextInterface } from '../../common/loader-context-in
 import { XssSafeFactory } from '../../common/xss-safe-factory.js';
 
 export class GmailLoaderContext implements LoaderContextInterface {
-  public constructor(private readonly factory: XssSafeFactory, public msgEl: JQueryEl, private readonly attachmentsContainerInner: JQueryEl) {}
+  public constructor(
+    private readonly factory: XssSafeFactory,
+    public msgEl: JQueryEl,
+    private readonly attachmentsContainerInner: JQueryEl
+  ) {}
 
   /* eslint-disable @typescript-eslint/naming-convention */
   /**

@@ -64,7 +64,7 @@ export class SetupView extends View {
   public readonly setupWithEmailKeyManager: SetupWithEmailKeyManagerModule;
   public readonly backupUi: BackupUi;
 
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public storage!: AcctStoreDict;
   public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
@@ -159,7 +159,6 @@ export class SetupView extends View {
       $('.input_backup_inbox').prop('checked', false).prop('disabled', true);
       $('.remove_if_backup_not_allowed').remove();
     }
-    this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
   };
 
@@ -174,10 +173,7 @@ export class SetupView extends View {
     $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
     $('.action_show_help').on(
       'click',
-      this.setHandler(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')
-      )
+      this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/help.htm'))
     );
     $('#button-go-back')
       .off()
@@ -210,6 +206,14 @@ export class SetupView extends View {
     $('.input_submit_key').on(
       'click',
       this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
+    );
+    $('#step_0_backup_to_designated_mailbox .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
+      'click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
+    );
+    $('#step_0_backup_to_designated_mailbox .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on(
+      'click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
     );
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
       'click',

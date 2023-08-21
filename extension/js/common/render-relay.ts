@@ -6,7 +6,7 @@ import { RelayManagerInterface } from './relay-manager-interface.js';
 import { RenderInterface } from './render-interface.js';
 import { PrintMailInfo, RenderMessage } from './render-message.js';
 import { TransferableAttachment } from './core/attachment.js';
-import { PromiseCancellation, Str } from './core/common.js';
+import { PromiseCancellation, Str, Value } from './core/common.js';
 import { Catch } from './platform/catch.js';
 import { Xss } from './platform/xss.js';
 import { ProgressCb } from './api/shared/api.js';
@@ -17,7 +17,7 @@ export class RenderRelay implements RenderInterface {
   private retry?: () => void;
   private progressOperation?: {
     text: string;
-    operationId: string; // we can possibly receive a callback from an operation started by the replaced RenderRelay, so need to check operationId
+    operationId: string; // to ignore possible stray notifications, we generate an id for each operation
   };
   public constructor(
     private relayManager: RelayManagerInterface,
@@ -25,19 +25,9 @@ export class RenderRelay implements RenderInterface {
     private processor: (renderModule: RenderInterface) => Promise<void>
   ) {}
 
-  public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
-    if (typeof percent === 'undefined') {
-      if (total || expectedTransferSize) {
-        percent = Math.round((loaded / (total || expectedTransferSize)) * 100);
-      }
-    }
-    return percent;
-  };
-
   public startProgressRendering = (text: string) => {
-    this.relay({ renderText: text }); // we want to enqueue this initial message in case of hanging...
     const operationId = Str.sloppyRandom(10);
-    this.progressOperation = { text, operationId };
+    this.relay({ progressOperation: { operationId, text, init: true } });
     return (expectedTransferSize: number) => {
       // the `download` shortcut function can be used in some cases
       // if not lost by messaging, it will be given priority over message-based progress implementation
@@ -46,15 +36,16 @@ export class RenderRelay implements RenderInterface {
         operationId,
         expectedTransferSize,
         download, // shortcut
+        frameId: this.frameId,
       };
     };
   };
 
   public renderProgress = ({ operationId, percent, loaded, total, expectedTransferSize }: Bm.AjaxProgress) => {
     if (this.progressOperation && this.progressOperation.operationId === operationId) {
-      const perc = RenderRelay.getPercentage(percent, loaded, total, expectedTransferSize);
+      const perc = Value.getPercentage(percent, loaded, total, expectedTransferSize);
       if (typeof perc !== 'undefined') {
-        this.relay({ renderText: `${this.progressOperation.text} ${perc}%` }, { progressOperationRendering: true });
+        this.relay({ progressOperation: { ...this.progressOperation, perc } });
       }
       return true;
     }
@@ -140,13 +131,22 @@ export class RenderRelay implements RenderInterface {
     }
   };
 
-  private relay = (message: RenderMessage, options?: { progressOperationRendering: true }) => {
+  private relay = (message: RenderMessage) => {
     if (!this.cancellation.cancel) {
-      if (!options?.progressOperationRendering) {
+      let dontEnqueue: boolean | undefined;
+      if (message.progressOperation) {
+        if (message.progressOperation.init) {
+          this.progressOperation = { text: message.progressOperation.text, operationId: message.progressOperation.operationId };
+        } else if (message.progressOperation.operationId !== this.progressOperation?.operationId) {
+          return;
+        } else {
+          dontEnqueue = true;
+        }
+      } else {
         // "unsubscribe" from further progress callbacks
         this.progressOperation = undefined;
       }
-      this.relayManager.relay(this.frameId, message, options?.progressOperationRendering);
+      this.relayManager.relay(this.frameId, message, dontEnqueue);
     }
   };
 }

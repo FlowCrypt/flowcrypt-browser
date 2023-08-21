@@ -12,7 +12,7 @@ import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
-import { GoogleAuth } from '../authentication/google/google-auth.js';
+import { GoogleOAuth } from '../authentication/google/google-oauth.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -195,7 +195,7 @@ export class ExternalService extends Api {
       const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
         // force refresh token
-        const { email } = GoogleAuth.parseIdToken(idToken);
+        const { email } = GoogleOAuth.parseIdToken(idToken);
         if (email) {
           return await ExternalService.apiCall(
             this.url,
@@ -206,7 +206,7 @@ export class ExternalService extends Api {
             {
               ...headers,
               // eslint-disable-next-line @typescript-eslint/naming-convention
-              Authorization: await GoogleAuth.googleApiAuthHeader(email, true),
+              Authorization: await GoogleOAuth.googleApiAuthHeader(email, true),
             },
             'json',
             method
