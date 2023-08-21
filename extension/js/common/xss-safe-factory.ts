@@ -16,6 +16,7 @@ import { Ui } from './browser/ui.js';
 import { WebMailName, WebMailVersion } from './browser/env.js';
 import { Xss } from './platform/xss.js';
 import { Buf } from './core/buf.js';
+import { ReplyOption } from '../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -25,6 +26,7 @@ export type FactoryReplyParams = {
   draftId?: string;
   subject?: string;
   removeAfterClose?: boolean;
+  replyOption?: ReplyOption;
 };
 
 export class XssSafeFactory {
@@ -167,6 +169,7 @@ export class XssSafeFactory {
       replyMsgId: convoParams.replyMsgId,
       draftId: convoParams.draftId,
       removeAfterClose: convoParams.removeAfterClose,
+      replyOption: convoParams.replyOption,
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   };

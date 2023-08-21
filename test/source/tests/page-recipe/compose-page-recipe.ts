@@ -24,7 +24,7 @@ export class ComposePageRecipe extends PageRecipe {
     options: {
       appendUrl?: string;
       hasReplyPrompt?: boolean;
-      skipClickPropt?: boolean;
+      skipClickPrompt?: boolean;
       skipValidation?: boolean;
       initialScript?: EvaluateFunc<unknown[]>;
     } = {}
@@ -47,7 +47,7 @@ export class ComposePageRecipe extends PageRecipe {
         await composePage.waitAll(['@input-body', '@input-subject', '@action-send']);
         await composePage.waitAny(['@action-show-container-cc-bcc-buttons', '@container-cc-bcc-buttons']);
       } else {
-        if (options.skipClickPropt) {
+        if (options.skipClickPrompt) {
           await Util.sleep(2);
         } else {
           await composePage.waitAll(['@action-accept-reply-prompt']);
