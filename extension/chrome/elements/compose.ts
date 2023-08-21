@@ -195,12 +195,11 @@ export class ComposeView extends View {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
     if (this.replyMsgId) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
-    if (this.replyOption) {
+    if (this.replyOption && this.isReplyBox) {
       await this.renderModule.activateReplyOption(this.replyOption, true);
     }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);

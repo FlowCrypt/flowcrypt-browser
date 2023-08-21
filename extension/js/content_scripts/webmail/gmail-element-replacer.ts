@@ -40,7 +40,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
-  private replyOption: ReplyOption;
+  private replyOption: ReplyOption | undefined;
 
   private sel = {
     // gmail_variant=standard|new
@@ -611,6 +611,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               replyBox.hide();
             } else if (isReplyButtonView) {
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
+              this.replyOption = undefined;
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
               if (deleteReplyEl) {
@@ -677,6 +678,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     } else if (replyBoxTypeImgClass?.includes('mL')) {
       return 'a_reply';
     }
+
     return undefined;
   };
 
