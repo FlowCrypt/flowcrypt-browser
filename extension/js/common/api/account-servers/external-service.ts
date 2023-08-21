@@ -89,7 +89,7 @@ export class ExternalService extends Api {
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const auth = await this.request<AuthenticationConfiguration>('GET', `/api/v1/client-configuration/authentication?domain=${this.domain}`);
+    const auth = await this.request<AuthenticationConfiguration>('GET', `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`);
     await AcctStore.set(this.acctEmail, { authentication: auth });
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
