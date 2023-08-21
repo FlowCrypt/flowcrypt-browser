@@ -27,6 +27,7 @@ import { GmailLoaderContext } from './gmail-loader-context.js';
 import { JQueryEl } from '../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../common/core/mime.js';
 import { MsgBlock } from '../../common/core/msg-block.js';
+import { ReplyOption } from '../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
@@ -39,6 +40,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
+  private replyOption: ReplyOption | undefined;
 
   private sel = {
     // gmail_variant=standard|new
@@ -54,6 +56,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachmentsContainerInner: 'div.aQH',
     translatePrompt: '.adI',
     standardComposeWin: '.aaZ:visible',
+    replyOptionImg: 'div.J-JN-M-I-Jm',
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
@@ -85,7 +88,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   public setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
-      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
+      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getConvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
       await this.replaceStandardReplyBox(undefined, true);
     }
@@ -525,7 +528,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   };
 
-  private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
+  private getConvoRootEl = (anyInnerElement: HTMLElement) => {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   };
 
@@ -546,7 +549,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
+      const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
       if (msgId) {
         replyParams.replyMsgId = msgId;
@@ -588,6 +591,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             this.removeNextReplyBoxBorders = false;
           }
           if (!midConvoDraft) {
+            const replyOption = this.parseReplyOption(replyBox);
+            if (replyOption) {
+              this.replyOption = replyOption;
+            }
+            replyParams.replyOption = this.replyOption;
             // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
@@ -603,6 +611,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               replyBox.hide();
             } else if (isReplyButtonView) {
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
+              this.replyOption = undefined;
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
               if (deleteReplyEl) {
@@ -636,11 +645,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private showSwitchToEncryptedReplyWarningIfNeeded = (reployBox: JQueryEl) => {
-    const showSwitchToEncryptedReplyWarning = reployBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+  private showSwitchToEncryptedReplyWarningIfNeeded = (replyBox: JQueryEl) => {
+    const showSwitchToEncryptedReplyWarning = replyBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
+
     if (showSwitchToEncryptedReplyWarning) {
-      const notification = $('<div class="error_notification">The last message was encrypted, but you are composing a reply without encryption. </div>');
-      const switchToEncryptedReply = $('<a href id="switch_to_encrypted_reply">Switch to encrypted reply</a>');
+      const isForward = this.parseReplyOption(replyBox) === 'a_forward';
+      const notification = $(
+        `<div class="error_notification">The last message was encrypted, but you are composing a ${isForward ? 'message' : 'reply'} without encryption. </div>`
+      );
+      const switchToEncryptedReply = $(`<a href id="switch_to_encrypted_reply">Switch to encrypted ${isForward ? 'compose' : 'reply'}</a>`);
       switchToEncryptedReply.on(
         'click',
         Ui.event.handle((el, ev: JQuery.Event) => {
@@ -652,8 +665,21 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         })
       );
       notification.append(switchToEncryptedReply); // xss-direct
-      reployBox.prepend(notification); // xss-direct
+      replyBox.prepend(notification); // xss-direct
     }
+  };
+
+  private parseReplyOption = (replyBox: JQueryEl) => {
+    const replyBoxTypeImgClass = replyBox.find(this.sel.replyOptionImg).find('img').attr('class');
+    if (replyBoxTypeImgClass?.includes('mK')) {
+      return 'a_reply_all';
+    } else if (replyBoxTypeImgClass?.includes('mI')) {
+      return 'a_forward';
+    } else if (replyBoxTypeImgClass?.includes('mL')) {
+      return 'a_reply';
+    }
+
+    return undefined;
   };
 
   private evaluateStandardComposeRecipients = async () => {
