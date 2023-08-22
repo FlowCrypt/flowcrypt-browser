@@ -6,11 +6,11 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export type ReplyOptions = 'a_reply' | 'a_reply_all' | 'a_forward';
+export type ReplyOption = 'a_reply' | 'a_reply_all' | 'a_forward';
 
 export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
   /* eslint-disable @typescript-eslint/naming-convention */
-  private popoverItems: Record<ReplyOptions, { text: string; iconPath: string }> = {
+  private popoverItems: Record<ReplyOption, { text: string; iconPath: string }> = {
     a_reply: { text: 'Reply', iconPath: '/img/reply-icon.png' },
     a_reply_all: { text: 'Reply All', iconPath: '/img/reply-all-icon.png' },
     a_forward: { text: 'Forward', iconPath: '/img/forward-icon.png' },
@@ -29,7 +29,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
       $('.reply-container').hide();
     }
     for (const key of Object.keys(this.popoverItems)) {
-      const option = key as ReplyOptions;
+      const option = key as ReplyOption;
       const item = this.popoverItems[option];
       const elem = $(`
         <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(key)}">
@@ -44,11 +44,11 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  public changeOptionImage = (option: ReplyOptions) => {
+  public changeOptionImage = (option: ReplyOption) => {
     $('.reply-options-icon').attr('src', this.popoverItems[option].iconPath);
   };
 
-  private didOptionClick = async (option: ReplyOptions) => {
+  private didOptionClick = async (option: ReplyOption) => {
     await this.view.renderModule.changeReplyOption(option);
     this.changeOptionImage(option);
   };
