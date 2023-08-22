@@ -46,6 +46,15 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       }
       throw new HttpClientErr(`Unexpected FES domain "${parseAuthority(req)}" and url "${req.url}"`);
     },
+    '/api/v1/client-configuration/authentication': async ({}, req) => {
+      if (req.method !== 'GET') {
+        throw new HttpClientErr('Unsupported method');
+      }
+      if (config?.authenticationConfiguration) {
+        return config.authenticationConfiguration;
+      }
+      return {};
+    },
     '/api/v1/message/new-reply-token': async ({}, req) => {
       if (parseAuthority(req) === standardFesUrl(parsePort(req)) && req.method === 'POST') {
         authenticate(req, 'oidc');
