@@ -2525,8 +2525,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
         const auth = (await settingsPage.getFromLocalStorage([key]))[key];
         const authenticationConfiguration = auth as FesAuthenticationConfiguration;
-        console.log(authenticationConfiguration);
-        // expect(oauth).
+        expect(authenticationConfiguration).to.be.empty;
       })
     );
 
