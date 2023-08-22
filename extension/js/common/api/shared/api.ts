@@ -43,7 +43,7 @@ type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T ext
 export const supportsRequestStreams = (() => {
   let duplexAccessed = false;
 
-  const hasContentType = new Request('', {
+  const hasContentType = new Request('https://localhost', {
     body: new ReadableStream(),
     method: 'POST',
     get duplex() {
