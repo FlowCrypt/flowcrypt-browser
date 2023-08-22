@@ -426,7 +426,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    // eslint-disable-next-line no-only-tests/no-only-tests
     test(
       'mail.google.com - plain reply with dot menu',
       testWithBrowser(async (t, browser) => {

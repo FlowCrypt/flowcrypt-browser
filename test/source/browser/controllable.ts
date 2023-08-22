@@ -693,7 +693,6 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
-  // eslint-disable-next-line no-empty-function
   public constructor(
     public type: string,
     public text: string
