@@ -697,6 +697,7 @@
                 }
 
             } else {
+                // copied from https://github.com/emailjs/emailjs-mime-codec/blob/master/dist/mimecodec.js to support attachment names which contain emojis
                 // process text with unicode or special chars
                 var uriEncoded = encodeURIComponent('utf-8\'\'' + encodedStr);
                 var i = 0;
