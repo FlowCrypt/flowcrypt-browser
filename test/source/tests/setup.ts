@@ -2483,16 +2483,17 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - check custom authentication config from the local store (customer url fes)',
       testWithBrowser(async (t, browser) => {
+        const oauthConfig = {
+          clientId: 'your-client-id',
+          clientSecret: 'your-client-secret',
+          redirectUrl: 'https://example.com/redirect',
+          authCodeUrl: 'https://example.com/auth',
+          tokensUrl: 'https://example.com/tokens',
+        };
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           fes: {
             authenticationConfiguration: {
-              oauth: {
-                redirectUrl: 'https://example.com/redirect',
-                clientId: 'your-client-id',
-                clientSecret: 'your-client-secret',
-                authCodeUrl: 'https://example.com/auth',
-                tokensUrl: 'https://example.com/tokens',
-              },
+              oauth: oauthConfig,
             },
           },
         });
@@ -2504,11 +2505,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
         const auth = (await settingsPage.getFromLocalStorage([key]))[key];
         const { oauth } = auth as FesAuthenticationConfiguration;
-        expect(oauth.clientId).to.be.not.empty;
-        expect(oauth.clientSecret).to.be.not.empty;
-        expect(oauth.redirectUrl).to.be.not.empty;
-        expect(oauth.authCodeUrl).to.be.not.empty;
-        expect(oauth.tokensUrl).to.be.not.empty;
+        expect(oauth).to.equal(oauthConfig);
       })
     );
   }
