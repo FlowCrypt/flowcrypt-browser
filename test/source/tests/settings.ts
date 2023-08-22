@@ -970,7 +970,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         // test the pubkey in the storage
         const oldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(oldContact.sortedPubkeys.length).to.equal(1);
@@ -992,7 +992,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // test the pubkey in the storage
         const expectedOldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
@@ -1008,7 +1008,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // test the pubkey in the storage
         const newContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(newContact.sortedPubkeys.length).to.equal(1);

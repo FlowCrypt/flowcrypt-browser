@@ -385,9 +385,18 @@ export class BrowserMsg {
   };
 
   private static sendToChildren = (encryptedMsg: SymEncryptedMessage) => {
-    const childFrames = $(`iframe`).get() as HTMLIFrameElement[];
-    for (const childFrame of childFrames) {
-      childFrame.contentWindow?.postMessage(encryptedMsg, Env.getExtensionOrigin());
+    const extensionOrigin = Env.getExtensionOrigin();
+    const childFrames = Array.from(document.querySelectorAll('iframe'));
+    const childFramesWithExtensionOrigin = childFrames.filter(iframe => {
+      try {
+        const iframeOrigin = new URL(iframe.src).origin;
+        return iframeOrigin === extensionOrigin;
+      } catch {
+        return false;
+      }
+    });
+    for (const childFrame of childFramesWithExtensionOrigin) {
+      childFrame.contentWindow?.postMessage(encryptedMsg, extensionOrigin);
     }
   };
 
