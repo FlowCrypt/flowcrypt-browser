@@ -30,7 +30,7 @@ import {
 import { testSksKey } from '../mock/sks/sks-constants';
 import { flowcryptCompatibilityAliasList, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
-import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
+import { FesAuthenticationConfiguration, FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from '../util/parse';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
@@ -2479,9 +2479,53 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         );
       })
     );
+
+    test(
+      'setup - check custom authentication config from the local store (customer url fes)',
+      testWithBrowser(async (t, browser) => {
+        const oauthConfig = {
+          clientId: 'your-client-id',
+          clientSecret: 'your-client-secret',
+          redirectUrl: 'https://example.com/redirect',
+          authCodeUrl: 'https://example.com/auth',
+          tokensUrl: 'https://example.com/tokens',
+        };
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          fes: {
+            authenticationConfiguration: {
+              oauth: oauthConfig,
+            },
+          },
+        });
+        const acctEmail = 'user@authentication-config-test.flowcrypt.test';
+        await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+        await debugFrame.waitForContent('@container-pre', 'authentication');
+        const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
+        const auth = (await settingsPage.getFromLocalStorage([key]))[key];
+        const { oauth } = auth as FesAuthenticationConfiguration;
+        expect(oauth).to.deep.equal(oauthConfig);
+      })
+    );
   }
 
   if (testVariant === 'CONSUMER-MOCK') {
+    test(
+      'setup - check custom authentication config from the local store (shared tenant fes)',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
+        await debugFrame.waitForContent('@container-pre', 'authentication');
+        const key = `cryptup_${emailKeyIndex(acctEmail, 'authentication')}`;
+        const auth = (await settingsPage.getFromLocalStorage([key]))[key];
+        const authenticationConfiguration = auth as FesAuthenticationConfiguration;
+        expect(authenticationConfiguration).to.be.empty;
+      })
+    );
+
     test(
       'setup - imported key with multiple alias should show checkbox per alias',
       testWithBrowser(async (t, browser) => {

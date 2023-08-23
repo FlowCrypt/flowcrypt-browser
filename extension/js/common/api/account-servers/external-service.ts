@@ -13,6 +13,7 @@ import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { GoogleOAuth } from '../authentication/google/google-oauth.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -88,6 +89,8 @@ export class ExternalService extends Api {
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
+    const auth = await this.request<AuthenticationConfiguration>('GET', `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`);
+    await AcctStore.set(this.acctEmail, { authentication: auth });
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
