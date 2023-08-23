@@ -707,6 +707,27 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - Errors encountered during the update of a private key should be handled properly',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyPage = await settingsPage.getFrame(['my_key.htm']);
+        await myKeyPage.waitAndClick('@action-update-prv');
+        await myKeyPage.waitAndClick('@source-paste');
+        const invalidKeyFormat = 'non-valid-private-key-format';
+        const invalidPrivateKeyBlock = '-----BEGIN PGP PRIVATE KEY BLOCK-----\r\n\r\ninvalid-key\r\n-----END PGP PRIVATE KEY BLOCK-----';
+        await myKeyPage.waitAndType('@input-prv-key', invalidKeyFormat);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('warning', 'confirm', 'This does not appear to be a validly formatted key.');
+        await myKeyPage.waitAndType('@input-prv-key', invalidPrivateKeyBlock);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
+      })
+    );
+    test(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
