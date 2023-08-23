@@ -697,27 +697,68 @@
                 }
 
             } else {
-                // copied from https://github.com/emailjs/emailjs-mime-codec/blob/master/dist/mimecodec.js to support attachment names which contain emojis
+
+                // first line includes the charset and language info and needs to be encoded
+                // even if it does not contain any unicode characters
+                line = 'utf-8\'\'';
+                isEncoded = true;
+                startPos = 0;
                 // process text with unicode or special chars
-                var uriEncoded = encodeURIComponent('utf-8\'\'' + encodedStr);
-                var i = 0;
-                while (true) {
-                    var len = maxLength;
-                    // must not split hex encoded byte between lines
-                    if (uriEncoded[i + maxLength - 1] === '%') {
-                        len -= 1;
-                    } else if (uriEncoded[i + maxLength - 2] === '%') {
-                        len -= 2;
+                for (var i = 0, len = encodedStr.length; i < len; i++) {
+
+                    chr = encodedStr[i];
+
+                    if (isEncoded) {
+                        chr = continuationEncodeChr(chr);
+                    } else {
+                        // try to urlencode current char
+                        chr = chr === ' ' ? chr : continuationEncodeChr(chr);
+                        // By default it is not required to encode a line, the need
+                        // only appears when the string contains unicode or special chars
+                        // in this case we start processing the line over and encode all chars
+                        if (chr !== encodedStr[i]) {
+                            // Check if it is even possible to add the encoded char to the line
+                            // If not, there is no reason to use this line, just push it to the list
+                            // and start a new line with the char that needs encoding
+                            if ((continuationEncodeLine(line) + chr).length >= maxLength) {
+                                list.push({
+                                    line: line,
+                                    encoded: isEncoded
+                                });
+                                line = '';
+                                startPos = i - 1;
+                            } else {
+                                isEncoded = true;
+                                i = startPos;
+                                line = '';
+                                continue;
+                            }
+                        }
                     }
-                    line = uriEncoded.substr(i, len);
-                    if (!line) {
-                        break;
+
+                    // if the line is already too long, push it to the list and start a new one
+                    if ((line + chr).length >= maxLength) {
+                        list.push({
+                            line: line,
+                            encoded: isEncoded
+                        });
+                        line = chr = encodedStr[i] === ' ' ? ' ' : continuationEncodeChr(encodedStr[i]);
+                        if (chr === encodedStr[i]) {
+                            isEncoded = false;
+                            startPos = i - 1;
+                        } else {
+                            isEncoded = true;
+                        }
+                    } else {
+                        line += chr;
                     }
+                }
+
+                if (line) {
                     list.push({
                         line: line,
-                        encoded: true
+                        encoded: isEncoded
                     });
-                    i += line.length;
                 }
             }
 
