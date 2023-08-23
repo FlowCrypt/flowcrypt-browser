@@ -103,8 +103,6 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    export type Ajax = any; // not included in Any below
 
     export type Any =
       | GetActiveTabInfo
