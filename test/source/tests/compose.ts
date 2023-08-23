@@ -2294,7 +2294,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
-        await fileInput!.uploadFile('test/samples/ attac👍hment! 🔸.txt');
+        await fileInput!.uploadFile('test/samples/attac👍hment!🔸.txt');
         await ComposePageRecipe.sendAndClose(composePage);
       })
     );
