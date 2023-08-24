@@ -542,7 +542,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
-        await gmailPage.waitAll(['.aZi'], { visible: false });
+        await gmailPage.waitAll(['.aZo'], { visible: false });
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls.length).to.equal(2);
         await gmailPage.close();
