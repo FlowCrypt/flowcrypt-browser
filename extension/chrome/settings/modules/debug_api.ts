@@ -35,6 +35,7 @@ View.run(
         Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(this.which)} (not implemented)`);
       } else if (this.which === 'local_store') {
         const storage = await AcctStore.get(this.acctEmail, [
+          'authentication',
           'notification_setup_needed_dismissed',
           'email_provider',
           'hide_message_password',
