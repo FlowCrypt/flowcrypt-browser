@@ -533,6 +533,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
+    // eslint-disable-next-line no-only-tests/no-only-tests
+    test.only(
+      `mail.google.com - attachments which contain emoji in filename are rendered correctly`,
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
+        await Util.sleep(5);
+        await gmailPage.waitAll('iframe');
+        await gmailPage.waitAll(['.aZi'], { visible: false });
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
+        expect(urls.length).to.equal(2);
+        await gmailPage.close();
+      })
+    );
+
     test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
