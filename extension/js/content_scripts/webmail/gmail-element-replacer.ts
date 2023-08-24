@@ -504,11 +504,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       .filter('span.aZo:visible, span.a5r:visible')
       .find('span.aV3')
       .filter(function () {
-        // replace emoji images with text emojis
-        const emojiRegex = /<img data-emoji="([^\"]+)"[^>]*>/g;
-        const name = $(this)
-          .html()
-          .replace(emojiRegex, (_, emoji) => emoji as string);
+        const name = $(this).text().trim();
+        // // replace emoji images with text emojis
+        // const emojiRegex = /<img data-emoji="([^\"]+)"[^>]*>/g;
+        // const name = $(this)
+        //   .html()
+        //   .replace(emojiRegex, (_, emoji) => emoji as string);
         return regExp.test(name);
       })
       .closest('span.aZo, span.a5r');
