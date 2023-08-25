@@ -533,8 +533,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    // eslint-disable-next-line no-only-tests/no-only-tests
-    test.only(
+    test(
       `mail.google.com - attachments which contain emoji in filename are rendered correctly`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');

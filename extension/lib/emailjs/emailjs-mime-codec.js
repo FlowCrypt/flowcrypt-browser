@@ -703,23 +703,24 @@
                 isEncoded = true;
                 startPos = 0;
 
+                // fix for attachments with emoji in filenames
                 if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+                    // Intl.Segmenter() currently not available on Firefox
+                    // https://caniuse.com/mdn-javascript_builtins_intl_segmenter
                     encodedStr = [...new Intl.Segmenter().segment(encodedStr)].map(x => x.segment)
                 } else {
                     // regex from https://stackoverflow.com/a/69661174/3091318
                     encodedStr = encodedStr.replace(/(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu, '')
                 }
+
                 // process text with unicode or special chars
                 for (var i = 0, len = encodedStr.length; i < len; i++) {
 
                     chr = encodedStr[i];
 
-                    console.log('CHR ' + chr);
-
                     if (isEncoded) {
-                        chr = continuationEncodeChr(chr)
+                        chr = continuationEncodeChr(chr);
                     } else {
-                        console.log('not encoded');
                         // try to urlencode current char
                         chr = chr === ' ' ? chr : continuationEncodeChr(chr);
                         // By default it is not required to encode a line, the need
