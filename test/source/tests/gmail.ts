@@ -260,7 +260,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.serial(
+    // eslint-disable-next-line no-only-tests/no-only-tests
+    test.only(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
         async (t, browser) => {
