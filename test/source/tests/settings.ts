@@ -707,11 +707,25 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - Errors encountered during the update of a private key should be handled properly',
+      'settings - Errors encountered during the addition/update of a private key should be handled properly',
       testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
         const acct = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const keyCanBeFixedTestKey = testConstants.keyCanBeFixedTestKey;
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          fixKey: true,
+          key: {
+            title: '',
+            armored: keyCanBeFixedTestKey,
+            passphrase: 'hard to guess passphrase',
+            longid: '9866DB9063926D73',
+          },
+        });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAndClick('@action-open-pubkey-page');
         const myKeyPage = await settingsPage.getFrame(['my_key.htm']);
@@ -725,6 +739,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.waitAndType('@input-prv-key', invalidPrivateKeyBlock);
         await myKeyPage.waitAndClick('@action-update-key');
         await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
+        await myKeyPage.waitAndType('@input-prv-key', keyCanBeFixedTestKey);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await browser.newExtensionPage(t, 'chrome/settings/setup.htm');
+        await settingsPage.close();
       })
     );
     test(
