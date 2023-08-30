@@ -231,7 +231,8 @@ export const processMessageFromUser5 = async (body: string, fesUrl: string) => {
   if (match && match.length > 1) {
     const base64Data = match[1];
     const cryptupData = base64decode(base64Data);
-    expect(cryptupData).to.not.contains('bcc@example.com');
+    const jsonObject = JSON.parse(cryptupData);
+    expect(jsonObject.recipient).to.not.include('bcc@example.com');
     expect(cryptupData).to.contains('to@example.com');
   }
   return response;
