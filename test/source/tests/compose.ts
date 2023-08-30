@@ -3166,11 +3166,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         const subject = 'The PWD encrypted message does not include the BCC recipient';
+        const expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await ComposePageRecipe.closed(composePage);
+        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages + 1);
       })
     );
 
