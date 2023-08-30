@@ -473,6 +473,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SmimeSignedMessageStrategy();
     } else if (GMAIL_RECOVERY_EMAIL_SUBJECTS.includes(subject)) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('The PWD encrypted message does not include the BCC recipient')) {
+      this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('FlowCrypt OpenPGP Private Key backup')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {

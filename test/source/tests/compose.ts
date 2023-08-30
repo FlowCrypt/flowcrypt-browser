@@ -40,6 +40,7 @@ import {
   processMessageFromUser2,
   processMessageFromUser3,
   processMessageFromUser4,
+  processMessageFromUser5,
 } from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
 import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
@@ -3137,6 +3138,39 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages + 1);
         // this test is using PwdEncryptedMessageWithFesReplyGatewayErrorTestStrategy to check sent result based on subject "PWD encrypted message with FES web portal - a send fails with gateway update error"
         // also see '/api/v1/message' in customer-url-fes-endpoints.ts mock
+      })
+    );
+
+    test(
+      'user5@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - recipient in bcc should not be included in cryptup-data recipients',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {
+              'flowcrypt.compatibility@gmail.com': {
+                pubkey: somePubkey,
+              },
+            },
+          },
+          fes: {
+            messagePostValidator: processMessageFromUser5,
+            clientConfiguration: standardSubDomainFesClientConfiguration,
+          },
+        });
+        const acct = `user5@standardsubdomainfes.localhost:${t.context.urls?.port}`; // added port to trick extension into calling the mock
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(
+          settingsPage,
+          'flowcrypt.test.key.used.pgp',
+          { submitPubkey: false, usedPgpBefore: false },
+          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+        );
+        const subject = 'The PWD encrypted message does not include the BCC recipient';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', bcc: 'bcc@example.com' }, subject);
+        await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await ComposePageRecipe.closed(composePage);
       })
     );
 

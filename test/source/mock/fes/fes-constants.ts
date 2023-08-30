@@ -3,6 +3,7 @@ import { Buf } from '../../core/buf';
 import { DecryptSuccess, MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { FesClientConfiguration, FesConfig } from './shared-tenant-fes-endpoints';
 import { expect } from 'chai';
+import { base64decode } from '../../platform/util';
 
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 export const flowcryptTestClientConfiguration: FesConfig = {
@@ -205,6 +206,33 @@ export const processMessageFromUser4 = async (body: string, fesUrl: string) => {
       url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID',
     };
+  }
+  return response;
+};
+
+export const processMessageFromUser5 = async (body: string, fesUrl: string) => {
+  const response = {
+    // this url is required for pubkey encrypted message
+    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-ID`,
+    externalId: 'FES-MOCK-EXTERNAL-ID',
+    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+  };
+  const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
+  const decrypted = await MsgUtil.decryptMessage({
+    kisWithPp: [],
+    msgPwd: 'gO0d-pwd',
+    encryptedData,
+    verificationPubs: [],
+  });
+  const decryptedContent = decrypted.content!.toUtfStr();
+  expect(decrypted.success).to.equal(true);
+  const regex = /cryptup-data="([^"]*)"/;
+  const match = decryptedContent.match(regex);
+  if (match && match.length > 1) {
+    const base64Data = match[1];
+    const cryptupData = base64decode(base64Data);
+    expect(cryptupData).to.not.contains('bcc@example.com');
+    expect(cryptupData).to.contains('to@example.com');
   }
   return response;
 };
