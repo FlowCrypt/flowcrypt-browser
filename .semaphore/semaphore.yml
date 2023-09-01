@@ -131,15 +131,6 @@ blocks:
           commands:
             - npm run-script test_local_unit_enterprise
             - '[[ -f report.xml ]] && test-results publish report.xml'
-      epilogue:
-        on_fail:
-          commands:
-            - |
-              shopt -s nullglob
-              for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
-                echo "Uploading debug file $file as job artifact..."
-                artifact push job "$file"
-              done
 
 after_pipeline:
   task:
