@@ -545,7 +545,7 @@
      * @return {String} joined header value
      */
     // copied from https://github.com/nodemailer/libmime/
-    MimeNode.prototype.buildHeaderValue = function(structured) {
+    MimeNode.prototype._buildHeaderValue = function(structured) {
         let paramsArray = [];
 
         Object.keys(structured.params || {}).forEach(param => {
@@ -725,7 +725,26 @@
         }
 
         // ensure chars that are not handled by encodeURICompent are converted as well
-        return str.replace(/[\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]/g, chr => this.encodeURICharComponent(chr));
+        return str.replace(/[\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]/g, chr => this._encodeURICharComponent(chr));
+    }
+
+    MimeNode.prototype._encodeURICharComponent = function(chr) {
+        let res = '';
+        let ord = chr.charCodeAt(0).toString(16).toUpperCase();
+
+        if (ord.length % 2) {
+            ord = '0' + ord;
+        }
+
+        if (ord.length > 2) {
+            for (let i = 0, len = ord.length / 2; i < len; i++) {
+                res += '%' + ord.substr(i, 2);
+            }
+        } else {
+            res += '%' + ord;
+        }
+
+        return res;
     }
 
     /**
