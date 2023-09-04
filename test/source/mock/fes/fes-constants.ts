@@ -146,8 +146,7 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   const regex = /cryptup-data="([^"]*)"/;
   const match = decryptedMimeMsg.match(regex);
   if (match && match.length > 1) {
-    const base64Data = match[1];
-    const cryptupData = base64decode(base64Data);
+    const cryptupData = base64decode(match[1]);
     const jsonObject = JSON.parse(cryptupData);
     expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
     expect(cryptupData).to.contains('to@example.com');
