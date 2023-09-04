@@ -142,7 +142,16 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  const decryptedMimeMsg = decrypted.content?.toUtfStr();
+  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  const regex = /cryptup-data="([^"]*)"/;
+  const match = decryptedMimeMsg.match(regex);
+  if (match && match.length > 1) {
+    const base64Data = match[1];
+    const cryptupData = base64decode(base64Data);
+    const jsonObject = JSON.parse(cryptupData);
+    expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
+    expect(cryptupData).to.contains('to@example.com');
+  }
   // small.txt
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'
@@ -206,34 +215,6 @@ export const processMessageFromUser4 = async (body: string, fesUrl: string) => {
       url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID`,
       externalId: 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID',
     };
-  }
-  return response;
-};
-
-export const processMessageFromUser5 = async (body: string, fesUrl: string) => {
-  const response = {
-    // this url is required for pubkey encrypted message
-    url: `http://${fesUrl}/message/FES-MOCK-MESSAGE-ID`,
-    externalId: 'FES-MOCK-EXTERNAL-ID',
-    emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
-  };
-  const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
-  const decrypted = await MsgUtil.decryptMessage({
-    kisWithPp: [],
-    msgPwd: 'gO0d-pwd',
-    encryptedData,
-    verificationPubs: [],
-  });
-  const decryptedContent = decrypted.content!.toUtfStr();
-  expect(decrypted.success).to.equal(true);
-  const regex = /cryptup-data="([^"]*)"/;
-  const match = decryptedContent.match(regex);
-  if (match && match.length > 1) {
-    const base64Data = match[1];
-    const cryptupData = base64decode(base64Data);
-    const jsonObject = JSON.parse(cryptupData);
-    expect(jsonObject.recipient).to.not.include('bcc@example.com');
-    expect(cryptupData).to.contains('to@example.com');
   }
   return response;
 };

@@ -252,12 +252,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     newMsgData: NewMsgData
   ): Promise<{ bodyWithReplyToken: SendableMsgBody; replyToken: string }> => {
-    const recipients = getUniqueRecipientEmails(newMsgData.recipients);
-    for (const validRecipientElement of this.view.recipientsModule.getValidRecipients()) {
-      if (validRecipientElement.sendingType === 'bcc') {
-        recipients.splice(1, recipients.indexOf(validRecipientElement.email));
-      }
-    }
+    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
+    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
     try {
       const response = await this.view.acctServer.messageToken();
       const replyInfoRaw: ReplyInfoRaw = {
