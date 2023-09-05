@@ -143,10 +143,12 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   });
   expect(decrypted.success).to.equal(true);
   const decryptedMimeMsg = decrypted.content!.toUtfStr();
-  const regex = /cryptup-data="([^"]*)"/;
-  const match = decryptedMimeMsg.match(regex);
-  if (match && match.length > 1) {
-    const cryptupData = base64decode(match[1]);
+  const cryptupDataRegex = /cryptup-data="([^"]*)"/;
+  const cryptupDataMatch = decryptedMimeMsg.match(cryptupDataRegex);
+  expect(cryptupDataMatch).to.not.be.undefined;
+  expect(cryptupDataMatch && cryptupDataMatch.length).to.be.greaterThan(1);
+  if (cryptupDataMatch) {
+    const cryptupData = base64decode(cryptupDataMatch[1]);
     const jsonObject = JSON.parse(cryptupData);
     expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
     expect(cryptupData).to.contains('to@example.com');
