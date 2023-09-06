@@ -66,7 +66,23 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - backup message rendering`,
+      `decrypt - old backup message rendering`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '15f84afa553d8a83';
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      `decrypt - new backup message rendering`,
       testWithBrowser(async (t, browser) => {
         const threadId = '188923a75165a3c8';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');

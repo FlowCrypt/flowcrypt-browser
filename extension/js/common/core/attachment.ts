@@ -199,7 +199,7 @@ export class Attachment {
       // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
       // todo: after #4906 is done we should "decrypt" the encryptedFile here to see if it's a binary 'publicKey' (as in message 1869220e0c8f16dd)
-    } else if (this.name.match(/flowcrypt-backup-[a-z0-9]+-[A-F0-9]{40}\.(key|asc)$/g)) {
+    } else if (this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+|[a-z0-9]+-[A-F0-9]{40})\.(key|asc)$/g)) {
       return 'privateKey';
     } else if (this.isPublicKey()) {
       return 'publicKey';
