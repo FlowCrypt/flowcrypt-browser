@@ -142,9 +142,9 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  const decryptedMimeMsg = decrypted.content!.toUtfStr();
+  const decryptedMimeMsg = decrypted.content?.toUtfStr();
   const cryptupDataRegex = /cryptup-data="([^"]*)"/;
-  const cryptupDataMatch = decryptedMimeMsg.match(cryptupDataRegex);
+  const cryptupDataMatch = decryptedMimeMsg?.match(cryptupDataRegex);
   expect(cryptupDataMatch).to.not.be.undefined;
   expect(cryptupDataMatch && cryptupDataMatch.length).to.be.greaterThan(1);
   if (cryptupDataMatch) {
