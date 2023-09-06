@@ -146,13 +146,11 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   const cryptupDataRegex = /cryptup-data="([^"]*)"/;
   const cryptupDataMatch = decryptedMimeMsg?.match(cryptupDataRegex);
   expect(cryptupDataMatch).to.not.be.undefined;
-  expect(cryptupDataMatch && cryptupDataMatch.length).to.be.greaterThan(1);
-  if (cryptupDataMatch) {
-    const cryptupData = base64decode(cryptupDataMatch[1]);
-    const jsonObject = JSON.parse(cryptupData);
-    expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
-    expect(cryptupData).to.contains('to@example.com');
-  }
+  expect(cryptupDataMatch?.length).to.be.greaterThan(1);
+  const cryptupData = base64decode(cryptupDataMatch![1]);
+  const jsonObject = JSON.parse(cryptupData);
+  expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
+  expect(cryptupData).to.contains('to@example.com');
   // small.txt
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'
