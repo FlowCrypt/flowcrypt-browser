@@ -707,19 +707,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - the backup hint for FlowCrypt should be triggered when an attachment is a FlowCrypt backup file.',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const inboxPage = await browser.newExtensionPage(
-          t,
-          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=188923a75165a3c8`
-        );
-        await inboxPage.waitAll('@container-attachments');
-        const backupPage = await inboxPage.getFrame(['backup.htm']);
-        await backupPage.isElementPresent('@container-import-backup-prompt-text');
-      })
-    );
-    test(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');

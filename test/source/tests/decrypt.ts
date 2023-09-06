@@ -68,7 +68,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - backup message rendering`,
       testWithBrowser(async (t, browser) => {
-        const threadId = '15f84afa553d8a83';
+        const threadId = '188923a75165a3c8';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
