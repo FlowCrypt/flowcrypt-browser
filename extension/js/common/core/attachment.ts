@@ -145,7 +145,6 @@ export class Attachment {
 
   public isPrivateKey = (): boolean => {
     return (
-      this.type === 'application/pgp-keys' ||
       Boolean(this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+(?:\-[A-F0-9]{40})?)\.(key|asc)$/g)) ||
       (/\.(asc|key)$/.test(this.name) &&
         this.hasData() &&
