@@ -23,38 +23,6 @@
 BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
 (async () => {
   const expectedEncodedFilenames = [
-    // 1..31
-    `filename*0*=utf-8''%01`,
-    `filename*0*=utf-8''%02`,
-    `filename*0*=utf-8''%03`,
-    `filename*0*=utf-8''%04`,
-    `filename*0*=utf-8''%05`,
-    `filename*0*=utf-8''%06`,
-    `filename*0*=utf-8''%07`,
-    `filename*0*=utf-8''%08`,
-    `filename="\\t"`,
-    `filename="\\n"`,
-    `filename*0*=utf-8''%0B`,
-    `filename*0*=utf-8''%0C`,
-    `filename="\\r"`,
-    `filename*0*=utf-8''%0E`,
-    `filename*0*=utf-8''%0F`,
-    `filename*0*=utf-8''%10`,
-    `filename*0*=utf-8''%11`,
-    `filename*0*=utf-8''%12`,
-    `filename*0*=utf-8''%13`,
-    `filename*0*=utf-8''%14`,
-    `filename*0*=utf-8''%15`,
-    `filename*0*=utf-8''%16`,
-    `filename*0*=utf-8''%17`,
-    `filename*0*=utf-8''%18`,
-    `filename*0*=utf-8''%19`,
-    `filename*0*=utf-8''%1A`,
-    `filename*0*=utf-8''%1B`,
-    `filename*0*=utf-8''%1C`,
-    `filename*0*=utf-8''%1D`,
-    `filename*0*=utf-8''%1E`,
-    `filename*0*=utf-8''%1F`,
     // 33..127
     `filename=!`,
     `filename="\\""`,
@@ -150,7 +118,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     `filename=|`,
     `filename=}`,
     `filename=~`,
-    `filename=`,
+    `filename=${String.fromCharCode(0x7f)}`,
     // 128..255
     `filename*0*=utf-8''%C2%80`,
     `filename*0*=utf-8''%C2%81`,
@@ -290,10 +258,9 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
       ' filename*3*=%D0%A6%D0%A7%D0%A8%D0%A9%D0%AA%D0%AB%D0%AC%D0%AD;\r\n' +
       ' filename*4*=%D0%AE%D0%AF',
   ];
-  // 1..31
-  var filenames = [...Array(31).keys()].map(i => String.fromCharCode(i + 1));
+
   // 33..255
-  filenames = filenames.concat([...Array(223).keys()].map(i => String.fromCharCode(i + 33)));
+  var filenames = [...Array(223).keys()].map(i => String.fromCharCode(i + 33));
   // what's?_up.txt
   filenames.push(`what's?_up.txt`);
   // capital Cyrillic letters
@@ -309,6 +276,7 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file names`);
     throw Error(`Mismatch at index ${mismatchIndex}, found: ${encodedFilenames[mismatchIndex][1]}, expected: ${expectedEncodedFilenames[mismatchIndex]}`);
   }
   const decoded = await Mime.decode(encoded);
+
   for (var i = 0; i < filenames.length; i++) {
     const originalName = filenames[i];
     const extractedAttachment = decoded.attachments[i];
