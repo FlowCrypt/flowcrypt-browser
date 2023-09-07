@@ -3,6 +3,7 @@ import { Buf } from '../../core/buf';
 import { DecryptSuccess, MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { FesClientConfiguration, FesConfig } from './shared-tenant-fes-endpoints';
 import { expect } from 'chai';
+import { base64decode } from '../../platform/util';
 
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 export const flowcryptTestClientConfiguration: FesConfig = {
@@ -142,6 +143,14 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   });
   expect(decrypted.success).to.equal(true);
   const decryptedMimeMsg = decrypted.content?.toUtfStr();
+  const cryptupDataRegex = /cryptup-data="([^"]*)"/;
+  const cryptupDataMatch = decryptedMimeMsg?.match(cryptupDataRegex);
+  expect(cryptupDataMatch).to.not.be.undefined;
+  expect(cryptupDataMatch?.length).to.be.greaterThan(1);
+  const cryptupData = base64decode(cryptupDataMatch![1]);
+  const jsonObject = JSON.parse(cryptupData);
+  expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
+  expect(cryptupData).to.contains('to@example.com');
   // small.txt
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'
