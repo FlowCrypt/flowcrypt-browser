@@ -2281,6 +2281,26 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - send message with attachments which contain emoji in filename',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const attachmentName = 'attac👍hment!🔸.txt';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          attester: { includeHumanKey: true },
+        });
+        const subject = `Test Sending Message With Attachment Which Contains Emoji in Filename ${Util.lousyRandom()}`;
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject);
+        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        await fileInput!.uploadFile(`test/samples/${attachmentName}`);
+        await ComposePageRecipe.sendAndClose(composePage);
+        const googleData = await GoogleData.withInitializedData(acctEmail);
+        const sentMsgAttachment = googleData.searchMessagesBySubject(subject)[0].payload!.parts![0];
+        expect(sentMsgAttachment.filename).to.equal(attachmentName + '.pgp');
+      })
+    );
+
+    test(
       'send with mixed S/MIME and PGP recipients - should show err',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
