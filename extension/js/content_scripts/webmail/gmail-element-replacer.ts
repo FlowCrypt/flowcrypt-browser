@@ -166,7 +166,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      const blocksFromEmailContainer = Mime.processBody({ text: emailContainer.innerText });
+      const emailContainerText = Xss.htmlSanitizeAndStripAllTags(emailContainer.innerHTML, '\n');
+      const blocksFromEmailContainer = Mime.processBody({ text: emailContainerText });
       if (blocksFromEmailContainer.length === 0 || (blocksFromEmailContainer.length === 1 && blocksFromEmailContainer[0].type === 'plainText')) {
         // only has single block which is plain text
         continue;
