@@ -1027,11 +1027,10 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     });
     test('[unit][MsgUtil.decryptMessage] mdc - missing - error', async t => {
       const encryptedData = decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
       const kisWithPp = [
         {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
           passphrase: compatibilityKey1.passphrase,
         },
@@ -1050,24 +1049,23 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     test('[unit][MsgUtil.decryptMessage] decrypts a pubkey-encrypted OpenPGP message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const encryptedData = Buf.fromBase64Str(msg!.raw!)
         .toUtfStr()
         .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
       const kisWithPp = [
         {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
           passphrase: compatibilityKey1.passphrase,
         },
       ];
       const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted1.success).to.equal(true);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
       expect(verifyRes1.match).to.be.null;
       t.pass();
@@ -1093,7 +1091,6 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     test('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
@@ -1242,7 +1239,6 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       }
       t.pass();
     });
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     test('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
       const passphrase = 'some pass for testing';
@@ -1266,8 +1262,8 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - accessing private method
+
+      // @ts-expect-error - accessing private method
       const sortedKeys = await MsgUtil.getSortedKeys(kisWithPp, m);
       // point is that only one of the private keys should be used for decrypting, not two
       expect(sortedKeys.prvMatching.length).to.equal(1);
@@ -1279,11 +1275,11 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       expect(sortedKeys.prvForDecryptDecrypted[0].ki.longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-expect-error
       const matching1 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub1), m.getEncryptionKeyIDs());
       expect(matching1.length).to.equal(1);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-expect-error
       const matching2 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub2), m.getEncryptionKeyIDs());
       expect(matching2.length).to.equal(0);
       t.pass();
@@ -1427,7 +1423,7 @@ ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
 
     test('[KeyUtil.diagnose] displays PK and SK usage', async t => {
       const usageRegex = /\[\-\] \[(.*)\]/;
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
       const result1 = await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
       {
         const pk0UsageStr = result1.get('Usage flags')!;
@@ -1458,7 +1454,6 @@ ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
         expect(sk0Usage).to.include('encrypt_storage');
         expect(sk0Usage).to.include('encrypt_communication');
       }
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       t.pass();
     });
 

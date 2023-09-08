@@ -44,7 +44,7 @@ export const processMessageFromUser = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"to":["Mr To <to@example.com>"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
   const decrypted = (await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -84,7 +84,7 @@ export const processMessageFromUser2 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -133,7 +133,7 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"to":["to@example.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["flowcrypt.compatibility@gmail.com"]');
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],

@@ -117,6 +117,7 @@ export class Ui {
         Catch.reportErr(e);
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     prevent: <THIS extends HTMLElement | void>(
       evName: PreventableEventName,
       cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,

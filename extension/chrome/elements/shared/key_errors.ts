@@ -76,12 +76,12 @@ export class KeyErrors {
         this.acctEmail,
         this.setupView ? '#step_3_compatibility_fix' : '#compatibility_fix',
         origPrv,
-        options ? options!.passphrase : String($('.input_passphrase').val()),
+        options ? options.passphrase : String($('.input_passphrase').val()),
         window.location.href.replace(/#$/, '')
       );
-      if (this.setupView) {
+      if (this.setupView && options) {
         await saveKeysAndPassPhrase(this.setupView.acctEmail, [fixedPrv], options);
-        await this.setupView.submitPublicKeys(options!);
+        await this.setupView.submitPublicKeys(options);
         await this.setupView.finalizeSetup();
         await this.setupView.setupRender.renderSetupDone();
         return;

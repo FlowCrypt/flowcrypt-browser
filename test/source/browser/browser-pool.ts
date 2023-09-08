@@ -132,7 +132,7 @@ export class BrowserPool {
 
   private processTestError = (err: unknown, t: AvaContext, attemptHtmls: string[], flag?: 'FAILING') => {
     t.context.retry = undefined;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     if (t.context.attemptNumber! < t.context.totalAttempts!) {
       t.log(`${t.context.attemptText} Retrying: ${String(err)}`);
     } else {

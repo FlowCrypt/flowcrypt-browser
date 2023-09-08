@@ -223,10 +223,9 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       'decrypt - encrypted text inside "message" attachment is correctly decrypted',
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
         const key = Config.key('flowcrypt.compatibility.1pp1')!;
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '184a474fc1bd59b8',
@@ -1878,9 +1877,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await pgpBlock.click('#pgp_block a');
         await Util.sleep(5);
         const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
-        await flowcryptTab!.waitForSelector('body'); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        await flowcryptTab!.waitForSelector('body');
         await Util.sleep(3);
-        expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null'); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null');
       })
     );
 
@@ -1903,7 +1902,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const msgId = '175ccd8755eab85f';
-        // eslint-disable @typescript-eslint/no-non-null-assertion
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
           google: {
