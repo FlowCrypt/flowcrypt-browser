@@ -506,18 +506,18 @@
          * @return {Object} Header value as a parsed structure
          */
         parseHeaderValue: function(str) {
-            let response = {
+            var response = {
                 value: false,
                 params: {}
-            };
-            let key = false;
-            let value = '';
-            let type = 'value';
-            let quote = false;
-            let escaped = false;
-            let chr;
+            },
+            key = false,
+            value = '',
+            type = 'value',
+            quote = false,
+            escaped = false,
+            chr;
 
-            for (let i = 0, len = str.length; i < len; i++) {
+            for (var i = 0, len = str.length; i < len; i++) {
                 chr = str.charAt(i);
                 if (type === 'key') {
                     if (chr === '=') {
@@ -549,6 +549,7 @@
                         value += chr;
                     }
                     escaped = false;
+
                 }
             }
 
@@ -566,8 +567,8 @@
             // https://tools.ietf.org/html/rfc2231#section-3
 
             // preprocess values
-            Object.keys(response.params).forEach(key => {
-                let actualKey, nr, match, value;
+            Object.keys(response.params).forEach(function(key) {
+                var actualKey, nr, match, value;
                 if ((match = key.match(/(\*(\d+)|\*(\d+)\*|\*)$/))) {
                     actualKey = key.substr(0, match.index);
                     nr = Number(match[2] || match[3]) || 0;
@@ -594,35 +595,36 @@
             });
 
             // concatenate split rfc2231 strings and convert encoded strings to mime encoded words
-            Object.keys(response.params).forEach(key => {
-                let value;
+            Object.keys(response.params).forEach(function(key) {
+                var value;
                 if (response.params[key] && Array.isArray(response.params[key].values)) {
-                    value = response.params[key].values.map(val => val || '').join('');
+                    value = response.params[key].values.map(function(val) {
+                        return val || '';
+                    }).join('');
 
                     if (response.params[key].charset) {
                         // convert "%AB" to "=?charset?Q?=AB?="
-                        response.params[key] =
-                            '=?' +
+                        response.params[key] = '=?' +
                             response.params[key].charset +
                             '?Q?' +
-                            value
-                                // fix invalidly encoded chars
-                                .replace(/[=?_\s]/g, s => {
-                                    let c = s.charCodeAt(0).toString(16);
-                                    if (s === ' ') {
-                                        return '_';
-                                    } else {
-                                        return '%' + (c.length < 2 ? '0' : '') + c;
-                                    }
-                                })
-                                // change from urlencoding to percent encoding
-                                .replace(/%/g, '=') +
+                            value.
+                            // fix invalidly encoded chars
+                        replace(/[=\?_\s]/g, function(s) {
+                                var c = s.charCodeAt(0).toString(16);
+                                if (s === ' ') {
+                                    return '_';
+                                } else {
+                                    return '%' + (c.length < 2 ? '0' : '') + c;
+                                }
+                            }).
+                            // change from urlencoding to percent encoding
+                        replace(/%/g, '=') +
                             '?=';
                     } else {
                         response.params[key] = value;
                     }
                 }
-            });
+            }.bind(this));
 
             return response;
         },
