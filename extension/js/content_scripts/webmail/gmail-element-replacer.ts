@@ -217,6 +217,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
 
     if (emailContainer.textContent) {
+      // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
+      // .textContent property returns content of not visible nodes too
       const blocksFromTextContent = Mime.processBody({ text: emailContainer.textContent });
       if (!isPlainText(blocksFromTextContent)) {
         return blocksFromTextContent;
