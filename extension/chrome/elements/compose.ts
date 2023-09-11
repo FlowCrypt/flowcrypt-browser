@@ -195,6 +195,7 @@ export class ComposeView extends View {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
     if (this.replyMsgId) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await this.renderModule.fetchReplyMeta(Object.keys(storage.sendAs!));
     }
     BrowserMsg.listen(this.tabId);

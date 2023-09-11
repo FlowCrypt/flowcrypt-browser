@@ -312,7 +312,6 @@ export class OpenPGPKey {
     result.set(`Is Private?`, KeyUtil.formatResult(key.isPrivate()));
     const users = await key.verifyAllUsers();
     for (let i = 0; i < users.length; i++) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       result.set(`User id ${i}`, (users[i].valid ? '' : '* REVOKED, INVALID OR MISSING SIGNATURE * ') + users[i].userID);
     }
     const user = await key.getPrimaryUser();
@@ -751,8 +750,7 @@ export class OpenPGPKey {
       encryptionKeyIgnoringExpiration = encryptionKey;
       // find the key with latest expiration by trying dates of current key's expiration
       while (true) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        expiration = OpenPGPKey.getExpirationAsDateOrUndefined(await encryptionKeyIgnoringExpiration!.getExpirationTime())?.getTime();
+        expiration = OpenPGPKey.getExpirationAsDateOrUndefined(await encryptionKeyIgnoringExpiration.getExpirationTime())?.getTime();
         if (!expiration || (primaryKeyExpiration && expiration >= primaryKeyExpiration)) break; // found a never-expiring key or a key with expiration beyond primary
         const nextCandidateKey: OpenPGP.Key | OpenPGP.Subkey | undefined = await Catch.undefinedOnException(
           key.getEncryptionKey(undefined, new Date(expiration))

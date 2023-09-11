@@ -50,7 +50,7 @@ type WebmailSpecificInfo = {
   ) => Promise<void>;
 };
 export interface WebmailElementReplacer {
-  getIntervalFunctions: () => Array<IntervalFunction>;
+  getIntervalFunctions: () => IntervalFunction[];
   setReplyBoxEditable: () => Promise<void>;
   reinsertReplyBox: (replyMsgId: string) => void;
   scrollToReplyBox: (replyMsgId: string) => void;

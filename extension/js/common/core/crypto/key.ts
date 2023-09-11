@@ -465,7 +465,7 @@ export class KeyUtil {
   };
 
   private static getSortValue = (pubinfo: PubkeyInfo): number => {
-    const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration;
     // sort non-revoked first, then non-expired
     return pubinfo.revoked || pubinfo.pubkey.revoked ? -Infinity : expirationSortValue;
   };
