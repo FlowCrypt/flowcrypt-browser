@@ -31,10 +31,6 @@ const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   }
 };
 
-export const tabsQuery = async (q: chrome.tabs.QueryInfo): Promise<chrome.tabs.Tab[]> => {
-  return await new Promise(resolve => chrome.tabs.query(q, resolve));
-};
-
 export const windowsCreate = async (q: chrome.windows.CreateData): Promise<chrome.windows.Window | undefined> => {
   return await new Promise(resolve => {
     if (typeof chrome.windows !== 'undefined') {
