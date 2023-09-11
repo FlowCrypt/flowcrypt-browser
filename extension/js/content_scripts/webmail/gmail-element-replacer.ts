@@ -166,9 +166,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer added evaluated');
       }
       const msgId = this.determineMsgId(emailContainer);
-      const blocksFromEmailContainer = Mime.processBody({ text: emailContainer.innerText });
-      if (blocksFromEmailContainer.length === 0 || (blocksFromEmailContainer.length === 1 && blocksFromEmailContainer[0].type === 'plainText')) {
-        // only has single block which is plain text
+      const blocksFromEmailContainer = this.parseBlocksFromEmailContainer(emailContainer);
+      if (blocksFromEmailContainer.length === 0) {
         continue;
       }
       const { renderedXssSafe: renderedFromEmailContainerXssSafe } = this.messageRenderer.renderMsg({ blocks: blocksFromEmailContainer }, false); // xss-safe-value
@@ -204,6 +203,25 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       this.messageRenderer.startProcessingInlineBlocks(this.relayManager, this.factory, setMessageInfo, blocksInFrames);
     }
+  };
+
+  private parseBlocksFromEmailContainer = (emailContainer: HTMLElement) => {
+    const parseTextBlocks = (text: string) => Mime.processBody({ text });
+
+    const isPlainText = (blocks: MsgBlock[]) => {
+      return blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText');
+    };
+
+    const blocksFromEmailContainer = parseTextBlocks(emailContainer.innerText);
+
+    if (!isPlainText(blocksFromEmailContainer)) {
+      return blocksFromEmailContainer;
+    }
+
+    // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
+    // .textContent property returns content of not visible nodes too
+    const blocksFromTextContent = parseTextBlocks(emailContainer.textContent ?? '');
+    return isPlainText(blocksFromTextContent) ? [] : blocksFromTextContent;
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
