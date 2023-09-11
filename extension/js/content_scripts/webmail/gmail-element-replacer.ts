@@ -206,26 +206,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private parseBlocksFromEmailContainer = (emailContainer: HTMLElement) => {
-    const blocksFromEmailContainer = Mime.processBody({ text: emailContainer.innerText });
+    const parseTextBlocks = (text: string) => Mime.processBody({ text });
 
     const isPlainText = (blocks: MsgBlock[]) => {
       return blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText');
     };
 
+    const blocksFromEmailContainer = parseTextBlocks(emailContainer.innerText);
+
     if (!isPlainText(blocksFromEmailContainer)) {
       return blocksFromEmailContainer;
     }
 
-    if (emailContainer.textContent) {
-      // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
-      // .textContent property returns content of not visible nodes too
-      const blocksFromTextContent = Mime.processBody({ text: emailContainer.textContent });
-      if (!isPlainText(blocksFromTextContent)) {
-        return blocksFromTextContent;
-      }
-    }
-
-    return [];
+    // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
+    // .textContent property returns content of not visible nodes too
+    const blocksFromTextContent = parseTextBlocks(emailContainer.textContent ?? '');
+    return isPlainText(blocksFromTextContent) ? [] : blocksFromTextContent;
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
