@@ -78,7 +78,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.pubLookup = new PubLookup(clientConfiguration);
   }
 
-  public getIntervalFunctions = (): Array<IntervalFunction> => {
+  public getIntervalFunctions = (): IntervalFunction[] => {
     return [
       { interval: 1000, handler: () => this.everything() },
       { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() },

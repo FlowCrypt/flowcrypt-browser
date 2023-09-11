@@ -122,7 +122,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
           throw Error(`Test case does not end with '})();'. Did you put code outside of the async functions? (forbidden)`);
         }
         const testCodeLines = code.split('\n');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         let thisUnitTestTitle = testCodeLines.shift()!.trim();
         if (thisUnitTestTitle.endsWith(';')) {
           thisUnitTestTitle = thisUnitTestTitle.slice(0, -1);

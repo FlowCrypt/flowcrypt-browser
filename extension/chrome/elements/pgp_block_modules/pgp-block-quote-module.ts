@@ -13,7 +13,7 @@ export class PgpBlockViewQuoteModule {
     if (isHtml) {
       const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent)); // xss-sanitized
       let htmlBlockQuoteExists = false;
-      const shouldBeQuoted: Array<Element> = [];
+      const shouldBeQuoted: Element[] = [];
       for (let i = message[0].children.length - 1; i >= 0; i--) {
         if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
           shouldBeQuoted.push(message[0].children[i]);

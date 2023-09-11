@@ -92,7 +92,7 @@ export class Catch {
     console.error(exception.message + '\n' + exception.stack);
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-expect-error
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
     if (exception instanceof UnreportableError) {

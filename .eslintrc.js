@@ -11,7 +11,7 @@ module.exports = {
     chrome: false,
     OpenPGP: false,
   },
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'plugin:@typescript-eslint/stylistic', 'prettier'],
   ignorePatterns: ['.eslintrc.js'],
   parserOptions: {
     project: 'tsconfig.json',
@@ -29,6 +29,7 @@ module.exports = {
   ],
   root: true,
   rules: {
+    '@typescript-eslint/consistent-indexed-object-style': 'off',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'off',
     '@typescript-eslint/dot-notation': 'error',
@@ -72,6 +73,7 @@ module.exports = {
     ],
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': ['warn'],
+    '@typescript-eslint/no-extraneous-class': 'off',
     '@typescript-eslint/no-floating-promises': 'error',
     '@typescript-eslint/no-misused-new': 'error',
     '@typescript-eslint/no-namespace': 'off',

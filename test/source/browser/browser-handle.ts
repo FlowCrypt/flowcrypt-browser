@@ -38,7 +38,7 @@ export class BrowserHandle {
       await controllablePage.goto(url);
     }
     this.pages.push(controllablePage);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     if (url && url.includes(t.context.urls!.extensionId)) {
       await controllablePage.waitUntilViewLoaded();
     }
@@ -68,7 +68,7 @@ export class BrowserHandle {
     try {
       await page.setViewport(this.viewport);
       this.pages.push(controllablePage);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       if (url.includes(t.context.urls!.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
       }

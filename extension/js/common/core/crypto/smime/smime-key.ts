@@ -279,6 +279,7 @@ export class SmimeKey {
     const fingerprint = forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(forge.pki.distinguishedNameToAsn1(certificate.issuer), certificate.serialNumber);
+
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const expiration = SmimeKey.dateToNumber(certificate.validity.notAfter)!;
     const expired = expiration < Date.now();
