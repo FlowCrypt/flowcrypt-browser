@@ -34,7 +34,8 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
   public createFooterHtml = (footer: string) => {
     const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
     const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
-    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    let footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    footerFirstLine = Xss.stripNonPrintableSpaces(footerFirstLine);
     if (!footerFirstLine) {
       return '';
     }

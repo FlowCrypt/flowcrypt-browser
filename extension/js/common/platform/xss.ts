@@ -51,6 +51,38 @@ export class Xss {
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
+  private static NON_PRINTABLE_SPACES = [
+    '\u034F',
+    '\u17B4',
+    '\u17B5',
+    '\u180E',
+    '\u2000-\u200B',
+    '\u202F',
+    '\u205F',
+    '\u2060-\u2064',
+    '\u206A-\u206F',
+    '\u3000',
+    '\u2800',
+    '\u3164',
+    '\uFEFF',
+    '\uFFA0',
+    '\u1D159',
+    '\u1D173',
+    '\u1D174',
+    '\u1D175',
+    '\u1D176',
+    '\u1D177',
+    '\u1D178',
+    '\u1D179',
+    '\u1D17A',
+    '\u0009',
+    '\u0020',
+    '\u00A0',
+    '\u00AD',
+    '\u061C',
+    '\u115F',
+    '\u1160',
+  ];
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -224,6 +256,11 @@ export class Xss {
       text = text.replace(/\n/g, outputNl);
     }
     return text;
+  };
+
+  public static stripNonPrintableSpaces = (str: string) => {
+    const nonPrintableSpacePattern = new RegExp(`[${Xss.NON_PRINTABLE_SPACES.join('')}]`, 'ug');
+    return str.replace(nonPrintableSpacePattern, '');
   };
 
   public static escape = (str: string) => {
