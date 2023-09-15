@@ -745,6 +745,29 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - #5408 PDF files downloaded correctly from attachment previews',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(
+          t,
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
+        );
+        const pdfFileName = 'small.pdf';
+        const attachmentPdf = await inboxPage.getFrame(['attachment.htm', `name=${pdfFileName}`]);
+        await attachmentPdf.waitForSelTestState('ready');
+        await attachmentPdf.click('body');
+        const attachmentPreviewPdf = await inboxPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPdf.waitAll('#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page');
+
+        const downloadedPdf = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+          await attachmentPreviewPdf.waitAndClick('@attachment-preview-download');
+        });
+        expect(Object.entries(downloadedPdf).length).to.equal(1);
+        expect(Object.keys(downloadedPdf)[0]).to.equal(pdfFileName);
+        expect(downloadedPdf[pdfFileName].length).to.equal(15218);
+      })
+    );
+    test(
       'settings - attachment previews with entering pass phrase',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
