@@ -17,7 +17,10 @@ import { getMockCustomerUrlFesEndpoints } from '../fes/customer-url-fes-endpoint
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
-  public constructor(message: string, public statusCode = 400) {
+  public constructor(
+    message: string,
+    public statusCode = 400
+  ) {
     super(message);
   }
 }
@@ -88,7 +91,11 @@ export class Api<REQ, RES> {
   protected throttleChunkMsUpload = 0;
   protected throttleChunkMsDownload = 0;
 
-  public constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
+  public constructor(
+    apiName: string,
+    protected handlers: Handlers<REQ, RES>,
+    protected urlPrefix = ''
+  ) {
     this.apiName = apiName;
     const opt = {
       key: readFileSync(`./test/mock_cert/key.pem.mock`),
@@ -166,6 +173,7 @@ export class Api<REQ, RES> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     return undefined as void;
   };
 
@@ -280,7 +288,7 @@ export class Api<REQ, RES> {
 
   protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
     let parsedBody: string | undefined;
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
     if (body.length) {
       if (
         req.url!.startsWith('/upload/') || // gmail message send
@@ -294,7 +302,6 @@ export class Api<REQ, RES> {
       }
     }
     return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
   };
 
   private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
@@ -325,7 +332,7 @@ export class Api<REQ, RES> {
     for (const valuePair of valuePairs) {
       if (valuePair) {
         const equalSignSeparatedParts = valuePair.split('=');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         params[equalSignSeparatedParts.shift()!] = decodeURIComponent(equalSignSeparatedParts.join('='));
       }
     }

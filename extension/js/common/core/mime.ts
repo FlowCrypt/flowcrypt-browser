@@ -341,7 +341,7 @@ export class Mime {
     return pgpMimeSigned;
   };
 
-  private static headerGetAddress = (parsedMimeMsg: MimeContentWithHeaders, headersNames: Array<SendingType | 'from'>) => {
+  private static headerGetAddress = (parsedMimeMsg: MimeContentWithHeaders, headersNames: (SendingType | 'from')[]) => {
     const result: { to: string[]; cc: string[]; bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
@@ -472,28 +472,27 @@ export class Mime {
       treatAs,
       name: Mime.getNodeFilename(node),
       type: Mime.getNodeType(node),
-      data:
-        node.contentTransferEncoding.value === 'quoted-printable'
-          ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
-          : node.content,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) : node.content,
       cid: Mime.getNodeContentId(node),
     });
   };
 
   private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (node.charset && Iso88592.labels.includes(node.charset)) {
-      return Iso88592.decode(node.rawContent!); // eslint-disable-line @typescript-eslint/no-unsafe-return
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+      return Iso88592.decode(node.rawContent!);
     }
     let resultBuf: Buf;
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
       resultBuf = Buf.fromUint8(node.content);
     } else if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       resultBuf = Mime.fromEqualSignNotationAsBuf(node.rawContent!);
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       resultBuf = Buf.fromRawBytesStr(node.rawContent!);
     }
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     if (node.charset?.toUpperCase() === 'ISO-2022-JP' || (node.charset === 'utf-8' && Mime.getNodeType(node, 'initial')?.includes('ISO-2022-JP'))) {
       return iso2022jpToUtf(resultBuf);
     }

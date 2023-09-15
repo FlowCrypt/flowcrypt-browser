@@ -277,6 +277,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const draftId = this.getLocalDraftId();
     const storage = await GlobalStore.get(['local_drafts']);
     if (typeof storage.local_drafts !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete storage.local_drafts[draftId];
       await GlobalStore.set(storage);
     }

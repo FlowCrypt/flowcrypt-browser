@@ -24,7 +24,6 @@ export interface AttesterConfig {
 export const getMockAttesterEndpoints = (oauth: OauthMock, attesterConfig: AttesterConfig): HandlersDefinition => {
   return {
     '/attester/pub/?': async ({ body }, req) => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
       if (isGet(req)) {
         if (!attesterConfig?.pubkeyLookup) {

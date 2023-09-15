@@ -539,28 +539,213 @@
 
     /**
      * Joins parsed header value together as 'value; param1=value1; param2=value2'
-     *
+     * PS: We are following RFC 822 for the list of special characters that we need to keep in quotes.
+     *      Refer: https://www.w3.org/Protocols/rfc1341/4_Content-Type.html
      * @param {Object} structured Parsed header value
      * @return {String} joined header value
      */
-    MimeNode.prototype._buildHeaderValue = function (structured) {
-        var paramsArray = [];
+    // copied from https://github.com/nodemailer/libmime/
+    MimeNode.prototype._buildHeaderValue = function(structured) {
+        let paramsArray = [];
 
-        Object.keys(structured.params || {}).forEach(function (param) {
+        Object.keys(structured.params || {}).forEach(param => {
             // filename might include unicode characters so it is a special case
-            if (param === 'filename') {
-                mimecodec.continuationEncode(param, structured.params[param], 50).forEach(function (encodedParam) {
-                    // continuation encoded strings are always escaped, so no need to use enclosing quotes
-                    // in fact using quotes might end up with invalid filenames in some clients
-                    paramsArray.push(encodedParam.key + '=' + encodedParam.value);
+            let value = structured.params[param];
+            if (!this._isPlainText(value) || value.length >= 75) {
+                this._buildHeaderParam(param, value, 50).forEach(encodedParam => {
+                    if (!/[\s"\\;:/=(),<>@[\]?]|^[-']|'$/.test(encodedParam.value) || encodedParam.key.substr(-1) === '*') {
+                        paramsArray.push(encodedParam.key + '=' + encodedParam.value);
+                    } else {
+                        paramsArray.push(encodedParam.key + '=' + JSON.stringify(encodedParam.value));
+                    }
                 });
+            } else if (/[\s'"\\;:/=(),<>@[\]?]|^-/.test(value)) {
+                paramsArray.push(param + '=' + JSON.stringify(value));
             } else {
-                paramsArray.push(param + '=' + this._escapeHeaderArgument(structured.params[param]));
+                paramsArray.push(param + '=' + value);
             }
-        }.bind(this));
+        });
 
         return structured.value + (paramsArray.length ? '; ' + paramsArray.join('; ') : '');
-    };
+    }
+
+    /**
+     * Encodes a string or an Buffer to an UTF-8 Parameter Value Continuation encoding (rfc2231)
+     * Useful for splitting long parameter values.
+     *
+     * For example
+     *      title="unicode string"
+     * becomes
+     *     title*0*=utf-8''unicode
+     *     title*1*=%20string
+     *
+     * @param {String|Buffer} data String to be encoded
+     * @param {Number} [maxLength=50] Max length for generated chunks
+     * @param {String} [fromCharset='UTF-8'] Source sharacter set
+     * @return {Array} A list of encoded keys and headers
+     */
+    // copied from https://github.com/nodemailer/libmime/
+    MimeNode.prototype._buildHeaderParam = function(key, data, maxLength, fromCharset) {
+        let list = [];
+        let encodedStr = typeof data === 'string' ? data : mimecodec.decode(data, fromCharset);
+        let encodedStrArr;
+        let chr, ord;
+        let line;
+        let startPos = 0;
+        let isEncoded = false;
+        let i, len;
+
+        maxLength = maxLength || 50;
+
+        // process ascii only text
+        if (this._isPlainText(data)) {
+            // check if conversion is even needed
+            if (encodedStr.length <= maxLength) {
+                return [
+                    {
+                        key,
+                        value: encodedStr
+                    }
+                ];
+            }
+
+            encodedStr = encodedStr.replace(new RegExp('.{' + maxLength + '}', 'g'), str => {
+                list.push({
+                    line: str
+                });
+                return '';
+            });
+
+            if (encodedStr) {
+                list.push({
+                    line: encodedStr
+                });
+            }
+        } else {
+            if (/[\uD800-\uDBFF]/.test(encodedStr)) {
+                // string containts surrogate pairs, so normalize it to an array of bytes
+                encodedStrArr = [];
+                for (i = 0, len = encodedStr.length; i < len; i++) {
+                    chr = encodedStr.charAt(i);
+                    ord = chr.charCodeAt(0);
+                    if (ord >= 0xd800 && ord <= 0xdbff && i < len - 1) {
+                        chr += encodedStr.charAt(i + 1);
+                        encodedStrArr.push(chr);
+                        i++;
+                    } else {
+                        encodedStrArr.push(chr);
+                    }
+                }
+                encodedStr = encodedStrArr;
+            }
+
+            // first line includes the charset and language info and needs to be encoded
+            // even if it does not contain any unicode characters
+            line = "utf-8''";
+            isEncoded = true;
+            startPos = 0;
+
+            // process text with unicode or special chars
+            for (i = 0, len = encodedStr.length; i < len; i++) {
+                chr = encodedStr[i];
+
+                if (isEncoded) {
+                    chr = this._safeEncodeURIComponent(chr);
+                } else {
+                    // try to urlencode current char
+                    chr = chr === ' ' ? chr : this._safeEncodeURIComponent(chr);
+                    // By default it is not required to encode a line, the need
+                    // only appears when the string contains unicode or special chars
+                    // in this case we start processing the line over and encode all chars
+                    if (chr !== encodedStr[i]) {
+                        // Check if it is even possible to add the encoded char to the line
+                        // If not, there is no reason to use this line, just push it to the list
+                        // and start a new line with the char that needs encoding
+                        if ((this._safeEncodeURIComponent(line) + chr).length >= maxLength) {
+                            list.push({
+                                line,
+                                encoded: isEncoded
+                            });
+                            line = '';
+                            startPos = i - 1;
+                        } else {
+                            isEncoded = true;
+                            i = startPos;
+                            line = '';
+                            continue;
+                        }
+                    }
+                }
+
+                // if the line is already too long, push it to the list and start a new one
+                if ((line + chr).length >= maxLength) {
+                    list.push({
+                        line,
+                        encoded: isEncoded
+                    });
+                    line = chr = encodedStr[i] === ' ' ? ' ' : this._safeEncodeURIComponent(encodedStr[i]);
+                    if (chr === encodedStr[i]) {
+                        isEncoded = false;
+                        startPos = i - 1;
+                    } else {
+                        isEncoded = true;
+                    }
+                } else {
+                    line += chr;
+                }
+            }
+
+            if (line) {
+                list.push({
+                    line,
+                    encoded: isEncoded
+                });
+            }
+        }
+
+        return list.map((item, i) => ({
+            // encoded lines: {name}*{part}*
+            // unencoded lines: {name}*{part}
+            // if any line needs to be encoded then the first line (part==0) is always encoded
+            key: key + '*' + i + (item.encoded ? '*' : ''),
+            value: item.line
+        }));
+    }
+
+    // copied from https://github.com/nodemailer/libmime/
+    MimeNode.prototype._safeEncodeURIComponent = function(str) {
+        str = (str || '').toString();
+
+        try {
+            // might throw if we try to encode invalid sequences, eg. partial emoji
+            str = encodeURIComponent(str);
+        } catch (E) {
+            // should never run
+            return str.replace(/[^\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]+/g, '');
+        }
+
+        // ensure chars that are not handled by encodeURICompent are converted as well
+        return str.replace(/[\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]/g, chr => this._encodeURICharComponent(chr));
+    }
+
+    MimeNode.prototype._encodeURICharComponent = function(chr) {
+        let res = '';
+        let ord = chr.charCodeAt(0).toString(16).toUpperCase();
+
+        if (ord.length % 2) {
+            ord = '0' + ord;
+        }
+
+        if (ord.length > 2) {
+            for (let i = 0, len = ord.length / 2; i < len; i++) {
+                res += '%' + ord.substr(i, 2);
+            }
+        } else {
+            res += '%' + ord;
+        }
+
+        return res;
+    }
 
     /**
      * Escapes a header argument value (eg. boundary value for content type),

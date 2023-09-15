@@ -100,7 +100,7 @@ export class ExternalService extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
+    await this.request('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
   };
 
   public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
@@ -108,7 +108,7 @@ export class ExternalService extends Api {
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>(
+    await this.request(
       'POST',
       `/api/${this.apiVersion}/log-collector/exception`,
       {},
@@ -154,7 +154,7 @@ export class ExternalService extends Api {
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>(
+    await this.request(
       'POST',
       `/api/${this.apiVersion}/message/${externalId}/gateway`,
       {},

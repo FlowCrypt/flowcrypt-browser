@@ -17,7 +17,7 @@ type FrameEntry = {
 export class RelayManager implements RelayManagerInterface {
   private readonly frames = new Map<string, FrameEntry>();
 
-  public constructor(private debug: boolean = false) {
+  public constructor(private debug = false) {
     const framesObserver = new MutationObserver(async mutationsList => {
       for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
