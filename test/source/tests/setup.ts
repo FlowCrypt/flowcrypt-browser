@@ -1481,7 +1481,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         const set3 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         expect(set3[0].lastModified).to.be.greaterThan(set2[0].lastModified!); // an update happened
         await gmailPage.close();
         // 3. EKM returns the same version of the existing key, no toast, no update
@@ -1520,7 +1520,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitTillGone('@dialog-passphrase');
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         const set7 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         expect(set7[0].lastModified!).to.be.greaterThan(set6[0].lastModified!); // an update happened
         await gmailPage.close();
         // 7. EKM returns an older version of the existing key, no toast, no update
@@ -1552,7 +1552,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const mainKey10 = KeyUtil.filterKeysByIdentity(set10, [mainKey9[0]]);
         expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(secondaryKey9[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
         expect(mainKey10.length).to.equal(1);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
         // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
         await BrowserRecipe.finishSession(gmailPage);
@@ -2333,7 +2333,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const currentKey = await retrieveAndCheckKeys(settingsPage, acctEmail, 1);
         const expectedEmailSubject = `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${currentKey[0].id}`;
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(expectedEmailSubject)[0];
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const fromEmailHeaderLine = rawMessage.headerLines[2].line;
         const toEmailHeaderLine = rawMessage.headerLines[3].line;

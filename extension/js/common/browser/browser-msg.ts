@@ -96,6 +96,7 @@ export namespace Bm {
       sameWorld: boolean | undefined;
     };
     export type InMemoryStoreGet = string | null;
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgDecrypt = DecryptResult;

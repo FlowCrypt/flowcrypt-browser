@@ -109,9 +109,7 @@ export class GmailMsg {
 
 export class GmailParser {
   public static findHeader = (apiGmailMsgObj: GmailMsg | GmailMsg$payload, headerName: string) => {
-    const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload')
-      ? (apiGmailMsgObj as GmailMsg).payload! // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      : (apiGmailMsgObj as GmailMsg$payload);
+    const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailMsg).payload! : (apiGmailMsgObj as GmailMsg$payload);
     if (typeof node.headers !== 'undefined') {
       for (const header of node.headers) {
         if (header.name.toLowerCase() === headerName.toLowerCase()) {
@@ -224,7 +222,6 @@ export class GoogleData {
     let msgBlock = '';
     let attachmentsBlock = '';
     if (msgId) {
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
       const fromAddress = Xss.escape(fromHeader!.value);
@@ -260,7 +257,6 @@ export class GoogleData {
             .join('') +
           '</div>';
       }
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       msgBlock = `<div class="adn ads" data-legacy-message-id="${msgId}">
     <div class="gs">
       <span email="${fromAddress}" name="mock sender" class="gD"><span>Mock Sender</span></span>
@@ -472,7 +468,7 @@ export class GoogleData {
     const threads: GmailThread[] = [];
     for (const thread of this.getMessagesAndDrafts()
       .filter(m => (labelIds.length ? (m.labelIds || []).some(l => labelIds.includes(l)) : true))
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       .map(m => ({ historyId: m.historyId, id: m.threadId!, snippet: `MOCK SNIPPET: ${GoogleData.msgSubject(m)}` }))) {
       if (thread.id && !threads.map(t => t.id).includes(thread.id)) {
         threads.push(thread);

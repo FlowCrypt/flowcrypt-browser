@@ -33,12 +33,6 @@ type PubkeyAttributes = {
   expiresOn: number | null;
 };
 
-export type ContactV4 = {
-  info: Email;
-  pubkeys: Pubkey[];
-  revocations: Revocation[];
-};
-
 export type ContactPreview = EmailParts & {
   hasPgp: boolean;
   pgpLoading?: Promise<boolean> | undefined;

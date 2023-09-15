@@ -507,15 +507,15 @@
          */
         parseHeaderValue: function(str) {
             var response = {
-                    value: false,
-                    params: {}
-                },
-                key = false,
-                value = '',
-                type = 'value',
-                quote = false,
-                escaped = false,
-                chr;
+                value: false,
+                params: {}
+            },
+            key = false,
+            value = '',
+            type = 'value',
+            quote = false,
+            escaped = false,
+            chr;
 
             for (var i = 0, len = str.length; i < len; i++) {
                 chr = str.charAt(i);
@@ -697,12 +697,22 @@
                 }
 
             } else {
-
                 // first line includes the charset and language info and needs to be encoded
                 // even if it does not contain any unicode characters
                 line = 'utf-8\'\'';
                 isEncoded = true;
                 startPos = 0;
+
+                // fix for attachments with emoji in filenames
+                if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+                    // Intl.Segmenter() currently not available on Firefox
+                    // https://caniuse.com/mdn-javascript_builtins_intl_segmenter
+                    encodedStr = [...new Intl.Segmenter().segment(encodedStr)].map(x => x.segment)
+                } else {
+                    // regex from https://stackoverflow.com/a/69661174/3091318
+                    encodedStr = encodedStr.replace(/(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu, '')
+                }
+
                 // process text with unicode or special chars
                 for (var i = 0, len = encodedStr.length; i < len; i++) {
 

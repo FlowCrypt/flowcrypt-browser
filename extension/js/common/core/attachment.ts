@@ -136,10 +136,19 @@ export class Attachment {
       return this.treatAsValue === 'publicKey';
     }
     return (
-      this.type === 'application/pgp-keys' ||
+      (this.type === 'application/pgp-keys' && !this.isPrivateKey()) ||
       /^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g.test(this.name) || // name starts with a key id
       (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}.*\.asc$/g.test(this.name)) || // name contains the word "public", any key id and ends with .asc
       (/\.asc$/.test(this.name) && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
+    );
+  };
+
+  public isPrivateKey = (): boolean => {
+    return (
+      Boolean(this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+(?:\-[A-F0-9]{40})?)\.(key|asc)$/g)) ||
+      (/\.(asc|key)$/.test(this.name) &&
+        this.hasData() &&
+        Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PRIVATE KEY BLOCK-----'))
     );
   };
 
@@ -201,7 +210,7 @@ export class Attachment {
       // todo: after #4906 is done we should "decrypt" the encryptedFile here to see if it's a binary 'publicKey' (as in message 1869220e0c8f16dd)
     } else if (this.isPublicKey()) {
       return 'publicKey';
-    } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc)$/g)) {
+    } else if (this.isPrivateKey()) {
       return 'privateKey';
     } else {
       // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above

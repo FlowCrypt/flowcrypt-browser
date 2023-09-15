@@ -258,7 +258,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       return;
     }
     let lastProgressPercent = -1;
-    const loadedAr: Array<number> = [];
+    const loadedAr: number[] = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(

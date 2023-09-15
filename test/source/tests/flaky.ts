@@ -246,7 +246,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           key: { passphrase: 'long enough to suit requirements' },
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const fingerprint = (await settingsPage.read('.good', true))!.split(' ').join('');
         const myKeyFrame = await browser.newPage(
           t,
@@ -256,7 +256,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const longid = fingerprint.substring(fingerprint.length - 16);
         const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
         expect(key.algo.bits).to.equal(3072);
         expect(key.algo.algorithm).to.equal('rsaEncryptSign');
@@ -437,14 +437,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const key = Config.key('flowcryptcompatibility.from.address');
-        await SettingsPageRecipe.addKeyTest(
-          t,
-          browser,
-          acct,
-          key.armored!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-          key.passphrase!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-          { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
-        );
+        await SettingsPageRecipe.addKeyTest(t, browser, acct, key.armored!, key.passphrase!, { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', undefined, {
@@ -484,7 +477,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
         await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 120 });
       })
@@ -499,7 +492,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         await fileInput!.uploadFile('test/samples/large.jpg');
         await Util.sleep(2);
         await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
@@ -515,7 +508,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
         const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         await fileInput!.uploadFile('test/samples/small.txt');
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
         // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"

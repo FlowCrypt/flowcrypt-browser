@@ -5,7 +5,7 @@
 
   const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-invalid-void-type
   const acceptCb = (cb: () => Promise<number | void>) => {
     // nothing
   };

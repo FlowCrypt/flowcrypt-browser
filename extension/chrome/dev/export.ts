@@ -103,7 +103,7 @@ Catch.try(async () => {
       }
     }
     await gmail.fetchAttachmentsMissingData(fetchableAttachments, percent => print(`Percent attachments done: ${percent}`));
-    const attachments: { [id: string]: { data: string; size: number } } = {};
+    const attachments: Record<string, { data: string; size: number }> = {};
     for (const attachment of fetchableAttachments.concat(skippedAttachments)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       attachments[attachment.id!] = { data: attachment.getData().toBase64UrlStr(), size: attachment.getData().length };
