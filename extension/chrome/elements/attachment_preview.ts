@@ -60,7 +60,8 @@ View.run(
               this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toUtfStr()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
             } else if (attachmentType === 'pdf') {
               // PDF
-              pdfjsLib.getDocument({ data: result }).promise.then(async (pdf: PDFDocumentProxy) => {
+              // .slice() is used to copy attachment data https://github.com/FlowCrypt/flowcrypt-browser/issues/5408
+              pdfjsLib.getDocument({ data: result.slice() }).promise.then(async (pdf: PDFDocumentProxy) => {
                 const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
                 await previewPdf.render();
               });
