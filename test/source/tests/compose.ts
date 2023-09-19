@@ -1629,7 +1629,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const emailSignature = '<div dir="ltr">-- <br>footer with non breaking space<br></div>';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          attester: { includeHumanKey: true },
           google: {
             acctPrimarySignature: emailSignature,
           },
