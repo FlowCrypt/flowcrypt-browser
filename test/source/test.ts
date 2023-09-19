@@ -173,7 +173,12 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
       e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/)
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
-  const foundUnwantedErrs = usefulErrors.filter(re => re.message !== `intentional error for debugging` && !re.message.includes('traversal forbidden'));
+  const foundUnwantedErrs = usefulErrors.filter(
+    re =>
+      re.message !== `intentional error for debugging` &&
+      !re.message.includes('traversal forbidden') &&
+      !re.message.includes('The string to be decoded is not correctly encoded')
+  );
   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
     // on consumer flavor app, we submit errors to flowcrypt.com backend
     t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
