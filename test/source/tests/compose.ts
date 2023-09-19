@@ -1625,6 +1625,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - replace &nbsp; with regular space in email footer to prevent duplicate email separators',
+      testWithBrowser(async (t, browser) => {
+        const emailSignature = '<div dir="ltr">-- <br>footer with non breaking space<br></div>';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          attester: { includeHumanKey: true },
+          google: {
+            acctPrimarySignature: emailSignature,
+          },
+        });
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        const emailSeparatorRegex = new RegExp('--', 'g');
+        const emailBody = await composePage.read('@input-body');
+        const emailSeparatorMatch = emailBody?.match(emailSeparatorRegex);
+        expect(emailSeparatorMatch?.length).to.equal(1);
+        await composePage.close();
+      })
+    );
+
+    test(
       'compose - new message, Footer Mock Test',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
