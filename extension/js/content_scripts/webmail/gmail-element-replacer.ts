@@ -167,11 +167,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       const msgId = this.determineMsgId(emailContainer);
       const blocksFromEmailContainer = this.parseBlocksFromEmailContainer(emailContainer);
-      if (blocksFromEmailContainer.length === 0) {
-        continue;
+      let currentEmailContainer = $(emailContainer);
+      if (!this.isPlainText(blocksFromEmailContainer)) {
+        const { renderedXssSafe: renderedFromEmailContainerXssSafe } = this.messageRenderer.renderMsg({ blocks: blocksFromEmailContainer }, false); // xss-safe-value
+        currentEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       }
-      const { renderedXssSafe: renderedFromEmailContainerXssSafe } = this.messageRenderer.renderMsg({ blocks: blocksFromEmailContainer }, false); // xss-safe-value
-      const replacedEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+
       let blocks: MsgBlock[] = [];
       let messageInfo: MessageInfo | undefined;
       try {
@@ -182,11 +183,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         blocks = blocksFromEmailContainer;
         // todo: print info for offline?
       }
+      if (this.isPlainText(blocks)) {
+        continue;
+      }
       const setMessageInfo = messageInfo ?? {
         isPwdMsgBasedOnMsgSnippet: MessageRenderer.isPwdMsg(emailContainer.innerText),
         plainSubject: undefined, // todo: take from this.sel.subject?
       };
-
       if (!setMessageInfo.from) {
         setMessageInfo.from = this.getFrom(this.getMsgBodyEl(msgId));
       }
@@ -197,7 +200,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
       }
-      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(replacedEmailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(currentEmailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
@@ -205,23 +208,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
+  private isPlainText = (blocks: MsgBlock[]) => {
+    return blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText');
+  };
+
   private parseBlocksFromEmailContainer = (emailContainer: HTMLElement) => {
     const parseTextBlocks = (text: string) => Mime.processBody({ text });
 
-    const isPlainText = (blocks: MsgBlock[]) => {
-      return blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText');
-    };
-
     const blocksFromEmailContainer = parseTextBlocks(emailContainer.innerText);
 
-    if (!isPlainText(blocksFromEmailContainer)) {
+    if (!this.isPlainText(blocksFromEmailContainer)) {
       return blocksFromEmailContainer;
     }
 
     // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
     // .textContent property returns content of not visible nodes too
     const blocksFromTextContent = parseTextBlocks(emailContainer.textContent ?? '');
-    return isPlainText(blocksFromTextContent) ? [] : blocksFromTextContent;
+    return this.isPlainText(blocksFromTextContent) ? blocksFromEmailContainer : blocksFromTextContent;
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
