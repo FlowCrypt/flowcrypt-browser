@@ -741,8 +741,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
         await myKeyPage.waitAndType('@input-prv-key', keyCanBeFixedTestKey);
         await myKeyPage.waitAndClick('@action-update-key');
-        await browser.newExtensionPage(t, 'chrome/settings/setup.htm');
-        await settingsPage.close();
+        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'The set of User IDs in this key is not supported.');
       })
     );
     test(
