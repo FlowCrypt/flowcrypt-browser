@@ -217,14 +217,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
     const blocksFromEmailContainer = parseTextBlocks(emailContainer.innerText);
 
-    if (!this.isPlainText(blocksFromEmailContainer)) {
+    if (!this.isPlainText(blocksFromEmailContainer) || !emailContainer.textContent) {
       return blocksFromEmailContainer;
     }
 
     // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
     // .textContent property returns content of not visible nodes too
-    const blocksFromTextContent = parseTextBlocks(emailContainer.textContent ?? '');
-    return this.isPlainText(blocksFromTextContent) ? blocksFromEmailContainer : blocksFromTextContent;
+    return parseTextBlocks(emailContainer.textContent);
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
