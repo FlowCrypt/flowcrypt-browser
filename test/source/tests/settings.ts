@@ -707,6 +707,44 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - Errors encountered during the addition/update of a private key should be handled properly',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const keyCanBeFixedTestKey = testConstants.keyCanBeFixedTestKey;
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          fixKey: true,
+          key: {
+            title: '',
+            armored: keyCanBeFixedTestKey,
+            passphrase: 'hard to guess passphrase',
+            longid: '9866DB9063926D73',
+          },
+        });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyPage = await settingsPage.getFrame(['my_key.htm']);
+        await myKeyPage.waitAndClick('@action-update-prv');
+        await myKeyPage.waitAndClick('@source-paste');
+        const invalidKeyFormat = 'non-valid-private-key-format';
+        const invalidPrivateKeyBlock = '-----BEGIN PGP PRIVATE KEY BLOCK-----\r\n\r\ninvalid-key\r\n-----END PGP PRIVATE KEY BLOCK-----';
+        await myKeyPage.waitAndType('@input-prv-key', invalidKeyFormat);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('warning', 'confirm', 'This does not appear to be a validly formatted key.');
+        await myKeyPage.waitAndType('@input-prv-key', invalidPrivateKeyBlock);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
+        await myKeyPage.waitAndType('@input-prv-key', keyCanBeFixedTestKey);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'The set of User IDs in this key is not supported.');
+      })
+    );
+    test(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
@@ -742,6 +780,29 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
         await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download');
+      })
+    );
+    test(
+      'settings - #5408 PDF files downloaded correctly from attachment previews',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(
+          t,
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
+        );
+        const pdfFileName = 'small.pdf';
+        const attachmentPdf = await inboxPage.getFrame(['attachment.htm', `name=${pdfFileName}`]);
+        await attachmentPdf.waitForSelTestState('ready');
+        await attachmentPdf.click('body');
+        const attachmentPreviewPdf = await inboxPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPdf.waitAll('#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page');
+
+        const downloadedPdf = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+          await attachmentPreviewPdf.waitAndClick('@attachment-preview-download');
+        });
+        expect(Object.entries(downloadedPdf).length).to.equal(1);
+        expect(Object.keys(downloadedPdf)[0]).to.equal(pdfFileName);
+        expect(downloadedPdf[pdfFileName].length).to.equal(15218);
       })
     );
     test(
