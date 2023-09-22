@@ -9,7 +9,7 @@ export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (acctEmail: string | undefined) => {
     if (acctEmail) {
       const authentication = (await AcctStore.get(acctEmail, ['authentication'])).authentication;
-      if (authentication?.oauth.clientId && authentication?.oauth.clientId !== GoogleOAuth.OAUTH.client_id) {
+      if (authentication?.oauth?.clientId && authentication?.oauth?.clientId !== GoogleOAuth.OAUTH.client_id) {
         return await Ui.modal.warning(
           `Custom IdP is configured on this domain, but it is not supported on browser extension yet.\n
       Authentication with Enterprise Server will continue using Google IdP until implemented in a future update.`
