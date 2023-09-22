@@ -34,6 +34,7 @@ export class BrowserPool {
       `--disable-extensions-except=${extensionDir}`,
       `--load-extension=${extensionDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
+      '--disable-features=IsolateOrigins,site-per-process',
     ];
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
