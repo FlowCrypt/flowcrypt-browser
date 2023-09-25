@@ -535,6 +535,24 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
+      `mail.google.com - large clipped PGP/MIME encrypted message rendered correctly`,
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtxKSjjzhRZRRzddjMvJnpDRQf');
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
+        expect(urls.length).to.equal(1);
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+          content: ['Check it'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
+        await pageHasSecureReplyContainer(t, browser, gmailPage);
+      })
+    );
+
+    test(
       `mail.google.com - attachments which contain emoji in filename are rendered correctly`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
