@@ -343,7 +343,7 @@ export class Settings {
       const response = await GoogleOAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await GlobalStore.acctEmailsAdd(response.acctEmail);
-        await ConfiguredIdpOAuth.newAuthPopupForEnterpriseServerAuthenticationIfNeeded(acctEmail);
+        await ConfiguredIdpOAuth.newAuthPopupForEnterpriseServerAuthenticationIfNeeded(response.acctEmail);
         const storage = await AcctStore.get(response.acctEmail, ['setup_done']);
         if (storage.setup_done) {
           // this was just an additional permission
