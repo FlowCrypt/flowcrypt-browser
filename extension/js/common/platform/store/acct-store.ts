@@ -1,7 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
+import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
@@ -12,7 +13,7 @@ import { AbstractStore, RawStore } from './abstract-store.js';
 import { InMemoryStore } from './in-memory-store.js';
 
 export type EmailProvider = 'gmail';
-type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
+type GoogleAuthScopesNames = [keyof typeof GoogleOAuth.OAUTH.scopes, keyof typeof GoogleOAuth.OAUTH.legacy_scopes][number];
 
 export type Scopes = {
   openid: boolean;
@@ -44,7 +45,8 @@ export type AccountIndex =
   | 'rules'
   | 'fesUrl'
   | 'failedPassphraseAttempts'
-  | 'lastUnsuccessfulPassphraseAttempt';
+  | 'lastUnsuccessfulPassphraseAttempt'
+  | 'authentication';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -75,6 +77,7 @@ export type AcctStoreDict = {
   fesUrl?: string; // url where FlowCrypt External Service is deployed
   failedPassphraseAttempts?: number;
   lastUnsuccessfulPassphraseAttempt?: number;
+  authentication?: AuthenticationConfiguration;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -138,19 +141,19 @@ export class AcctStore extends AbstractStore {
     }
     let allowedScopes: string[] = [];
     try {
-      const { scope } = await GoogleAuth.getTokenInfo(accessToken);
+      const { scope } = await GoogleOAuth.getTokenInfo(accessToken);
       allowedScopes = scope.split(' ');
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded('broadcast', { acctEmail });
       }
     }
-    for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
+    for (const key of Object.keys({ ...GoogleOAuth.OAUTH.scopes, ...GoogleOAuth.OAUTH.legacy_scopes })) {
       const scopeName = key as GoogleAuthScopesNames;
-      if (scopeName in GoogleAuth.OAUTH.scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
-      } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
+      if (scopeName in GoogleOAuth.OAUTH.scopes) {
+        result[scopeName] = allowedScopes.includes(GoogleOAuth.OAUTH.scopes[scopeName as keyof typeof GoogleOAuth.OAUTH.scopes]);
+      } else if (scopeName in GoogleOAuth.OAUTH.legacy_scopes) {
+        result[scopeName] = allowedScopes.includes(GoogleOAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleOAuth.OAUTH.legacy_scopes]);
       }
     }
     return result;

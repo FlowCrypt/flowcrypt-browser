@@ -1,8 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Buf } from '../../core/buf';
-import { MsgUtil } from '../../core/crypto/pgp/msg-util';
+import { DecryptSuccess, MsgUtil } from '../../core/crypto/pgp/msg-util';
 import { FesClientConfiguration, FesConfig } from './shared-tenant-fes-endpoints';
 import { expect } from 'chai';
+import { base64decode } from '../../platform/util';
 
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 export const flowcryptTestClientConfiguration: FesConfig = {
@@ -43,15 +44,16 @@ export const processMessageFromUser = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"to":["Mr To <to@example.com>"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["Mr Bcc <bcc@example.com>"]');
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
-  const decrypted = await MsgUtil.decryptMessage({
+  const decrypted = (await MsgUtil.decryptMessage({
     kisWithPp: [],
     msgPwd: 'lousy pwdgO0d-pwd',
     encryptedData,
     verificationPubs: [],
-  });
+  })) as DecryptSuccess;
   expect(decrypted.success).to.equal(true);
+  expect(decrypted.signature?.signerLongids.length).to.equal(1);
   const decryptedMimeMsg = decrypted.content?.toUtfStr();
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - ID TOKEN'
@@ -82,7 +84,7 @@ export const processMessageFromUser2 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"to":["sender@domain.com","flowcrypt.compatibility@gmail.com","to@example.com","mock.only.pubkey@flowcrypt.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":[]');
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const encryptedData = Buf.fromUtfStr(body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0]);
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -131,7 +133,7 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   expect(body).to.contain('"to":["to@example.com"]');
   expect(body).to.contain('"cc":[]');
   expect(body).to.contain('"bcc":["flowcrypt.compatibility@gmail.com"]');
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const encryptedData = body.match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
   const decrypted = await MsgUtil.decryptMessage({
     kisWithPp: [],
@@ -141,6 +143,14 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
   });
   expect(decrypted.success).to.equal(true);
   const decryptedMimeMsg = decrypted.content?.toUtfStr();
+  const cryptupDataRegex = /cryptup-data="([^"]*)"/;
+  const cryptupDataMatch = decryptedMimeMsg?.match(cryptupDataRegex);
+  expect(cryptupDataMatch).to.not.be.undefined;
+  expect(cryptupDataMatch?.length).to.be.greaterThan(1);
+  const cryptupData = base64decode(cryptupDataMatch![1]);
+  const jsonObject = JSON.parse(cryptupData);
+  expect(jsonObject.recipient).to.not.include('flowcrypt.compatibility@gmail.com');
+  expect(cryptupData).to.contains('to@example.com');
   // small.txt
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - pubkey recipient in bcc'

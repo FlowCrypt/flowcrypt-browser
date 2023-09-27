@@ -96,7 +96,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //    - flowcrypt.com/shared-tenant-fes (consumers and customers without on-prem setup), or
     //    - fes.customer-domain.com (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
-    const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+    const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg, signingKey);
     // pwdRecipients that have their personal link
     const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
     const legacyPwdRecipients: { [type in RecipientType]?: EmailParts[] } = {};
@@ -154,7 +154,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     };
   };
 
-  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<UploadedMessageData> => {
+  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData, signingKey?: ParsedKeyInfo): Promise<UploadedMessageData> => {
     // PGP/MIME + included attachments (encrypted for password only)
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
@@ -165,7 +165,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
       await this.view.attachmentsModule.attachment.collectAttachments()
     );
-    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
+    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, [], signingKey?.key);
     return await this.view.acctServer.messageUpload(
       pwdEncryptedWithAttachments,
       replyToken,
@@ -252,7 +252,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     newMsgData: NewMsgData
   ): Promise<{ bodyWithReplyToken: SendableMsgBody; replyToken: string }> => {
-    const recipients = getUniqueRecipientEmails(newMsgData.recipients);
+    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
+    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
     try {
       const response = await this.view.acctServer.messageToken();
       const replyInfoRaw: ReplyInfoRaw = {

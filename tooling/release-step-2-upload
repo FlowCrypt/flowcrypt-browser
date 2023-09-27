@@ -78,7 +78,7 @@ with open('./tooling/release-firefox-latest-update.json', 'w') as outfile:
 
 ff_path = conf["firefox"]["path"]["upload"]
 replace_version_in_web_files = [
-  '../flowcrypt-web/source/blog/page/download.markdown',
+  '../flowcrypt-web/source/docs/blog/download.markdown',
   '../flowcrypt-web/source/html/js/pages/index.js'
 ]
 

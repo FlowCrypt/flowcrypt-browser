@@ -48,8 +48,19 @@ export type FesClientConfiguration = {
   enforce_keygen_expire_months?: number;
   allow_keys_openpgp_org_search_only_for_domains?: string[];
   disallow_keys_openpgp_org_search_for_domains?: string[];
+  prv_backup_to_designated_mailbox?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
+
+export type FesAuthenticationConfiguration = {
+  oauth: {
+    clientId: string;
+    clientSecret: string;
+    redirectUrl: string;
+    authCodeUrl: string;
+    tokensUrl: string;
+  };
+};
 
 export interface FesMessageReturnType {
   url: string;
@@ -60,6 +71,7 @@ export interface FesConfig {
   returnError?: HttpClientErr;
   apiEndpointReturnError?: HttpClientErr;
   clientConfiguration?: FesClientConfiguration;
+  authenticationConfiguration?: FesAuthenticationConfiguration;
   messagePostValidator?: (body: string, fesUrl: string) => Promise<FesMessageReturnType>;
 }
 
@@ -100,6 +112,15 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
           flags: [],
         },
       };
+    },
+    '/shared-tenant-fes/api/v1/client-configuration/authentication': async ({}, req) => {
+      if (req.method !== 'GET') {
+        throw new HttpClientErr('Unsupported method');
+      }
+      if (config?.authenticationConfiguration) {
+        return config.authenticationConfiguration;
+      }
+      return {};
     },
     '/shared-tenant-fes/api/v1/log-collector/exception': async ({ body }) => {
       reportedErrors.push(body as ReportedError);

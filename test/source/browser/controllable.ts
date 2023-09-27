@@ -246,11 +246,11 @@ abstract class ControllableBase {
   };
 
   public read = async (selector: string, onlyVisible = false): Promise<string | undefined> => {
-    selector = this.selector(selector);
+    const translatedSelector = this.selector(selector);
     if (onlyVisible) {
-      return (await this.readAll(selector)).find(el => el.visible)?.innerText;
+      return (await this.readAll(translatedSelector)).find(el => el.visible)?.innerText;
     } else {
-      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, this.selector(selector));
+      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, translatedSelector);
     }
   };
 
@@ -693,7 +693,6 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
-  // eslint-disable-next-line no-empty-function
   public constructor(
     public type: string,
     public text: string
@@ -764,7 +763,7 @@ export class ControllablePage extends ControllableBase {
   };
 
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
-    const dialogPromise: Promise<ControllableAlert> = new Promise((resolve, reject) => {
+    const dialogPromise = new Promise<ControllableAlert>((resolve, reject) => {
       this.page.on('dialog', () => resolve(this.alerts[this.alerts.length - 1])); // we need it as a ControllableAlert so that we know if it was dismissed or not
       setTimeout(() => reject(new Error('new alert timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
     });

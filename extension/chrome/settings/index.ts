@@ -39,7 +39,7 @@ View.run(
     private readonly advanced: boolean;
 
     private readonly gmail: Gmail | undefined;
-    private tabId!: string;
+    private readonly tabId = BrowserMsg.generateTabId();
     private notifications!: Notifications;
     private clientConfiguration: ClientConfiguration | undefined;
     private acctServer: AccountServer | undefined;
@@ -74,7 +74,6 @@ View.run(
       for (const webmailLName of await Env.webmails()) {
         $('.signin_button.' + webmailLName).css('display', 'inline-block');
       }
-      this.tabId = await BrowserMsg.requiredTabId();
       this.notifications = new Notifications();
       await this.acctServer?.initialize();
       if (this.acctEmail) {

@@ -7,13 +7,13 @@ import { Catch } from '../platform/catch.js';
 import { Dict, Str, Url } from '../core/common.js';
 import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
-import { Bm, BrowserMsg } from './browser-msg.js';
+import { Bm, BrowserMsg, ChildFrame } from './browser-msg.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>;
 
-export interface BrowserMsgResponseTracker {
+export interface BrowserMsgResponseTracker extends ChildFrame {
   getDest: () => string;
 }
 
@@ -117,6 +117,7 @@ export class Ui {
         Catch.reportErr(e);
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     prevent: <THIS extends HTMLElement | void>(
       evName: PreventableEventName,
       cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
@@ -351,7 +352,7 @@ export class Ui {
        */
       confirm: (text: string, isHTML = false, footer?: string): Promise<boolean> => {
         return CommonHandlers.sendRequestAndHandleAsyncResult(requestUid => {
-          BrowserMsg.send.showConfirmation({
+          BrowserMsg.send.showConfirmation(confirmationResultTracker, {
             text,
             isHTML,
             footer,

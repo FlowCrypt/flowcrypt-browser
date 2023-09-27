@@ -32,8 +32,8 @@ export class Browser {
     } else {
       // safari
       const ev = document.createEvent('MouseEvents');
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - safari only. expected 15 arguments, but works well with 4
+
+      // @ts-expect-error - safari only. expected 15 arguments, but works well with 4
       ev.initMouseEvent('click', true, true, window);
       a.dispatchEvent(ev);
     }

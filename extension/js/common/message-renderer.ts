@@ -52,7 +52,7 @@ export class MessageRenderer {
     private readonly factory: XssSafeFactory,
     private readonly sendAsAliases: Set<string>,
     private readonly fullName?: string,
-    private debug: boolean = false
+    private debug = false
   ) {
     this.downloader = new Downloader(gmail);
   }

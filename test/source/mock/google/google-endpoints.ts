@@ -14,7 +14,7 @@ import { Dict } from '../../core/common';
 
 type DraftSaveModel = { message: { raw: string; threadId: string } };
 
-const allowedRecipients: Array<string> = [
+const allowedRecipients: string[] = [
   'flowcrypt.compatibility@gmail.com',
   'manualcopypgp@flowcrypt.com',
   'censored@email.com',
@@ -42,6 +42,8 @@ const allowedRecipients: Array<string> = [
   'invalid@example.com',
   'timeout@example.com',
   'flowcrypt.test.key.new.manual.1@gmail.com',
+  'user@prv-backup-to-designated-mailbox.flowcrypt.test',
+  'admin@prv-backup-to-designated-mailbox.flowcrypt.test',
 ];
 
 export type MockUserAlias = {
@@ -234,7 +236,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req)) {
         // temporary replacement for parseResourceId() until #5050 is fixed
-        const id = req.url!.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1]; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        const id = req.url!.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1];
         if (!id) {
           return {};
         }
@@ -280,7 +282,6 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       }
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req) && (format === 'metadata' || format === 'full')) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const id = parseResourceId(req.url!);
         const msgs = (await GoogleData.withInitializedData(acct)).getMessagesAndDraftsByThread(id);
         if (!msgs.length) {
@@ -336,7 +337,6 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
     '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req)) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const id = parseResourceId(req.url!);
         const data = await GoogleData.withInitializedData(acct);
         const draft = data.getDraft(id);
@@ -363,7 +363,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
     '/gmail/?': async ({}, req) => {
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req)) {
-        const id = parseResourceId(req.url!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        const id = parseResourceId(req.url!);
         return await GoogleData.getMockGmailPage(acct, id, config?.htmlRenderer);
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
@@ -435,7 +435,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   const recipients = parsedMailAddressObjectAsArray(mimeMsg.to)
     .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
     .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   if (!recipients.length || recipients.some(addr => addr.value.some(em => !allowedRecipients.includes(em.address!)))) {
     throw new HttpClientErr("Error: You can't send a message to unexisting email address(es)");
   }
@@ -443,7 +443,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (acct === 'flowcrypt.compatibility@gmail.com') {
     aliases.push('flowcryptcompatibility@gmail.com');
   }
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   if (!mimeMsg.from?.value.length || mimeMsg.from?.value.find(em => !aliases.includes(em.address!))) {
     throw new HttpClientErr("You can't send a message from unexisting email address(es)");
   }

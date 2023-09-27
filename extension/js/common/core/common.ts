@@ -303,6 +303,15 @@ export class Value {
     hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60,
   };
 
+  public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
+    if (typeof percent === 'undefined') {
+      if (total || expectedTransferSize) {
+        percent = Math.round((loaded / (total || expectedTransferSize)) * 100);
+      }
+    }
+    return percent;
+  };
+
   public static noop = (): void => undefined;
 }
 
@@ -320,8 +329,8 @@ export class Url {
    */
   public static parse = (expectedKeys: string[], parseThisUrl?: string) => {
     const url = parseThisUrl || window.location.search.replace('?', '');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
+
+    const valuePairs = url.split('?').pop()?.split('&') ?? []; // str.split('?') string[].length will always be >= 1
     const rawParams = new Map<string, string>();
     const rawParamNameDict = new Map<string, string>();
     for (const valuePair of valuePairs) {
@@ -412,14 +421,14 @@ export const emailKeyIndex = (scope: string, key: string): string => {
   return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
 };
 
-export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
+export const asyncSome = async <T>(arr: T[], predicate: (e: T) => Promise<boolean>) => {
   for (const e of arr) {
     if (await predicate(e)) return true;
   }
   return false;
 };
 
-export const asyncFilter = async <T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
+export const asyncFilter = async <T>(arr: T[], predicate: (e: T) => Promise<boolean>) => {
   return (
     await Promise.all(
       arr.map(async e => {

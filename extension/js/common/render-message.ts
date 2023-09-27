@@ -25,6 +25,7 @@ export type RenderMessage = {
   resizePgpBlockFrame?: true;
   separateQuotedContentAndRenderText?: { decryptedContent: string; isHtml: boolean };
   renderText?: string;
+  progressOperation?: { operationId: string; text: string; perc?: number; init?: boolean };
   setFrameColor?: 'green' | 'gray' | 'red';
   renderEncryptionStatus?: string;
   renderSignatureStatus?: string;

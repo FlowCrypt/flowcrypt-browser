@@ -689,6 +689,11 @@ body#settings > div#content.setup h1 {
   animation: fadeIn 0.7s;
 }
 
+body#settings > div#content.setup div#step_0_backup_to_designated_mailbox {
+  display: none;
+  animation: fadeIn 0.7s;
+}
+
 body#settings > div#content.setup div#step_0_found_key {
   display: none;
   animation: fadeIn 0.7s;
@@ -2828,7 +2833,10 @@ body#new_message.full_window {
 }
 
 body#new_message.full_window table#compose {
-  box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 8px 10px 1px rgba(0, 0, 0, 0.14),
+    0 3px 14px 2px rgba(0, 0, 0, 0.12),
+    0 5px 5px -3px rgba(0, 0, 0, 0.2);
 }
 
 div#reply_message_table_container {

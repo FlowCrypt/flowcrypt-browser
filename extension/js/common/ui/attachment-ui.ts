@@ -127,6 +127,7 @@ export class AttachmentUI {
   };
 
   private cancelAttachment = (uploadFileId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this.attachedFiles[uploadFileId];
     if (this.callbacks.uiChanged) {
       // run at next event loop cycle - let DOM changes render first

@@ -20,14 +20,13 @@ export const get203FAE7076005381 = async () => {
   if (!data) {
     data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
   }
-  /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
   const msg = data.getMessage('17dad75e63e47f97')!;
   const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
   return msgText
     .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
     .replace(/=\r\n/g, '')
     .replace(/=3D/g, '=');
-  /* eslint-enable @typescript-eslint/no-non-null-assertion */
 };
 
 export const somePubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----

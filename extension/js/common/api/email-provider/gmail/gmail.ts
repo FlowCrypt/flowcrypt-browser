@@ -16,7 +16,7 @@ import { Catch } from '../../../platform/catch.js';
 import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
 import { Google } from './google.js';
-import { GoogleAuth } from './google-auth.js';
+import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
 
@@ -175,7 +175,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           reject(new Error('Chunk response could not be decoded'));
         }
       };
-      GoogleAuth.googleApiAuthHeader(this.acctEmail)
+      GoogleOAuth.googleApiAuthHeader(this.acctEmail)
         .then(authToken => {
           const r = new XMLHttpRequest();
           const method = 'GET';
@@ -228,7 +228,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       return;
     }
     let lastProgressPercent = -1;
-    const loadedAr: Array<number> = [];
+    const loadedAr: number[] = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(

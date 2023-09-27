@@ -25,7 +25,7 @@ type RawAjaxErr = {
   status?: number;
   statusText?: string;
 };
-export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; tabId?: string };
+export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; frameId: string };
 export type ApiCallContext = ProgressDestFrame | undefined;
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
@@ -73,8 +73,7 @@ export class Api {
         $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType })
           .then((data, s, xhr) => {
             if (req.dataType === 'xhr') {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
+              // @ts-expect-error -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
               xhr.then = xhr.promise = undefined;
               resolve(xhr);
             } else {

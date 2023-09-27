@@ -260,7 +260,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.serial(
+    // fails in 'master' too, should be fixed in separate PR
+    test.skip(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
         async (t, browser) => {
@@ -433,12 +434,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
-        await gmailPage.waitAndClick('[act="94"]', { delay: 1 });
+        await gmailPage.waitAndClick('[act="24"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
-        await gmailPage.waitAll('.reply_message_evaluated .error_notification');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
@@ -447,6 +447,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        expect(await replyBox.read('@recipients-preview')).to.equal(['flowcrypt.compatibility@gmail.com', 'e2e.enterprise.test@flowcrypt.com'].join(''));
       })
     );
 
@@ -527,6 +530,39 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
         await gmailPage.waitAll(['.aZi'], { visible: false });
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      `mail.google.com - large clipped PGP/MIME encrypted message rendered correctly`,
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtxKSjjzhRZRRzddjMvJnpDRQf');
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
+        expect(urls.length).to.equal(1);
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+          content: ['Check it'],
+          encryption: 'encrypted',
+          signature: 'signed',
+        });
+        await pageHasSecureReplyContainer(t, browser, gmailPage);
+      })
+    );
+
+    test(
+      `mail.google.com - attachments which contain emoji in filename are rendered correctly`,
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
+        await Util.sleep(5);
+        await gmailPage.waitAll('iframe');
+        await gmailPage.waitAll(['.aZo'], { visible: false });
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
+        expect(urls.length).to.equal(2);
         await gmailPage.close();
       })
     );

@@ -7,7 +7,7 @@ import { Dict, Str } from '../../../core/common.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
-import { GoogleAuth } from './google-auth.js';
+import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
 
 export class Google {
@@ -38,12 +38,14 @@ export class Google {
     }
     contentType = contentType || 'application/json; charset=UTF-8';
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const headers = { Authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
     const context =
-      'operationId' in progress ? { operationId: progress.operationId, expectedTransferSize: progress.expectedTransferSize, tabId: progress.tabId } : undefined;
+      'operationId' in progress
+        ? { operationId: progress.operationId, expectedTransferSize: progress.expectedTransferSize, frameId: progress.frameId }
+        : undefined;
     const xhr = Api.getAjaxProgressXhrFactory('download' in progress || 'upload' in progress ? progress : {});
     const request = { xhr, context, url, method, data, headers, crossDomain: true, contentType, async: true };
-    return (await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request)) as RT;
+    return (await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request)) as RT;
   };
 
   public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max = 10) => {
@@ -55,9 +57,9 @@ export class Google {
     const data = { query, readMask: 'names,emailAddresses', pageSize: max };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const headers = { Authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
     const contacts = await Promise.all([
-      GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
+      GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
         xhr,
         url: searchContactsUrl,
         method,
@@ -67,7 +69,7 @@ export class Google {
         crossDomain: true,
         async: true,
       }) as Promise<GmailRes.GoogleContacts>,
-      GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
+      GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
         xhr,
         url: searchOtherContactsUrl,
         method,
@@ -97,8 +99,8 @@ export class Google {
     const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
     const data = { personFields: 'names' };
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    const contacts = GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
+    const headers = { Authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
+    const contacts = GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
       url: getProfileUrl,
       method,
       data,

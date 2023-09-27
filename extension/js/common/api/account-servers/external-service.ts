@@ -12,7 +12,8 @@ import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
-import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
+import { GoogleOAuth } from '../authentication/google/google-oauth.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -88,6 +89,8 @@ export class ExternalService extends Api {
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
+    const auth = await this.request<AuthenticationConfiguration>('GET', `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`);
+    await AcctStore.set(this.acctEmail, { authentication: auth });
     const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
@@ -97,7 +100,7 @@ export class ExternalService extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
+    await this.request('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
   };
 
   public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
@@ -105,7 +108,7 @@ export class ExternalService extends Api {
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>(
+    await this.request(
       'POST',
       `/api/${this.apiVersion}/log-collector/exception`,
       {},
@@ -151,7 +154,7 @@ export class ExternalService extends Api {
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>(
+    await this.request(
       'POST',
       `/api/${this.apiVersion}/message/${externalId}/gateway`,
       {},
@@ -195,7 +198,7 @@ export class ExternalService extends Api {
       const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
         // force refresh token
-        const { email } = GoogleAuth.parseIdToken(idToken);
+        const { email } = GoogleOAuth.parseIdToken(idToken);
         if (email) {
           return await ExternalService.apiCall(
             this.url,
@@ -206,7 +209,7 @@ export class ExternalService extends Api {
             {
               ...headers,
               // eslint-disable-next-line @typescript-eslint/naming-convention
-              Authorization: await GoogleAuth.googleApiAuthHeader(email, true),
+              Authorization: await GoogleOAuth.googleApiAuthHeader(email, true),
             },
             'json',
             method

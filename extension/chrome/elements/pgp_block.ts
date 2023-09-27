@@ -2,19 +2,19 @@
 
 'use strict';
 
-import { Url } from '../../js/common/core/common.js';
+import { Url, Value } from '../../js/common/core/common.js';
 import { Assert } from '../../js/common/assert.js';
 import { RenderMessage } from '../../js/common/render-message.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachmens-module.js';
+import { PgpBlockViewAttachmentsModule } from './pgp_block_modules/pgp-block-attachments-module.js';
 import { PgpBlockViewErrorModule } from './pgp_block_modules/pgp-block-error-module.js';
 import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-module.js';
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
 import { CommonHandlers, Ui } from '../../js/common/browser/ui.js';
 import { View } from '../../js/common/view.js';
-import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 
 export class PgpBlockView extends View {
   public readonly acctEmail: string; // needed for attachment decryption, probably should be refactored out
@@ -27,7 +27,12 @@ export class PgpBlockView extends View {
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
   public readonly printModule = new PgpBlockViewPrintModule();
-  private tabId!: string;
+  private readonly tabId = BrowserMsg.generateTabId();
+
+  private progressOperation?: {
+    text: string;
+    operationId: string; // to ignore possible stray notifications, we generate an id for each operation
+  };
 
   public constructor() {
     super();
@@ -49,7 +54,7 @@ export class PgpBlockView extends View {
   };
 
   public render = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
+    //
   };
 
   public setHandlers = () => {
@@ -60,12 +65,41 @@ export class PgpBlockView extends View {
     BrowserMsg.addListener('pgp_block_render', async (msg: RenderMessage) => {
       this.processMessage(msg);
     });
+    BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
+      this.handleAjaxProgress(progress);
+    });
     BrowserMsg.addListener('confirmation_result', CommonHandlers.createAsyncResultHandler());
-    BrowserMsg.listen(this.tabId);
-    BrowserMsg.send.pgpBlockReady({ frameId: this.frameId, messageSender: this.tabId });
+    BrowserMsg.listen([this.getDest(), this.frameId]); // we receive non-critical ajax_progress calls via frameId address
+    BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
+  };
+
+  private handleAjaxProgress = ({ operationId, percent, loaded, total, expectedTransferSize }: Bm.AjaxProgress) => {
+    if (this.progressOperation && this.progressOperation.operationId === operationId) {
+      const perc = Value.getPercentage(percent, loaded, total, expectedTransferSize);
+      if (typeof perc !== 'undefined') {
+        this.renderProgress({ ...this.progressOperation, perc });
+      }
+      return true;
+    }
+    return false;
+  };
+
+  private renderProgress = ({ operationId, text, perc, init }: { operationId: string; text: string; perc?: number; init?: boolean }) => {
+    if (init) {
+      this.progressOperation = { operationId, text };
+    } else if (this.progressOperation?.operationId !== operationId) {
+      return;
+    }
+    const renderText = perc ? `${text} ${perc}%` : text;
+    this.renderModule.renderText(renderText);
   };
 
   private processMessage = (data: RenderMessage) => {
+    if (data?.progressOperation) {
+      this.renderProgress(data.progressOperation);
+    } else {
+      this.progressOperation = undefined;
+    }
     // messages aren't merged when queueing, so the order is arbitrary
     if (data?.renderEncryptionStatus) {
       this.renderModule.renderEncryptionStatus(data.renderEncryptionStatus);
