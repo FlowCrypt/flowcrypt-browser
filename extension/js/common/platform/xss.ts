@@ -1,10 +1,13 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../../../../node_modules/@formatjs/intl-segmenter/lib/src/segmenter.d.ts" />
 
 'use strict';
 
 import * as DOMPurify from 'dompurify';
+
+import { Segmenter } from '@formatjs/intl-segmenter';
 
 import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
@@ -232,7 +235,12 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    str = str.replace(/(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu, '');
+    if (Intl !== undefined && typeof Segmenter === 'function') {
+      const segmenter = new Segmenter('en', {});
+      str = [...segmenter.segment(str)].map(x => x?.segment).join('');
+    } else {
+      str = str.replace(/(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu, '');
+    }
     return this.escape(str);
   };
 

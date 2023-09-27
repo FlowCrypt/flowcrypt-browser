@@ -55,6 +55,9 @@ copy_dependencies() {
   cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTPUT_DIRECTORY/lib/bootstrap/bootstrap.min.js
   cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTPUT_DIRECTORY/lib/bootstrap/bootstrap.min.css
   cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTPUT_DIRECTORY/lib/streams
+  cp node_modules/@formatjs/intl-segmenter/lib/src/segmenter.js $OUTPUT_DIRECTORY/lib/intl_segmenter.js
+  cp node_modules/@formatjs/intl-segmenter/lib/src/segmentation-utils.js $OUTPUT_DIRECTORY/lib/segmentation-utils.js
+  cp node_modules/@formatjs/intl-segmenter/lib/src/cldr-segmentation-rules.generated.js $OUTPUT_DIRECTORY/lib/cldr-segmentation-rules.generated.js
 }
 
 # Function to run a regex replace command with sed
@@ -128,7 +131,7 @@ main() {
   apply_regex_replace $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
 
   # bundle web-stream-tools as Stream var for the content script
-  ( cd conf && npx webpack --config webpack.config.js ) & pids+=($!)
+  ( cd conf && npx webpack --config webpack.config.js && npx webpack --config webpack.config_intl_segmenter.js ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
   # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually

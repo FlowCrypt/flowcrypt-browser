@@ -6,6 +6,7 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
+    "@formatjs/intl-segmenter": "^11.4.4",
     "@openpgp/web-stream-tools": "^0.0.13",
     "@types/chai": "4.3.6",
     "@types/chai-as-promised": "7.1.6",
