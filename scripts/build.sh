@@ -128,7 +128,7 @@ main() {
   apply_regex_replace $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
 
   # bundle web-stream-tools as Stream var for the content script
-  ( cd conf && npx webpack --config webpack.config.js ) & pids+=($!)
+  ( cd conf && npx webpack ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
   # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
