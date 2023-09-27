@@ -30,8 +30,7 @@
       "zxcvbn": ["lib/zxcvbn.js", "COMMENT"],
       "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js", "COMMENT"],
       "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
-      "node-forge": ["lib/forge.js", "COMMENT"],
-      "emoji-regex": ["../node_modules/emoji-regex/index.d.ts", "../node_modules/emoji-regex/index.js", "COMMENT"]
+      "node-forge": ["lib/forge.js", "COMMENT"]
     },
     "typeRoots": ["./extension/js/common/core/types", "./extension/types"]
   },

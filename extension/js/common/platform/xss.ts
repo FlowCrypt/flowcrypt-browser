@@ -1,13 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../node_modules/emoji-regex/index.d.ts" />
 
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-
-import emojiRegex from 'emoji-regex';
 
 import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
@@ -235,11 +232,7 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    const emojiPattern = emojiRegex();
-    // regex for removing whitespace other form of whitespaces www.utf8-chartable.de/unicode-utf8-table.pl?start=65024&names=-
-    const whitespaceRegex = /[\u{FE00}-\u{FE0F}]/gu;
-    str = str.replace(emojiPattern, '');
-    str = str.replace(whitespaceRegex, ''); //
+    str = str.replace(/(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu, '');
     return this.escape(str);
   };
 
