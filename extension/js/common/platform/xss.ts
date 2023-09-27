@@ -1,13 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../node_modules/@formatjs/intl-segmenter/lib/src/segmenter.d.ts" />
+/// <reference lib="es2022.intl" />
 
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-
-import { Segmenter } from '@formatjs/intl-segmenter';
 
 import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
@@ -55,6 +52,7 @@ export class Xss {
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
+  private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -235,11 +233,10 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    if (Intl !== undefined && typeof Segmenter === 'function') {
-      const segmenter = new Segmenter('en', {});
-      str = [...segmenter.segment(str)].map(x => x?.segment).join('');
+    if (Intl !== undefined && typeof Intl.Segmenter === 'function') {
+      str = [...new Intl.Segmenter().segment(str)].map(x => x?.segment).join('');
     } else {
-      str = str.replace(/(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu, '');
+      str = str.replace(Xss.EMOJI_REGEX, '');
     }
     return this.escape(str);
   };

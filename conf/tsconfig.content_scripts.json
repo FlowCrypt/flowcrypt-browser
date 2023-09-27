@@ -18,8 +18,7 @@
     "paths": {
       "dompurify": ["types/purify.d.ts"],
       "openpgp": ["../node_modules/openpgp/openpgp.d.ts"],
-      "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts"],
-      "@formatjs/intl-segmenter": ["../node_modules/@formatjs/intl-segmenter/lib/src/segmenter.d.ts"]
+      "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts"]
     },
     "typeRoots": ["../extension/types", "../extension/js/common/core/types"]
   },
