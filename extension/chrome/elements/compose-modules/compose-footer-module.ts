@@ -32,7 +32,9 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
   };
 
   public createFooterHtml = (footer: string) => {
-    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n');
+    // fix for duplicated new lines https://github.com/FlowCrypt/flowcrypt-browser/issues/5354
+    const footerWithoutEmptyDivs = this.removeDivsWithoutAttributes(footer);
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footerWithoutEmptyDivs, '\n');
     const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
     const footerFirstLine = sanitizedPlainFooter.split('\n')[0].replace(/&nbsp;/g, ' ');
     if (!footerFirstLine) {
@@ -42,5 +44,9 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
       return sanitizedHtmlFooter; // first line of footer is already a footer separator, made of special characters
     }
     return `--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
+  };
+
+  private removeDivsWithoutAttributes = (inputString: string) => {
+    return inputString.replace(/<div>(.*?)<\/div>/g, '$1');
   };
 }
