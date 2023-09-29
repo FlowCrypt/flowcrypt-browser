@@ -1,7 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference lib="es2022.intl" />
-
 'use strict';
 
 import * as DOMPurify from 'dompurify';
@@ -233,11 +231,7 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    if (Intl !== undefined && typeof Intl.Segmenter === 'function') {
-      str = [...new Intl.Segmenter().segment(str)].map(x => x?.segment).join('');
-    } else {
-      str = str.replace(Xss.EMOJI_REGEX, '');
-    }
+    str = str.replace(Xss.EMOJI_REGEX, '');
     return this.escape(str);
   };
 
