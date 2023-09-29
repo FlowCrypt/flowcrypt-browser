@@ -1981,13 +1981,14 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - an attachment with the filename "noname" that is of type image should not be recognized as an encrypted message',
       testWithBrowser(async (t, browser) => {
-        const threadId1 = '18adb91ebf3ba7b9'; // message with noname image
+        const threadId1 = '18adb91ebf3ba7b9'; // email with image attachment named "noname"
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage.waitAll('iframe');
-        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitForSelTestState('ready');
-        expect(await pgpBlock.notPresent('@pgp-error')).to.equal(true); // pgp decrypt error should not be present
+        const attachmentFrame = await inboxPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitForSelTestState('ready');
+        await attachmentFrame.waitForContent('@attachment-name', 'noname');
+        await attachmentFrame.waitForContent('@container-attachment-header', 'PLAIN FILE');
       })
     );
 
