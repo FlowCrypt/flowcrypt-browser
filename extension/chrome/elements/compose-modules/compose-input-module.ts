@@ -243,7 +243,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const result: ParsedRecipients = { to: [], cc: [], bcc: [] };
     for (const recipient of recipients) {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      const recipientObj = { email: recipient.email, name: Xss.stripEmojis(recipient.name || '') };
+      const recipientObj = { email: recipient.email, name: recipient.name || '' };
       switch (recipient.sendingType) {
         case 'to':
           result.to!.push(recipientObj);

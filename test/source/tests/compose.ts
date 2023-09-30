@@ -44,6 +44,8 @@ import {
 import { Buf } from '../core/buf';
 import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
+import { AddressObject } from 'mailparser';
+import Parse from '../util/parse';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -75,11 +77,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         const recipientEmail = 'User ⭐ Name <test@email.com>';
         const msgPwd = 'super hard password for the message';
-        const subject = 'Strip emojis in display name format';
+        const subject = 'Test Sending Message With Recipient Name Contains Emoji';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+        const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
+        const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
+        const toHeader = rawMessage.headers.get('to') as AddressObject;
+        expect(!toHeader.text.includes('⭐')).to.equal(true);
       })
     );
 
