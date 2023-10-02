@@ -905,7 +905,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const recipientId = this.generateRecipientId();
       const recipientsHtml =
         `<span tabindex="0" id="${recipientId}" data-test="${recipientId}">` +
-        `<span class="recipient-name">${Xss.stripEmojis(name || '')}</span>` +
+        `<span class="recipient-name">${name || ''}</span>` +
         `<span class="recipient-email">${Xss.escape(email || invalid || '')}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId);

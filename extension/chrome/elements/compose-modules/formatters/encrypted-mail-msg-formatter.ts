@@ -96,16 +96,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //    - flowcrypt.com/shared-tenant-fes (consumers and customers without on-prem setup), or
     //    - fes.customer-domain.com (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
-    const { to, cc, bcc } = newMsg.recipients;
-    const updateContactName = (recipient: { email: string; name: string }) => {
-      return {
-        ...recipient,
-        name: Xss.stripEmojis(recipient.name),
-      };
-    };
-    newMsg.recipients.to = to?.map(updateContactName);
-    newMsg.recipients.cc = cc?.map(updateContactName);
-    newMsg.recipients.bcc = bcc?.map(updateContactName);
     const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg, signingKey);
     // pwdRecipients that have their personal link
     const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));

@@ -231,8 +231,7 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    str = str.replace(Xss.EMOJI_REGEX, '');
-    return this.escape(str);
+    return str.replace(Xss.EMOJI_REGEX, '');
   };
 
   public static htmlUnescape = (str: string) => {
