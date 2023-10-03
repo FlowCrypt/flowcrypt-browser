@@ -52,7 +52,7 @@ export const Lang = {
     prvBackupToDesignatedMailboxEmailSubject: (acctEmail: string, fingerprint: string) =>
       `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${fingerprint}`,
     prvBackupToDesignatedMailboxEmailBody:
-      "Please keep this email and attachment in the mailbox for safekeeping. It will be needed if the user ever needs to set up FlowCrypt again or forgets their pass phrase. Without this, the user won't be able to read their emails.\n\nSee https://flowcrypt.com/docs/technical/enterprise/configuration/backup-to-designated-mailbox.html#recovery.",
+      "Please keep this email and attachment in the mailbox for safekeeping. It will be needed if the user ever needs to set up FlowCrypt again or forgets their pass phrase. Without this, the user won't be able to read their emails.\n\nSee https://flowcrypt.com/docs/technical/enterprise/configuration/backup-to-designated-mailbox.html#account-recovery.",
   },
   account: {
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,

@@ -93,7 +93,7 @@ export const multipleEmailAliasList: MockUserAlias[] = [
 ];
 
 export const flowcryptCompatibilityPrimarySignature =
-  '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
+  '<div dir="ltr"><font size="2">flowcrypt.compatibility test footer with an img<br></font><div><font size="2">and second line</font></div<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
 
 export const flowcryptCompatibilityAliasList = [
   {

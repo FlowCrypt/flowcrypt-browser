@@ -67,6 +67,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - strip emojis in a recipient email address',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const recipientEmail = 'NameWithEmoji ⭐ Test <test@email.com>';
+        const msgPwd = 'super hard password for the message';
+        const subject = 'Test Sending Message With Recipient Name Contains Emoji';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        await ComposePageRecipe.selectFromOption(composePage, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
+        await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+        // The actualt test for this is present in '/shared-tenant-fes/api/v1/message' of shared-tenant-fes mock endpoint.
+      })
+    );
+
+    test(
       'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
@@ -1615,12 +1633,30 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
         const footer = await composePage.read('@input-body');
-        expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img');
+        expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img\nand second line');
         await composePage.waitAndClick(`@action-send`);
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
         await composePage.waitAndType('@input-body', 'New message\n' + footer, { delay: 1 });
         await ComposePageRecipe.sendAndClose(composePage);
+      })
+    );
+
+    test(
+      'compose - replace &nbsp; with regular space in email footer to prevent duplicate email separators',
+      testWithBrowser(async (t, browser) => {
+        const emailSignature = '<div dir="ltr">-- <br>footer with non breaking space<br></div>';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: {
+            acctPrimarySignature: emailSignature,
+          },
+        });
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        const emailSeparatorRegex = new RegExp('--', 'g');
+        const emailBody = await composePage.read('@input-body');
+        const emailSeparatorMatch = emailBody?.match(emailSeparatorRegex);
+        expect(emailSeparatorMatch?.length).to.equal(1);
+        await composePage.close();
       })
     );
 

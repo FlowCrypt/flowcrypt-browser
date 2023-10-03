@@ -142,6 +142,9 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       if (req.method === 'POST' && typeof body === 'string') {
         expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
         expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+        if (body.includes('NameWithEmoji')) {
+          expect(body).to.not.include('⭐');
+        }
         const response = {
           // this url is required for pubkey encrypted message
           url: `https://flowcrypt.com/shared-tenant-fes/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,
