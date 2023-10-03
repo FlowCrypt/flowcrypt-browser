@@ -292,7 +292,7 @@ export class MessageRenderer {
         if (this.debug) {
           console.debug('processAttachment() try -> awaiting chunk + awaiting type');
         }
-        const data = await this.downloader.waitForAttachmentChunkDownload(a);
+        const data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // todo: publicKey attachment can't be too big, so we could do preparePubkey() call (checking file length) right here
@@ -406,11 +406,11 @@ export class MessageRenderer {
       const treatAs = a.treatAs(attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
-        this.downloader.queueAttachmentChunkDownload(a);
+        this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else if (treatAs === 'publicKey') {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
-        this.downloader.queueAttachmentChunkDownload(a);
+        this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
