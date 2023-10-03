@@ -5,7 +5,7 @@
 import { GoogleOAuth } from './google/google-oauth.js';
 import { Ui } from '../../browser/ui.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
-import { OAuth } from './oauth/oauth.js';
+import { OAuth } from './generic/oauth.js';
 
 export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (acctEmail: string) => {

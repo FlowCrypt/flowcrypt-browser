@@ -45,7 +45,7 @@ buildContentScript(
     getFilesInDir(`${sourceDir}/js/common/api/shared`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/key-server`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/account-servers`, /\.js$/, false),
-    getFilesInDir(`${sourceDir}/js/common/api/authentication/oauth`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication/generic`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/authentication/google`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/authentication`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/email-provider`, /\.js$/, false),
