@@ -5,8 +5,9 @@
 import { GoogleOAuth } from './google/google-oauth.js';
 import { Ui } from '../../browser/ui.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
+import { OAuth } from './oauth/oauth.js';
 
-export class ConfiguredIdpOAuth {
+export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (acctEmail: string) => {
     const storage = await AcctStore.get(acctEmail, ['authentication']);
     if (storage?.authentication?.oauth?.clientId && storage.authentication.oauth.clientId !== GoogleOAuth.OAUTH.client_id) {
