@@ -783,7 +783,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (window.location.hash.startsWith('#settings')) {
       const settingsBtnContainer = $(this.sel.settingsBtnContainer);
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
-        settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
+        settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail'));
         settingsBtnContainer.find('#fc_settings_btn').on(
           'click',
           Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail }))

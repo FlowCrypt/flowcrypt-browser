@@ -52,7 +52,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
         return msgBody.append(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
       }
     } else if (method === 'after') {
-      msgBody.after(newHtmlContent_MUST_BE_XSS_SAFE);
+      msgBody.after(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
       return msgBody;
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);
