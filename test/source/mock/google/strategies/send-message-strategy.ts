@@ -472,8 +472,6 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Test Sending Message With Attachment Which Contains Emoji in Filename')) {
       this.strategy = new SaveMessageInStorageStrategy();
-    } else if (subject.includes('Test Sending Message With Recipient Name Contains Emoji')) {
-      this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {
       this.strategy = new NoopTestStrategy();
     } else {
