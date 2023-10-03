@@ -14,6 +14,7 @@ import { ClientConfigurationError, ClientConfigurationJson } from '../../client-
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { GoogleOAuth } from '../authentication/google/google-oauth.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
+import { Xss } from '../../platform/xss.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -143,9 +144,9 @@ export class ExternalService extends Api {
         JSON.stringify({
           associateReplyToken,
           from,
-          to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
-          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
-          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName),
+          to: (recipients.to || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
+          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
+          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
         })
       ),
     });
