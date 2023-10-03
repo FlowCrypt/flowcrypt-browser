@@ -67,6 +67,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - strip emojis in a recipient email address',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const recipientEmail = 'NameWithEmoji ⭐ Test <test@email.com>';
+        const msgPwd = 'super hard password for the message';
+        const subject = 'Test Sending Message With Recipient Name Contains Emoji';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        await ComposePageRecipe.selectFromOption(composePage, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
+        await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+        // The actualt test for this is present in '/shared-tenant-fes/api/v1/message' of shared-tenant-fes mock endpoint.
+      })
+    );
+
+    test(
       'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';
