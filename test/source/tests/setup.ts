@@ -2498,7 +2498,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
         });
         const acctEmail = 'user@authentication-config-test.flowcrypt.test';
-        await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail, true);
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         const debugFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-show-local-store-contents', ['debug_api.htm']);
         await debugFrame.waitForContent('@container-pre', 'authentication');
