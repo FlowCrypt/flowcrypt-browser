@@ -38,7 +38,7 @@ const validateTypeScriptLine = (line: string, location: string) => {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/\.(html|append|prepend|replaceWith|insertBefore|insertAfter|after)\([^)]/) && !hasXssComment(line)) {
+  if (line.match(/\.(html|append|prepend|replaceWith|insertBefore|insertAfter|before|after)\([^)]/) && !hasXssComment(line)) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
