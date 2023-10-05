@@ -1979,7 +1979,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - an ambigious file "noname" should not be recognized as an encrypted message',
+      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
         const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
