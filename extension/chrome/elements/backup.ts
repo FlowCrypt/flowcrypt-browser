@@ -52,7 +52,7 @@ View.run(
       } else {
         $('.line .private_key_status')
           .text('This private key was not imported yet. We suggest to import all backups so that you can read all incoming encrypted emails.')
-          .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>');
+          .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>'); // xss-direct
       }
       this.sendResizeMsg();
     };
