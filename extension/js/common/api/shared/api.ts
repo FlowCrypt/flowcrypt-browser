@@ -9,6 +9,8 @@ import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../.
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
+import { Env } from '../../browser/env.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
 
 export type RecipientType = 'to' | 'cc' | 'bcc';
 export type ResFmt = 'json' | 'text' | undefined;
@@ -84,6 +86,14 @@ export class Api {
   };
 
   public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
+    if (Env.isContentScript()) {
+      // TODO: Fix showing progress
+      // req.progress = JSON.parse(JSON.stringify(req.progress));
+      // content script CORS not allowed anymore, have to drag it through background page
+      // https://www.chromestatus.com/feature/5629709824032768
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await BrowserMsg.send.bg.await.ajax({ req, resFmt });
+    }
     Api.throwIfApiPathTraversalAttempted(req.url);
     const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
     // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })

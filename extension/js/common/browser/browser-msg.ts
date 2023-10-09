@@ -16,6 +16,7 @@ import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
+import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -81,6 +82,7 @@ export namespace Bm {
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
+  export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
@@ -104,6 +106,8 @@ export namespace Bm {
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    export type Ajax = any; // not included in Any below
 
     export type Any =
       | GetActiveTabInfo
@@ -133,7 +137,6 @@ export namespace Bm {
     | ComposeWindowOpenDraft
     | NotificationShow
     | PassphraseDialog
-    | PassphraseDialog
     | Settings
     | SetCss
     | AddOrRemoveClass
@@ -151,7 +154,8 @@ export namespace Bm {
     | RenderMessage
     | PgpBlockReady
     | PgpBlockRetry
-    | ConfirmationResult;
+    | ConfirmationResult
+    | Ajax;
 
   export type AsyncRespondingHandler = (req: AnyRequest) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -196,6 +200,7 @@ export class BrowserMsg {
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
+        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
