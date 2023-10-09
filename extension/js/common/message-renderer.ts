@@ -593,7 +593,7 @@ export class MessageRenderer {
       const appendAfter = $(`iframe#${frameId}`);
       // todo: how publicKeys and needPassphrase interact?
       for (const armoredPubkey of result.publicKeys ?? []) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail)));
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail))); // xss-safe-value
       }
       while (result.needPassphrase && !renderModule.cancellation.cancel) {
         // wait for either passphrase or cancellation
