@@ -243,6 +243,16 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
       relayManager.renderProgress(progress);
     });
+    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+      const traverseUpLevels = traverseUp || 0;
+      let appendAfter = $(`iframe#${afterFrameId}`);
+      for (let i = 0; i < traverseUpLevels; i++) {
+        appendAfter = appendAfter.parent();
+      }
+      for (const armoredPubkey of publicKeys) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+      }
+    });
     BrowserMsg.listen(tabId);
   };
 
