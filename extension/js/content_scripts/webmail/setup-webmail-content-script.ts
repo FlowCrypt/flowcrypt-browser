@@ -404,9 +404,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     if (expireInDays > 30) {
       return;
     }
-    let warningMsg;
+    let warningMsg: string;
     if (clientConfiguration.usesKeyManager()) {
-      let expirationText;
+      let expirationText: string;
       if (expireInDays > 0) {
         expirationText = `Your local keys expire in ${Str.pluralize(expireInDays, 'day')}.<br/>`;
       } else {
@@ -417,7 +417,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
-      let expirationText;
+      let expirationText: string;
       if (expireInDays > 0) {
         expirationText = `Your keys are expiring in ${Str.pluralize(expireInDays, 'day')}.`;
       } else {
