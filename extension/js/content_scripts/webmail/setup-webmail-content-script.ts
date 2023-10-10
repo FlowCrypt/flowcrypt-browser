@@ -250,7 +250,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         appendAfter = appendAfter.parent();
       }
       for (const armoredPubkey of publicKeys) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false)); // xss-safe-value
       }
     });
     BrowserMsg.listen(tabId);
