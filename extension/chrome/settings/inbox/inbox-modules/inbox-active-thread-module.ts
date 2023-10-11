@@ -158,7 +158,7 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
         appendAfter = appendAfter.parent();
       }
       for (const armoredPubkey of publicKeys) {
-        appendAfter.after(this.view.factory.embeddedPubkey(armoredPubkey, false));
+        appendAfter.after(this.view.factory.embeddedPubkey(armoredPubkey, false)); // xss-safe-value
       }
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
