@@ -44,7 +44,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.resizeReplyBox();
     this.scrollIntoView();
     this.handleRTL();
-    // this.initSquire(this.isRichText());
+    this.initSquire(this.isRichText());
     // Set lastDraftBody to current empty squire content ex: <div><br></div>)
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5184
     this.view.draftModule.setLastDraftBody(this.squire.getHTML());
@@ -110,6 +110,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private initSquire = (addLinks: boolean, html = '') => {
     const el = this.view.S.cached('input_text').get(0) as HTMLElement;
+    this.squire?.destroy();
     this.squire = new window.Squire(el, { addLinks });
     this.squire.setHTML(html);
   };
@@ -184,7 +185,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private initShortcuts = () => {
     try {
       const isMac = /Mac OS X/.test(navigator.userAgent);
-      const ctrlKey = isMac ? 'meta-' : 'ctrl-';
+      const ctrlKey = isMac ? 'Meta-' : 'Ctrl-';
       const mapKeyToFormat = (tag: string) => {
         return (self: Squire, event: Event) => {
           try {
