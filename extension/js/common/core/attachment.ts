@@ -220,7 +220,13 @@ export class Attachment {
       // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
       const isAmbiguousAscFile = /\.asc$/.test(this.name); // ambiguous .asc name
       const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
-      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isAttachmentAnImage()) {
+      if (
+        !this.inline &&
+        this.length < 100000 &&
+        (isAmbiguousAscFile || isAmbiguousNonameFile) &&
+        !this.isAttachmentAnImage() &&
+        this.type !== 'application/octet-stream'
+      ) {
         return this.hasData() ? 'maybePgp' : 'needChunk';
       }
       return 'plainFile';
