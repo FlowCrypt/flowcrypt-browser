@@ -228,7 +228,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Xss.sanitizeAppend(containerSel, iconHtml)
+    Xss.sanitizePrepend(containerSel, iconHtml)
       .children(iconSel)
       .off()
       .on('click', Ui.event.prevent('double', Catch.try(onClick)));
@@ -239,7 +239,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replaceConvoBtns = (force = false) => {
-    const convoUpperIcons = $('div.ade:visible');
+    const convoUpperIcons = $('div.hj:visible');
     const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
@@ -299,7 +299,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) {
           // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            convoUpperIcons.find('.gZ').trigger('click');
+            convoUpperIcons.trigger('click');
           });
         }
       }
