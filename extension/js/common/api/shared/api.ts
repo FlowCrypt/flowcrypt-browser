@@ -9,8 +9,8 @@ import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../.
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
-import { Env } from '../../browser/env.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
+// import { Env } from '../../browser/env.js';
+// import { BrowserMsg } from '../../browser/browser-msg.js';
 
 export type RecipientType = 'to' | 'cc' | 'bcc';
 export type ResFmt = 'json' | 'text' | undefined;
@@ -86,14 +86,14 @@ export class Api {
   };
 
   public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
-    if (Env.isContentScript()) {
-      // TODO: Fix showing progress
-      // req.progress = JSON.parse(JSON.stringify(req.progress));
-      // content script CORS not allowed anymore, have to drag it through background page
-      // https://www.chromestatus.com/feature/5629709824032768
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return await BrowserMsg.send.bg.await.ajax({ req, resFmt });
-    }
+    // if (Env.isContentScript()) {
+    //   // TODO: Fix showing progress
+    //   req.progress = JSON.parse(JSON.stringify(req.progress));
+    //   // content script CORS not allowed anymore, have to drag it through background page
+    //   // https://www.chromestatus.com/feature/5629709824032768
+    //   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    //   return await BrowserMsg.send.bg.await.ajax({ req, resFmt });
+    // }
     Api.throwIfApiPathTraversalAttempted(req.url);
     const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
     // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })
@@ -161,7 +161,7 @@ export class Api {
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
     try {
-      const fetchPromise = fetch(url, requestInit);
+      const fetchPromise = Api.fetchWithRetry(url, requestInit);
       await uploadPromise();
       const response = await Promise.race([fetchPromise, newTimeoutPromise()]);
       if (!response.ok) {
@@ -327,6 +327,17 @@ export class Api {
   private static throwIfApiPathTraversalAttempted = (requestUrl: string) => {
     if (requestUrl.includes('../') || requestUrl.includes('/..')) {
       throw new Error(`API path traversal forbidden: ${requestUrl}`);
+    }
+  };
+
+  private static fetchWithRetry = async (url: string, options: RequestInit, attempts = 2): Promise<Response> => {
+    // in firefox fetch sends pre-flight OPTIONS request which sometimes returns CORS error
+    // on retry fetch sends original request and it passes
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      if (attempts === 1) throw err;
+      return await Api.fetchWithRetry(url, options, attempts - 1);
     }
   };
 }
