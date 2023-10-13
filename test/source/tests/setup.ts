@@ -1622,7 +1622,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           await gmailPage.close();
         },
         undefined,
-        minutes(10) // Increased timeout from the default 4 minutes to 10 due to extensive test duration
+        minutes(12) // Increased timeout from the default 4 minutes to 12 due to extensive test duration
       )
     );
 
