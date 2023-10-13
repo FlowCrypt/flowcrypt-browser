@@ -4,7 +4,7 @@
 
 import { GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
-import { Attachment } from './core/attachment.js';
+import { Attachment, Attachment$treatAs } from './core/attachment.js';
 import { Buf } from './core/buf.js';
 import { ExpirationCache } from './core/expiration-cache.js';
 
@@ -23,22 +23,22 @@ export class Downloader {
     });
   };
 
-  public queueAttachmentChunkDownload = (a: Attachment): { result: Promise<Buf> } => {
+  public queueAttachmentChunkDownload = (a: Attachment, treatAs: Attachment$treatAs): { result: Promise<Buf> } => {
     if (a.hasData()) {
       return { result: Promise.resolve(a.getData()) };
     }
     let download = this.chunkDownloads.get(a);
     if (!download) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      download = this.gmail.attachmentGetChunk(a.msgId!, a.id!);
+      download = this.gmail.attachmentGetChunk(a.msgId!, a.id!, treatAs);
       this.chunkDownloads.set(a, download);
     }
     return { result: download };
   };
 
-  public waitForAttachmentChunkDownload = async (a: Attachment) => {
+  public waitForAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs) => {
     if (a.hasData()) return a.getData();
-    return this.chunkDownloads.await(a, this.queueAttachmentChunkDownload(a).result);
+    return this.chunkDownloads.await(a, this.queueAttachmentChunkDownload(a, treatAs).result);
   };
 
   public msgGetRaw = async (msgId: string): Promise<string> => {
