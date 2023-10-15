@@ -1992,7 +1992,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await attachmentFrame1.waitForContent('@container-attachment-header', 'PLAIN FILE');
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
         await inboxPage2.waitAll('iframe');
-        const attachmentFrame2 = await inboxPage1.getFrame(['attachment.htm']);
+        const attachmentFrame2 = await inboxPage2.getFrame(['attachment.htm']);
         await attachmentFrame2.waitForSelTestState('ready');
         await attachmentFrame2.waitForContent('@attachment-name', 'noname');
         await attachmentFrame2.waitForContent('@container-attachment-header', 'PLAIN FILE');
