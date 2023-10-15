@@ -1560,6 +1560,31 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - message with attached ECC public key is rendered correctly',
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const threadId = '18b18681188bba11';
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['check my key'],
+          encryption: 'encrypted',
+        });
+        const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.true;
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.true;
+      })
+    );
+
+    test(
       'decrypt - not an armored public key in a file that looked like a public key',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
