@@ -11,7 +11,7 @@
     "@types/chai-as-promised": "7.1.6",
     "@types/chrome": "0.0.246",
     "@types/dompurify": "3.0.3",
-    "@types/jquery": "3.5.19",
+    "@types/jquery": "3.5.22",
     "@types/mailparser": "3.4.0",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.6.0",
