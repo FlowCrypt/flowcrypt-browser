@@ -52,19 +52,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       this.view.S.cached('triple_dot').removeClass('progress');
     }
     let sanitizedQuote = '';
-    if (this.messageToReplyOrForward?.text) {
-      const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
-      if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
-        sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(
-          this.messageToReplyOrForward.text,
-          sentDate,
-          this.messageToReplyOrForward.headers.from
-        )}`;
-      }
-      if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
-        for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          this.view.attachmentsModule.attachment.addFile(file);
-        }
+    console.log(this.messageToReplyOrForward);
+    sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(method)}`;
+    if (method === 'forward' && this.messageToReplyOrForward?.decryptedFiles.length) {
+      for (const file of this.messageToReplyOrForward.decryptedFiles) {
+        this.view.attachmentsModule.attachment.addFile(file);
       }
     }
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
@@ -93,8 +85,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       }
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw));
       const headers = {
+        subject: decoded.subject,
         date: String(decoded.headers.date),
         from: decoded.from,
+        to: decoded.to,
+        cc: decoded.cc,
         references: String(decoded.headers.references || ''),
         'message-id': String(decoded.headers['message-id'] || ''),
       };
@@ -206,14 +201,32 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       .join('');
   };
 
-  private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
-    let onDateUserWrote = `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:`;
-    const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
-    if (rtl) {
-      onDateUserWrote = `<div dir="ltr">${onDateUserWrote}</div>`;
+  private generateHtmlPreviousMsgQuote = (method: 'reply' | 'forward') => {
+    if (!this.messageToReplyOrForward || !this.messageToReplyOrForward.text || !this.messageToReplyOrForward.headers.date) {
+      return;
     }
-    const sanitizedQuote = Xss.htmlSanitize(onDateUserWrote + this.quoteText(Xss.escape(text)));
-    return `<blockquote${rtl ? ' dir="rtl"' : ''}>${sanitizedQuote}</blockquote>`;
+    const text = this.messageToReplyOrForward.text;
+    const from = this.messageToReplyOrForward.headers.from;
+    const date = new Date(String(this.messageToReplyOrForward.headers.date));
+    const dateStr = Str.fromDate(date).replace(' ', ' at ');
+    const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
+    const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
+    let header = '';
+    if (method === 'reply') {
+      header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
+    } else {
+      header =
+        `<div ${dirAttr}>` +
+        `---------- Forwarded message ---------<br/>` +
+        `From: ${from}<br>` +
+        `Date: ${dateStr}<br>` +
+        `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
+        `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
+        `${this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc.join(', ')}<br>` : ''}` +
+        `</div>`;
+    }
+    const sanitizedQuote = Xss.htmlSanitize(header + this.quoteText(Xss.escape(text)));
+    return `<blockquote ${dirAttr}}>${sanitizedQuote}</blockquote>`;
   };
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
