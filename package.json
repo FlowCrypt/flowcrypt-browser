@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "8.5.0",
+  "version": "8.5.1",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -11,14 +11,14 @@
     "@types/chai-as-promised": "7.1.6",
     "@types/chrome": "0.0.246",
     "@types/dompurify": "3.0.3",
-    "@types/jquery": "3.5.19",
+    "@types/jquery": "3.5.22",
     "@types/mailparser": "3.4.0",
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.6.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.5",
     "ava": "5.3.1",
     "chai": "4.3.8",
     "chai-as-promised": "7.1.1",
-    "eslint": "^8.48.0",
+    "eslint": "^8.51.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-header": "3.1.1",
     "eslint-plugin-import": "^2.28.1",
