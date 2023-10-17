@@ -155,7 +155,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
   };
 
-  public attachmentGetChunk = async (msgId: string, attachmentId: string): Promise<Buf> => {
+  public attachmentGetChunk = async (msgId: string, attachmentId: string, treatAs: string): Promise<Buf> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -163,6 +163,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         acctEmail: this.acctEmail,
         msgId,
         attachmentId,
+        treatAs,
       });
       return chunk;
     }
@@ -215,7 +216,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           r.send();
           let status: number;
           const responsePollInterval = Catch.setHandledInterval(() => {
-            if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) {
+            if (status >= 200 && status <= 299 && (r.responseText.length >= minBytes || treatAs === 'publicKey')) {
               window.clearInterval(responsePollInterval);
               processChunkAndResolve(r.responseText);
               r.abort();
@@ -233,7 +234,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             }
             if (r.readyState === 3 || r.readyState === 4) {
               // loading, done
-              if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) {
+              if (status >= 200 && status <= 299 && (r.responseText.length >= minBytes || treatAs === 'publicKey')) {
                 // done as a success - resolve in case response_poll didn't catch this yet
                 processChunkAndResolve(r.responseText);
                 window.clearInterval(responsePollInterval);

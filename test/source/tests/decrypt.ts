@@ -1560,6 +1560,31 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - message with attached ECC public key is rendered correctly',
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const threadId = '18b18681188bba11';
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['check my key'],
+          encryption: 'encrypted',
+        });
+        const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.true;
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.true;
+      })
+    );
+
+    test(
       'decrypt - not an armored public key in a file that looked like a public key',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
@@ -1979,16 +2004,23 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - an attachment with the filename "noname" that is of type image should not be recognized as an encrypted message',
+      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message',
       testWithBrowser(async (t, browser) => {
-        const threadId1 = '18adb91ebf3ba7b9'; // email with image attachment named "noname"
+        const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
+        const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
-        await inboxPage.waitAll('iframe');
-        const attachmentFrame = await inboxPage.getFrame(['attachment.htm']);
-        await attachmentFrame.waitForSelTestState('ready');
-        await attachmentFrame.waitForContent('@attachment-name', 'noname');
-        await attachmentFrame.waitForContent('@container-attachment-header', 'PLAIN FILE');
+        const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
+        await inboxPage1.waitAll('iframe');
+        const attachmentFrame1 = await inboxPage1.getFrame(['attachment.htm']);
+        await attachmentFrame1.waitForSelTestState('ready');
+        await attachmentFrame1.waitForContent('@attachment-name', 'noname');
+        await attachmentFrame1.waitForContent('@container-attachment-header', 'PLAIN FILE');
+        const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
+        await inboxPage2.waitAll('iframe');
+        const attachmentFrame2 = await inboxPage2.getFrame(['attachment.htm']);
+        await attachmentFrame2.waitForSelTestState('ready');
+        await attachmentFrame2.waitForContent('@attachment-name', 'noname');
+        await attachmentFrame2.waitForContent('@container-attachment-header', 'PLAIN FILE');
       })
     );
 

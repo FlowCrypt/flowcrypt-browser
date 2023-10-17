@@ -198,7 +198,7 @@ export class Attachment {
       return 'signature';
     } else if (this.inline && this.isAttachmentAnImage()) {
       return 'inlineImage';
-    } else if (!this.name && !this.isAttachmentAnImage()) {
+    } else if (!this.name && !this.isAttachmentAnImage() && this.type !== 'application/octet-stream') {
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
@@ -221,6 +221,9 @@ export class Attachment {
       const isAmbiguousAscFile = /\.asc$/.test(this.name); // ambiguous .asc name
       const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
       if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isAttachmentAnImage()) {
+        if (isAmbiguousNonameFile && this.type === 'application/octet-stream') {
+          return 'plainFile';
+        }
         return this.hasData() ? 'maybePgp' : 'needChunk';
       }
       return 'plainFile';

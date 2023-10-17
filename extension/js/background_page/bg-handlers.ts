@@ -44,7 +44,7 @@ export class BgHandlers {
   };
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
-    return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId) };
+    return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId, r.treatAs) };
   };
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
