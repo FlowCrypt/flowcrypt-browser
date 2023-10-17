@@ -51,24 +51,21 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       this.view.S.cached('triple_dot').find('#loader').remove();
       this.view.S.cached('triple_dot').removeClass('progress');
     }
-    let sanitizedQuote = '';
-    console.log(this.messageToReplyOrForward);
-    sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(method)}`;
-    if (method === 'forward' && this.messageToReplyOrForward?.decryptedFiles.length) {
-      for (const file of this.messageToReplyOrForward.decryptedFiles) {
-        this.view.attachmentsModule.attachment.addFile(file);
-      }
-    }
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
-    if (!sanitizedQuote && !sanitizedFooter) {
-      this.view.S.cached('triple_dot').hide();
-      return;
-    }
-    this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: sanitizedQuote };
+    const msgQuote = this.generateHtmlPreviousMsgQuote(method);
     if (method === 'forward') {
-      this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
+      this.view.S.cached('triple_dot').hide();
+      for (const file of this.messageToReplyOrForward?.decryptedFiles ?? []) {
+        this.view.attachmentsModule.attachment.addFile(file);
+      }
+      const inputHtml = `<br>${msgQuote}<br><br><br>${sanitizedFooter}`;
+      Xss.sanitizeAppend(this.view.S.cached('input_text'), inputHtml);
+      this.view.draftModule.setLastDraftBody(inputHtml);
+      this.view.sizeModule.resizeComposeBox();
     } else {
+      const sanitizedQuote = `<br><br>${msgQuote}`;
+      this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: sanitizedQuote };
       this.view.S.cached('triple_dot').on(
         'click',
         this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
@@ -211,11 +208,12 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
-    let header = '';
     if (method === 'reply') {
-      header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
+      const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
+      const sanitizedQuote = Xss.htmlSanitize(header + this.quoteText(Xss.escape(text)));
+      return `<blockquote ${dirAttr}}>${sanitizedQuote}</blockquote>`;
     } else {
-      header =
+      const header =
         `<div ${dirAttr}>` +
         `---------- Forwarded message ---------<br/>` +
         `From: ${from}<br>` +
@@ -224,9 +222,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
         `${this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc.join(', ')}<br>` : ''}` +
         `</div>`;
+      return `${header}<br><br>${Xss.escape(text)}`;
     }
-    const sanitizedQuote = Xss.htmlSanitize(header + this.quoteText(Xss.escape(text)));
-    return `<blockquote ${dirAttr}}>${sanitizedQuote}</blockquote>`;
   };
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
