@@ -364,7 +364,7 @@ export class AttachmentDownloadView extends View {
     this.size = fileSize || this.size;
     const progressEl = $('.download_progress');
     if (!percent && this.size) {
-      percent = Math.floor(((received * 0.75) / this.size) * 100);
+      percent = Math.min(Math.floor((received / this.size) * 100), 100);
     }
     if (percent) {
       progressEl.text(`${Math.min(100, percent)}%`);
