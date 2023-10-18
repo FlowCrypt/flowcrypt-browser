@@ -54,12 +54,13 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     const msgQuote = this.generateHtmlPreviousMsgQuote(method);
+    console.log(msgQuote);
     if (method === 'forward') {
       this.view.S.cached('triple_dot').hide();
       for (const file of this.messageToReplyOrForward?.decryptedFiles ?? []) {
         this.view.attachmentsModule.attachment.addFile(file);
       }
-      const inputHtml = `<br>${msgQuote}<br><br><br>${sanitizedFooter}`;
+      const inputHtml = `<br>${msgQuote}<br><br>${sanitizedFooter}`;
       Xss.sanitizeAppend(this.view.S.cached('input_text'), inputHtml);
       this.view.draftModule.setLastDraftBody(inputHtml);
       this.view.sizeModule.resizeComposeBox();
@@ -191,10 +192,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private quoteText = (text: string) => {
+  private convertLineBreakToBr = (text: string, shouldQuote: boolean) => {
     return text
       .split('\n')
-      .map(line => `<br>&gt; ${line}`.trim())
+      .map(line => `<br>${shouldQuote ? '&gt; ' : ''}${line}`.trim())
       .join('');
   };
 
@@ -208,9 +209,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
+    const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
     if (method === 'reply') {
       const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
-      const sanitizedQuote = Xss.htmlSanitize(header + this.quoteText(Xss.escape(text)));
+      const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
       return `<blockquote ${dirAttr}}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
@@ -220,9 +222,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `Date: ${dateStr}<br>` +
         `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
         `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
-        `${this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc.join(', ')}<br>` : ''}` +
+        `${this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc.join(', ')}` : ''}` +
         `</div>`;
-      return `${header}<br><br>${Xss.escape(text)}`;
+      return `${header}<br><br>${escapedText}`;
     }
   };
 
