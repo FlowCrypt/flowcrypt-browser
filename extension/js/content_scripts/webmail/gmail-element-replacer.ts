@@ -41,6 +41,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
   private replyOption: ReplyOption | undefined;
+  private originalMessageText: string;
 
   private sel = {
     // gmail_variant=standard|new
@@ -157,6 +158,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private replaceArmoredBlocks = async () => {
     const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
+    if (emailsContainingPgpBlock.text()) {
+      this.originalMessageText = emailsContainingPgpBlock.text();
+    }
     for (const emailContainer of emailsContainingPgpBlock) {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer', emailContainer);
@@ -299,7 +303,24 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) {
           // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            convoUpperIcons.trigger('click');
+            const doc = `
+            <html lang="en">
+            <head>
+                <style>
+                    .original_message_container {
+                        padding: 4px;
+                    }
+                </style>
+            </head>
+            <body>
+                <pre class="original_message_container">${Xss.escape(this.originalMessageText)}</pre>
+            </body>
+            </html>
+            `;
+            const popupWindow = window.open('', '_blank', 'width=620, height=900');
+            popupWindow?.document.open();
+            popupWindow?.document.write(doc);
+            popupWindow?.document.close();
           });
         }
       }

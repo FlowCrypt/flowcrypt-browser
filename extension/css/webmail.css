@@ -250,7 +250,7 @@ body.cryptup_gmail div.hj.appended span.cryptup_convo_button > span {
   padding: 2px 3px;
   display: inline-block;
   border-radius: 2px;
-  cursor: default;
+  cursor: pointer;
 }
 
 body.cryptup_gmail div.hj.appended span.cryptup_convo_button:hover > img,
