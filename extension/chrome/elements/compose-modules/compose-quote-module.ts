@@ -54,7 +54,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
     const msgQuote = this.generateHtmlPreviousMsgQuote(method);
-    console.log(msgQuote);
     if (method === 'forward') {
       this.view.S.cached('triple_dot').hide();
       for (const file of this.messageToReplyOrForward?.decryptedFiles ?? []) {
