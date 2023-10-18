@@ -892,7 +892,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await composePage.waitAndClick('@action-forward');
         await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' });
-        expect(await composePage.read('@input-body')).to.include('> This message will contain a separately attached file + signature.');
+        const bodyContent = await composePage.read('@input-body');
+        expect(bodyContent).to.include('---------- Forwarded message ---------');
+        expect(bodyContent).to.include('From: henry.electrum@gmail.com');
+        expect(bodyContent).to.include('Date: 2017-11-03 at 02:42');
+        expect(bodyContent).to.include('Subject: [enigmail] signed message w/ attachment PGP/MIME');
+        expect(bodyContent).to.include('To: flowcrypt.compatibility@gmail.com');
+        expect(bodyContent).to.include('This message will contain a separately attached file + signature.');
         await composePage.waitAny('.qq-file-id-0');
       })
     );

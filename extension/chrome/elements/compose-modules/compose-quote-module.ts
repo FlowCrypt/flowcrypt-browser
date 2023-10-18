@@ -60,7 +60,10 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       for (const file of this.messageToReplyOrForward?.decryptedFiles ?? []) {
         this.view.attachmentsModule.attachment.addFile(file);
       }
-      const inputHtml = `<br>${msgQuote}<br><br>${sanitizedFooter}`;
+      let inputHtml = `<br>${msgQuote}`;
+      if (sanitizedFooter) {
+        inputHtml += `<br><br>${sanitizedFooter}`;
+      }
       Xss.sanitizeAppend(this.view.S.cached('input_text'), inputHtml);
       this.view.draftModule.setLastDraftBody(inputHtml);
       this.view.sizeModule.resizeComposeBox();
