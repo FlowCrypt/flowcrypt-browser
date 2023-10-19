@@ -23,7 +23,6 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - export PUPPETEER_PRODUCT=firefox
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
@@ -59,8 +58,8 @@ blocks:
 
   - name: Live UI Gmail tests
     dependencies: []
-    # run:
-    #   when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
+    run:
+      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
       minutes: 45
     task:
@@ -71,7 +70,6 @@ blocks:
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
         commands:
-          - export PUPPETEER_PRODUCT=firefox
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - npm install
