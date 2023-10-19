@@ -41,13 +41,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private removeNextReplyBoxBorders = false;
   private shouldShowEditableSecureReply = false;
   private replyOption: ReplyOption | undefined;
-  private originalMessageText: string;
 
   private sel = {
     // gmail_variant=standard|new
     convoRoot: 'div.if',
     convoRootScrollable: '.Tm.aeJ',
     subject: 'h2.hP',
+    linkWithGmIdKey: 'link#embedded_data_iframe',
+    dataMsgId: 'div.adn.ads',
     autoReplies: 'div.brb',
     msgOuter: 'div.adn',
     msgInner: 'div.a3s:visible:not(.undefined), .message_inner_body:visible',
@@ -158,9 +159,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private replaceArmoredBlocks = async () => {
     const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
-    if (emailsContainingPgpBlock.text()) {
-      this.originalMessageText = emailsContainingPgpBlock.text();
-    }
     for (const emailContainer of emailsContainingPgpBlock) {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer', emailContainer);
@@ -303,24 +301,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) {
           // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            const doc = `
-            <html lang="en">
-            <head>
-                <style>
-                    .original_message_container {
-                        padding: 4px;
-                    }
-                </style>
-            </head>
-            <body>
-                <pre class="original_message_container">${Xss.escape(this.originalMessageText)}</pre>
-            </body>
-            </html>
-            `;
-            const popupWindow = window.open('', '_blank', 'width=620, height=900');
-            popupWindow?.document.open();
-            popupWindow?.document.write(doc);
-            popupWindow?.document.close();
+            const linkWithGmKeyId = $(this.sel.linkWithGmIdKey).attr('data-recorded-src') || '';
+            const dataMsgId = $(this.sel.dataMsgId).attr('data-message-id')?.replace('#', '') || '';
+            const urlParams = new URLSearchParams(linkWithGmKeyId);
+            const tokenParam = urlParams.get('token') || '';
+            const gmIdKey = JSON.parse(tokenParam)[1];
+            const url = `https://mail.google.com/mail/u/${this.acctEmail}/?ik=${gmIdKey}&view=lg&permmsgid=${dataMsgId}`;
+            window.open(url, '_blank', `height=680, width=620, top=30, left=${(screen.width - 620) / 2}`);
           });
         }
       }
