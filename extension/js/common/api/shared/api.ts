@@ -244,6 +244,46 @@ export class Api {
     }
   };
 
+  /** @deprecated should use ajax() */
+  public static ajaxWithJquery = async <T extends ResFmt, RT = unknown>(
+    req: Ajax,
+    resFmt: T,
+    formattedData: FormData | string | undefined = undefined
+  ): Promise<FetchResult<T, RT>> => {
+    const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
+      xhr: Api.getAjaxProgressXhrFactory(req.progress),
+      url: req.url,
+      method: req.method,
+      data: formattedData,
+      dataType: resFmt,
+      crossDomain: true,
+      headers: req.headers,
+      processData: false,
+      contentType: false,
+      async: true,
+      timeout: typeof req.progress?.upload === 'function' || typeof req.progress?.download === 'function' ? undefined : 20000, // substituted with {} above
+    };
+
+    try {
+      return await new Promise((resolve, reject) => {
+        Api.throwIfApiPathTraversalAttempted(req.url || '');
+        $.ajax({ ...apiReq, dataType: apiReq.dataType === 'xhr' ? undefined : apiReq.dataType })
+          .then(data => {
+            resolve(data as FetchResult<T, RT>);
+          })
+          .catch(reject);
+      });
+    } catch (e) {
+      if (e instanceof Error) {
+        throw e;
+      }
+      if (Api.isRawAjaxErr(e)) {
+        throw AjaxErr.fromXhr(e, { ...req, stack: Catch.stackTrace() });
+      }
+      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
+    }
+  };
+
   public static isInternetAccessible = async () => {
     try {
       await Api.download('https://google.com');
@@ -320,50 +360,13 @@ export class Api {
       return undefinedRes as FetchResult<T, RT>;
     }
     if (progress.upload) {
-      const result = await Api.apiCallWithProgress(req, resFmt, formattedData);
+      // as of October 2023 fetch upload progress (through ReadableStream)
+      // is supported only by Chrome and requires HTTP/2 on backend
+      // as temporary solution we use XMLHTTPRequest for such requests
+      const result = await Api.ajaxWithJquery(req, resFmt, formattedData);
       return result as FetchResult<T, RT>;
     } else {
       return await Api.ajax(req, resFmt);
-    }
-  };
-
-  protected static apiCallWithProgress = async <T extends ResFmt, RT = unknown>(
-    req: Ajax,
-    resFmt: T,
-    formattedData: FormData | string | undefined
-  ): Promise<FetchResult<T, RT>> => {
-    const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
-      xhr: Api.getAjaxProgressXhrFactory(req.progress),
-      url: req.url,
-      method: req.method,
-      data: formattedData,
-      dataType: resFmt,
-      crossDomain: true,
-      headers: req.headers,
-      processData: false,
-      contentType: false,
-      async: true,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      timeout: typeof req.progress!.upload === 'function' || typeof req.progress!.download === 'function' ? undefined : 20000, // substituted with {} above
-    };
-
-    try {
-      return await new Promise((resolve, reject) => {
-        Api.throwIfApiPathTraversalAttempted(req.url || '');
-        $.ajax({ ...apiReq, dataType: apiReq.dataType === 'xhr' ? undefined : apiReq.dataType })
-          .then(data => {
-            resolve(data as FetchResult<T, RT>);
-          })
-          .catch(reject);
-      });
-    } catch (e) {
-      if (e instanceof Error) {
-        throw e;
-      }
-      if (Api.isRawAjaxErr(e)) {
-        throw AjaxErr.fromXhr(e, { ...req, stack: Catch.stackTrace() });
-      }
-      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
   };
 

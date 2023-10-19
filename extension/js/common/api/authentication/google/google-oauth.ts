@@ -329,15 +329,19 @@ export class GoogleOAuth extends OAuth {
         client_secret: GoogleOAuth.OAUTH.client_secret,
       });
     /* eslint-enable @typescript-eslint/naming-convention */
+    const req: Ajax = {
+      url,
+      method: 'POST',
+      stack: Catch.stackTrace(),
+    };
 
-    return (await Api.ajax(
-      {
-        url,
-        method: 'POST',
-        stack: Catch.stackTrace(),
-      },
-      'json'
-    )) as GoogleAuthTokensResponse;
+    if (Catch.browser().name === 'firefox') {
+      // Firefox 118 fails to perform fetch request to https://oauth2.googleapis.com/token
+      // with error message "CORS header ‘Origin’ cannot be added"
+      return (await Api.ajaxWithJquery(req, 'json')) as GoogleAuthTokensResponse;
+    } else {
+      return (await Api.ajax(req, 'json')) as GoogleAuthTokensResponse;
+    }
   };
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
