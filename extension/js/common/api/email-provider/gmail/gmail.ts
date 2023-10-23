@@ -132,7 +132,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       this.acctEmail,
       `messages/${msgId}`,
       { method: 'GET', data: { format: format || 'full' } },
-      { download: progressCb }
+      progressCb ? { download: progressCb } : undefined
     );
   };
 
