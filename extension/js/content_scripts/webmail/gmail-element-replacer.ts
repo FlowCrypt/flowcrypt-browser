@@ -28,6 +28,7 @@ import { JQueryEl } from '../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../common/core/mime.js';
 import { MsgBlock } from '../../common/core/msg-block.js';
 import { ReplyOption } from '../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
+import { Google } from '../../common/api/email-provider/gmail/google.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
@@ -303,11 +304,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
             const linkWithGmKeyId = $(this.sel.linkWithGmIdKey).attr('data-recorded-src') || '';
             const dataMsgId = $(this.sel.dataMsgId).attr('data-message-id')?.replace('#', '') || '';
-            const urlParams = new URLSearchParams(linkWithGmKeyId);
-            const tokenParam = urlParams.get('token') || '';
+            const tokenParam = new URLSearchParams(linkWithGmKeyId).get('token') || '';
             const gmIdKey = JSON.parse(tokenParam)[1];
-            const url = `https://mail.google.com/mail/u/${this.acctEmail}/?ik=${gmIdKey}&view=lg&permmsgid=${dataMsgId}`;
-            window.open(url, '_blank', `height=680, width=620, top=30, left=${(screen.width - 620) / 2}`);
+            const webmailUrl = Google.webmailUrl(this.acctEmail) + `/?ik=${gmIdKey}&permmsgid=${dataMsgId}&view=lg`;
+            window.open(webmailUrl, '_blank', `height=680, width=620, top=30, left=${(screen.width - 620) / 2}`);
           });
         }
       }
