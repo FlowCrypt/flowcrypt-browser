@@ -203,7 +203,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (inputMethod === 'mouse') {
       await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
     } else if (inputMethod === 'keyboard') {
-      await page.press('Escape');
+      await passPhraseFrame.keyboard().press('Escape');
     }
     await page.waitTillGone('@dialog-passphrase');
     expect(passPhraseFrame.frame.isDetached()).to.equal(true);
