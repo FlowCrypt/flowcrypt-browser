@@ -40,7 +40,6 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     );
     this.handlePaste();
     this.handlePasteImages();
-    this.initShortcuts();
     this.resizeReplyBox();
     this.scrollIntoView();
     this.handleRTL();
@@ -112,6 +111,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const el = this.view.S.cached('input_text').get(0) as HTMLElement;
     this.squire?.destroy();
     this.squire = new window.Squire(el, { addLinks });
+    this.initShortcuts();
     this.squire.setHTML(html);
   };
 
@@ -210,38 +210,16 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       const removeFormatting = (self: Squire) => {
         self.removeAllFormatting();
       };
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'u', mapKeyToFormat('U'));
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'i', mapKeyToFormat('I'));
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + '\\', removeFormatting);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'shift-7', noop); // default is 'S'
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'shift-5', noop); // default is 'SUB', { tag: 'SUP' }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'shift-6', noop); // default is 'SUP', { tag: 'SUB' }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'shift-8', noop); // default is 'makeUnorderedList'
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + 'shift-9', noop); // default is 'makeOrderedList'
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + '[', noop); // default is 'decreaseQuoteLevel'
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       this.squire.setKeyHandler(ctrlKey + ']', noop); // default is 'increaseQuot
     } catch (e) {
       Catch.reportErr(e);
