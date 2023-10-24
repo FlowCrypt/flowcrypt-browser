@@ -38,11 +38,6 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       'click',
       this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`))
     );
-    this.handlePaste();
-    this.handlePasteImages();
-    this.resizeReplyBox();
-    this.scrollIntoView();
-    this.handleRTL();
     this.initSquire(this.isRichText());
     // Set lastDraftBody to current empty squire content ex: <div><br></div>)
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5184
@@ -53,12 +48,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public addRichTextFormatting = () => {
-    this.initSquire(true, this.squire.getHTML());
+    this.initSquire(true);
   };
 
   public removeRichTextFormatting = () => {
-    const html = Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>');
-    this.initSquire(false, html);
+    this.initSquire(false);
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -107,12 +101,21 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return isInputLimitExceeded;
   };
 
-  private initSquire = (addLinks: boolean, html = '') => {
+  private initSquire = (addLinks: boolean) => {
+    const squireHtml = this.squire?.getHTML();
     const el = this.view.S.cached('input_text').get(0) as HTMLElement;
     this.squire?.destroy();
     this.squire = new window.Squire(el, { addLinks });
     this.initShortcuts();
-    this.squire.setHTML(html);
+    this.handlePaste();
+    this.handlePasteImages();
+    this.resizeReplyBox();
+    this.scrollIntoView();
+    this.handleRTL();
+    if (squireHtml) {
+      const processedHtml = addLinks ? squireHtml : Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>');
+      this.squire.setHTML(processedHtml);
+    }
   };
 
   private handlePaste = () => {
