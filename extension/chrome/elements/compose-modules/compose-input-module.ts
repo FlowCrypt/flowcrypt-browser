@@ -52,7 +52,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public removeRichTextFormatting = () => {
-    this.initSquire(false);
+    this.initSquire(false, true);
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -101,7 +101,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return isInputLimitExceeded;
   };
 
-  private initSquire = (addLinks: boolean) => {
+  private initSquire = (addLinks: boolean, removeExistingLinks = false) => {
     const squireHtml = this.squire?.getHTML();
     const el = this.view.S.cached('input_text').get(0) as HTMLElement;
     this.squire?.destroy();
@@ -113,7 +113,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.scrollIntoView();
     this.handleRTL();
     if (squireHtml) {
-      const processedHtml = addLinks ? squireHtml : Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>', false);
+      const processedHtml = removeExistingLinks ? Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>', false) : squireHtml;
       this.squire.setHTML(processedHtml);
     }
   };
