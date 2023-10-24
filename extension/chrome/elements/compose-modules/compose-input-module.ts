@@ -113,7 +113,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.scrollIntoView();
     this.handleRTL();
     if (squireHtml) {
-      const processedHtml = addLinks ? squireHtml : Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>');
+      const processedHtml = addLinks ? squireHtml : Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>', false);
       this.squire.setHTML(processedHtml);
     }
   };
