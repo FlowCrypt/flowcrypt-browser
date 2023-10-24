@@ -83,7 +83,7 @@ export namespace Bm {
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: JQuery.AjaxSettings<ApiCallContext>; stack: string };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
-  export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
+  export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: Dest; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
