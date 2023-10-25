@@ -1639,7 +1639,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
         const footer = await composePage.read('@input-body');
-        expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img\nand second line');
+        expect(footer).to.eq('\n\n\n\n--\n\nflowcrypt.compatibility test footer with an img\n\nand second line\n');
         await composePage.waitAndClick(`@action-send`);
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
