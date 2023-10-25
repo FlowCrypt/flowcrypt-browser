@@ -28,7 +28,6 @@ import { JQueryEl } from '../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../common/core/mime.js';
 import { MsgBlock } from '../../common/core/msg-block.js';
 import { ReplyOption } from '../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
-import { Google } from '../../common/api/email-provider/gmail/google.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
@@ -48,8 +47,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     convoRoot: 'div.if',
     convoRootScrollable: '.Tm.aeJ',
     subject: 'h2.hP',
-    linkWithGmIdKey: 'link#embedded_data_iframe',
-    dataMsgId: 'div.adn.ads',
     autoReplies: 'div.brb',
     msgOuter: 'div.adn',
     msgInner: 'div.a3s:visible:not(.undefined), .message_inner_body:visible',
@@ -242,7 +239,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replaceConvoBtns = (force = false) => {
-    const convoUpperIcons = $('div.hj:visible');
+    const convoUpperIconsContainer = $('div.hj:visible');
+    const convoUpperIcons = $('span.pYTkkf-JX-ank-Rtc0Jf');
     const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
@@ -297,17 +295,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
     }
     // conversation top-right icon buttons
-    if (convoUpperIcons.length) {
+    if (convoUpperIconsContainer.length) {
       if (useEncryptionInThisConvo) {
-        if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) {
-          // either not appended, or appended icon is outdated (convo switched to encrypted)
-          this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            const linkWithGmKeyId = $(this.sel.linkWithGmIdKey).attr('data-recorded-src') || '';
-            const dataMsgId = $(this.sel.dataMsgId).attr('data-message-id')?.replace('#', '') || '';
-            const tokenParam = new URLSearchParams(linkWithGmKeyId).get('token') || '';
-            const gmIdKey = JSON.parse(tokenParam)[1];
-            const webmailUrl = Google.webmailUrl(this.acctEmail) + `/?ik=${gmIdKey}&permmsgid=${dataMsgId}&view=lg`;
-            window.open(webmailUrl, '_blank', `height=680, width=620, top=30, left=${(screen.width - 620) / 2}`);
+        if (!convoUpperIconsContainer.is('.appended') || convoUpperIconsContainer.find(convoUpperIcons).length) {
+          this.addfcConvoIcon(convoUpperIconsContainer, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
+            const openOriginalInNewTabIndex = convoUpperIcons.length - 1; // the open in new tab icon button has always been in the last item
+            convoUpperIconsContainer.find(convoUpperIcons).eq(openOriginalInNewTabIndex).trigger('click');
           });
         }
       }
