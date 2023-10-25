@@ -3,7 +3,7 @@
 'use strict';
 
 import { NewMsgData, ValidRecipientElement } from './compose-types.js';
-import { CursorEvent, SquireEditor, WillPasteEvent } from '../../../types/squire.js';
+import Squire from 'squire-rte';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ParsedRecipients } from '../../../js/common/api/email-provider/email-provider-api.js';
@@ -14,21 +14,31 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ComposeView } from '../compose.js';
 import { Lang } from '../../../js/common/lang.js';
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    Squire: typeof Squire;
+  }
+}
+
+interface SquireWillPasteEvent extends Event {
+  fragment: DocumentFragment;
+}
+
 export class ComposeInputModule extends ViewModule<ComposeView> {
-  public squire = new window.Squire(this.view.S.cached('input_text').get(0) as HTMLElement);
+  public squire!: Squire;
+
+  public constructor(view: ComposeView) {
+    super(view);
+    this.initSquire(false);
+  }
 
   public setHandlers = () => {
     this.view.S.cached('add_intro').on(
       'click',
       this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`))
     );
-    this.handlePaste();
-    this.handlePasteImages();
-    this.initShortcuts();
-    this.resizeReplyBox();
-    this.scrollIntoView();
-    this.handleRTL();
-    this.squire.setConfig({ addLinks: this.isRichText() });
+    this.initSquire(this.isRichText());
     // Set lastDraftBody to current empty squire content ex: <div><br></div>)
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5184
     this.view.draftModule.setLastDraftBody(this.squire.getHTML());
@@ -38,12 +48,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public addRichTextFormatting = () => {
-    this.squire.setConfig({ addLinks: true });
+    this.initSquire(true);
   };
 
   public removeRichTextFormatting = () => {
-    this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
-    this.squire.setConfig({ addLinks: false });
+    this.initSquire(false, true);
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -92,13 +101,30 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return isInputLimitExceeded;
   };
 
+  private initSquire = (addLinks: boolean, removeExistingLinks = false) => {
+    const squireHtml = this.squire?.getHTML();
+    const el = this.view.S.cached('input_text').get(0) as HTMLElement;
+    this.squire?.destroy();
+    this.squire = new window.Squire(el, { addLinks });
+    this.initShortcuts();
+    this.handlePaste();
+    this.handlePasteImages();
+    this.resizeReplyBox();
+    this.scrollIntoView();
+    this.handleRTL();
+    if (squireHtml) {
+      const processedHtml = removeExistingLinks ? Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>', false) : squireHtml;
+      this.squire.setHTML(processedHtml);
+    }
+  };
+
   private handlePaste = () => {
-    this.squire.addEventListener('willPaste', async (e: WillPasteEvent) => {
+    this.squire.addEventListener('willPaste', async (e: SquireWillPasteEvent) => {
       const div = document.createElement('div');
       div.appendChild(e.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
-      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
+      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length as number)) {
         e.preventDefault();
         await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
         return;
@@ -121,7 +147,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
+            this.squire.insertImage(reader.result?.toString() ?? '', { name: file.name, title: file.name });
             this.view.draftModule.draftSave().catch(Catch.reportErr);
           } catch (e) {
             Catch.reportErr(e);
@@ -162,9 +188,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private initShortcuts = () => {
     try {
       const isMac = /Mac OS X/.test(navigator.userAgent);
-      const ctrlKey = isMac ? 'meta-' : 'ctrl-';
+      const ctrlKey = isMac ? 'Meta-' : 'Ctrl-';
       const mapKeyToFormat = (tag: string) => {
-        return (self: SquireEditor, event: Event) => {
+        return (self: Squire, event: Event) => {
           try {
             event.preventDefault();
             if (!this.isRichText()) {
@@ -181,10 +207,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
           }
         };
       };
-      const noop = (self: SquireEditor, event: Event) => {
+      const noop = (_self: Squire, event: Event) => {
         event.preventDefault();
       };
-      const removeFormatting = (self: SquireEditor) => {
+      const removeFormatting = (self: Squire) => {
         self.removeAllFormatting();
       };
       this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
@@ -204,7 +230,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   private resizeReplyBox = () => {
-    this.squire.addEventListener('cursor', (e: CursorEvent) => {
+    this.squire.addEventListener('cursor', (e: Event & { range: Range }) => {
       if (this.view.isReplyBox) {
         const cursorContainer = e.range.commonAncestorContainer as HTMLElement;
         this.view.sizeModule.resizeComposeBox(0, cursorContainer?.offsetTop);

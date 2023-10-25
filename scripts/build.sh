@@ -46,7 +46,7 @@ copy_dependencies() {
   cp node_modules/sweetalert2/dist/sweetalert2.css $OUTPUT_DIRECTORY/css/sweetalert2.css
   cp node_modules/iso-8859-2/iso-8859-2.js $OUTPUT_DIRECTORY/lib/iso-8859-2.js
   cp node_modules/zxcvbn/dist/zxcvbn.js $OUTPUT_DIRECTORY/lib/zxcvbn.js
-  cp node_modules/squire-rte/build/squire-raw.js $OUTPUT_DIRECTORY/lib/squire-raw.js
+  cp node_modules/squire-rte/dist/squire.js $OUTPUT_DIRECTORY/lib/squire.js
   cp node_modules/clipboard/dist/clipboard.js $OUTPUT_DIRECTORY/lib/clipboard.js
   cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTPUT_DIRECTORY/lib/fine-uploader.js
   cp node_modules/filesize/dist/filesize.js $OUTPUT_DIRECTORY/lib/filesize.js
