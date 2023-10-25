@@ -100,7 +100,7 @@ export class Api {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
       if (req.progress?.download) {
-        req.progress.download = JSON.parse(JSON.stringify(req.progress.download));
+        req.progress.download = undefined;
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
