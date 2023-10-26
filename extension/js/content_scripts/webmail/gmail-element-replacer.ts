@@ -299,8 +299,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (useEncryptionInThisConvo) {
         if (!convoUpperIconsContainer.is('.appended') || convoUpperIconsContainer.find(convoUpperIcons).length) {
           this.addfcConvoIcon(convoUpperIconsContainer, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            const openOriginalInNewTabIndex = convoUpperIcons.length - 1; // the open in new tab icon button has always been in the last item
-            convoUpperIconsContainer.find(convoUpperIcons).eq(openOriginalInNewTabIndex).trigger('click');
+            convoUpperIconsContainer.find(convoUpperIcons).last().trigger('click');
           });
         }
       }
