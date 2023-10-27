@@ -233,7 +233,7 @@ body.cryptup_gmail_new div.new_secure_compose_window_button:hover {
   background-color: #fafafb;
 }
 
-body.cryptup_gmail div.V8djrc.byY.appended span.cryptup_convo_button > img {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button > img {
   border: 2px solid #31a217;
   width: 10px;
   margin: 4px;
@@ -242,7 +242,7 @@ body.cryptup_gmail div.V8djrc.byY.appended span.cryptup_convo_button > img {
   opacity: 0.8;
 }
 
-body.cryptup_gmail div.V8djrc.byY.appended span.cryptup_convo_button > span {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button > span {
   text-transform: uppercase;
   font-size: 9.5px;
   color: white;
@@ -253,20 +253,19 @@ body.cryptup_gmail div.V8djrc.byY.appended span.cryptup_convo_button > span {
   cursor: pointer;
 }
 
-body.cryptup_gmail div.V8djrc.byY.appended span.cryptup_convo_button:hover > img,
-div.V8djrc.byY.appended span.cryptup_convo_button:hover > span {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button:hover > img,
+div.hj.appended span.cryptup_convo_button:hover > span {
   opacity: 1;
 }
 
-body.cryptup_gmail div.V8djrc.byY.appended span.cryptup_convo_button:not(:first-child) {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button:not(:first-child) {
   margin-left: 5px;
 }
 
-body.cryptup_gmail.cryptup_gmail_new div.V8djrc.byY.appended span.cryptup_convo_button {
+body.cryptup_gmail.cryptup_gmail_new div.hj.appended span.cryptup_convo_button {
   margin-left: 18px;
   zoom: 1.2;
-  right: 112px;
-  position: absolute;
+  float: left;
   margin-top: 2px;
 }
 

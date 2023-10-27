@@ -227,8 +227,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
+    if ($(containerSel).find(iconSel).length) {
+      return;
+    }
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Xss.sanitizeAppend(containerSel, iconHtml)
+    Xss.sanitizePrepend(containerSel, iconHtml)
       .children(iconSel)
       .off()
       .on('click', Ui.event.prevent('double', Catch.try(onClick)));
@@ -239,7 +242,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replaceConvoBtns = (force = false) => {
-    const convoUpperIconsContainer = $('div.V8djrc.byY:visible');
+    const convoUpperIconsContainer = $('div.hj:visible');
     const convoUpperIcons = $('span.pYTkkf-JX-ank-Rtc0Jf');
     const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
