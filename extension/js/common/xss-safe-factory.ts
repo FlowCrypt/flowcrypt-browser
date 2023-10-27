@@ -271,7 +271,7 @@ export class XssSafeFactory {
 
   public btnWithoutFc = () => {
     const span = `<span>see original</span>`;
-    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
+    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-test="action-show-original-conversation" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
   };
 
   public btnWithFc = () => {
