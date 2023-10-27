@@ -96,7 +96,8 @@ export class Api {
   };
 
   public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
-    if (Env.isContentScript()) {
+    // TODO: Should work the same for Chrome
+    if (Catch.browser().name === 'firefox' && Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
       if (req.progress?.download) {
