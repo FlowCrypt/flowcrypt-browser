@@ -457,6 +457,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     const loaderContext = new GmailLoaderContext(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
+    attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachments.length;
     for (const a of attachments) {
       const attachmentSel = this.filterAttachments(
