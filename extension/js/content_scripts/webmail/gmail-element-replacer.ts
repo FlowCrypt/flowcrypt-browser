@@ -227,8 +227,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
+    if ($(containerSel).find(iconSel).length) {
+      return;
+    }
     containerSel.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Xss.sanitizeAppend(containerSel, iconHtml)
+    Xss.sanitizePrepend(containerSel, iconHtml)
       .children(iconSel)
       .off()
       .on('click', Ui.event.prevent('double', Catch.try(onClick)));
@@ -239,7 +242,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private replaceConvoBtns = (force = false) => {
-    const convoUpperIcons = $('div.ade:visible');
+    const convoUpperIconsContainer = $('div.hj:visible');
+    const convoUpperIcons = $('span.pYTkkf-JX-ank-Rtc0Jf');
     const useEncryptionInThisConvo = this.isEncrypted() || force;
     // reply buttons
     const visibleReplyBtns = $('td.acX:visible');
@@ -294,12 +298,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
     }
     // conversation top-right icon buttons
-    if (convoUpperIcons.length) {
+    if (convoUpperIconsContainer.length) {
       if (useEncryptionInThisConvo) {
-        if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) {
-          // either not appended, or appended icon is outdated (convo switched to encrypted)
-          this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
-            convoUpperIcons.find('.gZ').trigger('click');
+        if (!convoUpperIconsContainer.is('.appended') || convoUpperIconsContainer.find(convoUpperIcons).length) {
+          this.addfcConvoIcon(convoUpperIconsContainer, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
+            convoUpperIconsContainer.find(convoUpperIcons).last().trigger('click');
           });
         }
       }
