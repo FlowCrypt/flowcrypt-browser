@@ -609,6 +609,26 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
+    test(
+      'mail.google.com - the number of attachments label should be hidden for encrypted emails',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '15f7f0e992f2c830';
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, `/${threadId}`);
+        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
+          sleep: 10,
+          appearIn: 25,
+        });
+        const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+          content: ['test password message'],
+          encryption: 'encrypted',
+        });
+        expect(await gmailPage.isElementPresent('.aVW')).to.equal(false);
+      })
+    );
+
     // todo - missing equivalent sample at ci.tests.gmail
     // test('mail.google.com - pubkey gets rendered when using quoted-printable mime', testWithBrowser('compatibility', async (t, browser) => {
     //   const gmailPage = await openGmailPage(t, browser, '/WhctKJVRFztXGwvSbwcrbDshGTnLWMFvhwJmhqllRWwvpKnlpblQMXVZLTsKfWdPWKhPFBV');
