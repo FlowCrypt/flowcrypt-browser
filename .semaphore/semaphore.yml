@@ -59,7 +59,7 @@ blocks:
   - name: Live UI Gmail tests
     dependencies: []
     run:
-      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
+      when: branch = 'master' OR branch = 'issue-5459-hide-noname-attachment' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
       minutes: 45
     task:
