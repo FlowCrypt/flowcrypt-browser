@@ -440,6 +440,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
+  private isAttachmentHideable = (attachment: Attachment) => {
+    const isHideableFile = attachment.type === 'application/pgp-keys' || Attachment.encryptedMsgNames.some(filename => filename === attachment.name);
+    return isHideableFile;
+  };
+
   private processAttachments = async (
     msgId: string,
     attachments: Attachment[],
@@ -474,7 +479,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         messageInfo,
         skipGoogleDrive
       );
-      if (renderStatus === 'hidden') {
+      if (renderStatus === 'hidden' || this.isAttachmentHideable(a)) {
         nRenderedAttachments--;
       }
     }
