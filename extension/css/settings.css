@@ -538,8 +538,7 @@ body#settings .settings-border .key-content-row {
 }
 
 body#settings .settings-border .key_list {
-  overflow-x: hidden;
-  overflow-y: hidden;
+  overflow: hidden;
 
   /* will be overriden to scroll if > 4 keys */
   height: 219px;

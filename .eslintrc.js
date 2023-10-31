@@ -70,6 +70,10 @@ module.exports = {
         format: ['camelCase', 'UPPER_CASE'],
         leadingUnderscore: 'allow',
       },
+      {
+        selector: ['import'],
+        format: ['camelCase', 'PascalCase'],
+      },
     ],
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': ['warn'],
