@@ -48,7 +48,7 @@ type RawAjaxErr = {
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
-export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null };
+export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null; operationId?: string; expectedTransferSize?: number; frameId?: string };
 
 type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
 
@@ -96,14 +96,12 @@ export class Api {
   };
 
   public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
-    // TODO: Should work the same for Chrome
-    if (Catch.browser().name === 'firefox' && Env.isContentScript()) {
+    if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
-      if (req.progress?.download) {
-        req.progress.download = undefined;
+      if (req.progress) {
+        req.progress = JSON.parse(JSON.stringify(req.progress));
       }
-
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await BrowserMsg.send.bg.await.ajax({ req, resFmt });
     }
@@ -198,7 +196,7 @@ export class Api {
         );
       }
       const transformResponseWithProgressAndTimeout = () => {
-        if (req.progress?.download && response.body) {
+        if (req.progress && response.body) {
           const contentLength = response.headers.get('content-length');
           // real content length is approximately 140% of content-length header value
           const total = contentLength ? parseInt(contentLength) * 1.4 : 0;
@@ -216,7 +214,17 @@ export class Api {
                   return;
                 }
                 downloadedBytes += value.length;
-                downloadProgress(undefined, downloadedBytes, total);
+                if (downloadProgress) {
+                  downloadProgress(undefined, downloadedBytes, total);
+                } else if (req.progress?.expectedTransferSize && req.progress.operationId) {
+                  BrowserMsg.send.ajaxProgress('broadcast', {
+                    percent: undefined,
+                    loaded: downloadedBytes,
+                    total,
+                    expectedTransferSize: req.progress.expectedTransferSize,
+                    operationId: req.progress.operationId,
+                  });
+                }
                 await transformWriter.write(value);
               }
             },

@@ -30,16 +30,6 @@ export class BgHandlers {
   };
 
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
-    // TODO: Fix ajax progress handling
-    // if (r.req.context?.operationId) {
-    //   // progress updates were requested via messages
-    //   const frameId = r.req.context.frameId;
-    //   const operationId = r.req.context.operationId;
-    //   const expectedTransferSize = r.req.context.expectedTransferSize;
-    //   r.req.xhr = Api.getAjaxProgressXhrFactory({
-    //     download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(frameId, { percent, loaded, total, expectedTransferSize, operationId }),
-    //   });
-    // }
     return await Api.ajax(r.req, r.resFmt);
   };
 
@@ -62,7 +52,7 @@ export class BgHandlers {
           if (activeTabs[0].id !== undefined) {
             type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
             chrome.tabs.executeScript(
-              activeTabs[0].id!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+              activeTabs[0].id,
               { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
               (result: ScriptRes) => {
                 resolve({

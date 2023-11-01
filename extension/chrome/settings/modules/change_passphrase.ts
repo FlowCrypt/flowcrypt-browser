@@ -102,7 +102,7 @@ View.run(
       const prv = await KeyUtil.parse(this.mostUsefulPrv.keyInfo.private);
       if ((await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val()))) === true) {
         await this.bruteForceProtection.passphraseCheckSucceed();
-        this.mostUsefulPrv!.key = prv; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        this.mostUsefulPrv.key = prv;
         this.displayBlock('step_1_enter_new');
         $('#new_pass_phrase').trigger('focus');
       } else {

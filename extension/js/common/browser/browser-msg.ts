@@ -297,7 +297,7 @@ export class BrowserMsg {
 
   public static listen = (dest: Bm.Dest) => {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
+      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, _sender);
       if (msg.to && [dest, 'broadcast'].includes(msg.to)) {
         BrowserMsg.handleMsg(msg, rawRespond);
         return true;
@@ -504,7 +504,15 @@ export class BrowserMsg {
       };
       try {
         if (chrome.runtime) {
-          chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          if (Env.isBackgroundPage()) {
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+              for (const tab of tabs) {
+                chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+              }
+            });
+          } else {
+            chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          }
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }
