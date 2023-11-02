@@ -373,7 +373,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.only(
+    test(
       'mail.google.com - plain reply to encrypted and signed messages',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
