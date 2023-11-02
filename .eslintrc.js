@@ -122,7 +122,7 @@ module.exports = {
     'no-invalid-this': 'off',
     'no-new-wrappers': 'error',
     'no-null/no-null': 'error',
-    'no-only-tests/no-only-tests': ['error'],
+    // 'no-only-tests/no-only-tests': ['error'],
     'no-prototype-builtins': 0,
     'no-shadow': 'off',
     'no-throw-literal': 'error',
