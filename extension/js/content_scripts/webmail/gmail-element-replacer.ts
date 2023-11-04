@@ -440,7 +440,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private isAttachmentHideable = (attachment: Attachment) => {
+  private isAttachmentHideable = (attachment: Attachment, renderStatus: string) => {
+    if (renderStatus === 'hidden') {
+      return true;
+    }
     const isHideableFile = attachment.type === 'application/pgp-keys' || Attachment.encryptedMsgNames.some(filename => filename === attachment.name);
     return isHideableFile;
   };
@@ -479,7 +482,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         messageInfo,
         skipGoogleDrive
       );
-      if (renderStatus === 'hidden' || this.isAttachmentHideable(a)) {
+      if (this.isAttachmentHideable(a, renderStatus)) {
         nRenderedAttachments--;
       }
     }
@@ -487,13 +490,19 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
       $(this.sel.attachmentsButtons).hide();
     }
-    if (nRenderedAttachments >= 2) {
-      // Aligned with Gmail, the label is shown only if there are 2 or more attachments
-      attachmentsContainerInner.parent().find(this.sel.numberOfAttachmentsDigit).text(nRenderedAttachments);
-      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
-    }
     if (nRenderedAttachments === 0) {
       attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
+    } else {
+      const elementsToClone = ['span.a2H', 'div.a2b'];
+      const scannedByGmailLabel = $(elementsToClone[0]).first().clone();
+      const scannedByGmailPopover = $(elementsToClone[1]).first().clone(true);
+      // for uniformity reasons especially when Google used "One" for single attachment and numeric representation for multiple.
+      const gmailAttachmentLabelReplacement = $(`<span>${nRenderedAttachments} ${nRenderedAttachments > 1 ? 'Attachments' : 'Attachment'}</span>`);
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).empty();
+      gmailAttachmentLabelReplacement.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      scannedByGmailLabel.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      scannedByGmailPopover.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
     }
     if (!skipGoogleDrive) {
       await this.processGoogleDriveAttachments(msgId, loaderContext.msgEl, attachmentsContainerInner, messageInfo);
