@@ -50,8 +50,8 @@ copy_dependencies() {
   cp node_modules/clipboard/dist/clipboard.js $OUTPUT_DIRECTORY/lib/clipboard.js
   cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTPUT_DIRECTORY/lib/fine-uploader.js
   cp node_modules/filesize/dist/filesize.js $OUTPUT_DIRECTORY/lib/filesize.js
-  cp node_modules/pdfjs-dist/build/pdf.js $OUTPUT_DIRECTORY/lib/pdf.js
-  cp node_modules/pdfjs-dist/build/pdf.worker.js $OUTPUT_DIRECTORY/lib/pdf.worker.js
+  cp node_modules/pdfjs-dist/build/pdf.mjs $OUTPUT_DIRECTORY/lib/pdf.js
+  cp node_modules/pdfjs-dist/build/pdf.worker.mjs $OUTPUT_DIRECTORY/lib/pdf.worker.js
   cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTPUT_DIRECTORY/lib/bootstrap/bootstrap.min.js
   cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTPUT_DIRECTORY/lib/bootstrap/bootstrap.min.css
   cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTPUT_DIRECTORY/lib/streams
