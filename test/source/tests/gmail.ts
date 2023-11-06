@@ -317,8 +317,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
-          await replyBox.waitAndClick('@action-send');
-          await replyBox.waitTillGone('@action-send');
+          await replyBox.waitAndClick('@action-send', { confirmGone: true });
           await Util.sleep(2);
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
