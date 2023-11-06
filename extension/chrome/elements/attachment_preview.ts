@@ -8,7 +8,7 @@ import { AttachmentDownloadView } from './attachment.js';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { PDFDocumentProxy } from '../../types/pdf.js';
+import { getDocument, PDFDocumentProxy } from 'pdfjs-dist';
 import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -18,8 +18,6 @@ import { Browser } from '../../js/common/browser/browser.js';
 import { AttachmentWarnings } from './shared/attachment_warnings.js';
 
 type AttachmentType = 'img' | 'txt' | 'pdf';
-
-declare const pdfjsLib: { getDocument: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
 View.run(
   class AttachmentPreviewView extends AttachmentDownloadView {
@@ -61,7 +59,7 @@ View.run(
             } else if (attachmentType === 'pdf') {
               // PDF
               // .slice() is used to copy attachment data https://github.com/FlowCrypt/flowcrypt-browser/issues/5408
-              pdfjsLib.getDocument({ data: result.slice() }).promise.then(async (pdf: PDFDocumentProxy) => {
+              await getDocument(result.slice()).promise.then(async (pdf: PDFDocumentProxy) => {
                 const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
                 await previewPdf.render();
               });
