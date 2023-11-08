@@ -268,7 +268,7 @@ export class Ui {
       }
       const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
-          Swal.getCloseButton()!.blur(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          Swal.getCloseButton()?.blur();
         },
         html,
         width: 750,

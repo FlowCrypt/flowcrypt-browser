@@ -1,11 +1,11 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { expect } from 'chai';
-import { IncomingMessage } from 'http';
+import { IncomingHttpHeaders } from 'http';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
-import { messageIdRegex, parsePort } from '../lib/mock-util';
+import { messageIdRegex, parseAuthority, parsePort } from '../lib/mock-util';
 
 export interface ReportedError {
   name: string;
@@ -92,7 +92,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       if (config?.apiEndpointReturnError) {
         throw config.apiEndpointReturnError;
       }
-      throw new HttpClientErr(`Not running any FES here: ${req.headers.host}`);
+      throw new HttpClientErr(`Not running any FES here: ${parseAuthority(req)}`);
     },
     '/shared-tenant-fes/api/v1/client-configuration': async ({}, req) => {
       // individual ClientConfiguration is tested using FlowCrypt backend mock, see BackendData.getClientConfiguration
@@ -201,7 +201,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
   };
 };
 
-const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
+const authenticate = (req: { headers: IncomingHttpHeaders }, type: 'oidc' | 'fes'): string => {
   const jwt = (req.headers.authorization || '').replace('Bearer ', '');
   if (!jwt) {
     throw new Error('Mock FES missing authorization header');
@@ -219,4 +219,4 @@ const authenticate = (req: IncomingMessage, type: 'oidc' | 'fes'): string => {
   return MockJwt.parseEmail(jwt);
 };
 
-const messageIdRegexForRequest = (req: IncomingMessage) => messageIdRegex(parsePort(req));
+const messageIdRegexForRequest = (req: { headers: IncomingHttpHeaders }) => messageIdRegex(parsePort(req));

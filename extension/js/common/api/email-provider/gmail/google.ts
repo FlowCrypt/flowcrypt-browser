@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { Api, ProgressCbs, ProgressDestFrame, ReqMethod } from '../../shared/api.js';
-import { Dict, Str } from '../../../core/common.js';
+import { Ajax, ProgressCbs } from '../../shared/api.js';
+import { Dict, Str, UrlParams } from '../../../core/common.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
 import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
+import { Catch } from '../../../platform/catch.js';
 
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
@@ -17,69 +18,72 @@ export class Google {
 
   public static gmailCall = async <RT>(
     acctEmail: string,
-    method: ReqMethod,
     path: string,
-    params: Dict<Serializable> | string | undefined,
-    progress?: ProgressCbs | ProgressDestFrame,
-    contentType?: string
+    params?:
+      | {
+          method: 'POST' | 'PUT';
+          data: Dict<Serializable>;
+          dataType?: 'JSON';
+        }
+      | {
+          method: 'POST';
+          data: string;
+          contentType: string;
+          dataType: 'TEXT';
+        }
+      | {
+          method: 'GET';
+          data?: UrlParams;
+        }
+      | { method: 'DELETE' },
+    progress?: ProgressCbs
   ): Promise<RT> => {
     progress = progress || {};
-    let data, url;
-    if ('upload' in progress) {
+    let url;
+    let dataPart:
+      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
+      | { method: 'POST'; data: string; contentType: string; dataType: 'TEXT' }
+      | { method: 'GET'; data?: UrlParams }
+      | { method: 'DELETE' };
+    if (params?.method === 'POST' && params.dataType === 'TEXT') {
       url = `${GMAIL_GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
-      data = params;
+      dataPart = { method: 'POST', data: params.data, contentType: params.contentType, dataType: 'TEXT' };
     } else {
       url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
-      if (method === 'GET' || method === 'DELETE') {
-        data = params;
+      if (params?.method === 'GET') {
+        dataPart = { method: 'GET', data: params.data };
+      } else if (params?.method === 'POST' || params?.method === 'PUT') {
+        dataPart = { method: params.method, data: params.data, dataType: 'JSON' };
+      } else if (params?.method === 'DELETE') {
+        dataPart = { ...params };
       } else {
-        data = JSON.stringify(params);
+        dataPart = { method: 'GET' };
       }
     }
-    contentType = contentType || 'application/json; charset=UTF-8';
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
-    const context =
-      'operationId' in progress
-        ? { operationId: progress.operationId, expectedTransferSize: progress.expectedTransferSize, frameId: progress.frameId }
-        : undefined;
-    const xhr = Api.getAjaxProgressXhrFactory('download' in progress || 'upload' in progress ? progress : {});
-    const request = { xhr, context, url, method, data, headers, crossDomain: true, contentType, async: true };
-    return (await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request)) as RT;
+    const headers = { authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
+    const progressCbs = 'download' in progress || 'upload' in progress ? progress : undefined;
+    const request: Ajax = { url, headers, ...dataPart, stack: Catch.stackTrace(), progress: progressCbs };
+    return await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<RT>(acctEmail, request);
   };
 
   public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max = 10) => {
     progress = progress || {};
-    const method = 'GET';
-    const contentType = 'application/json; charset=UTF-8';
     const searchContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people:searchContacts`;
     const searchOtherContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/otherContacts:search`;
     const data = { query, readMask: 'names,emailAddresses', pageSize: max };
-    const xhr = Api.getAjaxProgressXhrFactory(progress);
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
-    const contacts = await Promise.all([
-      GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
-        xhr,
-        url: searchContactsUrl,
-        method,
-        data,
-        headers,
-        contentType,
-        crossDomain: true,
-        async: true,
-      }) as Promise<GmailRes.GoogleContacts>,
-      GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
-        xhr,
-        url: searchOtherContactsUrl,
-        method,
-        data,
-        headers,
-        contentType,
-        crossDomain: true,
-        async: true,
-      }) as Promise<GmailRes.GoogleContacts>,
-    ]);
+    const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
+    const contacts = await Promise.all(
+      [searchContactsUrl, searchOtherContactsUrl].map(url =>
+        GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<GmailRes.GoogleContacts>(acctEmail, {
+          progress,
+          url,
+          method: 'GET',
+          data,
+          headers: { authorization },
+          stack: Catch.stackTrace(),
+        })
+      )
+    );
     const userContacts = contacts[0].results || [];
     const otherContacts = contacts[1].results || [];
     const contactsMerged = [...userContacts, ...otherContacts];
@@ -94,20 +98,16 @@ export class Google {
   };
 
   public static getNames = async (acctEmail: string) => {
-    const method = 'GET';
-    const contentType = 'application/json; charset=UTF-8';
     const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
     const data = { personFields: 'names' };
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const headers = { Authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
+    const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const contacts = GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
       url: getProfileUrl,
-      method,
+      method: 'GET',
       data,
-      headers,
-      contentType,
-      crossDomain: true,
-      async: true,
+      headers: { authorization },
+      stack: Catch.stackTrace(),
     }) as Promise<GmailRes.GoogleUserProfile>;
     return contacts;
   };

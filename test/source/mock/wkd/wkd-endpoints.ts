@@ -4,7 +4,7 @@ import { PgpArmor } from '../../core/crypto/pgp/pgp-armor';
 import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api.js';
 import { isGet } from '../lib/mock-util.js';
-import { IncomingMessage } from 'http';
+import { Http2ServerRequest } from 'http2';
 
 // todo - add a not found test with: throw new HttpClientErr('Pubkey not found', 404);
 
@@ -18,8 +18,8 @@ export interface WkdConfig {
   advancedLookup?: Record<string, WkdLookUpResult>;
 }
 
-const fetchKeyResult = async (req: IncomingMessage, keyRecord: Record<string, WkdLookUpResult> | undefined) => {
-  const emailLocalPart = req.url!.split('?l=').pop()!.toLowerCase().trim();
+const fetchKeyResult = async (req: Http2ServerRequest, keyRecord: Record<string, WkdLookUpResult> | undefined) => {
+  const emailLocalPart = req.url.split('?l=').pop()!.toLowerCase().trim();
   if (!keyRecord) {
     return '';
   }

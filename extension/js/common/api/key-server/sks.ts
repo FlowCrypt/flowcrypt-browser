@@ -72,7 +72,7 @@ export class Sks extends Api {
 
   private get = async (path: string): Promise<string | undefined> => {
     try {
-      const { responseText } = (await Api.apiCall(this.url, path, undefined, undefined, undefined, undefined, 'xhr', 'GET')) as XMLHttpRequest;
+      const responseText = await Api.apiCall(this.url, path, undefined, undefined, undefined, 'text');
       return responseText;
     } catch (e) {
       if (ApiErr.isNotFound(e)) {
