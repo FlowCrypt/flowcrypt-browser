@@ -39,16 +39,17 @@ export class Google {
     progress?: ProgressCbs
   ): Promise<RT> => {
     progress = progress || {};
-    const baseUrl = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
-    const url = params?.method === 'POST' && params?.dataType === 'TEXT' ? `${baseUrl}?uploadType=multipart` : baseUrl;
+    let url;
     let dataPart:
       | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
       | { method: 'POST'; data: string; contentType: string; dataType: 'TEXT' }
       | { method: 'GET'; data?: UrlParams }
       | { method: 'DELETE' };
     if (params?.method === 'POST' && params.dataType === 'TEXT') {
+      url = `${GMAIL_GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
       dataPart = { method: 'POST', data: params.data, contentType: params.contentType, dataType: 'TEXT' };
     } else {
+      url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
       if (params?.method === 'GET') {
         dataPart = { method: 'GET', data: params.data };
       } else if (params?.method === 'POST' || params?.method === 'PUT') {
@@ -59,7 +60,6 @@ export class Google {
         dataPart = { method: 'GET' };
       }
     }
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const headers = { authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
     const progressCbs = 'download' in progress || 'upload' in progress ? progress : undefined;
     const request: Ajax = { url, headers, ...dataPart, stack: Catch.stackTrace(), progress: progressCbs };
