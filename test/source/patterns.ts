@@ -30,7 +30,7 @@ const hasXssComment = (line: string) => {
 };
 
 const hasErrHandledComment = (line: string) => {
-  return /\/\/ error-handled/.test(line);
+  return /\/[\/\*] error-handled/.test(line);
 };
 
 const validateTypeScriptLine = (line: string, location: string) => {

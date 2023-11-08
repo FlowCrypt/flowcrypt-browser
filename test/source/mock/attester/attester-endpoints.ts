@@ -24,7 +24,7 @@ export interface AttesterConfig {
 export const getMockAttesterEndpoints = (oauth: OauthMock, attesterConfig: AttesterConfig): HandlersDefinition => {
   return {
     '/attester/pub/?': async ({ body }, req) => {
-      const emailOrLongid = req.url!.split('/').pop()!.toLowerCase().trim();
+      const emailOrLongid = req.url.split('/').pop()!.toLowerCase().trim();
       if (isGet(req)) {
         if (!attesterConfig?.pubkeyLookup) {
           throw new HttpClientErr('Method not allowed', 405);

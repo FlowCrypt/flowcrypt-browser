@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as https from 'https';
-import * as http from 'http';
+import * as http2 from 'http2';
 import { Util } from '../../util';
 import { readFileSync } from 'fs';
 import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-endpoints';
@@ -40,7 +39,7 @@ export enum Status {
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
-export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
+export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http2.Http2ServerRequest) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
 interface ConfigurationOptions {
@@ -83,7 +82,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
 }
 
 export class Api<REQ, RES> {
-  public server: https.Server;
+  public server: http2.Http2Server;
   public configProvider: ConfigurationProviderInterface<REQ, RES> | undefined;
   protected apiName: string;
   protected maxRequestSizeMb = 0;
@@ -101,7 +100,7 @@ export class Api<REQ, RES> {
       key: readFileSync(`./test/mock_cert/key.pem.mock`),
       cert: readFileSync(`./test/mock_cert/cert.pem.mock`),
     };
-    this.server = https.createServer(opt, (request, response) => {
+    this.server = http2.createSecureServer(opt, (request, response) => {
       const start = Date.now();
       this.handleReq(request, response)
         .then(data => this.throttledResponse(response, data))
@@ -172,12 +171,12 @@ export class Api<REQ, RES> {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+  protected log = (ms: number, req: http2.Http2ServerRequest, res: http2.Http2ServerResponse, errRes?: Buffer) => {
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     return undefined as void;
   };
 
-  protected handleReq = async (req: http.IncomingMessage, res: http.ServerResponse): Promise<Buffer> => {
+  protected handleReq = async (req: http2.Http2ServerRequest, res: http2.Http2ServerResponse): Promise<Buffer> => {
     if (req.method === 'OPTIONS') {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', '*');
@@ -199,10 +198,7 @@ export class Api<REQ, RES> {
     throw new HttpClientErr(`unknown MOCK path ${req.url}`);
   };
 
-  protected chooseHandler = (req: http.IncomingMessage): RequestHandler<REQ, RES> | undefined => {
-    if (!req.url) {
-      throw new Error('no url');
-    }
+  protected chooseHandler = (req: { url: string }): RequestHandler<REQ, RES> | undefined => {
     const configHandlers = this.configProvider?.getHandlers() ?? {};
     const allHandlers: Handlers<REQ, RES> = {
       ...configHandlers,
@@ -236,7 +232,7 @@ export class Api<REQ, RES> {
     );
   };
 
-  protected fmtHandlerRes = (handlerRes: RES, serverRes: http.ServerResponse): Buffer => {
+  protected fmtHandlerRes = (handlerRes: RES, serverRes: http2.Http2ServerResponse): Buffer => {
     if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
       serverRes.setHeader('content-type', 'text/html');
     } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
@@ -260,7 +256,7 @@ export class Api<REQ, RES> {
     return Buffer.from(json);
   };
 
-  protected collectReq = (req: http.IncomingMessage): Promise<Buffer> => {
+  protected collectReq = (req: http2.Http2ServerRequest): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
       const body: Buffer[] = [];
       let byteLength = 0;
@@ -286,25 +282,24 @@ export class Api<REQ, RES> {
     });
   };
 
-  protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
+  protected parseReqBody = (body: Buffer, req: http2.Http2ServerRequest): REQ => {
     let parsedBody: string | undefined;
-
     if (body.length) {
       if (
-        req.url!.startsWith('/upload/') || // gmail message send
-        (req.url!.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
-        req.url!.startsWith('/api/v1/message') || // FES pwd msg
-        req.url!.startsWith('/shared-tenant-fes/api/v1/message') // Shared TENANT FES pwd msg
+        req.url.startsWith('/upload/') || // gmail message send
+        (req.url.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
+        req.url.startsWith('/api/v1/message') || // FES pwd msg
+        req.url.startsWith('/shared-tenant-fes/api/v1/message') // Shared TENANT FES pwd msg
       ) {
         parsedBody = body.toString();
       } else {
         parsedBody = JSON.parse(body.toString());
       }
     }
-    return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
+    return { query: this.parseUrlQuery(req.url), body: parsedBody } as unknown as REQ;
   };
 
-  private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
+  private throttledResponse = async (response: http2.Http2ServerResponse, data: Buffer) => {
     // If google oauth2 login, then redirect to url
     if (/^https:\/\/google\.localhost:[0-9]+\/robots\.txt/.test(data.toString())) {
       response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention

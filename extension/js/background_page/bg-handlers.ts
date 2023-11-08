@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Api } from '../common/api/shared/api.js';
 import { BgUtils } from './bgutils.js';
-import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
+import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
+import { Api } from '../common/api/shared/api.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -30,16 +30,7 @@ export class BgHandlers {
   };
 
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
-    if (r.req.context?.operationId) {
-      // progress updates were requested via messages
-      const frameId = r.req.context.frameId;
-      const operationId = r.req.context.operationId;
-      const expectedTransferSize = r.req.context.expectedTransferSize;
-      r.req.xhr = Api.getAjaxProgressXhrFactory({
-        download: (percent, loaded, total) => BrowserMsg.send.ajaxProgress(frameId, { percent, loaded, total, expectedTransferSize, operationId }),
-      });
-    }
-    return await Api.ajax(r.req, r.stack);
+    return await Api.ajax(r.req, r.resFmt);
   };
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
@@ -61,7 +52,7 @@ export class BgHandlers {
           if (activeTabs[0].id !== undefined) {
             type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
             chrome.tabs.executeScript(
-              activeTabs[0].id!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+              activeTabs[0].id,
               { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
               (result: ScriptRes) => {
                 resolve({

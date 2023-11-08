@@ -92,7 +92,13 @@ export class OauthMock {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
     const accessToken = authorization.replace(/^Bearer /, '');
-    const acct = this.acctByIdToken[accessToken];
+    let acct = this.acctByIdToken[accessToken];
+    if (!acct) {
+      // After logging in to a mock google account, the browser submits google's access token to some other endpoints
+      // Specifying an idtoken in `Authorization` header doesn't help, it gets overriden with the access token by the browser
+      // todo: Inspect how we should solve this
+      acct = this.acctByAccessToken[accessToken];
+    }
     if (!acct) {
       throw new HttpClientErr('Invalid idToken token', Status.UNAUTHORIZED);
     }

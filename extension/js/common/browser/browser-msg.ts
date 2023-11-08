@@ -3,7 +3,6 @@
 'use strict';
 
 import { AuthRes } from '../api/authentication/google/google-oauth.js';
-import { ApiCallContext } from '../api/shared/api.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
@@ -17,6 +16,7 @@ import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
+import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -40,6 +40,7 @@ export namespace Bm {
     to: Dest;
     data: { bm: AnyRequest & { messageSender?: Dest }; objUrls: Dict<string> };
     responseName?: string;
+    propagateToParent?: boolean;
   };
 
   export type SetCss = { css: Dict<string>; traverseUp?: number; selector: string };
@@ -81,7 +82,7 @@ export namespace Bm {
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
-  export type Ajax = { req: JQuery.AjaxSettings<ApiCallContext>; stack: string };
+  export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
@@ -136,7 +137,6 @@ export namespace Bm {
     | ComposeWindowOpenDraft
     | NotificationShow
     | PassphraseDialog
-    | PassphraseDialog
     | Settings
     | SetCss
     | AddOrRemoveClass
@@ -145,7 +145,6 @@ export namespace Bm {
     | InMemoryStoreSet
     | InMemoryStoreGet
     | PgpMsgDecrypt
-    | Ajax
     | AjaxProgress
     | ShowAttachmentPreview
     | ShowConfirmation
@@ -155,7 +154,8 @@ export namespace Bm {
     | RenderMessage
     | PgpBlockReady
     | PgpBlockRetry
-    | ConfirmationResult;
+    | ConfirmationResult
+    | Ajax;
 
   export type AsyncRespondingHandler = (req: AnyRequest) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -295,13 +295,10 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handler;
   };
 
-  public static listen = (dest: Bm.Dest[] | string) => {
-    if (typeof dest === 'string') {
-      dest = [dest];
-    }
+  public static listen = (dest: Bm.Dest) => {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
-      if (msg.to && [...dest, 'broadcast'].includes(msg.to)) {
+      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, _sender);
+      if (msg.to && [dest, 'broadcast'].includes(msg.to)) {
         BrowserMsg.handleMsg(msg, rawRespond);
         return true;
       }
@@ -350,14 +347,14 @@ export class BrowserMsg {
     });
   };
 
-  protected static listenForWindowMessages = (dest: Bm.Dest[]) => {
+  protected static listenForWindowMessages = (dest: Bm.Dest) => {
     const extensionOrigin = Env.getExtensionOrigin();
     window.addEventListener('message', async e => {
       if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
       const encryptedMsg = e.data as SymEncryptedMessage;
       if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
       let handled = false;
-      if ([...dest, 'broadcast'].includes(encryptedMsg.to)) {
+      if ([dest, 'broadcast'].includes(encryptedMsg.to)) {
         const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
         handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
@@ -507,7 +504,15 @@ export class BrowserMsg {
       };
       try {
         if (chrome.runtime) {
-          chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          if (Env.isBackgroundPage()) {
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+              for (const tab of tabs) {
+                chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+              }
+            });
+          } else {
+            chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          }
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }
