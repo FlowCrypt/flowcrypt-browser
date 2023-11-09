@@ -563,6 +563,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll(['.aZo'], { visible: false });
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls.length).to.equal(2);
+        expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
+        expect(await gmailPage.waitForContent('.aVW span.a2H', ' •  Scanned by Gmail'));
+
         await gmailPage.close();
       })
     );
@@ -591,6 +594,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
         expect(urls.length).to.equal(1);
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aVW')).to.equal(false); // attachment label count should be hidden
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
@@ -607,26 +611,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
         await composePage.waitForContent('.email_address.expired', 'demo@flowcrypt.com');
         expect(await composePage.attr('.email_address.expired', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
-      })
-    );
-
-    test(
-      'mail.google.com - the number of attachments label should be hidden for encrypted emails',
-      testWithBrowser(async (t, browser) => {
-        const threadId = '15f7f0e992f2c830';
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, `/${threadId}`);
-        const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
-          sleep: 10,
-          appearIn: 25,
-        });
-        const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
-        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
-          content: ['test password message'],
-          encryption: 'encrypted',
-        });
-        expect(await gmailPage.isElementPresent('.aVW')).to.equal(false);
       })
     );
 

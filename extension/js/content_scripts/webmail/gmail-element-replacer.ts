@@ -501,7 +501,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const scannedByGmailLabel = $(elementsToClone[0]).first().clone();
       const scannedByGmailPopover = $(elementsToClone[1]).first().clone(true);
       // for uniformity reasons especially when Google used "One" for single attachment and numeric representation for multiple.
-      const gmailAttachmentLabelReplacement = $(`<span>${nRenderedAttachments} ${nRenderedAttachments > 1 ? 'Attachments' : 'Attachment'}</span>`);
+      const gmailAttachmentLabelReplacement = $(
+        `<span>${nRenderedAttachments}</span>&nbsp;<span>${nRenderedAttachments > 1 ? 'Attachments' : 'Attachment'}</span>`
+      );
       attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).empty();
       gmailAttachmentLabelReplacement.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
       scannedByGmailLabel.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
