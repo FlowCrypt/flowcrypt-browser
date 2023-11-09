@@ -565,7 +565,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         expect(urls.length).to.equal(2);
         expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
         expect(await gmailPage.waitForContent('.aVW span.a2H', ' •  Scanned by Gmail'));
-
         await gmailPage.close();
       })
     );
