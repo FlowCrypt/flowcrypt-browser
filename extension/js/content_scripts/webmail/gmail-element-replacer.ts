@@ -444,7 +444,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (renderStatus === 'hidden') {
       return true;
     }
-    const isHideableFile = attachment.type === 'application/pgp-keys' || Attachment.encryptedMsgNames.some(filename => filename === attachment.name);
+    const isHideableFile =
+      attachment.type === 'application/pgp-keys' || attachment.isPublicKey() || Attachment.encryptedMsgNames.some(filename => filename === attachment.name);
     return isHideableFile;
   };
 
@@ -491,7 +492,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       $(this.sel.attachmentsButtons).hide();
     }
     if (nRenderedAttachments === 0) {
-      attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
+      // only hide when there's no encrypted public key attachments.
+      if ($('.pgp_pubkey').length === 0) {
+        attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
+      }
     } else {
       const elementsToClone = ['span.a2H', 'div.a2b'];
       const scannedByGmailLabel = $(elementsToClone[0]).first().clone();
