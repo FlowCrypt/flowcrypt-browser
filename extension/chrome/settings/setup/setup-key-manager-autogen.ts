@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Api } from '../../../js/common/api/shared/api.js';
 import { Settings } from '../../../js/common/settings.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -81,9 +81,16 @@ export class SetupWithEmailKeyManagerModule {
     } catch (e) {
       if (ApiErr.isNetErr(e) && (await Api.isInternetAccessible())) {
         // frendly message when key manager is down, helpful during initial infrastructure setup
-        e.message =
-          `FlowCrypt Email Key Manager at ${this.view.clientConfiguration.getKeyManagerUrlForPrivateKeys()} cannot be reached. ` +
+        const url = this.view.clientConfiguration.getKeyManagerUrlForPrivateKeys();
+        const message =
+          `FlowCrypt Email Key Manager at ${url} cannot be reached. ` +
           'If your organization requires a VPN, please connect to it. Else, please inform your network admin.';
+        if (e instanceof AjaxErr) {
+          e.message = message; // we assume isNetErr wasn't identified by the message property
+        } else {
+          // convert to AjaxErr, identifiable as a net error, with a custom message
+          throw AjaxErr.fromNetErr(message, e.stack, url);
+        }
       }
       throw e;
     }

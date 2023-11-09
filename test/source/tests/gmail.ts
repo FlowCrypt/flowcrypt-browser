@@ -172,8 +172,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
-        expect(await gmailPage.isElementPresent('@action-show-original-conversation')).to.equal(true);
         await gotoGmailPage(gmailPage, '/QgrcJHrtqfgLGKqwChjKsHKzZQpwRHMBqpG');
+        await gmailPage.waitAll('@action-show-original-conversation');
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
         expect(urls.length).to.equal(1);
         const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
@@ -317,8 +317,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
-          await replyBox.waitAndClick('@action-send');
-          await replyBox.waitTillGone('@action-send');
+          await replyBox.waitAndClick('@action-send', { confirmGone: true });
           await Util.sleep(2);
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
@@ -604,8 +603,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
-        await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
-        expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
+        // TODO: demo@flowcrypt.com key should be updated
+        // await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
+        await composePage.waitForContent('.email_address.expired', 'demo@flowcrypt.com');
+        expect(await composePage.attr('.email_address.expired', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
       })
     );
 
