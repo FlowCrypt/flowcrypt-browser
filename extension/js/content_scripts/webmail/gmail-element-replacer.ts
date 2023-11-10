@@ -492,8 +492,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       $(this.sel.attachmentsButtons).hide();
     }
     if (nRenderedAttachments === 0) {
-      // only hide when there's no encrypted public key attachments.
-      if ($('.pgp_pubkey').length === 0) {
+      if ($('.pgp_block').length === 0) {
         attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
       }
     } else {
