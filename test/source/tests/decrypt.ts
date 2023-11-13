@@ -1980,21 +1980,25 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - Message clipping should exclude inline images',
       testWithBrowser(async (t, browser) => {
-        const threadId1 = '1890bbca1d2acc4c';
+        const threadId = '18bc8fceb732a174';
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const gmailPage1 = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId1}`, undefined, authHdr);
-        await gmailPage1.waitAll('iframe');
-        const pgpBlock1 = await gmailPage1.getFrame(['pgp_block.htm']);
-        await pgpBlock1.verifyContentIsNotPresentContinuously('@pgp-block-content', '[clipped - message too large]');
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        const pgpBlock = await gmailPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-block-content', 'hello');
+        await pgpBlock.waitAll('#pgp_block img');
+        await pgpBlock.checkIfImageIsDisplayedCorrectly('#pgp_block img');
+        await pgpBlock.verifyContentIsNotPresentContinuously('@pgp-block-content', '[clipped - message too large]');
+        await gmailPage.close();
       })
     );
 
     test(
       'decrypt - prevent rendering of attachments from domain sources other than flowcrypt.s3.amazonaws.com',
       testWithBrowser(async (t, browser) => {
-        const threadId1 = '184cc6aa8e884397';
+        const threadId = '184cc6aa8e884397';
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
         await pgpBlock.waitForSelTestState('ready');
