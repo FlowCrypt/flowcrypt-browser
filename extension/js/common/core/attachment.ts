@@ -40,7 +40,15 @@ export class Attachment {
   // todo: it'd be better to compile this regex based on the data we have in `treatAs` method
   public static readonly webmailNamePattern =
     /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(OpenPGP_signature(.asc)?)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
-  public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
+  public static readonly encryptedMsgNames = [
+    'msg.asc',
+    'message.asc',
+    'encrypted.asc',
+    'encrypted.eml.pgp',
+    'Message.pgp',
+    'openpgp-encrypted-message.asc',
+    '.asc.pgp',
+  ];
 
   public length = NaN;
   public type: string;

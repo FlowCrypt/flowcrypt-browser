@@ -492,6 +492,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       $(this.sel.attachmentsButtons).hide();
     }
     if (nRenderedAttachments === 0) {
+      $(this.sel.attachmentsContainerOuter).children('.hp').hide();
       if ($('.pgp_block').length === 0) {
         attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
       }
