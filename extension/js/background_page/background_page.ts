@@ -59,6 +59,7 @@ console.info('background_process.js starting');
   //   is fixed, this can be moved to the gmail content script, and some may be removed
   BrowserMsg.addPgpListeners();
 
+  BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
