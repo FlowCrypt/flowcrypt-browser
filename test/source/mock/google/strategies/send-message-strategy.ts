@@ -68,7 +68,6 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
   await checkForAbsenceofBase64InAttachments(innerMimeMsg.attachments);
 };
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // TODO: Make a better structure of ITestMsgStrategy. Because this class doesn't test anything, it only saves message in the Mock
 class SaveMessageInStorageStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult, id: string) => {
@@ -232,7 +231,6 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
-/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
 class MessageWithFooterTestStrategy implements ITestMsgStrategy {
   private readonly footer = 'flowcrypt.compatibility test footer with an img';
@@ -241,7 +239,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
     const mimeMsg = parseResult.mimeMsg;
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
     const decrypted = await MsgUtil.decryptMessage({
-      kisWithPp: keyInfo!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      kisWithPp: keyInfo!,
       encryptedData: Buf.fromUtfStr(mimeMsg.text || ''),
       verificationPubs: [],
     });
@@ -310,12 +308,14 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
 }
 
 class NoopTestStrategy implements ITestMsgStrategy {
-  public test = async () => {}; // eslint-disable-line @typescript-eslint/no-empty-function
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  public test = async () => {};
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   private readonly quotedContent: string = [
     'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+    '',
     '> This is some message',
     '>',
     '> and below is the quote',
@@ -329,13 +329,12 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
   public test = async (parseResult: ParseMsgResult) => {
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: keyInfo!,
       encryptedData: parseResult.mimeMsg.text!,
       verificationPubs: [],
     });
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     if (!decrypted.success) {
       throw new HttpClientErr(`Error: can't decrypt message`);
     }
@@ -372,14 +371,13 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Encrypted Message');
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     const withAttachments = mimeMsg.subject?.includes(' with attachment');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(ENVELOPED_DATA_OID);
     if (p7.type === ENVELOPED_DATA_OID) {
@@ -394,10 +392,9 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
         expect(decryptedMessage).to.contain('This text should be encrypted into PKCS#7 data');
         if (withAttachments) {
           const nestedMimeMsg = await Parse.parseMixed(decryptedMessage);
-          /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
           expect(nestedMimeMsg.attachments!.length).to.equal(3);
           expect(nestedMimeMsg.attachments![0].content.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
-          /* eslint-enable @typescript-eslint/no-non-null-assertion */
         }
       }
     }
@@ -414,13 +411,12 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).value).to.equal('attachment');
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
     expect(mimeMsg.attachments!.length).to.equal(1);
     expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
     expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
     expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
     const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(SIGNED_DATA_OID);
   };
@@ -474,6 +470,8 @@ export class TestBySubjectStrategyContext {
     } else if (GMAIL_RECOVERY_EMAIL_SUBJECTS.includes(subject)) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('FlowCrypt OpenPGP Private Key backup')) {
+      this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('Test Sending Message With Attachment Which Contains Emoji in Filename')) {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {
       this.strategy = new NoopTestStrategy();

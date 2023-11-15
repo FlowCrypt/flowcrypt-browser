@@ -50,7 +50,7 @@ type WebmailSpecificInfo = {
   ) => Promise<void>;
 };
 export interface WebmailElementReplacer {
-  getIntervalFunctions: () => Array<IntervalFunction>;
+  getIntervalFunctions: () => IntervalFunction[];
   setReplyBoxEditable: () => Promise<void>;
   reinsertReplyBox: (replyMsgId: string) => void;
   scrollToReplyBox: (replyMsgId: string) => void;
@@ -243,6 +243,16 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
       relayManager.renderProgress(progress);
     });
+    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+      const traverseUpLevels = traverseUp || 0;
+      let appendAfter = $(`iframe#${afterFrameId}`);
+      for (let i = 0; i < traverseUpLevels; i++) {
+        appendAfter = appendAfter.parent();
+      }
+      for (const armoredPubkey of publicKeys) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false)); // xss-safe-value
+      }
+    });
     BrowserMsg.listen(tabId);
   };
 
@@ -394,9 +404,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     if (expireInDays > 30) {
       return;
     }
-    let warningMsg;
+    let warningMsg: string;
     if (clientConfiguration.usesKeyManager()) {
-      let expirationText;
+      let expirationText: string;
       if (expireInDays > 0) {
         expirationText = `Your local keys expire in ${Str.pluralize(expireInDays, 'day')}.<br/>`;
       } else {
@@ -407,7 +417,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
-      let expirationText;
+      let expirationText: string;
       if (expireInDays > 0) {
         expirationText = `Your keys are expiring in ${Str.pluralize(expireInDays, 'day')}.`;
       } else {

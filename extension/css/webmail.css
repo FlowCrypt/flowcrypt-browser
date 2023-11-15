@@ -16,7 +16,9 @@
   background-color: #fff;
   border: none;
   border-radius: 24px;
-  box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  box-shadow:
+    0 1px 2px 0 rgb(60 64 67 / 30%),
+    0 1px 3px 1px rgb(60 64 67 / 15%);
   color: #3c4043;
   font-weight: 500;
   white-space: nowrap;
@@ -231,7 +233,7 @@ body.cryptup_gmail_new div.new_secure_compose_window_button:hover {
   background-color: #fafafb;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button > img {
   border: 2px solid #31a217;
   width: 10px;
   margin: 4px;
@@ -240,7 +242,7 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
   opacity: 0.8;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button > span {
   text-transform: uppercase;
   font-size: 9.5px;
   color: white;
@@ -248,21 +250,23 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
   padding: 2px 3px;
   display: inline-block;
   border-radius: 2px;
-  cursor: default;
+  cursor: pointer;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img,
-div.ade.appended span.cryptup_convo_button:hover > span {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button:hover > img,
+div.hj.appended span.cryptup_convo_button:hover > span {
   opacity: 1;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button:not(:first-child) {
   margin-left: 5px;
 }
 
-body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button {
+body.cryptup_gmail.cryptup_gmail_new div.hj.appended span.cryptup_convo_button {
   margin-left: 18px;
   zoom: 1.2;
+  float: left;
+  margin-top: 2px;
 }
 
 /* The 'End Pass Phrase Session' button */

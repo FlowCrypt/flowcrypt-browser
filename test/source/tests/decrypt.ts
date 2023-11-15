@@ -66,9 +66,25 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - backup message rendering`,
+      `decrypt - old backup message rendering`,
       testWithBrowser(async (t, browser) => {
         const threadId = '15f84afa553d8a83';
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await gmailPage.close();
+      })
+    );
+
+    test(
+      `decrypt - new backup message rendering`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '188923a75165a3c8';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
@@ -207,10 +223,9 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       'decrypt - encrypted text inside "message" attachment is correctly decrypted',
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
         const key = Config.key('flowcrypt.compatibility.1pp1')!;
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '184a474fc1bd59b8',
@@ -1545,6 +1560,31 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - message with attached ECC public key is rendered correctly',
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const threadId = '18b18681188bba11';
+        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
+        await inboxPage.waitAll('iframe');
+        expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), {
+          content: ['check my key'],
+          encryption: 'encrypted',
+        });
+        const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.true;
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
+        expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
+        expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.true;
+      })
+    );
+
+    test(
       'decrypt - not an armored public key in a file that looked like a public key',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
@@ -1862,9 +1902,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await pgpBlock.click('#pgp_block a');
         await Util.sleep(5);
         const flowcryptTab = (await browser.browser.pages()).find(p => p.url() === 'https://flowcrypt.com/');
-        await flowcryptTab!.waitForSelector('body'); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        await flowcryptTab!.waitForSelector('body');
         await Util.sleep(3);
-        expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null'); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        expect(await flowcryptTab!.evaluate(() => `Opener: ${JSON.stringify(window.opener)}`)).to.equal('Opener: null');
       })
     );
 
@@ -1887,7 +1927,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         const msgId = '175ccd8755eab85f';
-        // eslint-disable @typescript-eslint/no-non-null-assertion
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
           google: {
@@ -1961,6 +2000,27 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await pgpBlock.waitForSelTestState('ready');
         await pgpBlock.waitForContent('@pgp-block-content', '[skipped attachment due to invalid url]');
         await pgpBlock.notPresent(['.preview-attachment', '@download-attachment-0']);
+      })
+    );
+
+    test(
+      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message',
+      testWithBrowser(async (t, browser) => {
+        const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
+        const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
+        await inboxPage1.waitAll('iframe');
+        const attachmentFrame1 = await inboxPage1.getFrame(['attachment.htm']);
+        await attachmentFrame1.waitForSelTestState('ready');
+        await attachmentFrame1.waitForContent('@attachment-name', 'noname');
+        await attachmentFrame1.waitForContent('@container-attachment-header', 'PLAIN FILE');
+        const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
+        await inboxPage2.waitAll('iframe');
+        const attachmentFrame2 = await inboxPage2.getFrame(['attachment.htm']);
+        await attachmentFrame2.waitForSelTestState('ready');
+        await attachmentFrame2.waitForContent('@attachment-name', 'noname');
+        await attachmentFrame2.waitForContent('@container-attachment-header', 'PLAIN FILE');
       })
     );
 

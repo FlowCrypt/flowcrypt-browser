@@ -172,6 +172,7 @@ export class Api<REQ, RES> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected log = (ms: number, req: http2.Http2ServerRequest, res: http2.Http2ServerResponse, errRes?: Buffer) => {
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     return undefined as void;
   };
 
@@ -326,7 +327,7 @@ export class Api<REQ, RES> {
     for (const valuePair of valuePairs) {
       if (valuePair) {
         const equalSignSeparatedParts = valuePair.split('=');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         params[equalSignSeparatedParts.shift()!] = decodeURIComponent(equalSignSeparatedParts.join('='));
       }
     }

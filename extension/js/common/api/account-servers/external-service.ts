@@ -14,6 +14,7 @@ import { ClientConfigurationError, ClientConfigurationJson } from '../../client-
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
 import { GoogleOAuth } from '../authentication/google/google-oauth.js';
+import { Xss } from '../../platform/xss.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -98,7 +99,7 @@ export class ExternalService extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
+    await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
   };
 
   public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
@@ -106,7 +107,7 @@ export class ExternalService extends Api {
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>(`/api/${this.apiVersion}/log-collector/exception`, {
+    await this.request(`/api/${this.apiVersion}/log-collector/exception`, {
       fmt: 'JSON',
       data: {
         tags,
@@ -139,9 +140,9 @@ export class ExternalService extends Api {
         JSON.stringify({
           associateReplyToken,
           from,
-          to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
-          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
-          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName),
+          to: (recipients.to || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
+          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
+          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
         })
       ),
     });
@@ -150,7 +151,7 @@ export class ExternalService extends Api {
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>(`/api/${this.apiVersion}/message/${externalId}/gateway`, {
+    await this.request(`/api/${this.apiVersion}/message/${externalId}/gateway`, {
       fmt: 'JSON',
       data: {
         emailGatewayMessageId,

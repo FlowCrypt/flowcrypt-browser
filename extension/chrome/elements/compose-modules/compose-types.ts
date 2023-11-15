@@ -35,13 +35,18 @@ export interface RecipientElement extends RecipientElementBase {
 
 export interface ValidRecipientElement extends RecipientElementBase, EmailParts {}
 
+export type MessageToReplyOrForwardHeaders = {
+  references: string;
+  'message-id': string;
+  subject?: string;
+  date?: string;
+  from?: string;
+  to: string[];
+  cc?: string[];
+};
+
 export type MessageToReplyOrForward = {
-  headers: {
-    references: string;
-    'message-id': string;
-    date?: string;
-    from?: string;
-  };
+  headers: MessageToReplyOrForwardHeaders;
   isOnlySigned?: boolean;
   text?: string;
   decryptedFiles: File[];

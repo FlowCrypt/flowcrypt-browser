@@ -7,7 +7,6 @@ import * as DOMPurify from 'dompurify';
 import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
 export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-PLAIN-TEXT';
-
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
  *  - in browser the implementation uses DOMPurify
@@ -51,6 +50,7 @@ export class Xss {
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
+  private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -228,6 +228,10 @@ export class Xss {
 
   public static escape = (str: string) => {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  };
+
+  public static stripEmojis = (str: string) => {
+    return str.replace(Xss.EMOJI_REGEX, '');
   };
 
   public static htmlUnescape = (str: string) => {

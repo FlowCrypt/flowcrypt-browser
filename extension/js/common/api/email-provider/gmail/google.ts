@@ -60,10 +60,9 @@ export class Google {
         dataPart = { method: 'GET' };
       }
     }
-    const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
-    // todo: const context = 'operationId' in progress ? { operationId: progress.operationId, expectedTransferSize: progress.expectedTransferSize, tabId: progress.tabId } : undefined;
+    const headers = { authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
     const progressCbs = 'download' in progress || 'upload' in progress ? progress : undefined;
-    const request: Ajax = { progress: progressCbs, url, ...dataPart, headers: { authorization }, stack: Catch.stackTrace() };
+    const request: Ajax = { url, headers, ...dataPart, stack: Catch.stackTrace(), progress: progressCbs };
     return await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<RT>(acctEmail, request);
   };
 

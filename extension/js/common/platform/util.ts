@@ -24,7 +24,7 @@ export const base64decode = (b64tr: string): string => {
   return atob(b64tr);
 };
 
-export const moveElementInArray = <T>(arr: Array<T>, oldIndex: number, newIndex: number) => {
+export const moveElementInArray = <T>(arr: T[], oldIndex: number, newIndex: number) => {
   while (oldIndex < 0) {
     oldIndex += arr.length;
   }

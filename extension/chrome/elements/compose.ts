@@ -30,7 +30,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
-import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
+import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
@@ -44,6 +44,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
@@ -145,6 +146,7 @@ export class ComposeView extends View {
       'debug',
       'removeAfterClose',
       'replyPubkeyMismatch',
+      'replyOption',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -152,6 +154,7 @@ export class ComposeView extends View {
     this.skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
     this.ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
     this.removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
+    this.replyOption = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyOption') as ReplyOption;
     this.disableDraftSaving = false;
     this.debug = uncheckedUrlParams.debug === true;
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
@@ -197,6 +200,9 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
+    if (this.replyOption && this.isReplyBox) {
+      await this.renderModule.activateReplyOption(this.replyOption, true);
+    }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
   };
 

@@ -75,7 +75,7 @@ export class PgpBlockView extends View {
     } else if (this.progressOperation?.operationId !== operationId) {
       return;
     }
-    const renderText = perc ? `${text} ${perc}%` : text;
+    const renderText = perc ? `${text} ${Math.min(perc, 100)}%` : text;
     this.renderModule.renderText(renderText);
   };
 

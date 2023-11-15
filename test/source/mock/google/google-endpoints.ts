@@ -14,7 +14,7 @@ import { Dict } from '../../core/common';
 
 type DraftSaveModel = { message: { raw: string; threadId: string } };
 
-const allowedRecipients: Array<string> = [
+const allowedRecipients: string[] = [
   'flowcrypt.compatibility@gmail.com',
   'manualcopypgp@flowcrypt.com',
   'censored@email.com',
@@ -93,7 +93,7 @@ export const multipleEmailAliasList: MockUserAlias[] = [
 ];
 
 export const flowcryptCompatibilityPrimarySignature =
-  '<div dir="ltr">flowcrypt.compatibility test footer with an img<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
+  '<div dir="ltr"><font size="2">flowcrypt.compatibility test footer with an img<br></font><div><font size="2">and second line</font></div<br><img src="https://flowcrypt.com/assets/imgs/svgs/flowcrypt-logo.svg" alt="Image result for small image"><br></div>';
 
 export const flowcryptCompatibilityAliasList = [
   {
@@ -435,7 +435,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   const recipients = parsedMailAddressObjectAsArray(mimeMsg.to)
     .concat(parsedMailAddressObjectAsArray(mimeMsg.cc))
     .concat(parsedMailAddressObjectAsArray(mimeMsg.bcc));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   if (!recipients.length || recipients.some(addr => addr.value.some(em => !allowedRecipients.includes(em.address!)))) {
     throw new HttpClientErr("Error: You can't send a message to unexisting email address(es)");
   }
@@ -443,7 +443,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   if (acct === 'flowcrypt.compatibility@gmail.com') {
     aliases.push('flowcryptcompatibility@gmail.com');
   }
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   if (!mimeMsg.from?.value.length || mimeMsg.from?.value.find(em => !aliases.includes(em.address!))) {
     throw new HttpClientErr("You can't send a message from unexisting email address(es)");
   }

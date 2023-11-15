@@ -16,6 +16,7 @@ import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
+import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -81,8 +82,9 @@ export namespace Bm {
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
+  export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
-  export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string };
+  export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: Dest; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
@@ -96,6 +98,7 @@ export namespace Bm {
       sameWorld: boolean | undefined;
     };
     export type InMemoryStoreGet = string | null;
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgDecrypt = DecryptResult;
@@ -134,7 +137,6 @@ export namespace Bm {
     | ComposeWindowOpenDraft
     | NotificationShow
     | PassphraseDialog
-    | PassphraseDialog
     | Settings
     | SetCss
     | AddOrRemoveClass
@@ -152,7 +154,8 @@ export namespace Bm {
     | RenderMessage
     | PgpBlockReady
     | PgpBlockRetry
-    | ConfirmationResult;
+    | ConfirmationResult
+    | Ajax;
 
   export type AsyncRespondingHandler = (req: AnyRequest) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -197,6 +200,7 @@ export class BrowserMsg {
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
+        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
@@ -293,7 +297,7 @@ export class BrowserMsg {
 
   public static listen = (dest: Bm.Dest) => {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, sender);
+      // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, _sender);
       if (msg.to && [dest, 'broadcast'].includes(msg.to)) {
         BrowserMsg.handleMsg(msg, rawRespond);
         return true;
@@ -381,9 +385,18 @@ export class BrowserMsg {
   };
 
   private static sendToChildren = (encryptedMsg: SymEncryptedMessage) => {
-    const childFrames = $(`iframe`).get() as HTMLIFrameElement[];
-    for (const childFrame of childFrames) {
-      childFrame.contentWindow?.postMessage(encryptedMsg, Env.getExtensionOrigin());
+    const extensionOrigin = Env.getExtensionOrigin();
+    const childFrames = Array.from(document.querySelectorAll('iframe'));
+    const childFramesWithExtensionOrigin = childFrames.filter(iframe => {
+      try {
+        const iframeOrigin = new URL(iframe.src).origin;
+        return iframeOrigin === extensionOrigin;
+      } catch {
+        return false;
+      }
+    });
+    for (const childFrame of childFramesWithExtensionOrigin) {
+      childFrame.contentWindow?.postMessage(encryptedMsg, extensionOrigin);
     }
   };
 
@@ -498,7 +511,15 @@ export class BrowserMsg {
       };
       try {
         if (chrome.runtime) {
-          chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          if (Env.isBackgroundPage()) {
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+              for (const tab of tabs) {
+                chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+              }
+            });
+          } else {
+            chrome.runtime.sendMessage(msg, processRawMsgResponse);
+          }
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }

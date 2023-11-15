@@ -117,6 +117,7 @@ export class Ui {
         Catch.reportErr(e);
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     prevent: <THIS extends HTMLElement | void>(
       evName: PreventableEventName,
       cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
@@ -267,7 +268,7 @@ export class Ui {
       }
       const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
-          Swal.getCloseButton()!.blur(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          Swal.getCloseButton()?.blur();
         },
         html,
         width: 750,

@@ -52,6 +52,16 @@ export type FesClientConfiguration = {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
+export type FesAuthenticationConfiguration = {
+  oauth: {
+    clientId: string;
+    clientSecret: string;
+    redirectUrl: string;
+    authCodeUrl: string;
+    tokensUrl: string;
+  };
+};
+
 export interface FesMessageReturnType {
   url: string;
   externalId: string;
@@ -61,6 +71,7 @@ export interface FesConfig {
   returnError?: HttpClientErr;
   apiEndpointReturnError?: HttpClientErr;
   clientConfiguration?: FesClientConfiguration;
+  authenticationConfiguration?: FesAuthenticationConfiguration;
   messagePostValidator?: (body: string, fesUrl: string) => Promise<FesMessageReturnType>;
 }
 
@@ -102,6 +113,15 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
         },
       };
     },
+    '/shared-tenant-fes/api/v1/client-configuration/authentication': async ({}, req) => {
+      if (req.method !== 'GET') {
+        throw new HttpClientErr('Unsupported method');
+      }
+      if (config?.authenticationConfiguration) {
+        return config.authenticationConfiguration;
+      }
+      return {};
+    },
     '/shared-tenant-fes/api/v1/log-collector/exception': async ({ body }) => {
       reportedErrors.push(body as ReportedError);
       return { saved: true };
@@ -122,6 +142,9 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       if (req.method === 'POST' && typeof body === 'string') {
         expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
         expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+        if (body.includes('NameWithEmoji')) {
+          expect(body).to.not.include('⭐');
+        }
         const response = {
           // this url is required for pubkey encrypted message
           url: `https://flowcrypt.com/shared-tenant-fes/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,

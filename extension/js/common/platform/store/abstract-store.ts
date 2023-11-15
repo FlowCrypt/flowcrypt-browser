@@ -8,11 +8,12 @@ import { ClientConfigurationJson } from '../../client-configuration.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex } from './acct-store.js';
 import { UnreportableError, Catch } from '../catch.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
-type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | GmailRes.OpenId | ClientConfigurationJson;
+type Storable = FlatTypes | string[] | StoredKeyInfo[] | KeyInfoWithIdentity[] | GmailRes.OpenId | ClientConfigurationJson | AuthenticationConfiguration;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {

@@ -7,6 +7,7 @@ import { Bm } from '../common/browser/browser-msg.js';
 import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
+import { Api } from '../common/api/shared/api.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -28,8 +29,12 @@ export class BgHandlers {
     return await dbFunc(db, ...request.args);
   };
 
+  public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
+    return await Api.ajax(r.req, r.resFmt);
+  };
+
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
-    return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId) };
+    return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId, r.treatAs) };
   };
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
@@ -47,7 +52,7 @@ export class BgHandlers {
           if (activeTabs[0].id !== undefined) {
             type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
             chrome.tabs.executeScript(
-              activeTabs[0].id!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+              activeTabs[0].id,
               { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
               (result: ScriptRes) => {
                 resolve({

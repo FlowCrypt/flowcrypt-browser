@@ -53,7 +53,7 @@ export class GmailPageRecipe extends PageRecipe {
       const moreActionsButton = await lastMessageElement.$$('[aria-label="More"]');
       expect(moreActionsButton.length).to.equal(1);
       await moreActionsButton[0].click();
-      await gmailPage.press('ArrowDown', 5);
+      await gmailPage.press('ArrowDown', 4);
       await gmailPage.press('Enter');
       await Util.sleep(3);
       await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });

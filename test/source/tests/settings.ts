@@ -146,7 +146,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const fingerprint = (await settingsPage.read('.good'))!.split(' ').join('');
         const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${longid}&parentTabId=`;
@@ -707,6 +707,44 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - Errors encountered during the addition/update of a private key should be handled properly',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const keyCanBeFixedTestKey = testConstants.keyCanBeFixedTestKey;
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          fixKey: true,
+          key: {
+            title: '',
+            armored: keyCanBeFixedTestKey,
+            passphrase: 'hard to guess passphrase',
+            longid: '9866DB9063926D73',
+          },
+        });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyPage = await settingsPage.getFrame(['my_key.htm']);
+        await myKeyPage.waitAndClick('@action-update-prv');
+        await myKeyPage.waitAndClick('@source-paste');
+        const invalidKeyFormat = 'non-valid-private-key-format';
+        const invalidPrivateKeyBlock = '-----BEGIN PGP PRIVATE KEY BLOCK-----\r\n\r\ninvalid-key\r\n-----END PGP PRIVATE KEY BLOCK-----';
+        await myKeyPage.waitAndType('@input-prv-key', invalidKeyFormat);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('warning', 'confirm', 'This does not appear to be a validly formatted key.');
+        await myKeyPage.waitAndType('@input-prv-key', invalidPrivateKeyBlock);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
+        await myKeyPage.waitAndType('@input-prv-key', keyCanBeFixedTestKey);
+        await myKeyPage.waitAndClick('@action-update-key');
+        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'The set of User IDs in this key is not supported.');
+      })
+    );
+    test(
       'settings - attachment previews are rendered according to their types',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
@@ -742,6 +780,29 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const attachmentPreviewOther = await inboxPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewOther.waitForContent('#attachment-preview-container .attachment-preview-unavailable', 'No preview available');
         await attachmentPreviewOther.waitAll('#attachment-preview-container .attachment-preview-unavailable #attachment-preview-download');
+      })
+    );
+    test(
+      'settings - #5408 PDF files downloaded correctly from attachment previews',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(
+          t,
+          `chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=174ab0ba9643b4fa`
+        );
+        const pdfFileName = 'small.pdf';
+        const attachmentPdf = await inboxPage.getFrame(['attachment.htm', `name=${pdfFileName}`]);
+        await attachmentPdf.waitForSelTestState('ready');
+        await attachmentPdf.click('body');
+        const attachmentPreviewPdf = await inboxPage.getFrame(['attachment_preview.htm']);
+        await attachmentPreviewPdf.waitAll('#attachment-preview-container.attachment-preview-pdf .attachment-preview-pdf-page');
+
+        const downloadedPdf = await inboxPage.awaitDownloadTriggeredByClicking(async () => {
+          await attachmentPreviewPdf.waitAndClick('@attachment-preview-download');
+        });
+        expect(Object.entries(downloadedPdf).length).to.equal(1);
+        expect(Object.keys(downloadedPdf)[0]).to.equal(pdfFileName);
+        expect(downloadedPdf[pdfFileName].length).to.equal(15218);
       })
     );
     test(
@@ -970,7 +1031,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         // test the pubkey in the storage
         const oldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(oldContact.sortedPubkeys.length).to.equal(1);
@@ -992,7 +1053,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // test the pubkey in the storage
         const expectedOldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
@@ -1008,7 +1069,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // test the pubkey in the storage
         const newContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(newContact.sortedPubkeys.length).to.equal(1);
@@ -1123,10 +1184,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // backing up to file when only one key is checked
         const backupFileRawData1 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
         const { keys: keys1 } = await KeyUtil.readMany(
-          Buf.fromUtfStr(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            backupFileRawData1['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()
-          )
+          Buf.fromUtfStr(backupFileRawData1['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString())
         );
         expect(keys1.length).to.equal(1);
         expect(keys1[0].id).to.equal('515431151DDD3EA232B37A4C98ACFA1EADAB5B92');
@@ -1183,7 +1241,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private keys have been successfully backed up');
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0];
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(Buf.concat(mimeMsg.attachments.map(a => a.content)));
         expect(keys.length).to.equal(2);
@@ -1235,7 +1293,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // one passphrase is not known but successfully guessed
         const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
         expect(Object.keys(downloadedFiles).length).to.equal(2);
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
         const { keys: keys1 } = await KeyUtil.readMany(
           Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString())
         );
@@ -1243,7 +1301,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const { keys: keys2 } = await KeyUtil.readMany(
           Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString())
         );
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
         expect(keys2.length).to.equal(1);
         await backupPage.close();
       })
@@ -1417,10 +1474,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('@input-backup-step3manual-file');
         const downloadedFiles = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue');
         const { keys } = await KeyUtil.readMany(
-          Buf.fromUtfStr(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString()
-          )
+          Buf.fromUtfStr(downloadedFiles['flowcrypt-backup-flowcrypttestkeymultiplegmailcom-515431151DDD3EA232B37A4C98ACFA1EADAB5B92.asc']!.toString())
         );
         expect(keys.length).to.equal(1);
         expect(keys[0].id).to.equal('515431151DDD3EA232B37A4C98ACFA1EADAB5B92');
@@ -1471,7 +1525,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndRespondToModal('info', 'confirm', 'Your private key has been successfully backed up');
 
         const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject('Your FlowCrypt Backup')[0];
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const mimeMsg = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const { keys } = await KeyUtil.readMany(new Buf(mimeMsg.attachments[0].content));
         expect(keys.length).to.equal(1);

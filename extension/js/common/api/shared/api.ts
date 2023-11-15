@@ -9,6 +9,12 @@ import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../.
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
+import { Env } from '../../browser/env.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+
+export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
+export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; frameId: string };
+export type ApiCallContext = ProgressDestFrame | undefined;
 
 export type RecipientType = 'to' | 'cc' | 'bcc';
 export type ResFmt = 'json' | 'text' | undefined;
@@ -30,15 +36,36 @@ export type Ajax = {
   | { method: 'POST' }
   | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
   | { method: 'POST' | 'PUT'; contentType?: string; data: string; dataType: 'TEXT' }
-  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' } // todo: default application/x-www-form-urlencoded; charset=UTF-8 ?
+  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' }
   | { method: never; data: never; contentType: never }
 );
+type RawAjaxErr = {
+  readyState: number;
+  responseText?: string;
+  status?: number;
+  statusText?: string;
+};
 
 export type ChunkedCb = (r: ProviderContactsResults) => Promise<void>;
 export type ProgressCb = (percent: number | undefined, loaded: number, total: number) => void;
-export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null };
+export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null; operationId?: string; expectedTransferSize?: number; frameId?: string };
 
 type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
+
+export const supportsRequestStreams = (() => {
+  let duplexAccessed = false;
+
+  const hasContentType = new Request('https://localhost', {
+    body: new ReadableStream(),
+    method: 'POST',
+    get duplex() {
+      duplexAccessed = true;
+      return 'half';
+    },
+  } as RequestInit).headers.has('Content-Type');
+
+  return duplexAccessed && !hasContentType;
+})();
 
 export class Api {
   public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
@@ -69,6 +96,15 @@ export class Api {
   };
 
   public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
+    if (Env.isContentScript()) {
+      // content script CORS not allowed anymore, have to drag it through background page
+      // https://www.chromestatus.com/feature/5629709824032768
+      if (req.progress) {
+        req.progress = JSON.parse(JSON.stringify(req.progress));
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await BrowserMsg.send.bg.await.ajax({ req, resFmt });
+    }
     Api.throwIfApiPathTraversalAttempted(req.url);
     const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
     // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })
@@ -197,6 +233,46 @@ export class Api {
     }
   };
 
+  /** @deprecated should use ajax() */
+  public static ajaxWithJquery = async <T extends ResFmt, RT = unknown>(
+    req: Ajax,
+    resFmt: T,
+    formattedData: FormData | string | undefined = undefined
+  ): Promise<FetchResult<T, RT>> => {
+    const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
+      xhr: Api.getAjaxProgressXhrFactory(req.progress),
+      url: req.url,
+      method: req.method,
+      data: formattedData,
+      dataType: resFmt,
+      crossDomain: true,
+      headers: req.headers,
+      processData: false,
+      contentType: false,
+      async: true,
+      timeout: typeof req.progress?.upload === 'function' || typeof req.progress?.download === 'function' ? undefined : 20000, // substituted with {} above
+    };
+
+    try {
+      return await new Promise((resolve, reject) => {
+        Api.throwIfApiPathTraversalAttempted(req.url || '');
+        $.ajax({ ...apiReq, dataType: apiReq.dataType === 'xhr' ? undefined : apiReq.dataType })
+          .then(data => {
+            resolve(data as FetchResult<T, RT>);
+          })
+          .catch(reject);
+      });
+    } catch (e) {
+      if (e instanceof Error) {
+        throw e;
+      }
+      if (Api.isRawAjaxErr(e)) {
+        throw AjaxErr.fromXhr(e, { ...req, stack: Catch.stackTrace() });
+      }
+      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
+    }
+  };
+
   public static isInternetAccessible = async () => {
     try {
       await Api.download('https://google.com');
@@ -267,12 +343,66 @@ export class Api {
         dataPart = { method: values.method ?? 'POST', data: formattedData, dataType: 'FORM' };
       }
     }
-    const req: Ajax = { url: url + path, stack: Catch.stackTrace(), ...dataPart, headers };
+    const req: Ajax = { url: url + path, stack: Catch.stackTrace(), ...dataPart, headers, progress };
     if (typeof resFmt === 'undefined') {
       const undefinedRes: undefined = await Api.ajax(req, undefined); // we should get an undefined
       return undefinedRes as FetchResult<T, RT>;
     }
-    return await Api.ajax(req, resFmt);
+    if (progress.upload) {
+      // as of October 2023 fetch upload progress (through ReadableStream)
+      // is supported only by Chrome and requires HTTP/2 on backend
+      // as temporary solution we use XMLHTTPRequest for such requests
+      const result = await Api.ajaxWithJquery(req, resFmt, formattedData);
+      return result as FetchResult<T, RT>;
+    } else {
+      return await Api.ajax(req, resFmt);
+    }
+  };
+
+  private static getAjaxProgressXhrFactory = (progressCbs: ProgressCbs | undefined): (() => XMLHttpRequest) | undefined => {
+    if (Env.isContentScript() || !progressCbs || !(progressCbs.upload || progressCbs.download)) {
+      // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
+      // thus no progress callbacks in bg or content scripts
+      // additionally no need to create this if there are no progressCbs defined
+      return undefined;
+    }
+    return () => {
+      // returning a factory
+      let lastProgressPercent = -1;
+      const progressPeportingXhr = new XMLHttpRequest();
+      if (progressCbs && typeof progressCbs.upload === 'function') {
+        progressPeportingXhr.upload.addEventListener(
+          'progress',
+          (evt: ProgressEvent) => {
+            const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
+            if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
+              lastProgressPercent = newProgressPercent;
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              progressCbs.upload!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
+            }
+          },
+          false
+        );
+      }
+      if (progressCbs && typeof progressCbs.download === 'function') {
+        progressPeportingXhr.addEventListener('progress', (evt: ProgressEvent) => {
+          // 100 because if the request takes less time than 1-2 seconds browsers trigger this function only once and when it's completed
+          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined;
+          if (typeof newProgressPercent === 'undefined' || newProgressPercent !== lastProgressPercent) {
+            if (newProgressPercent) {
+              lastProgressPercent = newProgressPercent;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            progressCbs.download!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
+          }
+        });
+      }
+      return progressPeportingXhr;
+    };
+  };
+
+  private static isRawAjaxErr = (e: unknown): e is RawAjaxErr => {
+    return !!e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
   };
 
   /**
@@ -282,6 +412,17 @@ export class Api {
   private static throwIfApiPathTraversalAttempted = (requestUrl: string) => {
     if (requestUrl.includes('../') || requestUrl.includes('/..')) {
       throw new Error(`API path traversal forbidden: ${requestUrl}`);
+    }
+  };
+
+  private static fetchWithRetry = async (url: string, options: RequestInit, attempts = 2): Promise<Response> => {
+    // in firefox fetch sends pre-flight OPTIONS request which sometimes returns CORS error
+    // on retry fetch sends original request and it passes
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      if (err.code !== undefined || attempts <= 1) throw err;
+      return await Api.fetchWithRetry(url, options, attempts - 1);
     }
   };
 }
