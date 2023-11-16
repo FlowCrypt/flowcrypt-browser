@@ -21,8 +21,8 @@
     "errorLens.errorTextColor": "#FF000066",
     "editor.tabSize": 2,
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true,
-      "source.fixAll.stylelint": true
+      "source.fixAll.eslint": "explicit",
+      "source.fixAll.stylelint": "explicit"
     },
     "diffEditor.wordWrap": "on",
     "editor.rulers": [160]
