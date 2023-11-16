@@ -8,7 +8,7 @@ import { Str } from './common.js';
 export type Attachment$treatAs =
   | 'publicKey'
   | 'privateKey'
-  | 'encryptedMsg' /* may be signed-only (known as 'signedMsg' in MsgBlockType) as well, 
+  | 'encryptedMsg' /* may be signed-only (known as 'signedMsg' in MsgBlockType) as well,
   should probably be renamed to 'cryptoMsg' to not be confused with 'encryptedMsg' in MsgBlockType */
   | 'hidden'
   | 'signature'
@@ -40,7 +40,15 @@ export class Attachment {
   // todo: it'd be better to compile this regex based on the data we have in `treatAs` method
   public static readonly webmailNamePattern =
     /^(((cryptup|flowcrypt)-backup-[a-z0-9]+\.(key|asc))|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(OpenPGP_signature(.asc)?)|(noname)|(message)|(PGPMIME version identification)|(ATT[0-9]{5})|())$/m;
-  public static readonly encryptedMsgNames = ['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp', 'openpgp-encrypted-message.asc'];
+  public static readonly encryptedMsgNames = [
+    'msg.asc',
+    'message.asc',
+    'encrypted.asc',
+    'encrypted.eml.pgp',
+    'Message.pgp',
+    'openpgp-encrypted-message.asc',
+    '.asc.pgp',
+  ];
 
   public length = NaN;
   public type: string;
@@ -137,7 +145,7 @@ export class Attachment {
     }
     return (
       (this.type === 'application/pgp-keys' && !this.isPrivateKey()) ||
-      /^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g.test(this.name) || // name starts with a key id
+      /^(0|0x)?([A-F0-9]{16}|[A-F0-9]{8}([A-F0-9]{8})?)\.asc(\.pgp)?$/i.test(this.name) || // Key ID (8 or 16 characters) with .asc extension (optional .pgp)
       (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}.*\.asc$/g.test(this.name)) || // name contains the word "public", any key id and ends with .asc
       (/\.asc$/.test(this.name) && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
     );

@@ -29,7 +29,7 @@
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "googleapis": "128.0.0",
     "husky": "^8.0.3",
-    "lint-staged": "^15.0.2",
+    "lint-staged": "^15.1.0",
     "mailparser": "3.6.5",
     "mkdirp": "3.0.1",
     "openpgp": "5.11.0",

@@ -347,7 +347,9 @@
                     // If there are no special symbols, no need to modify the text
                     if (this._isPlainText(this.content)) {
                         // If there are lines longer than 76 symbols/bytes, make the text 'flowed'
-                        if (/^.{77,}/m.test(this.content)) {
+                        // Take only first 100000 symbols to prevent "Too much recursion" error
+                        // https://github.com/FlowCrypt/flowcrypt-browser/issues/5479
+                        if (/^.{77,}/m.test(this.content.substr(0, 100000))) {
                             flowed = true;
                         }
                         transferEncoding = '7bit';

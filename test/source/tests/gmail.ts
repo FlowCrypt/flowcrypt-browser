@@ -563,6 +563,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll(['.aZo'], { visible: false });
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls.length).to.equal(2);
+        expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
+        expect(await gmailPage.waitForContent('.aVW span.a2H', ' •  Scanned by Gmail'));
         await gmailPage.close();
       })
     );
@@ -591,6 +593,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm']);
         expect(urls.length).to.equal(1);
         await pageHasSecureReplyContainer(t, browser, gmailPage);
+        expect(await gmailPage.isElementVisible('.aVW')).to.equal(false); // attachment label count should be hidden
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
       })
     );
