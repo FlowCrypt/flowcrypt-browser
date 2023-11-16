@@ -445,7 +445,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       return true;
     }
     const isHideableFile =
-      attachment.type === 'application/pgp-keys' || attachment.isPublicKey() || Attachment.encryptedMsgNames.some(filename => filename === attachment.name);
+      attachment.type === 'application/pgp-keys' ||
+      attachment.isPublicKey() ||
+      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename));
     return isHideableFile;
   };
 
