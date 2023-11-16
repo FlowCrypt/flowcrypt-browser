@@ -326,6 +326,11 @@ export class MessageRenderer {
           return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
         }
       }
+      if (treatAs === 'plainFile') {
+        if (!a.name || a.name === 'noname') {
+          return 'hidden';
+        }
+      }
       if (treatAs !== 'plainFile') {
         loaderContext.hideAttachment(attachmentSel);
       }
