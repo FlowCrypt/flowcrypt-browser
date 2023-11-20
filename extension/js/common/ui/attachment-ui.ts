@@ -59,7 +59,7 @@ export class AttachmentUI {
   };
 
   public setInputAttributes = (): HTMLInputElement => {
-    const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // eslint-disable-line
+    const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // eslint-disable-line no-underscore-dangle
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     input.setAttribute('data-test', 'action-attach-files');
