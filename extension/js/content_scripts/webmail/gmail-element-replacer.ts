@@ -578,7 +578,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private getConvoRootEl = (anyInnerElement: HTMLElement) => {
-    return $(anyInnerElement).closest('div.Bk, div.if, td.Bu').first();
+    return $(anyInnerElement).closest('div.if, div.aHU, td.Bu').first();
   };
 
   private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
