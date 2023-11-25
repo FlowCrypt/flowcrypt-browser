@@ -307,6 +307,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
           t.timeout(minutes(4)); // extend ava's timeout
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
+          expect(await gmailPage.isElementPresent('div.aHU')).to.equal(true); // @getConvoRootEl() target element for rendering encrypted reply or forward buttons
           await gmailPage.waitAndClick('@secure-reply-button');
           let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
           await Util.sleep(3);
