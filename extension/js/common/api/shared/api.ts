@@ -242,7 +242,10 @@ export class Api {
         return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
       } else if (resFmt === 'json') {
         const transformed = transformResponseWithProgressAndTimeout();
-        return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+        const jsonResString = JSON.stringify((await Promise.all([transformed.response.json(), transformed.pipe()]))[0]);
+        const jsonResBody = JSON.parse(jsonResString);
+        jsonResBody.status_code = jsonResBody?.status_code ?? transformed.response.status;
+        return jsonResBody as FetchResult<T, RT>;
       } else {
         return undefined as FetchResult<T, RT>;
       }

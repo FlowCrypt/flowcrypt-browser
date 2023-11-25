@@ -73,7 +73,7 @@ View.run(
       await Ui.delay(50); // give spinner time to load
       try {
         const res = await this.externalService?.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
-        if (res?.sent) {
+        if (res?.status_code === 200) {
           $(target).text('sent!');
           await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);
           BrowserMsg.send.closePage(this.parentTabId);

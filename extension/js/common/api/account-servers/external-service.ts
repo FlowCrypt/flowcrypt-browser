@@ -29,7 +29,8 @@ export namespace FesRes {
   };
   export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
-  export type HelpFeedback = { sent: boolean };
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  export type HelpFeedback = { status_code: number };
 }
 
 /**
