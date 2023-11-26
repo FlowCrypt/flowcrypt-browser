@@ -9,7 +9,7 @@
     "@openpgp/web-stream-tools": "^0.0.13",
     "@types/chai": "4.3.9",
     "@types/chai-as-promised": "7.1.7",
-    "@types/chrome": "0.0.248",
+    "@types/chrome": "0.0.253",
     "@types/dompurify": "3.0.4",
     "@types/jquery": "3.5.25",
     "@types/mailparser": "3.4.3",
