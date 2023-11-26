@@ -158,7 +158,13 @@ View.run(
         const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, String($('.input_email').val()));
         $('.action_add_contact')
           .text(
-            contactWithPubKeys && contactWithPubKeys.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0
+            contactWithPubKeys &&
+              contactWithPubKeys.sortedPubkeys &&
+              contactWithPubKeys.sortedPubkeys.length > 0 &&
+              this.parsedPublicKeys &&
+              contactWithPubKeys.sortedPubkeys.some(
+                existing => this.parsedPublicKeys && this.parsedPublicKeys.some(parsedPubkey => existing.pubkey.id === parsedPubkey.id)
+              )
               ? 'update key'
               : `import ${this.isExpired ? 'expired ' : ''}key`
           )
