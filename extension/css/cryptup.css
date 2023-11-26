@@ -630,20 +630,30 @@ body#settings > div#content.contacts #emails .action_show_pubkey_list.opened .ic
 body#settings > div#content.contacts #emails .contacts-pubkey {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   background: #f5f5f5;
   margin: -7px 0 7px;
-  padding-left: 30px;
   font-size: 14px;
+  padding-left: 20px;
   border-bottom: 1px solid #eaeaea;
 }
 
 body#settings > div#content.contacts #emails .contacts-pubkey .action_show {
   flex: 1;
+  margin-top: -2px;
   text-decoration: none;
 }
 
 body#settings > div#content.contacts #emails .contacts-pubkey:last-child {
   margin-bottom: 10px;
+}
+
+body#settings > div#content.contacts #emails .contacts-pubkey .contacts-pubkey-info {
+  display: inline-block;
+}
+
+body#settings > div#content.contacts #emails .contacts-pubkey .contacts-pubkey-actions {
+  display: inline-block;
 }
 
 body#settings > div#content textarea {

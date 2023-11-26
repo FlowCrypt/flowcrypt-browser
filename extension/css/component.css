@@ -1,0 +1,28 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+
+/* Badges */
+.fc-badge {
+  color: #eee;
+  font-size: 0.7em;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 3px;
+  display: inline-block;
+  padding: 0.2em 0.35em;
+}
+
+.fc-badge-success {
+  background-color: #31a217;
+}
+
+.fc-badge-danger {
+  background-color: #d14836;
+}
+
+.fc-badge-warning {
+  background-color: #c27e23;
+}
+
+.fc-badge-gray {
+  background-color: rgb(97, 97, 97);
+}
