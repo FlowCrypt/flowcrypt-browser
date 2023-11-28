@@ -230,9 +230,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   private resizeReplyBox = () => {
-    this.squire.addEventListener('cursor', (e: Event & { range: Range }) => {
+    this.squire.addEventListener('cursor', (e: Event & { detail: { range: Range } }) => {
       if (this.view.isReplyBox) {
-        const cursorContainer = e.range.commonAncestorContainer as HTMLElement;
+        const cursorContainer = e.detail.range.commonAncestorContainer as HTMLElement;
         this.view.sizeModule.resizeComposeBox(0, cursorContainer?.offsetTop);
       }
     });
