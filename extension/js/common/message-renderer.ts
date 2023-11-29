@@ -326,6 +326,11 @@ export class MessageRenderer {
           return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
         }
       }
+      if (treatAs === 'plainFile') {
+        if (!a.name || a.name === 'noname') {
+          return 'hidden';
+        }
+      }
       if (treatAs !== 'plainFile') {
         loaderContext.hideAttachment(attachmentSel);
       }
@@ -468,8 +473,7 @@ export class MessageRenderer {
 
   private clipMessageIfLimitExceeds = (decryptedContent: string) => {
     const maxDecryptedContentLength = 100000;
-    const base64InlineImageRegex = /<img src="data:image\/(jpeg|png|gif|bmp|tiff|webp)+;base64,[^"]+" name="(\w+\.\w+)" title="(\w+\.\w+)">/g;
-    const content = decryptedContent.replace(base64InlineImageRegex, '');
+    const content = decryptedContent.replace(/<img[^>]*src="data:image[^>]*>/g, '');
     if (content.length > maxDecryptedContentLength) {
       return decryptedContent.substring(0, maxDecryptedContentLength) + ' [clipped - message too large]';
     }

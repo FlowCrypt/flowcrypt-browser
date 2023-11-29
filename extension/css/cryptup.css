@@ -1443,10 +1443,6 @@ td {
   font-size: 14px;
 }
 
-.pgp_neutral button {
-  width: 120px;
-}
-
 .pgp_insecure {
   border: none;
   border-left: 4px solid #d14836;

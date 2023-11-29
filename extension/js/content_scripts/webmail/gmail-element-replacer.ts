@@ -440,6 +440,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
+  private isAttachmentHideable = (attachment: Attachment, renderStatus: string) => {
+    if (renderStatus === 'hidden') {
+      return true;
+    }
+    const isHideableFile =
+      attachment.type === 'application/pgp-keys' ||
+      attachment.isPublicKey() ||
+      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename));
+    return isHideableFile;
+  };
+
   private processAttachments = async (
     msgId: string,
     attachments: Attachment[],
@@ -457,6 +468,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     const loaderContext = new GmailLoaderContext(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
+    attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachments.length;
     for (const a of attachments) {
       const attachmentSel = this.filterAttachments(
@@ -473,7 +485,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         messageInfo,
         skipGoogleDrive
       );
-      if (renderStatus === 'hidden') {
+      if (this.isAttachmentHideable(a, renderStatus)) {
         nRenderedAttachments--;
       }
     }
@@ -481,13 +493,24 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
       $(this.sel.attachmentsButtons).hide();
     }
-    if (nRenderedAttachments >= 2) {
-      // Aligned with Gmail, the label is shown only if there are 2 or more attachments
-      attachmentsContainerInner.parent().find(this.sel.numberOfAttachmentsDigit).text(nRenderedAttachments);
-      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
-    }
     if (nRenderedAttachments === 0) {
-      attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
+      $(this.sel.attachmentsContainerOuter).children('.hp').hide();
+      if ($('.pgp_block').length === 0) {
+        attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
+      }
+    } else {
+      const elementsToClone = ['span.a2H', 'div.a2b'];
+      const scannedByGmailLabel = $(elementsToClone[0]).first().clone();
+      const scannedByGmailPopover = $(elementsToClone[1]).first().clone(true);
+      // for uniformity reasons especially when Google used "One" for single attachment and numeric representation for multiple.
+      const gmailAttachmentLabelReplacement = $(
+        `<span>${nRenderedAttachments}</span>&nbsp;<span>${nRenderedAttachments > 1 ? 'Attachments' : 'Attachment'}</span>`
+      );
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).empty();
+      gmailAttachmentLabelReplacement.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      scannedByGmailLabel.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      scannedByGmailPopover.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
     }
     if (!skipGoogleDrive) {
       await this.processGoogleDriveAttachments(msgId, loaderContext.msgEl, attachmentsContainerInner, messageInfo);
@@ -555,7 +578,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private getConvoRootEl = (anyInnerElement: HTMLElement) => {
-    return $(anyInnerElement).closest('div.if, td.Bu').first();
+    return $(anyInnerElement).closest('div.if, div.aHU, td.Bu').first();
   };
 
   private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
