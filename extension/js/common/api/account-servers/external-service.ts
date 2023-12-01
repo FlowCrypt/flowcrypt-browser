@@ -107,7 +107,7 @@ export class ExternalService extends Api {
   };
 
   public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
-    return await this.request<FesRes.HelpFeedback>(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message } });
+    return await this.request<FesRes.HelpFeedback>(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message }, withStatusCode: true });
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
@@ -179,7 +179,7 @@ export class ExternalService extends Api {
           data: Dict<string | Attachment>;
           fmt: 'FORM';
         }
-      | { data: Dict<Serializable>; fmt: 'JSON' },
+      | { data: Dict<Serializable>; fmt: 'JSON'; withStatusCode?: boolean },
     progress?: ProgressCbs
   ): Promise<RT> => {
     const values:

@@ -34,7 +34,7 @@ export type Ajax = {
 } & (
   | { method: 'GET' | 'DELETE'; data?: UrlParams }
   | { method: 'POST' }
-  | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
+  | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON'; withStatusCode?: boolean }
   | { method: 'POST' | 'PUT'; contentType?: string; data: string; dataType: 'TEXT' }
   | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' }
   | { method: never; data: never; contentType: never }
@@ -242,10 +242,10 @@ export class Api {
         return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
       } else if (resFmt === 'json') {
         const transformed = transformResponseWithProgressAndTimeout();
-        const jsonResString = JSON.stringify((await Promise.all([transformed.response.json(), transformed.pipe()]))[0]);
-        const jsonResBody = JSON.parse(jsonResString);
-        jsonResBody.status_code = jsonResBody?.status_code ?? transformed.response.status;
-        return jsonResBody as FetchResult<T, RT>;
+        const jsonRes = JSON.stringify((await Promise.all([transformed.response.json(), transformed.pipe()]))[0]);
+        const jsonResWithStatusCode = JSON.parse(jsonRes);
+        jsonResWithStatusCode.status_code = jsonResWithStatusCode?.status_code ?? transformed.response.status;
+        return ('withStatusCode' in req ? jsonResWithStatusCode : jsonRes) as FetchResult<T, RT>;
       } else {
         return undefined as FetchResult<T, RT>;
       }
@@ -336,6 +336,7 @@ export class Api {
           data: Dict<Serializable>;
           fmt: 'JSON';
           method?: 'POST' | 'PUT';
+          withStatusCode?: boolean;
         }
       | {
           data: string;
@@ -356,13 +357,13 @@ export class Api {
     let formattedData: FormData | string | undefined;
     let dataPart:
       | { method: 'GET' }
-      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
+      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON'; withStatusCode: boolean }
       | { method: 'POST' | 'PUT'; data: string; dataType: 'TEXT' }
       | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' };
     dataPart = { method: 'GET' };
     if (values) {
       if (values.fmt === 'JSON') {
-        dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'JSON' };
+        dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'JSON', withStatusCode: values.withStatusCode ?? false };
       } else if (values.fmt === 'TEXT') {
         dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'TEXT' };
       } else if (values.fmt === 'FORM') {
