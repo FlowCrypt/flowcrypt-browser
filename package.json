@@ -27,7 +27,7 @@
     "eslint-plugin-no-null": "^1.0.2",
     "eslint-plugin-no-only-tests": "3.1.0",
     "eslint-plugin-prefer-arrow": "^1.2.3",
-    "googleapis": "128.0.0",
+    "googleapis": "129.0.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "mailparser": "3.6.5",
