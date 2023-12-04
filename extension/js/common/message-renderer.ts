@@ -328,7 +328,7 @@ export class MessageRenderer {
       }
       if (treatAs === 'plainFile') {
         if (!a.name || a.name === 'noname') {
-          return 'hidden';
+          treatAs = 'hidden';
         }
       }
       if (treatAs !== 'plainFile') {
