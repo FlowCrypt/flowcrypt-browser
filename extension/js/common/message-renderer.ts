@@ -137,7 +137,7 @@ export class MessageRenderer {
     // stripping HTML tags here for safety in the way extractArmoredBlock used to do, should we?
     // note: MimeContent.html returned from Mime.decode (when processing a raw MIME-message) isn't stripped
     // so there is another stripping that takes place later when rendering in XssSafeFactory.renderableMsgBlock
-    const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
+    const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '<br>') : undefined;
     return {
       body: {
         text,
