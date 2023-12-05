@@ -2502,8 +2502,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, validKey, 'IMPORT KEY');
         await contactsFrame.waitForContent('@page-contacts', 'AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'openpgp');
-        await contactsFrame.waitForContent('@container-key-status', 'active');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+        await contactsFrame.waitForContent('@container-key-status', 'ACTIVE');
         await contactsFrame.waitAndClick(`@action-show-pubkey-AB8CF86E37157C3F290D72007ED43D79E9617655-openpgp`, {
           confirmGone: true,
         });
@@ -2520,12 +2520,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         // contains original key
         await contactsFrame.waitForContent('@page-contacts', 'AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'openpgp');
-        await contactsFrame.waitForContent('@container-key-status', 'active');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+        await contactsFrame.waitForContent('@container-key-status', 'ACTIVE');
         // contains newly fetched key
         await contactsFrame.waitForContent('@page-contacts', '8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'openpg');
-        await contactsFrame.waitForContent('@container-key-status', 'active');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+        await contactsFrame.waitForContent('@container-key-status', 'ACTIVE');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
           confirmGone: true,
         });
@@ -2563,8 +2563,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         await contactsFrame.waitForContent('@page-contacts', '6D3E 0986 7544 EE62 7F2E 928F BEE3 A42D 9A9C 8AC9');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'openpg');
-        await contactsFrame.waitForContent('@container-key-status', 'active');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+        await contactsFrame.waitForContent('@container-key-status', 'ACTIVE');
         await contactsFrame.waitAndClick(`@action-show-pubkey-6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9-openpgp`, {
           confirmGone: true,
         });
@@ -2816,8 +2816,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         await contactsFrame.waitForContent('@page-contacts', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'openpg');
-        await contactsFrame.waitForContent('@container-key-status', 'expired');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+        await contactsFrame.waitForContent('@container-key-status', 'EXPIRED');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true,
         });
@@ -2842,8 +2842,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         await contactsFrame.waitForContent('@page-contacts', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'openpg');
-        await contactsFrame.waitForContent('@container-key-status', 'expired');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+        await contactsFrame.waitForContent('@container-key-status', 'EXPIRED');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true,
         });
@@ -2877,8 +2877,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         await contactsFrame.waitForContent('@page-contacts', '16BB 4074 03A3 ADC5 5E1E 0E4A F93E EC8F B187 C923');
-        await contactsFrame.waitForContent('@container-contact-keyid', 'x509');
-        await contactsFrame.waitForContent('@container-key-status', 'expired');
+        await contactsFrame.waitForContent('@container-contact-keyid', 'X509');
+        await contactsFrame.waitForContent('@container-key-status', 'EXPIRED');
         await contactsFrame.waitAndClick(`@action-show-pubkey-16BB407403A3ADC55E1E0E4AF93EEC8FB187C923-x509`, {
           confirmGone: true,
         });
@@ -3432,8 +3432,8 @@ const importExpiredKeyForAutoRefresh = async (settingsPage: ControllablePage) =>
   const recipientEmail = 'auto.refresh.expired.key@recipient.com';
   const contactsFrame = await importKeyManuallyAndViewTheNewContact(settingsPage, recipientEmail, expiredPublicKey, 'IMPORT EXPIRED KEY');
   await contactsFrame.waitForContent('@page-contacts', '6D3E 0986 7544 EE62 7F2E 928F BEE3 A42D 9A9C 8AC9');
-  await contactsFrame.waitForContent('@container-contact-keyid', 'openpg');
-  await contactsFrame.waitForContent('@container-key-status', 'expired');
+  await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
+  await contactsFrame.waitForContent('@container-key-status', 'EXPIRED');
   await contactsFrame.waitAndClick(`@action-show-pubkey-6D3E09867544EE627F2E928FBEE3A42D9A9C8AC9-openpgp`, {
     confirmGone: true,
   });
