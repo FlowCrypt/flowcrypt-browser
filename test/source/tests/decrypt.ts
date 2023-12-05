@@ -1385,7 +1385,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           expect(await contactsFrame.isElementPresent(`@action-show-email-${senderAttr}`)).to.be.true;
           await contactsFrame.waitAndClick(`@action-show-email-${senderAttr}`);
           // contains the  newly fetched key
-          await contactsFrame.waitForContent('@page-contacts', 'openpgp - active - 2BB2 1977 6F23 CE48 EBB8 609C 203F AE70 7600 5381');
+          await contactsFrame.waitForContent('@page-contacts', '2BB2 1977 6F23 CE48 EBB8 609C 203F AE70 7600 5381');
+          await contactsFrame.waitForContent('@container-contact-keyid', 'openpg');
+          await contactsFrame.waitForContent('@container-key-status', 'active');
         }
       })
     );
