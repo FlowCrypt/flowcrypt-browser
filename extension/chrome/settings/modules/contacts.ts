@@ -140,17 +140,22 @@ View.run(
         for (const pubkey of contact.sortedPubkeys) {
           const keyid = Xss.escape(pubkey.pubkey.id);
           const type = Xss.escape(pubkey.pubkey.family);
-          let status: string;
+          const keyStatus: { state: string; statusIndicator: string } = { state: 'unset', statusIndicator: 'unset' };
           if (pubkey.revoked) {
-            status = 'revoked';
+            keyStatus.state = 'revoked';
+            keyStatus.statusIndicator = 'light-gray';
           } else if (pubkey.pubkey?.usableForEncryption) {
-            status = 'active';
+            keyStatus.state = 'active';
+            keyStatus.statusIndicator = 'green';
           } else if (pubkey.pubkey?.usableForEncryptionButExpired) {
-            status = 'expired';
+            keyStatus.state = 'expired';
+            keyStatus.statusIndicator = 'orange';
           } else if (pubkey.pubkey?.usableForSigning) {
-            status = 'sign only';
+            keyStatus.state = 'sign only';
+            keyStatus.statusIndicator = 'yellow';
           } else {
-            status = 'unusable';
+            keyStatus.state = 'unusable';
+            keyStatus.statusIndicator = 'red';
           }
           const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
           const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
@@ -158,7 +163,7 @@ View.run(
           tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">
           <div class="contacts-pubkey-info">
             <span class="fc-badge fc-badge-gray" data-test="container-contact-keyid">${type}</span>&nbsp;
-            <span class="fc-badge fc-badge-${status === 'active' || 'sign only' ? 'success' : 'danger'}" data-test="container-key-status">${status}</span>
+            <span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status">${keyStatus.state}</span>
             ${show}
           </div>
           <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;
