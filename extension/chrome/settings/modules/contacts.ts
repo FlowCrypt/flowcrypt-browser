@@ -162,7 +162,6 @@ View.run(
             ${show}
           </div>
           <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;
-          tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">${show}${change}${remove}</div>`;
         }
         $(emailRow).after(tableContents); // xss-safe-value
         // remove all listeners from the old link by creating a new element
