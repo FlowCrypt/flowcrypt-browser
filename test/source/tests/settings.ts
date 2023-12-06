@@ -280,6 +280,33 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - import different public key for same the contact',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.user1FirstPubKey);
+        await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame.waitForInputValue('@input-email', 'user1@example.com');
+        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+        await pubkeyFrame.waitAndClick('@action-add-contact');
+        await contactsFrame.waitAndClick('@action-back-to-contact-list');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.user1SecondPubKey);
+        await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame2 = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame2.waitForInputValue('@input-email', 'user1@example.com');
+        await pubkeyFrame2.waitForContent('@action-add-contact', 'IMPORT KEY');
+      })
+    );
+    test(
       'settings - import public key which contains null users',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
@@ -417,7 +444,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
         await Util.sleep(1);
         const contacts = await contactsFrame.read('@page-contacts');
-        console.log(contacts);
         expect(contacts).to.contain('5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
         await contactsFrame.waitForContent('@container-contact-keyid', 'OPENPGP');
         await contactsFrame.waitForContent('@container-key-status', 'ACTIVE');
