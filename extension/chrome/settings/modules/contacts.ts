@@ -140,22 +140,17 @@ View.run(
         for (const pubkey of contact.sortedPubkeys) {
           const keyid = Xss.escape(pubkey.pubkey.id);
           const type = Xss.escape(pubkey.pubkey.family);
-          const keyStatus: { state: string; statusIndicator: string } = { state: 'unset', statusIndicator: 'unset' };
+          let keyStatus: { state: string; statusIndicator: string };
           if (pubkey.revoked) {
-            keyStatus.state = 'revoked';
-            keyStatus.statusIndicator = 'light-gray';
+            keyStatus = { state: 'revoked', statusIndicator: 'light-gray' };
           } else if (pubkey.pubkey?.usableForEncryption) {
-            keyStatus.state = 'active';
-            keyStatus.statusIndicator = 'green';
+            keyStatus = { state: 'active', statusIndicator: 'green' };
           } else if (pubkey.pubkey?.usableForEncryptionButExpired) {
-            keyStatus.state = 'expired';
-            keyStatus.statusIndicator = 'orange';
+            keyStatus = { state: 'expired', statusIndicator: 'orange' };
           } else if (pubkey.pubkey?.usableForSigning) {
-            keyStatus.state = 'sign only';
-            keyStatus.statusIndicator = 'yellow';
+            keyStatus = { state: 'sign only', statusIndicator: 'yellow' };
           } else {
-            keyStatus.state = 'unusable';
-            keyStatus.statusIndicator = 'red';
+            keyStatus = { state: 'unusable', statusIndicator: 'red' };
           }
           const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
           const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
