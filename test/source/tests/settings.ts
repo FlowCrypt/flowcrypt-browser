@@ -245,7 +245,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
-        await SettingsPageRecipe.checkContactKey(contactsFrame, 'EXPIRED', 'OPENPGP', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
+        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'EXPIRED', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true,
         });
@@ -262,7 +262,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-save-public-key', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         await contactsFrame.waitForContent('@page-contacts', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
-        await SettingsPageRecipe.checkContactKey(contactsFrame, 'EXPIRED', 'OPENPGP', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
+        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'EXPIRED', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true,
         });
@@ -297,6 +297,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const pubkeyFrame2 = await contactsFrame.getFrame(['pgp_pubkey.htm']);
         await pubkeyFrame2.waitForInputValue('@input-email', 'user1@example.com');
         await pubkeyFrame2.waitForContent('@action-add-contact', 'IMPORT KEY');
+        await contactsFrame.waitAndClick('@action-back-to-contact-list');
+        const firstKey = await contactsFrame.read('@action-show-pubkey-847C40E49C008DD45829B0E31A76BD6C58E0FA23-openpgp');
+        const secondKey = await contactsFrame.read('@action-show-pubkey-866EE9579A3BE9614838864310DD39DF58DA95A7-openpgp');
+        expect(firstKey).to.not.equal(secondKey);
       })
     );
     test(

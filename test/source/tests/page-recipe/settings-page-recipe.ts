@@ -171,8 +171,8 @@ export class SettingsPageRecipe extends PageRecipe {
 
   public static checkContactKey = async (
     contactsFrame: ControllableFrame,
-    keyStatus: 'ACTIVE' | 'SIGN ONLY' | 'EXPIRED' | 'UNUSABLE' | 'REVOKED',
     keyType: 'OPENPGP' | 'X509',
+    keyStatus: 'ACTIVE' | 'SIGN ONLY' | 'EXPIRED' | 'UNUSABLE' | 'REVOKED',
     fingerprint: string
   ) => {
     await contactsFrame.waitForContent('@page-contacts', fingerprint);

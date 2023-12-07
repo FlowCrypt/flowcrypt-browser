@@ -1402,7 +1402,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           expect(await contactsFrame.isElementPresent(`@action-show-email-${senderAttr}`)).to.be.true;
           await contactsFrame.waitAndClick(`@action-show-email-${senderAttr}`);
           // contains the  newly fetched key
-          await SettingsPageRecipe.checkContactKey(contactsFrame, 'ACTIVE', 'OPENPGP', '2BB2 1977 6F23 CE48 EBB8 609C 203F AE70 7600 5381');
+          await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', '2BB2 1977 6F23 CE48 EBB8 609C 203F AE70 7600 5381');
         }
       })
     );
