@@ -168,4 +168,15 @@ export class SettingsPageRecipe extends PageRecipe {
     await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded
     await settingsPage.close();
   };
+
+  public static checkContactKey = async (
+    contactsFrame: ControllableFrame,
+    keyStatus: 'ACTIVE' | 'SIGN ONLY' | 'EXPIRED' | 'UNUSABLE' | 'REVOKED',
+    keyType: 'OPENPGP' | 'X509',
+    fingerprint: string
+  ) => {
+    await contactsFrame.waitForContent('@page-contacts', fingerprint);
+    await contactsFrame.waitForContent('@container-contact-key-type', keyType);
+    await contactsFrame.waitForContent('@container-key-status', keyStatus);
+  };
 }
