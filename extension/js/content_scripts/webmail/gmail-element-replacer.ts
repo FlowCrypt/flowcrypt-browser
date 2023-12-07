@@ -168,7 +168,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const msgId = this.determineMsgId(emailContainer);
       const blocksFromEmailContainer = this.parseBlocksFromEmailContainer(emailContainer);
       let currentEmailContainer = $(emailContainer);
-      if (!this.isPlainText(blocksFromEmailContainer)) {
+      if (!this.isPlainTextOrHtml(blocksFromEmailContainer)) {
         const { renderedXssSafe: renderedFromEmailContainerXssSafe } = this.messageRenderer.renderMsg({ blocks: blocksFromEmailContainer }, false); // xss-safe-value
         currentEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       }
@@ -183,7 +183,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         blocks = blocksFromEmailContainer;
         // todo: print info for offline?
       }
-      if (this.isPlainText(blocks)) {
+      if (this.isPlainTextOrHtml(blocks)) {
         continue;
       }
       const setMessageInfo = messageInfo ?? {
@@ -208,8 +208,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private isPlainText = (blocks: MsgBlock[]) => {
-    return blocks.length === 0 || (blocks.length === 1 && blocks[0].type === 'plainText');
+  private isPlainTextOrHtml = (blocks: MsgBlock[]) => {
+    return blocks.find(b => !['plainText', 'plainHtml'].includes(b.type)) === undefined;
   };
 
   private parseBlocksFromEmailContainer = (emailContainer: HTMLElement) => {
@@ -217,7 +217,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
     const blocksFromEmailContainer = parseTextBlocks(emailContainer.innerText);
 
-    if (!this.isPlainText(blocksFromEmailContainer) || !emailContainer.textContent) {
+    if (!this.isPlainTextOrHtml(blocksFromEmailContainer) || !emailContainer.textContent) {
       return blocksFromEmailContainer;
     }
 

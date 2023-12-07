@@ -208,8 +208,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - #5004 cryptup_reply div not hidden issue`,
       testWithBrowser(async (t, browser) => {
         const threadId = '188b01fa672f55c8';
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
@@ -252,6 +251,24 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await gmailPage.waitForContent('.a3s', 'Plain message');
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(0);
         await gmailPage.close();
+      })
+    );
+
+    test(
+      `decrypt - render plain reply to encrypted message as plain message`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '18c20b915f8d0c0e';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        await inboxPage.waitForContent(
+          '@message-line',
+          'this is plain reply\n\nOn Thu, Nov 30, 2023 at 4:53 PM FlowCrypt Compatibility <flowcrypt.compatibility@gmail.com> wrote'
+        );
+        const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
+        expect(urls.length).to.equal(0);
+        await inboxPage.close();
       })
     );
 
@@ -2019,14 +2036,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage1.notPresent('iframe.pgp_block');
         await inboxPage1.notPresent('@container-attachments');
+        await inboxPage1.close();
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
         await inboxPage2.notPresent('iframe.pgp_block');
         await inboxPage2.notPresent('@container-attachments');
+        await inboxPage2.close();
         const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
         const pgpBlock = await inboxPage3.getFrame(['pgp_block.htm']);
         await inboxPage3.notPresent('@container-attachments');
         expect(await inboxPage3.isElementPresent('iframe.pgp_block')).to.equal(true);
         expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage3.close();
       })
     );
 
