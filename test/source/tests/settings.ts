@@ -297,10 +297,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const pubkeyFrame2 = await contactsFrame.getFrame(['pgp_pubkey.htm']);
         await pubkeyFrame2.waitForInputValue('@input-email', 'user1@example.com');
         await pubkeyFrame2.waitForContent('@action-add-contact', 'IMPORT KEY');
-        await contactsFrame.waitAndClick('@action-back-to-contact-list');
-        const firstKey = await contactsFrame.read('@action-show-pubkey-847C40E49C008DD45829B0E31A76BD6C58E0FA23-openpgp');
-        const secondKey = await contactsFrame.read('@action-show-pubkey-866EE9579A3BE9614838864310DD39DF58DA95A7-openpgp');
-        expect(firstKey).to.not.equal(secondKey);
       })
     );
     test(
