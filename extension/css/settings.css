@@ -814,7 +814,7 @@ body:not(.initialized) .hide_if_setup_not_done {
 /* Reusable CSS */
 
 /* Badges */
-.fc-badge {
+span.fc-badge {
   color: #eee;
   font-size: 0.7em;
   font-weight: 600;
@@ -829,7 +829,7 @@ body:not(.initialized) .hide_if_setup_not_done {
 }
 
 .fc-badge-red {
-  background-color: rgb(197, 5, 5);
+  background-color: #c50505;
 }
 
 .fc-badge-yellow {
@@ -837,14 +837,14 @@ body:not(.initialized) .hide_if_setup_not_done {
 }
 
 .fc-badge-orange {
-  background-color: rgb(210, 74, 44);
+  background-color: #d24a2c;
 }
 
 .fc-badge-gray {
-  background-color: rgb(97, 97, 97);
+  background-color: #616161;
 }
 
 .fc-badge-light-gray {
-  background-color: rgb(188, 188, 188);
+  background-color: #bcbcbc;
   color: #444;
 }
