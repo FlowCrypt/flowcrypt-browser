@@ -648,16 +648,9 @@ body#settings > div#content.contacts #emails .contacts-pubkey:last-child {
   margin-bottom: 10px;
 }
 
-body#settings > div#content.contacts #emails .contacts-pubkey .contacts-pubkey-info {
-  display: inline-block;
-}
-
+body#settings > div#content.contacts #emails .contacts-pubkey .contacts-pubkey-info,
 body#settings > div#content.contacts #emails .contacts-pubkey .contacts-pubkey-actions {
   display: inline-block;
-}
-
-body#settings > div#content textarea {
-  width: 100%;
 }
 
 body#settings .subscribe--header-row th:nth-child(2),
