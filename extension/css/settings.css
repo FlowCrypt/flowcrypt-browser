@@ -846,5 +846,5 @@ span.fc-badge {
 
 .fc-badge-light-gray {
   background-color: #bcbcbc;
-  color: #444;
+  color: #444 !important;
 }
