@@ -156,18 +156,16 @@ View.run(
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
       } else {
         const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, String($('.input_email').val()));
+        const isExistingKey =
+          contactWithPubKeys &&
+          contactWithPubKeys.sortedPubkeys &&
+          contactWithPubKeys.sortedPubkeys.length > 0 &&
+          this.parsedPublicKeys &&
+          contactWithPubKeys.sortedPubkeys.some(
+            existing => this.parsedPublicKeys && this.parsedPublicKeys.some(parsedPubkey => existing.pubkey.id === parsedPubkey.id)
+          );
         $('.action_add_contact')
-          .text(
-            contactWithPubKeys &&
-              contactWithPubKeys.sortedPubkeys &&
-              contactWithPubKeys.sortedPubkeys.length > 0 &&
-              this.parsedPublicKeys &&
-              contactWithPubKeys.sortedPubkeys.some(
-                existing => this.parsedPublicKeys && this.parsedPublicKeys.some(parsedPubkey => existing.pubkey.id === parsedPubkey.id)
-              )
-              ? 'update key'
-              : `import ${this.isExpired ? 'expired ' : ''}key`
-          )
+          .text(isExistingKey ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
           .css('background-color', this.isExpired ? '#989898' : '');
       }
     };
