@@ -355,7 +355,7 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processCryptoMessage(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+          this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -402,8 +402,8 @@ export class MessageRenderer {
   };
 
   private processFull = async (fullMsg: GmailRes.GmailMsg): Promise<ProcessedMessage> => {
-    const { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
-    const blocks = Mime.processBody(body);
+    let { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
+    let blocks = Mime.processBody(body);
     const isBodyEmpty = Mime.isBodyEmpty(body);
     // todo: start download of all attachments that are not plainFile, when the cache is implemented?
     // start chunk downloads for 'needChunk' attachments
@@ -416,6 +416,10 @@ export class MessageRenderer {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
         this.downloader.queueAttachmentChunkDownload(a, treatAs);
+      } else if (treatAs === 'encryptedMsg') {
+        await this.gmail.fetchAttachment(a);
+        body = { text: a.getData().toUtfStr() };
+        blocks = Mime.processBody(body);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
@@ -765,7 +769,7 @@ export class MessageRenderer {
     this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
-  private processCryptoMessage = async (
+  private processEncryptedMsgAttachment = async (
     attachment: Attachment,
     renderModule: RenderInterface,
     senderEmail: string | undefined,
