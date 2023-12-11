@@ -81,7 +81,7 @@ View.run(
           `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
       } else {
         lineActionsHtml +=
-          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
+          '&nbsp;&nbsp;<a href="https://https://flowcrypt.com/docs/technical/enterprise/configuration/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
       }
       Xss.sanitizeRender('.line.actions', lineActionsHtml);
       $('#emails').text('');
