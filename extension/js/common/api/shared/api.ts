@@ -357,7 +357,7 @@ export class Api {
     let formattedData: FormData | string | undefined;
     let dataPart:
       | { method: 'GET' }
-      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON'; withStatusCode: boolean }
+      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON'; withStatusCode?: boolean }
       | { method: 'POST' | 'PUT'; data: string; dataType: 'TEXT' }
       | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' };
     dataPart = { method: 'GET' };
