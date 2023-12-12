@@ -70,7 +70,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       }
     }
     if (this.view.isReplyBox) {
-      $(document).ready(() => this.view.sizeModule.resizeComposeBox());
+      $(() => {
+        this.view.sizeModule.resizeComposeBox();
+      });
     } else {
       this.view.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
