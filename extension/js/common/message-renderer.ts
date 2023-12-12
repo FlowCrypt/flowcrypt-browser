@@ -416,13 +416,17 @@ export class MessageRenderer {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
         this.downloader.queueAttachmentChunkDownload(a, treatAs);
-      } else if (treatAs === 'encryptedMsg') {
-        await this.gmail.fetchAttachment(a);
-        body = { text: a.getData().toUtfStr() };
-        blocks = Mime.processBody(body);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
+      }
+    }
+    if (blocks.length === 0) {
+      const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
+      if (encryptedMsgAttachment) {
+        await this.gmail.fetchAttachment(encryptedMsgAttachment);
+        body = { text: encryptedMsgAttachment.getData().toUtfStr() };
+        blocks = Mime.processBody(body);
       }
     }
     return {
