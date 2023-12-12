@@ -810,3 +810,41 @@ body:not(.initialized) .show_if_setup_not_done,
 body:not(.initialized) .hide_if_setup_not_done {
   display: none !important;
 }
+
+/* Reusable CSS */
+
+/* Badges */
+span.fc-badge {
+  color: #eee;
+  font-size: 0.7em;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 3px;
+  display: inline-block;
+  padding: 0.2em 0.35em;
+}
+
+.fc-badge-green {
+  background-color: #31a217;
+}
+
+.fc-badge-red {
+  background-color: #c50505;
+}
+
+.fc-badge-yellow {
+  background-color: #c27e23;
+}
+
+.fc-badge-orange {
+  background-color: #d24a2c;
+}
+
+.fc-badge-gray {
+  background-color: #616161;
+}
+
+.fc-badge-light-gray {
+  background-color: #bcbcbc;
+  color: #444 !important;
+}
