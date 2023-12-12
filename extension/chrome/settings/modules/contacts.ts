@@ -157,8 +157,8 @@ View.run(
           const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${Str.spaced(keyid)}</a>`;
           tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">
           <div class="contacts-pubkey-info">
-            <span class="fc-badge fc-badge-gray" data-test="container-contact-key-type">${type}</span>&nbsp;
-            <span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status">${keyStatus.state}</span>
+            <span class="fc-badge fc-badge-gray" data-test="container-contact-key-type-${keyid}">${type}</span>&nbsp;
+            <span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status-${keyid}">${keyStatus.state}</span>
             ${show}
           </div>
           <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;

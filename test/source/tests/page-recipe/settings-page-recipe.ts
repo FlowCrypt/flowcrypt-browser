@@ -175,8 +175,9 @@ export class SettingsPageRecipe extends PageRecipe {
     keyStatus: 'ACTIVE' | 'SIGN ONLY' | 'EXPIRED' | 'UNUSABLE' | 'REVOKED',
     fingerprint: string
   ) => {
+    fingerprint = fingerprint.split(' ').join('');
     await contactsFrame.waitForContent('@page-contacts', fingerprint);
-    await contactsFrame.waitForContent('@container-contact-key-type', keyType);
-    await contactsFrame.waitForContent('@container-key-status', keyStatus);
+    await contactsFrame.waitForContent(`@container-contact-key-type-${fingerprint}`, keyType);
+    await contactsFrame.waitForContent(`@container-key-status-${fingerprint}`, keyStatus);
   };
 }
