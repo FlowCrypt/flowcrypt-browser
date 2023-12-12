@@ -30,7 +30,7 @@ View.run(
     private factory: XssSafeFactory | undefined; // set in render()
     private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
     private clientConfiguration!: ClientConfiguration;
-    private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
+    private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">Back</a>';
     private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
     public constructor() {
@@ -72,8 +72,8 @@ View.run(
         substring: String($('.input-search-contacts').val()),
       });
       let lineActionsHtml =
-        '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
-        '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
+        '&nbsp;&nbsp;<a href="#" class="action_export_all">Export all</a>&nbsp;&nbsp;' +
+        '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">Import public keys</a>&nbsp;&nbsp;';
       if (this.clientConfiguration.getCustomSksPubkeyServer()) {
         lineActionsHtml +=
           `&nbsp;&nbsp;<br><br><b class="bad" data-test="custom-key-server-description">` +
@@ -81,7 +81,7 @@ View.run(
           `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
       } else {
         lineActionsHtml +=
-          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
+          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/enterprise/configuration/keyserver-integration.html" target="_blank">Use custom keyserver</a>&nbsp;&nbsp;';
       }
       Xss.sanitizeRender('.line.actions', lineActionsHtml);
       $('#emails').text('');
