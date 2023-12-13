@@ -192,8 +192,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
         const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
         if (encryptedMsgAttachment && messageInfo) {
-          await this.processAttachments(msgId, attachments, $(''), messageInfo, body, true);
-          continue;
+          const msgEl = this.getMsgBodyEl(msgId);
+          const loaderContext = new GmailLoaderContext(this.factory, msgEl);
+          await this.messageRenderer.processAttachment(encryptedMsgAttachment, body, attachments, loaderContext, undefined, msgId, messageInfo);
+          $(this.sel.translatePrompt).hide();
         }
       }
 

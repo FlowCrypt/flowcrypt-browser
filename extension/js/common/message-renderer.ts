@@ -362,16 +362,16 @@ export class MessageRenderer {
         return await this.renderBackupFromFile(a, loaderContext, attachmentSel);
       } else {
         // standard file
-        loaderContext.renderPlainAttachment(a, attachmentSel);
+        loaderContext?.renderPlainAttachment(a, attachmentSel);
         return 'shown';
       }
     } catch (e) {
       if (ApiErr.isNetErr(e)) {
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
+        loaderContext?.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
         return 'shown';
       } else {
         Catch.reportErr(e);
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: unknown err');
+        loaderContext?.renderPlainAttachment(a, attachmentSel, 'Categorize: unknown err');
         return 'shown';
       }
     }
