@@ -207,8 +207,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom(flowcrypt.compatibility)');
         await Util.sleep(1);
         const contacts = await contactsFrame.read('@page-contacts');
-        expect(contacts).to.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
-        expect(contacts).to.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+        expect(contacts).to.contain('5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+        expect(contacts).to.contain('E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
         await contactsFrame.waitAndClick('@action-show-pubkey-5520CACE2CB61EA713E5B0057FDE685548AEA788-openpgp', {
           confirmGone: true,
         });
@@ -245,7 +245,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await pubkeyFrame.waitForContent('@container-pgp-pubkey', `${recipientEmail} added`);
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitForContent('@page-contacts', 'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
+        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'EXPIRED', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true,
         });
@@ -261,7 +261,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndType('@input-public-key', testConstants.newHasOlderKeyOnAttester);
         await contactsFrame.waitAndClick('@action-save-public-key', { confirmGone: true });
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitForContent('@page-contacts', 'openpgp - expired - 8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
+        await contactsFrame.waitForContent('@page-contacts', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
+        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'EXPIRED', '8EC7 8F04 3CEB 0224 98AF D477 1E62 ED6D 15A2 5921');
         await contactsFrame.waitAndClick(`@action-show-pubkey-8EC78F043CEB022498AFD4771E62ED6D15A25921-openpgp`, {
           confirmGone: true,
         });
@@ -269,6 +270,33 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitForContent('@container-pubkey-details', 'Created on: Thu Jul 16 2020 09:56:40');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expiration: Thu Jul 16 2020 09:57:40');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Expired: yes');
+      })
+    );
+    test(
+      'settings - import different public key for same the contact',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'ci.tests.gmail@flowcrypt.test';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.user1FirstPubKey);
+        await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame.waitForInputValue('@input-email', 'user1@example.com');
+        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+        await pubkeyFrame.waitAndClick('@action-add-contact');
+        await contactsFrame.waitAndClick('@action-back-to-contact-list');
+        await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
+        await contactsFrame.waitAndType('@input-bulk-public-keys', testConstants.user1SecondPubKey);
+        await contactsFrame.waitAndClick('@action-show-parsed-public-keys', { confirmGone: true });
+        await contactsFrame.waitAll('iframe');
+        const pubkeyFrame2 = await contactsFrame.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame2.waitForInputValue('@input-email', 'user1@example.com');
+        await pubkeyFrame2.waitForContent('@action-add-contact', 'IMPORT KEY');
       })
     );
     test(
@@ -409,8 +437,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
         await Util.sleep(1);
         const contacts = await contactsFrame.read('@page-contacts');
-        expect(contacts).to.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
-        expect(contacts).to.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+        expect(contacts).to.contain('5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+        expect(contacts).to.contain('E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
         await contactsFrame.waitAndClick('@action-remove-pubkey-5520CACE2CB61EA713E5B0057FDE685548AEA788-openpgp', {
           confirmGone: true,
         });
@@ -444,8 +472,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-show-email-flowcryptcompatibilitygmailcom');
         await Util.sleep(1);
         const contacts1 = await contactsFrame.read('@page-contacts');
-        expect(contacts1).to.not.contain('openpgp - active - 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
-        expect(contacts1).to.contain('openpgp - active - E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
+        expect(contacts1).to.not.contain('5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788');
+        expect(contacts1).to.contain('E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207');
         await contactsFrame.waitAndClick('@action-remove-pubkey-E8F0517BA6D7DAB6081C96E4ADAC279C95093207-openpgp', {
           confirmGone: true,
         });
