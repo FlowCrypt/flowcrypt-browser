@@ -402,8 +402,8 @@ export class MessageRenderer {
   };
 
   private processFull = async (fullMsg: GmailRes.GmailMsg): Promise<ProcessedMessage> => {
-    let { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
-    let blocks = Mime.processBody(body);
+    const { body, attachments } = MessageRenderer.getMessageBodyAndAttachments(fullMsg);
+    const blocks = Mime.processBody(body);
     const isBodyEmpty = Mime.isBodyEmpty(body);
     // todo: start download of all attachments that are not plainFile, when the cache is implemented?
     // start chunk downloads for 'needChunk' attachments
@@ -419,14 +419,6 @@ export class MessageRenderer {
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
-      }
-    }
-    if (blocks.length === 0) {
-      const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
-      if (encryptedMsgAttachment) {
-        await this.gmail.fetchAttachment(encryptedMsgAttachment);
-        body = { text: encryptedMsgAttachment.getData().toUtfStr() };
-        blocks = Mime.processBody(body);
       }
     }
     return {
