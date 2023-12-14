@@ -137,7 +137,7 @@ export class MessageRenderer {
     // stripping HTML tags here for safety in the way extractArmoredBlock used to do, should we?
     // note: MimeContent.html returned from Mime.decode (when processing a raw MIME-message) isn't stripped
     // so there is another stripping that takes place later when rendering in XssSafeFactory.renderableMsgBlock
-    const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '\n') : undefined;
+    const html = bodies['text/html'] ? Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html']).toUtfStr(), '<br>') : undefined;
     return {
       body: {
         text,
@@ -328,7 +328,7 @@ export class MessageRenderer {
       }
       if (treatAs === 'plainFile') {
         if (!a.name || a.name === 'noname') {
-          return 'hidden';
+          treatAs = 'hidden';
         }
       }
       if (treatAs !== 'plainFile') {
@@ -355,7 +355,7 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processCryptoMessage(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+          this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -765,7 +765,7 @@ export class MessageRenderer {
     this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
-  private processCryptoMessage = async (
+  private processEncryptedMsgAttachment = async (
     attachment: Attachment,
     renderModule: RenderInterface,
     senderEmail: string | undefined,

@@ -30,7 +30,7 @@ View.run(
     private factory: XssSafeFactory | undefined; // set in render()
     private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
     private clientConfiguration!: ClientConfiguration;
-    private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
+    private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">Back</a>';
     private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
     public constructor() {
@@ -72,8 +72,8 @@ View.run(
         substring: String($('.input-search-contacts').val()),
       });
       let lineActionsHtml =
-        '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
-        '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
+        '&nbsp;&nbsp;<a href="#" class="action_export_all">Export all</a>&nbsp;&nbsp;' +
+        '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">Import public keys</a>&nbsp;&nbsp;';
       if (this.clientConfiguration.getCustomSksPubkeyServer()) {
         lineActionsHtml +=
           `&nbsp;&nbsp;<br><br><b class="bad" data-test="custom-key-server-description">` +
@@ -81,7 +81,7 @@ View.run(
           `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
       } else {
         lineActionsHtml +=
-          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
+          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/enterprise/configuration/keyserver-integration.html" target="_blank">Use custom keyserver</a>&nbsp;&nbsp;';
       }
       Xss.sanitizeRender('.line.actions', lineActionsHtml);
       $('#emails').text('');
@@ -140,24 +140,28 @@ View.run(
         for (const pubkey of contact.sortedPubkeys) {
           const keyid = Xss.escape(pubkey.pubkey.id);
           const type = Xss.escape(pubkey.pubkey.family);
-          let status: string;
+          let keyStatus: { state: string; statusIndicator: string };
           if (pubkey.revoked) {
-            status = 'revoked';
+            keyStatus = { state: 'revoked', statusIndicator: 'light-gray' };
           } else if (pubkey.pubkey?.usableForEncryption) {
-            status = 'active';
+            keyStatus = { state: 'active', statusIndicator: 'green' };
           } else if (pubkey.pubkey?.usableForEncryptionButExpired) {
-            status = 'expired';
+            keyStatus = { state: 'expired', statusIndicator: 'orange' };
           } else if (pubkey.pubkey?.usableForSigning) {
-            status = 'sign only';
+            keyStatus = { state: 'sign only', statusIndicator: 'yellow' };
           } else {
-            status = 'unusable';
+            keyStatus = { state: 'unusable', statusIndicator: 'red' };
           }
           const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
           const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
-          const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${type} - ${status} - ${Str.spaced(
-            keyid
-          )}</a>`;
-          tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">${show}${change}${remove}</div>`;
+          const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${Str.spaced(keyid)}</a>`;
+          tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">
+          <div class="contacts-pubkey-info">
+            <span class="fc-badge fc-badge-gray" data-test="container-contact-key-type-${keyid}">${type}</span>&nbsp;
+            <span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status-${keyid}">${keyStatus.state}</span>
+            ${show}
+          </div>
+          <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;
         }
         $(emailRow).after(tableContents); // xss-safe-value
         // remove all listeners from the old link by creating a new element

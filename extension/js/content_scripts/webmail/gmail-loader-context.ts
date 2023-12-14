@@ -10,7 +10,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
   public constructor(
     private readonly factory: XssSafeFactory,
     public msgEl: JQueryEl,
-    private readonly attachmentsContainerInner: JQueryEl
+    private readonly attachmentsContainerInner?: JQueryEl
   ) {}
 
   /* eslint-disable @typescript-eslint/naming-convention */
@@ -75,7 +75,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
     if (!attachmentSel) {
       // todo: do we need this clause?
       this.attachmentsContainerInner
-        .show()
+        ?.show()
         .addClass('attachment_processed')
         .find('.attachment_loader')
         .text(error || 'Please reload page');
@@ -90,7 +90,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
   };
 
   public prependEncryptedAttachment = (a: Attachment) => {
-    this.attachmentsContainerInner.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
+    this.attachmentsContainerInner?.prepend(this.factory.embeddedAttachment(a, true)); // xss-safe-factory
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
@@ -105,10 +105,12 @@ export class GmailLoaderContext implements LoaderContextInterface {
     this.msgEl = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(this.msgEl, method, newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
   };
 
-  public hideAttachment = (attachmentEl: JQueryEl) => {
-    attachmentEl.hide();
-    if (!attachmentEl.length) {
-      this.attachmentsContainerInner.children('.attachment_loader').text('Missing file info');
+  public hideAttachment = (attachmentEl: JQueryEl | undefined) => {
+    if (attachmentEl) {
+      attachmentEl.hide();
+      if (!attachmentEl.length) {
+        this.attachmentsContainerInner?.children('.attachment_loader').text('Missing file info');
+      }
     }
   };
 }
