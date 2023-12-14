@@ -54,7 +54,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     attachmentsContainerOuter: 'div.hq.gt',
     attachmentsContainerInner: 'div.aQH',
-    translatePrompt: '.adI',
+    translatePrompt: '.adI, .wl4W9b',
     standardComposeWin: '.aaZ:visible',
     replyOptionImg: 'div.J-JN-M-I-Jm',
     settingsBtnContainer: 'div.aeH > div > .fY',

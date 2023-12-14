@@ -71,6 +71,7 @@ export class OauthPageRecipe extends PageRecipe {
       auth0password: '#password',
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
+      googleContinueAuthBtn: '.VfPpkd-LgbsSe',
     };
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
@@ -79,26 +80,23 @@ export class OauthPageRecipe extends PageRecipe {
         `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
         { timeout: 45 }
       );
-      // eslint-disable-next-line no-null/no-null
-      if ((await oauthPage.target.$(selectors.googleEmailInput)) !== null) {
+
+      if (await oauthPage.target.$(selectors.googleEmailInput)) {
         // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
         await oauthPage.waitAll(selectors.googleEmailConfirmBtn);
         await Util.sleep(2);
         await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.googleEmailConfirmBtn));
-        // eslint-disable-next-line no-null/no-null
-      } else if ((await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`)) !== null) {
+      } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`)) {
         // already logged in - just choose an account
         await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
-        // eslint-disable-next-line no-null/no-null
-      } else if ((await oauthPage.target.$(alreadyLoggedSelector)) !== null) {
+      } else if (await oauthPage.target.$(alreadyLoggedSelector)) {
         // select from accounts where already logged in
         await oauthPage.waitAndClick(alreadyLoggedChooseOtherAccountSelector, { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
-        // eslint-disable-next-line no-null/no-null
-      } else if ((await oauthPage.target.$('.wLBAL[data-email="dummy"]')) !== null) {
+      } else if (await oauthPage.target.$('.wLBAL[data-email="dummy"]')) {
         // let any e-mail pass
         const href = (await oauthPage.attr('.wLBAL', 'href')) + acctEmail;
         await oauthPage.goto(href);
@@ -110,6 +108,11 @@ export class OauthPageRecipe extends PageRecipe {
           return;
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
+      }
+      if (await oauthPage.isElementPresent('.F9NWFb')) {
+        // additional confirmation screen
+        const actionButtons = await oauthPage.target.$$(selectors.googleContinueAuthBtn);
+        await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
       }
       await oauthPage.waitAny([selectors.googleApproveBtn, selectors.auth0username]);
       if (await oauthPage.isElementPresent(selectors.auth0username)) {
