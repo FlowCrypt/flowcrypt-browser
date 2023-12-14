@@ -54,7 +54,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     attachmentsContainerOuter: 'div.hq.gt',
     attachmentsContainerInner: 'div.aQH',
-    translatePrompt: '.adI',
+    translatePrompt: '.adI, .wl4W9b',
     standardComposeWin: '.aaZ:visible',
     replyOptionImg: 'div.J-JN-M-I-Jm',
     settingsBtnContainer: 'div.aeH > div > .fY',
@@ -176,13 +176,30 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       let blocks: MsgBlock[] = [];
       let messageInfo: MessageInfo | undefined;
       try {
-        ({ messageInfo, blocks } = await this.messageRenderer.msgGetProcessed(msgId));
+        let body: MessageBody | undefined;
+        let attachments: Attachment[] = [];
+
+        ({ body, blocks, attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId));
+
+        if (Mime.isBodyEmpty(body)) {
+          // check if message body was converted to attachment by Gmail
+          // happens for pgp/mime messages with attachments
+          // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
+          const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
+          if (encryptedMsgAttachment) {
+            const msgEl = this.getMsgBodyEl(msgId);
+            const loaderContext = new GmailLoaderContext(this.factory, msgEl);
+            await this.messageRenderer.processAttachment(encryptedMsgAttachment, body, attachments, loaderContext, undefined, msgId, messageInfo);
+            $(this.sel.translatePrompt).hide();
+          }
+        }
       } catch (e) {
         this.handleException(e);
         // fill with fallback values from the element
         blocks = blocksFromEmailContainer;
         // todo: print info for offline?
       }
+
       if (this.isPlainTextOrHtml(blocks)) {
         continue;
       }

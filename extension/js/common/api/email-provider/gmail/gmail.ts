@@ -144,11 +144,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     return await Google.gmailCall<GmailRes.GmailLabels>(this.acctEmail, 'labels', { method: 'GET' });
   };
 
-  public attachmentGet = async (msgId: string, attId: string, progress: { download: ProgressCb }): Promise<GmailRes.GmailAttachment> => {
+  public attachmentGet = async (attachment: Attachment, progress?: { download: ProgressCb }): Promise<GmailRes.GmailAttachment> => {
     type RawGmailAttRes = { attachmentId: string; size: number; data: string };
     const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(
       this.acctEmail,
-      `messages/${msgId}/attachments/${attId}`,
+      `messages/${attachment.msgId}/attachments/${attachment.id}`,
       { method: 'GET' },
       progress
     );
@@ -264,8 +264,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const responses = await Promise.all(
       attachmentsMissingData.map((a, index) =>
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.attachmentGet(a.msgId!, a.id!, {
+        this.attachmentGet(a, {
           download: (_, loaded) => {
             if (progressCb) {
               loadedAr[index] = loaded || 0;
@@ -287,8 +286,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
 
   public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransferSize: number) => { download: ProgressCb }) => {
     const expectedTransferSize = a.length * 1.33; // todo: remove code duplication
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const response = await this.attachmentGet(a.msgId!, a.id!, progressFunction(expectedTransferSize));
+    const response = await this.attachmentGet(a, progressFunction(expectedTransferSize));
     a.setData(response.data);
   };
 
