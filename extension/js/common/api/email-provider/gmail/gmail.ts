@@ -284,9 +284,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
   };
 
-  public fetchAttachment = async (a: Attachment, progressFunction?: (expectedTransferSize: number) => { download: ProgressCb }) => {
+  public fetchAttachment = async (a: Attachment, progressFunction: (expectedTransferSize: number) => { download: ProgressCb }) => {
     const expectedTransferSize = a.length * 1.33; // todo: remove code duplication
-    const response = await this.attachmentGet(a, progressFunction ? progressFunction(expectedTransferSize) : undefined);
+    const response = await this.attachmentGet(a, progressFunction(expectedTransferSize));
     a.setData(response.data);
   };
 

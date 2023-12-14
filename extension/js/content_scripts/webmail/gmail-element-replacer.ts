@@ -174,29 +174,30 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
 
       let blocks: MsgBlock[] = [];
-      let attachments: Attachment[] = [];
       let messageInfo: MessageInfo | undefined;
-      let body: MessageBody | undefined;
       try {
+        let body: MessageBody | undefined;
+        let attachments: Attachment[] = [];
+
         ({ body, blocks, attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId));
+
+        if (Mime.isBodyEmpty(body)) {
+          // check if message body was converted to attachment by Gmail
+          // happens for pgp/mime messages with attachments
+          // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
+          const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
+          if (encryptedMsgAttachment) {
+            const msgEl = this.getMsgBodyEl(msgId);
+            const loaderContext = new GmailLoaderContext(this.factory, msgEl);
+            await this.messageRenderer.processAttachment(encryptedMsgAttachment, body, attachments, loaderContext, undefined, msgId, messageInfo);
+            $(this.sel.translatePrompt).hide();
+          }
+        }
       } catch (e) {
         this.handleException(e);
         // fill with fallback values from the element
         blocks = blocksFromEmailContainer;
         // todo: print info for offline?
-      }
-
-      if (blocks.length === 0 && body && Mime.isBodyEmpty(body)) {
-        // check if message body was converted to attachment by Gmail
-        // happens for pgp/mime messages with attachments
-        // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
-        const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
-        if (encryptedMsgAttachment && messageInfo) {
-          const msgEl = this.getMsgBodyEl(msgId);
-          const loaderContext = new GmailLoaderContext(this.factory, msgEl);
-          await this.messageRenderer.processAttachment(encryptedMsgAttachment, body, attachments, loaderContext, undefined, msgId, messageInfo);
-          $(this.sel.translatePrompt).hide();
-        }
       }
 
       if (this.isPlainTextOrHtml(blocks)) {
