@@ -355,7 +355,7 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processCryptoMessage(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+          this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -765,7 +765,7 @@ export class MessageRenderer {
     this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
-  private processCryptoMessage = async (
+  private processEncryptedMsgAttachment = async (
     attachment: Attachment,
     renderModule: RenderInterface,
     senderEmail: string | undefined,
