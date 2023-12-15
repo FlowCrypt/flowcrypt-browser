@@ -327,7 +327,7 @@ export class MessageRenderer {
         }
       }
       if (treatAs === 'plainFile') {
-        if (!a.name || a.name === 'noname') {
+        if (Mime.isBodyEmpty(body) && (!a.name || a.name === 'noname')) {
           treatAs = 'hidden';
         }
       }
