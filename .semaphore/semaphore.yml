@@ -24,6 +24,7 @@ blocks:
       prologue:
         commands:
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+          - echo "test"
           - cd ~/git/flowcrypt-browser
           - npm install
           - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
