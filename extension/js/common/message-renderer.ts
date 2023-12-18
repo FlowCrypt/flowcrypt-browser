@@ -327,7 +327,9 @@ export class MessageRenderer {
         }
       }
       if (treatAs === 'plainFile') {
-        if (Mime.isBodyEmpty(body) && (!a.name || a.name === 'noname')) {
+        const isAmbiguousNonameFile = !a.name || a.name === 'noname';
+        const msgHasEncryptedMsgAttachment = attachments.some(a => Attachment.encryptedMsgNames.includes(a.name));
+        if (isAmbiguousNonameFile && (msgHasEncryptedMsgAttachment || Mime.isBodyEmpty(body))) {
           treatAs = 'hidden';
         }
       }
