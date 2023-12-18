@@ -368,14 +368,12 @@ export class MessageRenderer {
         return 'shown';
       }
     } catch (e) {
-      if (ApiErr.isNetErr(e)) {
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
-        return 'shown';
-      } else {
+      if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: unknown err');
-        return 'shown';
       }
+      const errorType = ApiErr.isNetErr(e) ? 'net err' : 'unknown err';
+      loaderContext.renderPlainAttachment(a, attachmentSel, `Categorize: ${errorType}`);
+      return 'shown';
     }
   };
 
