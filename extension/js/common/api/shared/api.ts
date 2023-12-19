@@ -119,6 +119,7 @@ export class Api {
     let duplex: 'half' | undefined;
     let uploadPromise: () => void | Promise<void> = Value.noop;
     let url: string;
+    let withJsonStatusCode = false;
     if (req.method === 'GET' || req.method === 'DELETE') {
       if (typeof req.data === 'undefined') {
         url = req.url;
@@ -131,6 +132,7 @@ export class Api {
         if ('data' in req && typeof req.data !== 'undefined') {
           if (req.dataType === 'JSON') {
             body = JSON.stringify(req.data);
+            withJsonStatusCode = req.withStatusCode ?? false;
             headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
           } else if (req.dataType === 'TEXT') {
             if (supportsRequestStreams && req.progress?.upload) {
@@ -242,10 +244,15 @@ export class Api {
         return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
       } else if (resFmt === 'json') {
         const transformed = transformResponseWithProgressAndTimeout();
-        const jsonRes = JSON.stringify((await Promise.all([transformed.response.json(), transformed.pipe()]))[0]);
-        const jsonResWithStatusCode = JSON.parse(jsonRes);
-        jsonResWithStatusCode.status_code = jsonResWithStatusCode?.status_code ?? transformed.response.status;
-        return ('withStatusCode' in req ? jsonResWithStatusCode : jsonRes) as FetchResult<T, RT>;
+        if (!withJsonStatusCode) {
+          return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+        } else {
+          const jsonRes = JSON.stringify(transformed.response.json());
+          const jsonResWithStatusCode = JSON.parse(jsonRes);
+          jsonResWithStatusCode.status_code = jsonResWithStatusCode?.status_code ?? transformed.response.status;
+          window.alert(jsonResWithStatusCode);
+          return jsonResWithStatusCode as FetchResult<T, RT>;
+        }
       } else {
         return undefined as FetchResult<T, RT>;
       }
