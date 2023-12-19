@@ -2025,7 +2025,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - an ambiguous file "noname" should be hidden and not be recognized as an encrypted message',
+      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message and should be hidden in encrypted message',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
         const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
@@ -2033,11 +2033,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage1.notPresent('iframe.pgp_block');
-        await inboxPage1.notPresent('@container-attachments');
+        expect(await inboxPage1.isElementPresent('@container-attachments')).to.be.true;
         await inboxPage1.close();
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
         await inboxPage2.notPresent('iframe.pgp_block');
-        await inboxPage2.notPresent('@container-attachments');
+        expect(await inboxPage2.isElementPresent('@container-attachments')).to.be.true;
         await inboxPage2.close();
         const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
         const pgpBlock = await inboxPage3.getFrame(['pgp_block.htm']);
