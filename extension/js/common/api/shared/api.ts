@@ -176,9 +176,10 @@ export class Api {
         );
       }
       const transformResponseWithProgressAndTimeout = () => {
-        if (req.progress?.download && response.body) {
+        if (req.progress && response.body) {
           const contentLength = response.headers.get('content-length');
-          const total = contentLength ? parseInt(contentLength) : 0;
+          // real content length is approximately 140% of content-length header value
+          const total = contentLength ? parseInt(contentLength) * 1.4 : 0;
           const transformStream = new TransformStream();
           const transformWriter = transformStream.writable.getWriter();
           const reader = response.body.getReader();
@@ -193,7 +194,17 @@ export class Api {
                   return;
                 }
                 downloadedBytes += value.length;
-                downloadProgress(undefined, downloadedBytes, total);
+                if (downloadProgress) {
+                  downloadProgress(undefined, downloadedBytes, total);
+                } else if (req.progress?.expectedTransferSize && req.progress.operationId) {
+                  BrowserMsg.send.ajaxProgress('broadcast', {
+                    percent: undefined,
+                    loaded: downloadedBytes,
+                    total,
+                    expectedTransferSize: req.progress.expectedTransferSize,
+                    operationId: req.progress.operationId,
+                  });
+                }
                 await transformWriter.write(value);
               }
             },
