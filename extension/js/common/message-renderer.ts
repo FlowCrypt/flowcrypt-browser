@@ -327,7 +327,9 @@ export class MessageRenderer {
         }
       }
       if (treatAs === 'plainFile') {
-        if (!a.name || a.name === 'noname') {
+        const isAmbiguousNonameFile = !a.name || a.name === 'noname';
+        const msgHasEncryptedMsgAttachment = attachments.some(a => Attachment.encryptedMsgNames.includes(a.name));
+        if (isAmbiguousNonameFile && (msgHasEncryptedMsgAttachment || Mime.isBodyEmpty(body))) {
           treatAs = 'hidden';
         }
       }
@@ -366,14 +368,12 @@ export class MessageRenderer {
         return 'shown';
       }
     } catch (e) {
-      if (ApiErr.isNetErr(e)) {
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
-        return 'shown';
-      } else {
+      if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: unknown err');
-        return 'shown';
       }
+      const errorType = ApiErr.isNetErr(e) ? 'net err' : 'unknown err';
+      loaderContext.renderPlainAttachment(a, attachmentSel, `Categorize: ${errorType}`);
+      return 'shown';
     }
   };
 
