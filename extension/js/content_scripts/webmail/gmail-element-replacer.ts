@@ -458,14 +458,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private isAttachmentHideable = (attachment: Attachment, renderStatus: string) => {
-    if (renderStatus === 'hidden') {
-      return true;
-    }
-    const isHideableFile =
+    return (
+      renderStatus === 'hidden' ||
       attachment.type === 'application/pgp-keys' ||
       attachment.isPublicKey() ||
-      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename));
-    return isHideableFile;
+      attachment.inline ||
+      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename))
+    );
   };
 
   private processAttachments = async (
