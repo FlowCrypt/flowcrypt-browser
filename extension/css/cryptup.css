@@ -608,9 +608,10 @@ body#settings > div#content.contacts #emails {
 }
 
 body#settings > div#content.contacts #emails .action_show_pubkey_list {
-  display: flex;
+  display: block;
+  margin-bottom: 6px;
   align-items: center;
-  height: 48px;
+  height: auto;
   border-bottom: 1px solid #f6f6f6;
   cursor: pointer;
 }
@@ -625,6 +626,11 @@ body#settings > div#content.contacts #emails .action_show_pubkey_list .icon-chev
 
 body#settings > div#content.contacts #emails .action_show_pubkey_list.opened .icon-chevron {
   transform: rotate(270deg);
+}
+
+body#settings > div#content.contacts #emails .action_show_pubkey_list span.contact_email_address {
+  margin-top: 6px;
+  position: absolute;
 }
 
 body#settings > div#content.contacts #emails .contacts-pubkey {
