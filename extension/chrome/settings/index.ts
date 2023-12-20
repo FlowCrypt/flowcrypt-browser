@@ -330,9 +330,9 @@ View.run(
         .then(posts => {
           // do not await because may take a while
           for (const post of posts) {
-            const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(
-              post.title.trim()
-            )}</a> ${Xss.escape(post.date.trim())}</div>`;
+            const html = `<div class="line"><a href="${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(
+              post.date.trim()
+            )}</div>`;
             Xss.sanitizeAppend('.blog_post_list', html);
           }
         })
