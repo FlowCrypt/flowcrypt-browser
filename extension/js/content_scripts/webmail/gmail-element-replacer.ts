@@ -176,13 +176,30 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       let blocks: MsgBlock[] = [];
       let messageInfo: MessageInfo | undefined;
       try {
-        ({ messageInfo, blocks } = await this.messageRenderer.msgGetProcessed(msgId));
+        let body: MessageBody | undefined;
+        let attachments: Attachment[] = [];
+
+        ({ body, blocks, attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId));
+
+        if (Mime.isBodyEmpty(body)) {
+          // check if message body was converted to attachment by Gmail
+          // happens for pgp/mime messages with attachments
+          // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
+          const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
+          if (encryptedMsgAttachment) {
+            const msgEl = this.getMsgBodyEl(msgId);
+            const loaderContext = new GmailLoaderContext(this.factory, msgEl);
+            await this.messageRenderer.processAttachment(encryptedMsgAttachment, body, attachments, loaderContext, undefined, msgId, messageInfo);
+            $(this.sel.translatePrompt).hide();
+          }
+        }
       } catch (e) {
         this.handleException(e);
         // fill with fallback values from the element
         blocks = blocksFromEmailContainer;
         // todo: print info for offline?
       }
+
       if (this.isPlainTextOrHtml(blocks)) {
         continue;
       }
@@ -441,14 +458,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   };
 
   private isAttachmentHideable = (attachment: Attachment, renderStatus: string) => {
-    if (renderStatus === 'hidden') {
-      return true;
-    }
-    const isHideableFile =
+    return (
+      renderStatus === 'hidden' ||
       attachment.type === 'application/pgp-keys' ||
       attachment.isPublicKey() ||
-      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename));
-    return isHideableFile;
+      attachment.inline ||
+      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename))
+    );
   };
 
   private processAttachments = async (

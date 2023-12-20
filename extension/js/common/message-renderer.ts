@@ -327,7 +327,9 @@ export class MessageRenderer {
         }
       }
       if (treatAs === 'plainFile') {
-        if (!a.name || a.name === 'noname') {
+        const isAmbiguousNonameFile = !a.name || a.name === 'noname';
+        const msgHasEncryptedMsgAttachment = attachments.some(a => Attachment.encryptedMsgNames.includes(a.name));
+        if (isAmbiguousNonameFile && (msgHasEncryptedMsgAttachment || Mime.isBodyEmpty(body))) {
           treatAs = 'hidden';
         }
       }
@@ -355,7 +357,7 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processCryptoMessage(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+          this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -366,14 +368,12 @@ export class MessageRenderer {
         return 'shown';
       }
     } catch (e) {
-      if (ApiErr.isNetErr(e)) {
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: net err');
-        return 'shown';
-      } else {
+      if (!ApiErr.isNetErr(e)) {
         Catch.reportErr(e);
-        loaderContext.renderPlainAttachment(a, attachmentSel, 'Categorize: unknown err');
-        return 'shown';
       }
+      const errorType = ApiErr.isNetErr(e) ? 'net err' : 'unknown err';
+      loaderContext.renderPlainAttachment(a, attachmentSel, `Categorize: ${errorType}`);
+      return 'shown';
     }
   };
 
@@ -765,7 +765,7 @@ export class MessageRenderer {
     this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 
-  private processCryptoMessage = async (
+  private processEncryptedMsgAttachment = async (
     attachment: Attachment,
     renderModule: RenderInterface,
     senderEmail: string | undefined,
