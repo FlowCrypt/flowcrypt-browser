@@ -250,7 +250,6 @@ export class Api {
           const jsonRes = JSON.stringify(transformed.response.json());
           const jsonResWithStatusCode = JSON.parse(jsonRes);
           jsonResWithStatusCode.status_code = jsonResWithStatusCode?.status_code ?? transformed.response.status;
-          window.alert(jsonResWithStatusCode);
           return jsonResWithStatusCode as FetchResult<T, RT>;
         }
       } else {
