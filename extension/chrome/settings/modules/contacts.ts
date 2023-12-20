@@ -94,7 +94,7 @@ View.run(
         tableContents += `
         <div email="${e}" class="action_show_pubkey_list" data-test="action-show-email-${e.replace(/[^a-z0-9]+/g, '')}">
           <img src="/img/svgs/chevron-left.svg" class="icon-chevron">
-          <span class="contact_email_address">${e}</span>
+          ${e}
         </div>
       `;
       }
