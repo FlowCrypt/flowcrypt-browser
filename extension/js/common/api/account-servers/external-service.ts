@@ -29,7 +29,6 @@ export namespace FesRes {
   };
   export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
-  export type HelpFeedback = {}; // eslint-disable-line @typescript-eslint/ban-types
 }
 
 /**
@@ -105,8 +104,8 @@ export class ExternalService extends Api {
     await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
   };
 
-  public helpFeedback = async (email: string, message: string): Promise<FesRes.HelpFeedback> => {
-    return await this.request<FesRes.HelpFeedback>(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message } });
+  public helpFeedback = async (email: string, message: string): Promise<void> => {
+    return await this.request(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message } });
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
