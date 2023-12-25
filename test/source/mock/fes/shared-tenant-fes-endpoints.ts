@@ -128,7 +128,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     },
     '/shared-tenant-fes/api/v1/account/feedback': async ({ body }) => {
       expect((body as { email: string }).email).to.equal('flowcrypt.compatibility@gmail.com');
-      return { sent: true, text: 'Feedback sent' };
+      return {};
     },
     '/shared-tenant-fes/api/v1/message/new-reply-token': async ({}, req) => {
       if (req.method === 'POST') {
