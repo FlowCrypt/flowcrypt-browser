@@ -1087,7 +1087,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
         expect((expectedOldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1689176967000);
-        console.log('hello2');
         await myKeyFrame.waitAndClick('@action-update-prv');
         {
           const [fileChooser] = await Promise.all([settingsPage.page.waitForFileChooser(), myKeyFrame.waitAndClick('@source-file', { retryErrs: true })]);
