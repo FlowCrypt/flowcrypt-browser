@@ -390,15 +390,19 @@ export class Mime {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static createAttachmentNode = (attachment: Attachment): any => {
     // todo: MimeBuilder types
-    const type = `${attachment.type}; name="${attachment.name}"`;
+    const isPgpMimeVersionAttachment = attachment.name.length === 0 && attachment.type === 'application/pgp-encrypted';
+    let type = `${attachment.type}`;
     const id = attachment.cid || Attachment.attachmentId();
     const header: Dict<string> = {};
+    if (!isPgpMimeVersionAttachment) {
+      type += `; name="${attachment.name}"`;
+      header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
+      header['X-Attachment-Id'] = id;
+      header['Content-ID'] = `<${id}>`;
+    }
     if (attachment.contentDescription) {
       header['Content-Description'] = attachment.contentDescription;
     }
-    header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
-    header['X-Attachment-Id'] = id;
-    header['Content-ID'] = `<${id}>`;
     header['Content-Transfer-Encoding'] = attachment.contentTransferEncoding || 'base64';
     const content =
       attachment.contentTransferEncoding === '7bit'
