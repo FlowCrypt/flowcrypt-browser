@@ -115,8 +115,6 @@ View.run(
         KeyImportUi.allowReselect();
         if (typeof updatedKey === 'undefined') {
           await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-        } else if (updatedKeyEncrypted.identities.length === 0) {
-          await Ui.modal.error(Lang.setup.prvHasUseridIssue);
         } else if (updatedKey.isPublic) {
           await Ui.modal.warning(
             'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'

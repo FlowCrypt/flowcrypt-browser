@@ -768,8 +768,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.waitAndClick('@action-update-key');
         await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
         await myKeyPage.waitAndType('@input-prv-key', keyCanBeFixedTestKey);
+        await myKeyPage.waitAndType('@input-passphrase', 'hard to guess passphrase');
         await myKeyPage.waitAndClick('@action-update-key');
-        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'The set of User IDs in this key is not supported.');
+        await myKeyPage.waitAndRespondToModal('confirm', 'confirm', 'Public and private key updated locally');
       })
     );
     test(
@@ -1075,8 +1076,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         }
         await myKeyFrame.type('@input-passphrase', '1234');
         await myKeyFrame.waitAndClick('@action-update-key');
-        await PageRecipe.waitForModalAndRespond(myKeyFrame, 'error', {
-          contentToCheck: 'The set of User IDs in this key is not supported.',
+        await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', {
+          contentToCheck: 'Public and private key updated locally',
           clickOn: 'confirm',
         });
         // test the pubkey in the storage
@@ -1085,11 +1086,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
-        expect((expectedOldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1610024667000);
+        expect((expectedOldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1689176967000);
+        await myKeyFrame.waitAndClick('@action-update-prv');
         {
           const [fileChooser] = await Promise.all([settingsPage.page.waitForFileChooser(), myKeyFrame.waitAndClick('@source-file', { retryErrs: true })]);
           await fileChooser.accept(['test/samples/openpgp/flowcrypttestkeymultiplegmailcom-0x98acfa1eadab5b92-updated.key']); // binary key
         }
+        await myKeyFrame.type('@input-passphrase', '1234');
         await myKeyFrame.waitAndClick('@action-update-key');
         await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', {
           contentToCheck: 'Public and private key updated locally',
