@@ -268,7 +268,7 @@ export class Mime {
       rootNode.appendChild(contentNode);
     }
     for (const attachment of attachments) {
-      rootNode.appendChild(Mime.createAttachmentNode(attachment));
+      rootNode.appendChild(Mime.createAttachmentNode(attachment, type));
     }
     return rootNode.build(); // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
@@ -315,14 +315,14 @@ export class Mime {
     const signedContentNode = new MimeBuilder('multipart/mixed');
     signedContentNode.appendChild(bodyNodes);
     for (const attachment of attachments) {
-      signedContentNode.appendChild(Mime.createAttachmentNode(attachment));
+      signedContentNode.appendChild(Mime.createAttachmentNode(attachment, 'pgpMimeSigned'));
     }
     const sigAttachmentPlaceholder = new Attachment({
       data: Buf.fromUtfStr(sigPlaceholder),
       type: 'application/pgp-signature',
       name: 'signature.asc',
     });
-    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder);
+    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder, 'pgpMimeSigned');
     // https://tools.ietf.org/html/rfc3156#section-5 - signed content first, signature after
     rootNode.appendChild(signedContentNode);
     rootNode.appendChild(sigAttachmentPlaceholderNode);
@@ -388,15 +388,17 @@ export class Mime {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static createAttachmentNode = (attachment: Attachment): any => {
+  private static createAttachmentNode = (attachment: Attachment, encodeType: MimeEncodeType): any => {
     // todo: MimeBuilder types
-    const isPgpMimeVersionAttachment = attachment.name.length === 0 && attachment.type === 'application/pgp-encrypted';
-    let type = `${attachment.type}`;
-    const id = attachment.cid || Attachment.attachmentId();
+    const isPgpMimeVersionAttachment = encodeType === 'pgpMimeEncrypted' && attachment.name.length === 0;
     const header: Dict<string> = {};
+    let type = attachment.type;
     if (!isPgpMimeVersionAttachment) {
       type += `; name="${attachment.name}"`;
       header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
+    }
+    if (encodeType !== 'pgpMimeEncrypted') {
+      const id = attachment.cid || Attachment.attachmentId();
       header['X-Attachment-Id'] = id;
       header['Content-ID'] = `<${id}>`;
     }
