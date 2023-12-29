@@ -390,10 +390,9 @@ export class Mime {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static createAttachmentNode = (attachment: Attachment, encodeType: MimeEncodeType): any => {
     // todo: MimeBuilder types
-    const isPgpMimeVersionAttachment = encodeType === 'pgpMimeEncrypted' && attachment.name.length === 0;
     const header: Dict<string> = {};
     let type = attachment.type;
-    if (!isPgpMimeVersionAttachment) {
+    if (!attachment.isPgpMimeVersionFile) {
       type += `; name="${attachment.name}"`;
       header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
     }
