@@ -39,7 +39,12 @@ const checkForAbsenceofBase64InAttachments = async (attachments: Attachment[]) =
 const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfoTitles: string[], expectPubkey: boolean) => {
   await checkForAbsenceofBase64InAttachments(parseResult.mimeMsg.attachments);
   const msg = Buf.fromBase64Str(parseResult.base64).toRawBytesStr();
-  if (!/Content-Transfer-Encoding: 7bit\r?\n\r?\n\Version: 1\r?\n/s.test(msg)) {
+
+  if (
+    !/Content-Type: application\/pgp-encrypted\r?\nContent-Description: PGP\/MIME version identification\r?\nContent-Transfer-Encoding: 7bit\r?\n\r?\n\Version: 1\r?\n/s.test(
+      msg
+    )
+  ) {
     throw new HttpClientErr(`Could not find Version: 1 with Content-Transfer-Encoding: 7bit`);
   }
   const keyInfos = await Config.getKeyInfo(keyInfoTitles);
@@ -52,6 +57,8 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
     expect(pubkeys).to.have.length(1);
     expect(keyInfos.some(ki => ki.id === pubkeys[0].id)).to.be.true;
   }
+  expect(msg).to.not.contain('X-Attachment-Id:');
+  expect(msg).to.not.contain('Content-ID:');
   const msgMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
   if (!msgMatch) {
     throw new HttpClientErr(`Could not find the encrypted message with Content-Transfer-Encoding: 7bit`);
