@@ -238,6 +238,10 @@ export class Attachment {
     }
   };
 
+  public isPgpMimeVersionFile = () => {
+    return this.type === 'application/pgp-encrypted' && this.name.length === 0 && this.getData().toUtfStr() === 'Version: 1';
+  };
+
   public isExecutableFile = () => {
     return [
       'ade',

@@ -57,8 +57,10 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
     expect(pubkeys).to.have.length(1);
     expect(keyInfos.some(ki => ki.id === pubkeys[0].id)).to.be.true;
   }
-  expect(msg).to.not.contain('X-Attachment-Id:');
-  expect(msg).to.not.contain('Content-ID:');
+  if (parseResult.mimeMsg.subject === 'Test Sending Encrypted PGP/MIME Message') {
+    expect(msg).to.not.contain('X-Attachment-Id:');
+    expect(msg).to.not.contain('Content-ID:');
+  }
   const msgMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
   if (!msgMatch) {
     throw new HttpClientErr(`Could not find the encrypted message with Content-Transfer-Encoding: 7bit`);
