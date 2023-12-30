@@ -55,10 +55,10 @@ export class KeyErrors {
 
   private toggleCompatibilityView = (visible: boolean) => {
     if (visible) {
-      $('#add_key_container').hide();
+      $('#my_key_update_container, #add_key_container').hide();
       $('#compatibility_fix').show();
     } else {
-      $('#add_key_container').show();
+      $('#my_key_update_container, #add_key_container').show();
       $('#compatibility_fix').hide();
     }
   };
