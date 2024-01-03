@@ -64,7 +64,7 @@ View.run(
       `
         );
       } else {
-        $('#my_key_update_container').show();
+        $('.my_key_update_container').show();
         this.keyImportUi.initPrvImportSrcForm(this.acctEmail, undefined);
         this.pubLookup = new PubLookup(this.clientConfiguration);
         [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
