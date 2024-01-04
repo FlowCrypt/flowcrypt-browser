@@ -745,13 +745,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const acct = 'flowcrypt.compatibility@gmail.com';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const keyCanBeFixedTestKey = testConstants.keyCanBeFixedTestKey;
+        const longid = '9866DB9063926D73';
         await SetupPageRecipe.manualEnter(settingsPage, '', {
           fixKey: true,
           key: {
             title: '',
             armored: keyCanBeFixedTestKey,
             passphrase: 'hard to guess passphrase',
-            longid: '9866DB9063926D73',
+            longid,
           },
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -773,6 +774,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await myKeyPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await myKeyPage.waitAndClick('@action-fix-and-import-key');
+        const { cryptup_flowcryptcompatibilitygmailcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_flowcryptcompatibilitygmailcom_keys']);
+        const pubkey = await KeyUtil.parse((keys as KeyInfoWithIdentity[])[0].public);
+        const expectedExpiration = new Date().getFullYear() + 1;
+        const pubkeyExpiration = new Date(pubkey.expiration!).getFullYear();
+        expect(pubkey.id.endsWith(longid)).to.equal(true);
+        expect(pubkeyExpiration).to.equal(expectedExpiration);
       })
     );
     test(
