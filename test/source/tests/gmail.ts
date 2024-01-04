@@ -607,7 +607,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'demo@flowcrypt.com' }, 'should find pubkey from WKD directly');
         await composePage.waitForContent('.email_address.has_pgp', 'demo@flowcrypt.com');
-        expect(await composePage.attr('.email_address.expired', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
+        expect(await composePage.attr('.email_address.has_pgp', 'title')).to.contain('0997 7F6F 512C A5AD 76F0 C210 248B 60EB 6D04 4DF8 (openpgp)');
       })
     );
 
