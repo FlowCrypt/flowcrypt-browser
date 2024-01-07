@@ -30,7 +30,7 @@
     "googleapis": "129.0.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
-    "mailparser": "3.6.5",
+    "mailparser": "3.6.6",
     "mkdirp": "3.0.1",
     "openpgp": "5.11.0",
     "pdfjs-dist": "3.11.174",
