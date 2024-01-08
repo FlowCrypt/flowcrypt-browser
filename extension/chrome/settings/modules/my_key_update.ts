@@ -19,7 +19,7 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
-import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import { KeyCanBeFixed, KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { KeyErrors } from '../../elements/shared/key_errors.js';
 
@@ -64,7 +64,7 @@ View.run(
       `
         );
       } else {
-        $('#content').show();
+        $('.my_key_update_container').show();
         this.keyImportUi.initPrvImportSrcForm(this.acctEmail, undefined);
         this.pubLookup = new PubLookup(this.clientConfiguration);
         [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
@@ -115,6 +115,8 @@ View.run(
         KeyImportUi.allowReselect();
         if (typeof updatedKey === 'undefined') {
           await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+        } else if (updatedKeyEncrypted.identities.length === 0) {
+          throw new KeyCanBeFixed(updatedKeyEncrypted);
         } else if (updatedKey.isPublic) {
           await Ui.modal.warning(
             'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
