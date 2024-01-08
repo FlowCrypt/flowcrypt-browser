@@ -238,7 +238,7 @@ export class Attachment {
     }
   };
 
-  public isPgpMimeVersionFile = () => {
+  public isPgpMimeVersion = () => {
     return this.type === 'application/pgp-encrypted' && this.name.length === 0 && this.getData().toUtfStr() === 'Version: 1';
   };
 
