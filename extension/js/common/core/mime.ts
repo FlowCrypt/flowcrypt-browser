@@ -397,7 +397,7 @@ export class Mime {
       header['X-Attachment-Id'] = id;
       header['Content-ID'] = `<${id}>`;
     }
-    if (!attachment.isPgpMimeVersion) {
+    if (!attachment.isPgpMimeVersion()) {
       type += `; name="${attachment.name}"`;
       header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
     }
