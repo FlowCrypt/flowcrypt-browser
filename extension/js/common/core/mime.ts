@@ -392,14 +392,14 @@ export class Mime {
     // todo: MimeBuilder types
     const header: Dict<string> = {};
     let type = attachment.type;
+    if (encodeType !== 'pgpMimeEncrypted' || !attachment.isPgpMimeVersion()) {
+      type += `; name="${attachment.name}"`;
+      header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
+    }
     if (encodeType !== 'pgpMimeEncrypted') {
       const id = attachment.cid || Attachment.attachmentId();
       header['X-Attachment-Id'] = id;
       header['Content-ID'] = `<${id}>`;
-    }
-    if (!attachment.isPgpMimeVersion()) {
-      type += `; name="${attachment.name}"`;
-      header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
     }
     if (attachment.contentDescription) {
       header['Content-Description'] = attachment.contentDescription;
