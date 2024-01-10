@@ -392,7 +392,7 @@ export class Mime {
     // todo: MimeBuilder types
     const header: Dict<string> = {};
     let type = attachment.type;
-    if (encodeType !== 'pgpMimeEncrypted' || !attachment.isPgpMimeVersion()) {
+    if (!attachment.isPgpMimeVersion()) {
       type += `; name="${attachment.name}"`;
       header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
     }

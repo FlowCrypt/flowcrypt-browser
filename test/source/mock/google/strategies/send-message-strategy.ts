@@ -40,19 +40,17 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
   await checkForAbsenceofBase64InAttachments(parseResult.mimeMsg.attachments);
   const msg = Buf.fromBase64Str(parseResult.base64).toRawBytesStr();
 
-  let versionRegex: RegExp;
+  if (!/Content-Transfer-Encoding: 7bit\r?\n\r?\n\Version: 1\r?\n/s.test(msg)) {
+    throw new HttpClientErr(`Could not find Version: 1 with Content-Transfer-Encoding: 7bit`);
+  }
   if (parseResult.mimeMsg.subject === 'Test Sending Encrypted PGP/MIME Message') {
-    versionRegex = new RegExp(
-      'Content-Type: application/pgp-encrypted\r?\nContent-Description: PGP/MIME version identification\r?\nContent-Transfer-Encoding: 7bit\r?\n\r?\nVersion: 1\r?\n',
-      's'
-    );
+    // PGP/MIME message shouldn't have filename attribute for version identification attachment
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5537
+    if (!/Content-Type: application\/pgp-encrypted\r?\nContent-Description: PGP\/MIME version identification\r?\n/s.test(msg)) {
+      throw new HttpClientErr(`Error: PGP\/MIME version identification attachment shouldn't have filename attribute`);
+    }
     expect(msg).to.not.contain('X-Attachment-Id:');
     expect(msg).to.not.contain('Content-ID:');
-  } else {
-    versionRegex = new RegExp('Content-Transfer-Encoding: 7bit\r?\n\r?\nVersion: 1\r?\n', 's');
-  }
-  if (!versionRegex.test(msg)) {
-    throw new HttpClientErr(`Could not find Version: 1 with Content-Transfer-Encoding: 7bit`);
   }
   const keyInfos = await Config.getKeyInfo(keyInfoTitles);
   if (expectPubkey) {
