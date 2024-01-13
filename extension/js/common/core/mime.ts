@@ -64,14 +64,10 @@ export class Mime {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text), true).blocks;
-      // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
-      if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
-        blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
-      } else if (decoded.html) {
-        // if no pgp blocks found in text part and there is html part, prefer html
+      // if there are no encryption-related blocks found in the text section, which we can use, then look at the html section
+      if (decoded.html && !blocksFromTextPart.some(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
         blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
       } else {
-        // else if no html and just a plain text message, use that
         blocks.push(...blocksFromTextPart);
       }
     } else if (decoded.html) {
