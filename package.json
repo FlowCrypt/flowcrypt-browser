@@ -16,7 +16,7 @@
     "@typescript-eslint/eslint-plugin": "6.18.0",
     "@typescript-eslint/parser": "6.18.0",
     "ava": "5.3.1",
-    "chai": "4.3.10",
+    "chai": "4.4.1",
     "chai-as-promised": "7.1.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.0.0",
