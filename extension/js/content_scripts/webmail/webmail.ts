@@ -149,8 +149,6 @@ Catch.try(async () => {
       getReplacer: () => replacer,
       start,
     });
-
-    // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
   };
 
   // when we support more webmails, there will be if/else here to figure out which one to run
