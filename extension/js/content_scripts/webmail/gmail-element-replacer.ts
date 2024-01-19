@@ -181,7 +181,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
         ({ body, blocks, attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId));
 
-        if (Mime.isBodyEmpty(body)) {
+        if (Mime.isBodyEmpty(body) && !this.currentlyReplacingAttachments) {
           // check if message body was converted to attachment by Gmail
           // happens for pgp/mime messages with attachments
           // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
