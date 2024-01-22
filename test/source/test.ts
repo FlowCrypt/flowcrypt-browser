@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import test, { Implementation } from 'ava';
+import { registerCompletionHandler } from 'ava/entrypoints/main.mjs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -51,6 +52,10 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
+
+registerCompletionHandler(() => {
+  process.exit();
+});
 
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
