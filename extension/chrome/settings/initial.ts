@@ -8,10 +8,10 @@ import { View } from '../../js/common/view.js';
 View.run(
   class InitialView extends View {
     public render = async () => {
-      if (Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76) {
-        $('#chrome-steps').css('display', 'block');
-      } else {
-        $('#firefox-steps').css('display', 'block');
+      const browserName = Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76 ? 'chrome' : 'firefox';
+      const stepsEl = document.getElementById(`${browserName}-steps`);
+      if (stepsEl) {
+        stepsEl.style.display = 'block';
       }
     };
 
