@@ -15,7 +15,7 @@ export class PgpBlockViewPrintModule {
       return;
     }
     const w = window.open();
-    const html = `
+    let html = `
       <!DOCTYPE html>
       <html lang="en-us">
       <head>
@@ -81,6 +81,12 @@ export class PgpBlockViewPrintModule {
       </body>
       </html>
     `;
+    if (w?.trustedTypes && w?.trustedTypes.createPolicy) {
+      const policy = w?.trustedTypes.createPolicy('print-policy', {
+        createHTML: (string: string) => string,
+      });
+      html = policy.createHTML(html);
+    }
     w?.document.write(html);
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview

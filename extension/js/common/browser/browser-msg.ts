@@ -6,8 +6,6 @@ import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, UrlParams } from '../core/common.js';
-import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../core/crypto/key.js';
-import { DecryptResult, MsgUtil, PgpMsgMethod } from '../core/crypto/pgp/msg-util.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
@@ -80,8 +78,6 @@ export namespace Bm {
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
-  export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
-  export type PgpKeyBinaryToArmored = { binaryKeysData: Uint8Array };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
@@ -101,23 +97,13 @@ export namespace Bm {
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
-    export type PgpMsgDecrypt = DecryptResult;
-    export type PgpKeyBinaryToArmored = { keys: ArmoredKeyIdentityWithEmails[] };
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
-    export type Any =
-      | GetActiveTabInfo
-      | ReconnectAcctAuthPopup
-      | PgpMsgDecrypt
-      | InMemoryStoreGet
-      | InMemoryStoreSet
-      | AjaxGmailAttachmentGetChunk
-      | PgpKeyBinaryToArmored
-      | ConfirmationResult;
+    export type Any = GetActiveTabInfo | ReconnectAcctAuthPopup | InMemoryStoreGet | InMemoryStoreSet | AjaxGmailAttachmentGetChunk | ConfirmationResult;
   }
 
   export type AnyRequest =
@@ -144,12 +130,10 @@ export namespace Bm {
     | Db
     | InMemoryStoreSet
     | InMemoryStoreGet
-    | PgpMsgDecrypt
     | AjaxProgress
     | ShowAttachmentPreview
     | ShowConfirmation
     | ReRenderRecipient
-    | PgpKeyBinaryToArmored
     | AuthWindowResult
     | RenderMessage
     | PgpBlockReady
@@ -203,9 +187,6 @@ export class BrowserMsg {
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
-        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
-        pgpKeyBinaryToArmored: (bm: Bm.PgpKeyBinaryToArmored) =>
-          BrowserMsg.sendAwait(undefined, 'pgpKeyBinaryToArmored', bm, true) as Promise<Bm.Res.PgpKeyBinaryToArmored>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm),
@@ -282,13 +263,6 @@ export class BrowserMsg {
 
   public static generateTabId = (contentScript?: boolean) => {
     return `${contentScript ? 'cs' : 'ex'}.${Str.sloppyRandom(10)}`;
-  };
-
-  public static addPgpListeners = () => {
-    BrowserMsg.bgAddListener('pgpMsgDecrypt', MsgUtil.decryptMessage);
-    BrowserMsg.bgAddListener('pgpKeyBinaryToArmored', async (r: Bm.PgpKeyBinaryToArmored) => ({
-      keys: await KeyUtil.parseAndArmorKeys(r.binaryKeysData),
-    }));
   };
 
   public static addListener = (name: string, handler: Handler) => {

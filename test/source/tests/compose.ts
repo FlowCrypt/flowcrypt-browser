@@ -1849,8 +1849,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       'compose - sending PGP/MIME encrypted message',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const subject = `Test Sending Encrypted PGP/MIME Message`;
-        const body = `This text is encrypted`;
+        const subject = 'Test Sending Encrypted PGP/MIME Message';
+        const body = 'This text is encrypted';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'flowcrypt.compatibility@gmail.com' }, subject, body, {
           richtext: true,

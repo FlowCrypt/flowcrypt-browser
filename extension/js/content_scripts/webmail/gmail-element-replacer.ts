@@ -181,7 +181,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
         ({ body, blocks, attachments, messageInfo } = await this.messageRenderer.msgGetProcessed(msgId));
 
-        if (Mime.isBodyEmpty(body)) {
+        if (Mime.isBodyEmpty(body) && !this.currentlyReplacingAttachments) {
           // check if message body was converted to attachment by Gmail
           // happens for pgp/mime messages with attachments
           // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
@@ -232,15 +232,21 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private parseBlocksFromEmailContainer = (emailContainer: HTMLElement) => {
     const parseTextBlocks = (text: string) => Mime.processBody({ text });
 
-    const blocksFromEmailContainer = parseTextBlocks(emailContainer.innerText);
+    const text = emailContainer.innerText;
+    const blocksFromEmailContainer = parseTextBlocks(text);
 
     if (!this.isPlainTextOrHtml(blocksFromEmailContainer) || !emailContainer.textContent) {
       return blocksFromEmailContainer;
     }
 
-    // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
-    // .textContent property returns content of not visible nodes too
-    return parseTextBlocks(emailContainer.textContent);
+    const armorHeader = PgpArmor.ARMOR_HEADER_DICT.null;
+    if (text.includes(armorHeader.begin) && !text.includes(armorHeader.end as string)) {
+      // handles case when part of message is clipped and "END PGP MESSAGE" line isn't visible
+      // .textContent property returns content of not visible nodes too
+      return parseTextBlocks(emailContainer.textContent);
+    }
+
+    return blocksFromEmailContainer;
   };
 
   private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {

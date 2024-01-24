@@ -8,7 +8,6 @@ import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { WKD_API_HOST } from '../../core/const.js';
 import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../../core/crypto/key.js';
 
 export class Wkd extends Api {
@@ -16,7 +15,10 @@ export class Wkd extends Api {
   // https://www.sektioneins.de/en/blog/18-11-23-gnupg-wkd.html
   // https://metacode.biz/openpgp/web-key-directory
 
-  public constructor(private domainName: string, private usesKeyManager: boolean) {
+  public constructor(
+    private domainName: string,
+    private usesKeyManager: boolean
+  ) {
     super();
   }
 
@@ -54,8 +56,7 @@ export class Wkd extends Api {
       return await KeyUtil.parseAndArmorKeys(response.buf);
     }
     // in pgp-block.html there is no openpgp loaded for performance, use background
-    const armored = await BrowserMsg.send.bg.await.pgpKeyBinaryToArmored({ binaryKeysData: response.buf });
-    return armored.keys;
+    return await KeyUtil.parseAndArmorKeys(response.buf);
   };
 
   public lookupEmail = async (email: string): Promise<PubkeysSearchResult> => {

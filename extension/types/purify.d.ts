@@ -1,78 +1,138 @@
-// Type definitions for DOM Purify
-// Project: https://github.com/cure53/DOMPurify
-// Definitions by: Dave Taylor <http://davetayls.me>, Samira Bazuzi <https://github.com/bazuzi>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-
-/* tslint:disable:only-arrow-functions */
-/* tslint:disable:unified-signatures */
+/// <reference types="trusted-types"/>
 
 export as namespace DOMPurify;
+export = DOMPurify;
 
-export declare let version: string;
-export declare let removed: any[];
-export declare let isSupported: boolean;
+declare const DOMPurify: createDOMPurifyI;
 
-export declare function sanitize(source: string | Node): string;
-export declare function sanitize(source: string | Node, config: Config & { RETURN_DOM_FRAGMENT?: false; RETURN_DOM?: false; }): string;
-export declare function sanitize(source: string | Node, config: Config & { RETURN_DOM_FRAGMENT: true; }): DocumentFragment;
-export declare function sanitize(source: string | Node, config: Config & { RETURN_DOM: true; }): HTMLElement;
-export declare function sanitize(source: string | Node, config: Config): string | HTMLElement | DocumentFragment;
-export declare function addHook(hook: 'uponSanitizeElement', cb: (currentNode: Element, data: SanitizeElementHookEvent, config: Config) => void): void;
-export declare function addHook(hook: 'uponSanitizeAttribute', cb: (currentNode: Element, data: SanitizeAttributeHookEvent, config: Config) => void): void;
-export declare function addHook(hook: HookName, cb: (currentNode: Element, data: HookEvent, config: Config) => void): void;
-export declare function setConfig(cfg: Config): void;
-export declare function clearConfig(): void;
-export declare function isValidAttribute(tag: string, attr: string, value: string): boolean;
-export declare function removeHook(entryPoint: HookName): void;
-export declare function removeHooks(entryPoint: HookName): void;
-export declare function removeAllHooks(): void;
+type WindowLike = Pick<
+    typeof globalThis,
+    | "NodeFilter"
+    | "Node"
+    | "Element"
+    | "HTMLTemplateElement"
+    | "DocumentFragment"
+    | "HTMLFormElement"
+    | "DOMParser"
+    | "NamedNodeMap"
+>;
 
-interface Config {
-    ADD_ATTR?: string[];
-    ADD_TAGS?: string[];
-    ALLOW_DATA_ATTR?: boolean;
-    ALLOWED_ATTR?: string[];
-    ALLOWED_TAGS?: string[];
-    FORBID_ATTR?: string[];
-    FORBID_TAGS?: string[];
-    FORCE_BODY?: boolean;
-    KEEP_CONTENT?: boolean;
-    RETURN_DOM?: boolean;
-    RETURN_DOM_FRAGMENT?: boolean;
-    RETURN_DOM_IMPORT?: boolean;
-    SANITIZE_DOM?: boolean;
-    WHOLE_DOCUMENT?: boolean;
-    ALLOWED_URI_REGEXP?: RegExp;
-    SAFE_FOR_TEMPLATES?: boolean;
-    ALLOW_UNKNOWN_PROTOCOLS?: boolean;
-    USE_PROFILES?: false | {mathMl?: boolean, svg?: boolean, svgFilters?: boolean, html?: boolean};
-    IN_PLACE?: boolean;
+interface createDOMPurifyI extends DOMPurify.DOMPurifyI {
+    (window?: Window | WindowLike): DOMPurify.DOMPurifyI;
 }
 
-type HookName
-    = 'beforeSanitizeElements'
-    | 'uponSanitizeElement'
-    | 'afterSanitizeElements'
-    | 'beforeSanitizeAttributes'
-    | 'uponSanitizeAttribute'
-    | 'afterSanitizeAttributes'
-    | 'beforeSanitizeShadowDOM'
-    | 'uponSanitizeShadowNode'
-    | 'afterSanitizeShadowDOM';
+declare namespace DOMPurify {
+    interface DOMPurifyI {
+        sanitize(source: string | Node): string;
+        // sanitize(source: string | Node, config: Config & { RETURN_TRUSTED_TYPE: true }): TrustedHTML;
+        sanitize(
+            source: string | Node,
+            config: Config & { RETURN_DOM_FRAGMENT?: false | undefined; RETURN_DOM?: false | undefined },
+        ): string;
+        sanitize(source: string | Node, config: Config & { RETURN_DOM_FRAGMENT: true }): DocumentFragment;
+        sanitize(source: string | Node, config: Config & { RETURN_DOM: true }): HTMLElement;
+        sanitize(source: string | Node, config: Config): string | HTMLElement | DocumentFragment;
 
-type HookEvent
-    = SanitizeElementHookEvent
-    | SanitizeAttributeHookEvent
-    | null;
+        addHook(
+            hook: "uponSanitizeElement",
+            cb: (currentNode: Element, data: SanitizeElementHookEvent, config: Config) => void,
+        ): void;
+        addHook(
+            hook: "uponSanitizeAttribute",
+            cb: (currentNode: Element, data: SanitizeAttributeHookEvent, config: Config) => void,
+        ): void;
+        addHook(hook: HookName, cb: (currentNode: Element, data: HookEvent, config: Config) => void): void;
 
-interface SanitizeElementHookEvent {
-    tagName: string;
-    allowedTags: string[];
-}
+        setConfig(cfg: Config): void;
+        clearConfig(): void;
+        isValidAttribute(tag: string, attr: string, value: string): boolean;
 
-interface SanitizeAttributeHookEvent {
-    attrName: string;
-    attrValue: string;
-    keepAttr: boolean;
-    allowedAttributes: string[];
+        removeHook(entryPoint: HookName): void;
+        removeHooks(entryPoint: HookName): void;
+        removeAllHooks(): void;
+
+        version: string;
+        removed: any[];
+        isSupported: boolean;
+    }
+
+    interface Config {
+        ADD_ATTR?: string[] | undefined;
+        ADD_DATA_URI_TAGS?: string[] | undefined;
+        ADD_TAGS?: string[] | undefined;
+        ADD_URI_SAFE_ATTR?: string[] | undefined;
+        ALLOW_ARIA_ATTR?: boolean | undefined;
+        ALLOW_DATA_ATTR?: boolean | undefined;
+        ALLOW_UNKNOWN_PROTOCOLS?: boolean | undefined;
+        ALLOW_SELF_CLOSE_IN_ATTR?: boolean | undefined;
+        ALLOWED_ATTR?: string[] | undefined;
+        ALLOWED_TAGS?: string[] | undefined;
+        ALLOWED_NAMESPACES?: string[] | undefined;
+        ALLOWED_URI_REGEXP?: RegExp | undefined;
+        FORBID_ATTR?: string[] | undefined;
+        FORBID_CONTENTS?: string[] | undefined;
+        FORBID_TAGS?: string[] | undefined;
+        FORCE_BODY?: boolean | undefined;
+        IN_PLACE?: boolean | undefined;
+        KEEP_CONTENT?: boolean | undefined;
+        /**
+         * change the default namespace from HTML to something different
+         */
+        NAMESPACE?: string | undefined;
+        PARSER_MEDIA_TYPE?: string | undefined;
+        RETURN_DOM_FRAGMENT?: boolean | undefined;
+        /**
+         * This defaults to `true` starting DOMPurify 2.2.0. Note that setting it to `false`
+         * might cause XSS from attacks hidden in closed shadowroots in case the browser
+         * supports Declarative Shadow: DOM https://web.dev/declarative-shadow-dom/
+         */
+        RETURN_DOM_IMPORT?: boolean | undefined;
+        RETURN_DOM?: boolean | undefined;
+        RETURN_TRUSTED_TYPE?: boolean | undefined;
+        SAFE_FOR_TEMPLATES?: boolean | undefined;
+        SANITIZE_DOM?: boolean | undefined;
+        /** @default false */
+        SANITIZE_NAMED_PROPS?: boolean | undefined;
+        USE_PROFILES?:
+            | false
+            | {
+                mathMl?: boolean | undefined;
+                svg?: boolean | undefined;
+                svgFilters?: boolean | undefined;
+                html?: boolean | undefined;
+            }
+            | undefined;
+        WHOLE_DOCUMENT?: boolean | undefined;
+        CUSTOM_ELEMENT_HANDLING?: {
+            tagNameCheck?: RegExp | ((tagName: string) => boolean) | null | undefined;
+            attributeNameCheck?: RegExp | ((lcName: string) => boolean) | null | undefined;
+            allowCustomizedBuiltInElements?: boolean | undefined;
+        };
+    }
+
+    type HookName =
+        | "beforeSanitizeElements"
+        | "uponSanitizeElement"
+        | "afterSanitizeElements"
+        | "beforeSanitizeAttributes"
+        | "uponSanitizeAttribute"
+        | "afterSanitizeAttributes"
+        | "beforeSanitizeShadowDOM"
+        | "uponSanitizeShadowNode"
+        | "afterSanitizeShadowDOM";
+
+    type HookEvent = SanitizeElementHookEvent | SanitizeAttributeHookEvent | null;
+
+    interface SanitizeElementHookEvent {
+        tagName: string;
+        allowedTags: { [key: string]: boolean };
+    }
+
+    interface SanitizeAttributeHookEvent {
+        attrName: string;
+        attrValue: string;
+        keepAttr: boolean;
+        allowedAttributes: { [key: string]: boolean };
+        forceKeepAttr?: boolean | undefined;
+    }
 }
