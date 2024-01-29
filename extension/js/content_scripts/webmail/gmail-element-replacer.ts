@@ -233,7 +233,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const parseTextBlocks = (text: string) => Mime.processBody({ text });
 
     const el = document.createElement('div');
-    el.appendChild(emailContainer.cloneNode());
+    el.appendChild(emailContainer.cloneNode(true));
 
     // add ">" character to the beginning of each line inside
     // gmail_quote elements for correct parsing of text blocks
