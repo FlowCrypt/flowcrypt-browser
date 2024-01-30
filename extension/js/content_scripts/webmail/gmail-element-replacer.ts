@@ -200,7 +200,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         // todo: print info for offline?
       }
 
-      if (this.isPlainTextOrHtml(blocks)) {
+      if (this.isPlainTextOrHtml(blocks) && this.isPlainTextOrHtml(blocksFromEmailContainer)) {
         continue;
       }
       const setMessageInfo = messageInfo ?? {
@@ -232,7 +232,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private parseBlocksFromEmailContainer = (emailContainer: HTMLElement) => {
     const parseTextBlocks = (text: string) => Mime.processBody({ text });
 
-    const text = emailContainer.innerText;
+    const el = document.createElement('div');
+    el.appendChild(emailContainer.cloneNode(true));
+
+    // add ">" character to the beginning of each line inside
+    // gmail_quote elements for correct parsing of text blocks
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5574
+    const gmailQuoteElements = el.querySelectorAll<HTMLElement>('.gmail_quote');
+    for (const gmailQuoteElement of gmailQuoteElements) {
+      let lines = gmailQuoteElement.innerText.split('\n');
+      lines = lines.map(line => '> ' + line);
+      gmailQuoteElement.innerText = lines.join('\n');
+    }
+
+    const text = el.innerText;
     const blocksFromEmailContainer = parseTextBlocks(text);
 
     if (!this.isPlainTextOrHtml(blocksFromEmailContainer) || !emailContainer.textContent) {
@@ -249,7 +262,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return blocksFromEmailContainer;
   };
 
-  private addfcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
+  private addFcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
     if ($(containerSel).find(iconSel).length) {
       return;
     }
@@ -324,7 +337,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (convoUpperIconsContainer.length) {
       if (useEncryptionInThisConvo) {
         if (!convoUpperIconsContainer.is('.appended') || convoUpperIconsContainer.find(convoUpperIcons).length) {
-          this.addfcConvoIcon(convoUpperIconsContainer, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
+          this.addFcConvoIcon(convoUpperIconsContainer, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
             convoUpperIconsContainer.find(convoUpperIcons).last().trigger('click');
           });
         }
