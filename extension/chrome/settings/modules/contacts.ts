@@ -55,7 +55,7 @@ View.run(
     };
 
     public setHandlers = () => {
-      $('.action_show_pubkey_list').off().on('click', this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
+      $('.action_show_pubkey_list').off().on('click', this.setHandler(this.actionRenderListPublicKeyHandler));
       $('#edit_contact .action_save_edited_pubkey').off().on('click', this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
       $('#bulk_import .action_process').off().on('click', this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
       $('.action_export_all').off().on('click', this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
@@ -131,6 +131,11 @@ View.run(
     };
 
     private actionRenderListPublicKeyHandler = async (emailRow: HTMLElement) => {
+      if ($(emailRow).hasClass('opened')) {
+        $(emailRow).removeClass('opened');
+        $(emailRow).children('.contacts-pubkey').remove();
+        return;
+      }
       $(emailRow).addClass('opened');
       const email = $(emailRow).attr('email')!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       const contact = await ContactStore.getOneWithAllPubkeys(undefined, email);
@@ -163,11 +168,7 @@ View.run(
           </div>
           <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;
         }
-        $(emailRow).after(tableContents); // xss-safe-value
-        // remove all listeners from the old link by creating a new element
-        const newElement = emailRow.cloneNode(true);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        emailRow!.parentNode!.replaceChild(newElement, emailRow);
+        $(emailRow).append(tableContents); // xss-safe-value
         $('.action_remove').off().on('click', this.setHandlerPrevent('double', this.actionRemovePublicKey));
         $('.action_show').off().on('click', this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
         $('.action_change').off().on('click', this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));

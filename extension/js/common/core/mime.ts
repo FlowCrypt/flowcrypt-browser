@@ -64,14 +64,10 @@ export class Mime {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text), true).blocks;
-      // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
-      if (blocksFromTextPart.find(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
-        blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
-      } else if (decoded.html) {
-        // if no pgp blocks found in text part and there is html part, prefer html
+      // if there are no encryption-related blocks found in the text section, which we can use, then look at the html section
+      if (decoded.html && !blocksFromTextPart.some(b => ['pkcs7', 'encryptedMsg', 'signedMsg', 'publicKey', 'privateKey'].includes(b.type))) {
         blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
       } else {
-        // else if no html and just a plain text message, use that
         blocks.push(...blocksFromTextPart);
       }
     } else if (decoded.html) {
@@ -268,9 +264,9 @@ export class Mime {
       rootNode.appendChild(contentNode);
     }
     for (const attachment of attachments) {
-      rootNode.appendChild(Mime.createAttachmentNode(attachment));
+      rootNode.appendChild(Mime.createAttachmentNode(attachment, type));
     }
-    return rootNode.build(); // eslint-disable-line @typescript-eslint/no-unsafe-return
+    return rootNode.build() as string;
   };
 
   public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
@@ -287,7 +283,7 @@ export class Mime {
       contentDescription = 'S/MIME Signed Message';
     }
     rootNode.addHeader('Content-Description', contentDescription);
-    return rootNode.build(); // eslint-disable-line @typescript-eslint/no-unsafe-return
+    return rootNode.build() as string;
   };
 
   public static subjectWithoutPrefixes = (subject: string): string => {
@@ -315,14 +311,14 @@ export class Mime {
     const signedContentNode = new MimeBuilder('multipart/mixed');
     signedContentNode.appendChild(bodyNodes);
     for (const attachment of attachments) {
-      signedContentNode.appendChild(Mime.createAttachmentNode(attachment));
+      signedContentNode.appendChild(Mime.createAttachmentNode(attachment, 'pgpMimeSigned'));
     }
     const sigAttachmentPlaceholder = new Attachment({
       data: Buf.fromUtfStr(sigPlaceholder),
       type: 'application/pgp-signature',
       name: 'signature.asc',
     });
-    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder);
+    const sigAttachmentPlaceholderNode = Mime.createAttachmentNode(sigAttachmentPlaceholder, 'pgpMimeSigned');
     // https://tools.ietf.org/html/rfc3156#section-5 - signed content first, signature after
     rootNode.appendChild(signedContentNode);
     rootNode.appendChild(sigAttachmentPlaceholderNode);
@@ -388,17 +384,22 @@ export class Mime {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static createAttachmentNode = (attachment: Attachment): any => {
+  private static createAttachmentNode = (attachment: Attachment, encodeType: MimeEncodeType): any => {
     // todo: MimeBuilder types
-    const type = `${attachment.type}; name="${attachment.name}"`;
-    const id = attachment.cid || Attachment.attachmentId();
     const header: Dict<string> = {};
+    let type = attachment.type;
+    if (!attachment.isPgpMimeVersion()) {
+      type += `; name="${attachment.name}"`;
+      header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
+    }
+    if (encodeType !== 'pgpMimeEncrypted') {
+      const id = attachment.cid || Attachment.attachmentId();
+      header['X-Attachment-Id'] = id;
+      header['Content-ID'] = `<${id}>`;
+    }
     if (attachment.contentDescription) {
       header['Content-Description'] = attachment.contentDescription;
     }
-    header['Content-Disposition'] = attachment.inline ? 'inline' : 'attachment';
-    header['X-Attachment-Id'] = id;
-    header['Content-ID'] = `<${id}>`;
     header['Content-Transfer-Encoding'] = attachment.contentTransferEncoding || 'base64';
     const content =
       attachment.contentTransferEncoding === '7bit'
@@ -480,8 +481,8 @@ export class Mime {
 
   private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
     if (node.charset && Iso88592.labels.includes(node.charset)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
-      return Iso88592.decode(node.rawContent!);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return Iso88592.decode(node.rawContent!) as string;
     }
     let resultBuf: Buf;
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {

@@ -745,13 +745,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const acct = 'flowcrypt.compatibility@gmail.com';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const keyCanBeFixedTestKey = testConstants.keyCanBeFixedTestKey;
+        const longid = '9866DB9063926D73';
         await SetupPageRecipe.manualEnter(settingsPage, '', {
           fixKey: true,
           key: {
             title: '',
             armored: keyCanBeFixedTestKey,
             passphrase: 'hard to guess passphrase',
-            longid: '9866DB9063926D73',
+            longid,
           },
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -768,8 +769,17 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.waitAndClick('@action-update-key');
         await myKeyPage.waitAndRespondToModal('error', 'confirm', 'An error happened when processing the key');
         await myKeyPage.waitAndType('@input-prv-key', keyCanBeFixedTestKey);
+        await myKeyPage.waitAndType('@input-passphrase', 'hard to guess passphrase');
         await myKeyPage.waitAndClick('@action-update-key');
-        await myKeyPage.waitAndRespondToModal('error', 'confirm', 'The set of User IDs in this key is not supported.');
+        await myKeyPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
+        await myKeyPage.selectOption('@input-compatibility-fix-expire-years', '1');
+        await myKeyPage.waitAndClick('@action-fix-and-import-key');
+        const { cryptup_flowcryptcompatibilitygmailcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_flowcryptcompatibilitygmailcom_keys']);
+        const pubkey = await KeyUtil.parse((keys as KeyInfoWithIdentity[])[0].public);
+        const expectedExpiration = new Date().getFullYear() + 1;
+        const pubkeyExpiration = new Date(pubkey.expiration!).getFullYear();
+        expect(pubkey.id.endsWith(longid)).to.equal(true);
+        expect(pubkeyExpiration).to.equal(expectedExpiration);
       })
     );
     test(
@@ -1075,10 +1085,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         }
         await myKeyFrame.type('@input-passphrase', '1234');
         await myKeyFrame.waitAndClick('@action-update-key');
-        await PageRecipe.waitForModalAndRespond(myKeyFrame, 'error', {
-          contentToCheck: 'The set of User IDs in this key is not supported.',
-          clickOn: 'confirm',
+        await myKeyFrame.waitAll('@input-compatibility-fix-expire-years', {
+          timeout: 30,
         });
+        await myKeyFrame.selectOption('@input-compatibility-fix-expire-years', '1');
+        await myKeyFrame.waitAndClick('@action-fix-and-import-key');
         // test the pubkey in the storage
         const expectedOldContact = await dbPage.page.evaluate(async acctEmail => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -1086,12 +1097,16 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
         expect((expectedOldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1610024667000);
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyFrame2 = await settingsPage.getFrame(['my_key.htm']);
+        await myKeyFrame2.waitAndClick('@action-update-prv');
         {
-          const [fileChooser] = await Promise.all([settingsPage.page.waitForFileChooser(), myKeyFrame.waitAndClick('@source-file', { retryErrs: true })]);
+          const [fileChooser] = await Promise.all([settingsPage.page.waitForFileChooser(), myKeyFrame2.waitAndClick('@source-file', { retryErrs: true })]);
           await fileChooser.accept(['test/samples/openpgp/flowcrypttestkeymultiplegmailcom-0x98acfa1eadab5b92-updated.key']); // binary key
         }
-        await myKeyFrame.waitAndClick('@action-update-key');
-        await PageRecipe.waitForModalAndRespond(myKeyFrame, 'confirm', {
+        await myKeyFrame2.type('@input-passphrase', '1234');
+        await myKeyFrame2.waitAndClick('@action-update-key');
+        await PageRecipe.waitForModalAndRespond(myKeyFrame2, 'confirm', {
           contentToCheck: 'Public and private key updated locally',
           clickOn: 'cancel',
         });

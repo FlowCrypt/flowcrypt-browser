@@ -69,7 +69,12 @@ export class BrowserRecipe {
 
   public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
-    await googleChatPage.waitAll('.bro'); // Welcome
+    await Util.sleep(5);
+    if (await googleChatPage.isElementPresent('.fKz7Od')) {
+      // close announcement about updated UI
+      await googleChatPage.waitAndClick('.fKz7Od', { delay: 1 });
+    }
+    await googleChatPage.waitAll('.T-I-KE'); // New chat button
     return googleChatPage;
   };
 

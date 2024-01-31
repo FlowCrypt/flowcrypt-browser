@@ -50,7 +50,7 @@ export class GmailPageRecipe extends PageRecipe {
         break;
       }
       // deleting last reply
-      const moreActionsButton = await lastMessageElement.$$('[aria-label="More"]');
+      const moreActionsButton = await lastMessageElement.$$('[aria-label="More message options"]');
       expect(moreActionsButton.length).to.equal(1);
       await moreActionsButton[0].click();
       await gmailPage.press('ArrowDown', 4);

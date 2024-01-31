@@ -13,6 +13,7 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { Str } from '../../../js/common/core/common.js';
 import { AttachmentWarnings } from '../shared/attachment_warnings.js';
+import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 
 declare const filesize: { filesize: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
@@ -95,7 +96,7 @@ export class PgpBlockViewAttachmentsModule {
   private decryptAndSaveAttachmentToDownloads = async (encrypted: Attachment) => {
     const kisWithPp = await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail);
     // todo: #4158 signature verification of attachments
-    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({
+    const decrypted = await MsgUtil.decryptMessage({
       kisWithPp,
       encryptedData: encrypted.getData(),
       verificationPubs: [],
