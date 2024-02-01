@@ -109,6 +109,8 @@ export class Api {
     const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
     // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })
     let body: BodyInit | undefined;
+    let duplex: 'half' | undefined;
+    let uploadPromise: () => void | Promise<void> = Value.noop;
     let url: string;
     if (req.method === 'GET' || req.method === 'DELETE') {
       if (typeof req.data === 'undefined') {
@@ -124,7 +126,24 @@ export class Api {
             body = JSON.stringify(req.data);
             headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
           } else if (req.dataType === 'TEXT') {
-            body = req.data;
+            if (supportsRequestStreams && req.progress?.upload) {
+              const upload = req.progress?.upload;
+              const transformStream = new TransformStream();
+              uploadPromise = async () => {
+                const transformWriter = transformStream.writable.getWriter();
+                for (let offset = 0; offset < req.data.length; ) {
+                  const chunkSize = Math.min(1000, req.data.length - offset);
+                  await Promise.race([transformWriter.write(Buf.fromRawBytesStr(req.data, offset, offset + chunkSize)), newTimeoutPromise()]);
+                  upload((offset / req.data.length) * 100, offset, req.data.length);
+                  offset += chunkSize;
+                }
+                await Promise.race([transformWriter.close(), newTimeoutPromise()]);
+              };
+              body = transformStream.readable;
+              duplex = 'half'; // activate upload progress mode
+            } else {
+              body = req.data;
+            }
             if (typeof req.contentType === 'string') {
               headersInit.push(['Content-Type', req.contentType]);
             }
@@ -135,10 +154,11 @@ export class Api {
       }
     }
     const abortController = new AbortController();
-    const requestInit: RequestInit = {
+    const requestInit: RequestInit & { duplex?: 'half' } = {
       method: req.method,
       headers: headersInit,
       body,
+      duplex,
       mode: 'cors',
       signal: abortController.signal,
     };
@@ -152,9 +172,10 @@ export class Api {
       });
     };
     try {
-      const responsePromises = [fetch(url, requestInit), newTimeoutPromise()];
-      // todo: disable timeout on upload
-      const response = await Promise.race(responsePromises);
+      const fetchPromise = Api.fetchWithRetry(url, requestInit);
+      await uploadPromise();
+      const response = await Promise.race([fetchPromise, newTimeoutPromise()]);
+
       if (!response.ok) {
         let responseText: string | undefined;
         readyState = 2; // HEADERS_RECEIVED
