@@ -139,7 +139,7 @@ export class BrowserHandle {
       const listener = async (target: Target) => {
         if (target.type() === 'page') {
           if (!resolved++) {
-            this.browser.removeListener('targetcreated', listener);
+            this.browser.off('targetcreated', listener);
             target.page().then(resolve, reject);
           }
         }
