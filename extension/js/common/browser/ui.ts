@@ -491,7 +491,7 @@ export class Ui {
   };
 
   public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
-    $('body').attr('data-test-state', state); // for automated tests
+    document.querySelector('body')?.setAttribute('data-test-state', state); // for automated tests
   };
 
   public static buildJquerySels = (sels: Dict<string>): SelCache => {
