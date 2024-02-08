@@ -90,16 +90,17 @@ export class GeneralMailFormatter {
     return await view.storageModule.decryptSenderKey(parsedSenderPrv);
   };
 
-  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey?: ParsedKeyInfo | undefined) => {
+  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey?: ParsedKeyInfo | undefined): Promise<boolean> => {
     const senderEmail = view.senderModule.getSender();
     const storage = await AcctStore.get(view.acctEmail, ['sendAs']);
     const emailAliases = Object.keys(storage.sendAs || {});
-    if (senderEmail !== view.acctEmail) {
-      if (signingKey?.keyInfo.emails) {
-        emailAliases.splice(emailAliases.indexOf(view.acctEmail), 1);
-        const emailsInSigningKey = signingKey.keyInfo.emails;
-        return emailsInSigningKey.every(email => emailAliases.includes(email));
+    if (senderEmail !== view.acctEmail && signingKey?.keyInfo.emails) {
+      const senderAliasIndex = emailAliases.indexOf(view.acctEmail);
+      if (senderAliasIndex !== -1) {
+        emailAliases.splice(senderAliasIndex, 1);
       }
+      const emailsInSigningKey = signingKey.keyInfo.emails;
+      return emailsInSigningKey.every(email => emailAliases.includes(email));
     }
     return true;
   };
