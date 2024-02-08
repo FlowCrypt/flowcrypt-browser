@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.5.3 on February 7, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/468?closed=1" target="_blank">Improvements for encrypted content detection and PGP/MIME messages parsing</a>
+
 version 8.5.2 on November 24, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/477?closed=1" target="_blank">Fixed reply buttons</a>
 
 version 8.5.1 on October 9, 2023: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/475?closed=1" target="_blank">Clickable links, improved login and google search popups</a>
