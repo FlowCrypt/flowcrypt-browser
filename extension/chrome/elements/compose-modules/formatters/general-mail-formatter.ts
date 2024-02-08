@@ -13,6 +13,7 @@ import { KeyStoreUtil, ParsedKeyInfo } from '../../../../js/common/core/crypto/k
 import { UnreportableError } from '../../../../js/common/platform/catch.js';
 import { ParsedRecipients } from '../../../../js/common/api/email-provider/email-provider-api.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
+import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 
 export type MultipleMessages = {
   msgs: SendableMsg[];
@@ -42,6 +43,10 @@ export class GeneralMailFormatter {
       const signingKey = await GeneralMailFormatter.chooseSigningKeyAndDecryptIt(view, senderKis);
       if (!signingKey) {
         throw new UnreportableError("Could not find account's key usable for signing this plain text message");
+      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey))) {
+        throw new UnreportableError(
+          `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
+        );
       }
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key);
@@ -63,6 +68,10 @@ export class GeneralMailFormatter {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
         //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
         throw new UnreportableError(`Could not find account's ${singleFamilyKeys.family} key usable for signing this encrypted message`);
+      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey))) {
+        throw new UnreportableError(
+          `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
+        );
       }
     }
     view.S.now('send_btn_text').text('Encrypting...');
@@ -79,5 +88,19 @@ export class GeneralMailFormatter {
     }
     // throws ComposerResetBtnTrigger when user closes pass phrase dialog without entering
     return await view.storageModule.decryptSenderKey(parsedSenderPrv);
+  };
+
+  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey?: ParsedKeyInfo | undefined) => {
+    const senderEmail = view.senderModule.getSender();
+    const storage = await AcctStore.get(view.acctEmail, ['sendAs']);
+    const emailAliases = Object.keys(storage.sendAs || {});
+    if (senderEmail !== view.acctEmail) {
+      if (signingKey?.keyInfo.emails) {
+        emailAliases.splice(emailAliases.indexOf(view.acctEmail), 1);
+        const emailsInSigningKey = signingKey.keyInfo.emails;
+        return emailsInSigningKey.every(email => emailAliases.includes(email));
+      }
+    }
+    return true;
   };
 }
