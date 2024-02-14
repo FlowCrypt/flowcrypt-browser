@@ -237,10 +237,12 @@ export class Api {
           return { response, pipe: Value.noop }; // original response
         }
       };
+      const responseLength = response.headers.get('Content-Length');
+      const isResponseNonEmpty = responseLength && parseInt(responseLength) !== 0;
       if (resFmt === 'text') {
         const transformed = transformResponseWithProgressAndTimeout();
         return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
-      } else if (resFmt === 'json') {
+      } else if (resFmt === 'json' && isResponseNonEmpty) {
         const transformed = transformResponseWithProgressAndTimeout();
         return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
       } else {
