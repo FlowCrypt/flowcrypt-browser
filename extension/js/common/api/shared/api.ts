@@ -237,14 +237,21 @@ export class Api {
           return { response, pipe: Value.noop }; // original response
         }
       };
-      const responseLength = response.headers.get('Content-Length');
-      const isResponseNonEmpty = responseLength && parseInt(responseLength) !== 0;
+
       if (resFmt === 'text') {
         const transformed = transformResponseWithProgressAndTimeout();
         return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
-      } else if (resFmt === 'json' && isResponseNonEmpty) {
-        const transformed = transformResponseWithProgressAndTimeout();
-        return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+      } else if (resFmt === 'json') {
+        try {
+          const transformed = transformResponseWithProgressAndTimeout();
+          return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+        } catch (e) {
+          // handle empty response https://github.com/FlowCrypt/flowcrypt-browser/issues/5601
+          if (e instanceof SyntaxError && e.message === 'Unexpected end of JSON input') {
+            return undefined as FetchResult<T, RT>;
+          }
+          throw e;
+        }
       } else {
         return undefined as FetchResult<T, RT>;
       }
