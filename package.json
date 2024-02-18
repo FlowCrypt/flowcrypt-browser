@@ -6,7 +6,7 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@openpgp/web-stream-tools": "^0.0.13",
+    "@openpgp/web-stream-tools": "^0.1.1",
     "@types/chai": "4.3.11",
     "@types/chai-as-promised": "7.1.8",
     "@types/chrome": "0.0.260",
