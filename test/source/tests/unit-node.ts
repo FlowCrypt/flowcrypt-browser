@@ -2731,7 +2731,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
 
     test(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
       const cache = new ExpirationCache(2000); // 2 seconds
-      cache.set('test-key', 'test-value');
+      await cache.set('test-key', 'test-value');
       expect(cache.get('test-key')).to.equal('test-value');
       await Util.sleep(2);
       expect(cache.get('test-key')).to.be.an('undefined');
@@ -2741,14 +2741,14 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
     test(`[unit][ExpirationCache.await] removes rejected promises from cache`, async t => {
       const cache = new ExpirationCache<string, Promise<string>>(24 * 60 * 60 * 1000); // 24 hours
       const rejectionPromise = Promise.reject(Error('test-error'));
-      cache.set('test-key', rejectionPromise);
+      await cache.set('test-key', rejectionPromise);
       await t.throwsAsync(() => cache.await('test-key', rejectionPromise) as Promise<Promise<string>>, {
         instanceOf: Error,
         message: 'test-error',
       });
       expect(cache.get('test-key')).to.be.an('undefined'); // next call simply returns undefined
       const fulfilledPromise = Promise.resolve('new-test-value');
-      cache.set('test-key', fulfilledPromise);
+      await cache.set('test-key', fulfilledPromise);
       // good value is returned indefinitely
       expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
       expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');

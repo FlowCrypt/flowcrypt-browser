@@ -40,6 +40,11 @@ Catch.try(async () => {
         if (Str.isEmailValid(emailFromAccountDropdown)) {
           return emailFromAccountDropdown;
         }
+
+        const emailFromAccountModal = $('div.gb_Dc > div').last().text().trim().toLowerCase();
+        if (Str.isEmailValid(emailFromAccountModal)) {
+          return emailFromAccountModal;
+        }
       }
       return undefined;
     };

@@ -251,14 +251,14 @@ export class BrowserMsg {
       div.style.backgroundColor = '#a44';
       div.style.padding = '4px 6px';
       const a = document.createElement('a');
-      a.href = window.location.href.split('#')[0];
+      a.href = location.href.split('#')[0];
       a.textContent = 'RELOAD';
       a.style.color = 'white';
       a.style.fontWeight = 'bold';
       a.style.marginLeft = '12px';
       div.appendChild(a);
     }
-    window.document.body.appendChild(div);
+    document.body.appendChild(div);
   };
 
   public static generateTabId = (contentScript?: boolean) => {
@@ -303,6 +303,7 @@ export class BrowserMsg {
         }
       };
       try {
+        console.log('GOT BG MESSAGE ' + msg.name);
         if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
@@ -323,7 +324,7 @@ export class BrowserMsg {
 
   protected static listenForWindowMessages = (dest: Bm.Dest) => {
     const extensionOrigin = Env.getExtensionOrigin();
-    window.addEventListener('message', async e => {
+    addEventListener('message', async e => {
       if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
       const encryptedMsg = e.data as SymEncryptedMessage;
       if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
@@ -438,7 +439,7 @@ export class BrowserMsg {
         // todo: can objUrls be deleted by another recipient?
         const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
         BrowserMsg.sendToChildren(encryptedMsg);
-        window.postMessage(encryptedMsg, '*');
+        postMessage(encryptedMsg, '*');
         BrowserMsg.sendUpParentLine(encryptedMsg);
       })();
     }
@@ -505,7 +506,7 @@ export class BrowserMsg {
     let w: Window = window;
     while (w.parent && w.parent !== w) {
       w = w.parent;
-      window.parent.postMessage(encryptedWithPropagationFlag, '*');
+      parent.postMessage(encryptedWithPropagationFlag, '*');
     }
   };
   /**

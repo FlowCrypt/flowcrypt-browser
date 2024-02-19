@@ -6,12 +6,12 @@ import { GmailRes } from './api/email-provider/gmail/gmail-parser.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { Attachment, Attachment$treatAs } from './core/attachment.js';
 import { Buf } from './core/buf.js';
-import { ExpirationCache } from './core/expiration-cache.js';
+import { SimpleExpirationCache } from './core/expiration-cache.js';
 
 export class Downloader {
-  private readonly chunkDownloads = new ExpirationCache<Attachment, Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
-  private readonly fullMessages = new ExpirationCache<string, Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
-  private readonly rawMessages = new ExpirationCache<string, Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly chunkDownloads = new SimpleExpirationCache<Attachment, Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
+  private readonly fullMessages = new SimpleExpirationCache<string, Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly rawMessages = new SimpleExpirationCache<string, Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
 
   public constructor(private readonly gmail: Gmail) {}
 

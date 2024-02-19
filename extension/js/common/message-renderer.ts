@@ -32,7 +32,7 @@ import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js'
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
-import { ExpirationCache } from './core/expiration-cache.js';
+import { SimpleExpirationCache } from './core/expiration-cache.js';
 
 type ProcessedMessage = {
   body: MessageBody;
@@ -43,7 +43,7 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly processedMessages = new ExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly processedMessages = new SimpleExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
 
   private constructor(
     private readonly acctEmail: string,

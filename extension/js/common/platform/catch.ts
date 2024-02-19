@@ -24,7 +24,7 @@ export type ErrorReport = {
 
 export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
-  private static ORIG_ONERROR = window.onerror;
+  private static ORIG_ONERROR = onerror;
   private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
     // happens in gmail window when reloaded extension + now reloading gmail
@@ -119,7 +119,7 @@ export class Catch {
    */
   public static reportErr = (e: unknown): boolean => {
     const { line, col } = Catch.getErrorLineAndCol(e);
-    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
+    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), location.href, line, col, e, true);
   };
 
   /**
@@ -167,9 +167,9 @@ export class Catch {
     }
   };
 
-  public static environment = (url = window.location.href): string => {
+  public static environment = (url = location.href): string => {
     const browserName = Catch.browser().name;
-    const origin = new URL(window.location.href).origin;
+    const origin = new URL(location.href).origin;
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
       env = 'ex:prod';
@@ -205,7 +205,7 @@ export class Catch {
       Catch.test();
     } catch (e) {
       // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
   };
@@ -243,16 +243,18 @@ export class Catch {
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
       const msg = e instanceof Error ? e.message : String(e);
-      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, window.location.href, line, col, e, true);
+      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, location.href, line, col, e, true);
     }
   };
 
   public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
-    return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
+    // TODO: Manifest V3
+    return ms; // window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   };
 
   public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
-    return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
+    // TODO: Manifest V3
+    return ms; // window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
@@ -294,7 +296,7 @@ export class Catch {
     return {
       name: exception.name.substring(0, 50),
       message: exception.message.substring(0, 200),
-      url: window.location.href.split('?')[0],
+      url: location.href.split('?')[0],
       line: line || 0,
       col: col || 0,
       trace: exception.stack || '',
@@ -402,5 +404,8 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-window.onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
-window.onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;
+// window is undefined in background service worker
+if (typeof window !== 'undefined') {
+  window.onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
+}
+onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;
