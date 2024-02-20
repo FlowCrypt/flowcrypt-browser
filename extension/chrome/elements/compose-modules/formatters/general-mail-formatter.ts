@@ -100,7 +100,7 @@ export class GeneralMailFormatter {
         emailAliases.splice(senderAliasIndex, 1);
       }
       const emailsInSigningKey = signingKey.keyInfo.emails;
-      return emailsInSigningKey.every(email => emailAliases.includes(email));
+      return emailsInSigningKey.some(email => emailAliases.includes(email));
     }
     return true;
   };
