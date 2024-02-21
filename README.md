@@ -25,6 +25,8 @@ $ npm install
 $ npm run build
 ```
 
+- For building project on Windows we recommend to use [Cygwin](https://www.cygwin.com/) with rsync package.
+
 After executing the build command, you can find your built project in the `build/chrome-consumer` and `build/firefox-consumer` folders.
 
 > ℹ️ Note: The `build` folder also contains other versions of the browser extension.
