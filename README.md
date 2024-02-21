@@ -19,7 +19,7 @@ $ cd some/folder/flowcrypt-browser
 $ npm install
 ```
 
-2. To build the project (currently available for Linux and Mac only), run the following command:
+2. To build the project, run the following command:
 
 ```bash
 $ npm run build
