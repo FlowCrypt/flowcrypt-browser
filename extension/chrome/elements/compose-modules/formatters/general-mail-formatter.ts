@@ -68,7 +68,7 @@ export class GeneralMailFormatter {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
         //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
         throw new UnreportableError(`Could not find account's ${singleFamilyKeys.family} key usable for signing this encrypted message`);
-      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey))) {
+      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey!))) {
         throw new UnreportableError(
           `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
         );
@@ -90,16 +90,21 @@ export class GeneralMailFormatter {
     return await view.storageModule.decryptSenderKey(parsedSenderPrv);
   };
 
-  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey?: ParsedKeyInfo | undefined): Promise<boolean> => {
+  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey: ParsedKeyInfo): Promise<boolean> => {
     const senderEmail = view.senderModule.getSender();
-    const storage = await AcctStore.get(view.acctEmail, ['sendAs']);
-    const emailAliases = Object.keys(storage.sendAs || {});
-    if (senderEmail !== view.acctEmail && signingKey?.keyInfo.emails) {
+    if (senderEmail !== view.acctEmail && signingKey.keyInfo.emails) {
+      const storage = await AcctStore.get(view.acctEmail, ['sendAs']);
+      const emailAliases = Object.keys(storage.sendAs || {});
       const senderAliasIndex = emailAliases.indexOf(view.acctEmail);
       if (senderAliasIndex !== -1) {
         emailAliases.splice(senderAliasIndex, 1);
       }
-      const emailsInSigningKey = signingKey.keyInfo.emails;
+      const emailsInSigningKey = signingKey.keyInfo.emails || [];
+      let filteredEmailsInSigningKey: string[] = [];
+      for (const email of emailsInSigningKey) {
+        filteredEmailsInSigningKey.push(email.replace(/(.+)(?=\+).*(?=@)/, '$1'));
+      }
+      filteredEmailsInSigningKey = filteredEmailsInSigningKey.filter((value, index) => filteredEmailsInSigningKey.indexOf(value) === index);
       return emailsInSigningKey.some(email => emailAliases.includes(email));
     }
     return true;
