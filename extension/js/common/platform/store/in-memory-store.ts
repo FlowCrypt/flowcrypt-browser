@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { AbstractStore } from './abstract-store.js';
-import { Time } from '../../browser/time.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 
 /**
@@ -21,13 +20,7 @@ export class InMemoryStore extends AbstractStore {
   };
 
   public static getUntilAvailable = async (acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> => {
-    for (let i = 0; i < retryCount; i++) {
-      const value = await InMemoryStore.get(acctEmail, key);
-      if (value) {
-        return value;
-      }
-      await Time.sleep(300);
-    }
-    return undefined;
+    console.log(await BrowserMsg.send.bg.await.inMemoryStoreGetUntilAvailable({ acctEmail, key, retryCount }));
+    return (await BrowserMsg.send.bg.await.inMemoryStoreGetUntilAvailable({ acctEmail, key, retryCount })) ?? undefined;
   };
 }

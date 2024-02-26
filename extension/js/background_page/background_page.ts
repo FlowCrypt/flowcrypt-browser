@@ -54,6 +54,9 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
   BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
   BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));
+  BrowserMsg.bgAddListener('inMemoryStoreGetUntilAvailable', async (r: Bm.InMemoryStoreGetUntilAvailable) =>
+    inMemoryStore.getUntilAvailable(emailKeyIndex(r.acctEmail, r.key))
+  );
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
