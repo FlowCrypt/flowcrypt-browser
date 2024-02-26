@@ -77,7 +77,6 @@ export namespace Bm {
     expiration: number | undefined;
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
-  export type InMemoryStoreGetUntilAvailable = { acctEmail: string; key: string; retryCount: number };
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
@@ -95,7 +94,6 @@ export namespace Bm {
       sameWorld: boolean | undefined;
     };
     export type InMemoryStoreGet = string | null;
-    export type InMemoryStoreGetUntilAvailable = string | null;
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
@@ -105,14 +103,7 @@ export namespace Bm {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
-    export type Any =
-      | GetActiveTabInfo
-      | ReconnectAcctAuthPopup
-      | InMemoryStoreGet
-      | InMemoryStoreGetUntilAvailable
-      | InMemoryStoreSet
-      | AjaxGmailAttachmentGetChunk
-      | ConfirmationResult;
+    export type Any = GetActiveTabInfo | ReconnectAcctAuthPopup | InMemoryStoreGet | InMemoryStoreSet | AjaxGmailAttachmentGetChunk | ConfirmationResult;
   }
 
   export type AnyRequest =
@@ -138,7 +129,6 @@ export namespace Bm {
     | ReconnectAcctAuthPopup
     | Db
     | InMemoryStoreSet
-    | InMemoryStoreGetUntilAvailable
     | InMemoryStoreGet
     | AjaxProgress
     | ShowAttachmentPreview
@@ -192,8 +182,6 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
-        inMemoryStoreGetUntilAvailable: (bm: Bm.InMemoryStoreGetUntilAvailable) =>
-          BrowserMsg.sendAwait(undefined, 'inMemoryStoreGetUntilAvailable', bm, true) as Promise<Bm.Res.InMemoryStoreGetUntilAvailable>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,

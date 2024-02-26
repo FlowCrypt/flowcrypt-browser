@@ -11,7 +11,6 @@ export class ExpirationCache<K, V> {
   public set = async (key: K, value?: V, expiration?: number) => {
     console.log('STORE SET ' + key);
     if (value) {
-      console.log({ [`${key}`]: { value, expiration: expiration || Date.now() + this.expirationTicks } });
       await chrome.storage.session.set({ [`${key}`]: { value, expiration: expiration || Date.now() + this.expirationTicks } });
       // this.cache.set(key, { value, expiration: expiration || Date.now() + this.expirationTicks });
     } else {
@@ -24,7 +23,6 @@ export class ExpirationCache<K, V> {
     // const found = this.cache.get(key);
     console.log('STORE GET ' + key);
     const found = ((await chrome.storage.session.get(`${key}`)) as { value: V; expiration: number }) ?? undefined;
-    console.log(found);
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
@@ -34,39 +32,6 @@ export class ExpirationCache<K, V> {
       }
     }
     return undefined;
-  };
-
-  public getUntilAvailable = async (key: string, retryCount = 20, delay = 300): Promise<string | undefined> => {
-    const alarmName = `retry_${key}`;
-    let attempt = 0;
-
-    console.log('Get until available');
-    return new Promise(resolve => {
-      const checkValue = async () => {
-        const value = await this.get(key as K); // Assume this is a method that retrieves data.
-        console.log(`getUntilAvailable, ${value}`);
-        if (value) {
-          resolve(value as string);
-          await chrome.alarms.clear(alarmName);
-        } else if (attempt < retryCount) {
-          attempt++;
-          await chrome.alarms.create(alarmName, { when: Date.now() + delay });
-        } else {
-          resolve(undefined);
-          await chrome.alarms.clear(alarmName);
-        }
-      };
-
-      chrome.alarms.onAlarm.addListener(alarm => {
-        console.log('Alarm');
-        if (alarm.name === alarmName) {
-          void checkValue();
-        }
-      });
-
-      console.log('initial get until available');
-      void checkValue(); // Initial check without delay.
-    });
   };
 
   public deleteExpired = (additionalPredicate: (key: K, value: V) => boolean = () => false): void => {
