@@ -43,9 +43,8 @@ addManifest('chrome-enterprise', manifest => {
   manifest.name = 'FlowCrypt for Enterprise';
   manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
   // careful - changing this will likely cause all extensions to be disabled in their user's browsers
+  manifest.permissions = ['storage', 'tabs', 'unlimitedStorage'];
   manifest.host_permissions = [
-    'storage',
-    'tabs',
     'https://*.google.com/*',
     // customer enterprise environments use people,gmail,oauth2 subdomains of googleapis.com
     // instead of the generic www.googleapis.com subdomain as used by consumer extension
@@ -57,7 +56,6 @@ addManifest('chrome-enterprise', manifest => {
     //        disables installed extensions / asks user to re-enable
     'https://*.googleapis.com/*',
     'https://flowcrypt.com/*',
-    'unlimitedStorage',
   ];
   for (const csDef of manifest.content_scripts) {
     csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
