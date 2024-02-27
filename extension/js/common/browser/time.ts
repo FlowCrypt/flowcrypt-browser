@@ -7,15 +7,15 @@ import { Catch } from '../platform/catch.js';
 export class Time {
   public static wait = (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> =>
     new Promise((success, error) => {
-      const interval = Catch.setHandledInterval(() => {
+      const alarm = Catch.setHandledInterval(() => {
         const result = untilThisFunctionEvalsTrue();
         if (result === true) {
-          clearInterval(interval);
+          Catch.clearAlarm(alarm);
           if (success) {
             success();
           }
         } else if (result === false) {
-          clearInterval(interval);
+          Catch.clearAlarm(alarm);
           if (error) {
             error();
           }

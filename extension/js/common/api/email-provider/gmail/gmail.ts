@@ -215,9 +215,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           r.setRequestHeader('Authorization', authToken);
           r.send();
           let status: number;
-          const responsePollInterval = Catch.setHandledInterval(() => {
+          const responsePollAlarm = Catch.setHandledInterval(() => {
             if (status >= 200 && status <= 299 && (r.responseText.length >= minBytes || treatAs === 'publicKey')) {
-              window.clearInterval(responsePollInterval);
+              Catch.clearAlarm(responsePollAlarm);
               processChunkAndResolve(r.responseText);
               r.abort();
             }
@@ -228,7 +228,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
               status = r.status;
               if (status >= 300) {
                 reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url, stack }));
-                window.clearInterval(responsePollInterval);
+                Catch.clearAlarm(responsePollAlarm);
                 r.abort();
               }
             }
@@ -237,14 +237,14 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
               if (status >= 200 && status <= 299 && (r.responseText.length >= minBytes || treatAs === 'publicKey')) {
                 // done as a success - resolve in case response_poll didn't catch this yet
                 processChunkAndResolve(r.responseText);
-                window.clearInterval(responsePollInterval);
+                Catch.clearAlarm(responsePollAlarm);
                 if (r.readyState === 3) {
                   r.abort();
                 }
               } else {
                 // done as a fail - reject
                 reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url, stack }));
-                window.clearInterval(responsePollInterval);
+                Catch.clearAlarm(responsePollAlarm);
               }
             }
           };

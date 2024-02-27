@@ -124,10 +124,10 @@ export class Ui {
       errHandler?: BrowserEventErrHandler,
       originalThis?: unknown
     ) => {
-      let eventTimer: number | undefined;
+      let eventAlarm: string | undefined;
       let eventFiredOn: number | undefined;
       const cbResetTimer = () => {
-        eventTimer = undefined;
+        eventAlarm = undefined;
         eventFiredOn = undefined;
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
@@ -144,14 +144,14 @@ export class Ui {
       };
       return function (this: THIS) {
         if (evName === 'spree') {
-          clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SPREE_MS);
+          Catch.clearAlarm(eventAlarm);
+          eventAlarm = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SPREE_MS);
         } else if (evName === 'slowspree') {
-          clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
+          Catch.clearAlarm(eventAlarm);
+          eventAlarm = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
         } else if (evName === 'veryslowspree') {
-          clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
+          Catch.clearAlarm(eventAlarm);
+          eventAlarm = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
           if (eventFiredOn) {
             if (evName === 'parallel') {

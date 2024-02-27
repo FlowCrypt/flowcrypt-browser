@@ -20,7 +20,7 @@ import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
-    let replacePgpElsInterval: number;
+    let replacePgpElsAlarm: string;
     let replacer: GmailElementReplacer;
 
     const getUserAccountEmail = (): undefined | string => {
@@ -114,13 +114,13 @@ Catch.try(async () => {
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
-        replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
+        replacePgpElsAlarm = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (typeof (window as any).$ === 'function') {
             intervalFunction.handler();
           } else {
             // firefox will unload jquery when extension is restarted or updated
-            clearInterval(replacePgpElsInterval);
+            Catch.clearAlarm(replacePgpElsAlarm);
             notifyMurdered();
           }
         }, intervalFunction.interval);

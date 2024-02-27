@@ -247,14 +247,47 @@ export class Catch {
     }
   };
 
-  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
-    // TODO: Manifest V3
-    return ms; // window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
+  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): string => {
+    const alarmName = `interval_${new Date().getTime()}`;
+    // Create the alarm with delay
+    void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+
+    const alarmListener = (alarm: { name: string }) => {
+      if (alarm.name === alarmName) {
+        Catch.try(cb)();
+        void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+      }
+    };
+
+    // Listen for the alarm and execute the callback when it triggers, then clear the alarm
+    chrome.alarms.onAlarm.addListener(alarmListener);
+
+    // Return the alarm name so it can be cleared if needed before it triggers
+    return alarmName;
   };
 
-  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
-    // TODO: Manifest V3
-    return ms; // window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
+  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): string => {
+    const alarmName = `timeout_${new Date().getTime()}`;
+    // Create the alarm with delay
+    void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+
+    const alarmListener = (alarm: { name: string }) => {
+      if (alarm.name === alarmName) {
+        void chrome.alarms.clear(alarmName); // Clear the alarm after executing the callback
+        chrome.alarms.onAlarm.removeListener(alarmListener); // Remove the listener to clean up
+        Catch.try(cb)();
+      }
+    };
+
+    // Listen for the alarm and execute the callback when it triggers, then clear the alarm
+    chrome.alarms.onAlarm.addListener(alarmListener);
+
+    // Return the alarm name so it can be cleared if needed before it triggers
+    return alarmName;
+  };
+
+  public static clearAlarm = (alarmName: string | undefined) => {
+    void chrome.alarms.clear(alarmName);
   };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {

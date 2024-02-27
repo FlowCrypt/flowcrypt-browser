@@ -28,8 +28,7 @@ console.info('background.js service worker starting');
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string, string>(4 * 60 * 60 * 1000); // 4 hours
 
-  // TODO: Manifest V3
-  // Catch.setHandledInterval(() => inMemoryStore.deleteExpired(), 60000); // each minute
+  Catch.setHandledInterval(() => inMemoryStore.deleteExpired(), 60000); // each minute
   try {
     await migrateGlobal();
     await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });

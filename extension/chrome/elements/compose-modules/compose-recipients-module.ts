@@ -35,7 +35,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private readonly MAX_CONTACTS_LENGTH = 8;
 
-  private addedPubkeyDbLookupInterval?: number;
+  private addedPubkeyDbLookupAlarm?: string;
 
   private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
 
@@ -530,14 +530,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private addTheirPubkeyClickHandler = () => {
     const noPgpRecipients = this.getValidRecipients().filter(r => r.element.className.includes('no_pgp'));
     this.view.renderModule.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
-    clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
-    this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
+    Catch.clearAlarm(this.addedPubkeyDbLookupAlarm); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
+    this.addedPubkeyDbLookupAlarm = Catch.setHandledInterval(async () => {
       const recipientsHasPgp: ValidRecipientElement[] = [];
       for (const recipient of noPgpRecipients) {
         const pubkeys = (await ContactStore.getEncryptionKeys(undefined, [recipient.email]))[0].keys;
         if (pubkeys.length > 0) {
           $(recipient.element).removeClass('no_pgp').find('i').remove();
-          clearInterval(this.addedPubkeyDbLookupInterval);
+          Catch.clearAlarm(this.addedPubkeyDbLookupAlarm);
           recipientsHasPgp.push(recipient);
           await this.evaluateRecipients(recipientsHasPgp);
         }

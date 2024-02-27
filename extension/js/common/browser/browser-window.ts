@@ -18,16 +18,15 @@ export interface BrowserWindow extends Window {
 }
 
 export interface ContentScriptWindow extends BrowserWindow {
-  TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
-  TrySetDestroyableInterval: (code: () => void, ms: number) => number;
+  TrySetDestroyableTimeout: (code: () => void, ms: number) => string;
+  TrySetDestroyableInterval: (code: () => void, ms: number) => string;
   injected: true; // background script will use this to test if scripts were already injected, and inject if not
   account_email_global: undefined | string; // used by background script
   same_world_global: true; // used by background_script
   destruction_event: string;
   destroyable_class: string;
   reloadable_class: string;
-  destroyable_intervals: number[];
-  destroyable_timeouts: number[];
+  destroyable_alarms: string[];
   destroy: () => void;
   vacant: () => boolean;
 }
