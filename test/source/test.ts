@@ -54,12 +54,10 @@ const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, i
 
 const dynamicImport = new Function('specifier', 'return import(specifier)');
 
-test.before('set registerCompletionHandler', async () => {
-  dynamicImport('ava').then((module: { registerCompletionHandler: (handler: () => void) => void }) => {
-    const { registerCompletionHandler } = module;
-    registerCompletionHandler(() => {
-      process.exit();
-    });
+dynamicImport('ava').then((module: { registerCompletionHandler: (handler: () => void) => void }) => {
+  const { registerCompletionHandler } = module;
+  registerCompletionHandler(() => {
+    process.exit();
   });
 });
 
