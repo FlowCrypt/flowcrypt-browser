@@ -17,6 +17,7 @@ import { ClientConfiguration } from '../../common/client-configuration.js';
 import { RelayManager } from '../../common/relay-manager.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
+import { Time } from '../../common/browser/time.js';
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
@@ -49,6 +50,12 @@ Catch.try(async () => {
       return undefined;
     };
 
+    const injectFCVarScript = () => {
+      const scriptElement = document.createElement('script');
+      scriptElement.src = chrome.runtime.getURL('/js/common/core/feature-config-injector.js');
+      (document.head || document.documentElement).appendChild(scriptElement);
+    };
+
     const getInsightsFromHostVariables = () => {
       const insights: WebmailVariantObject = {
         newDataLayer: undefined,
@@ -56,19 +63,7 @@ Catch.try(async () => {
         email: undefined,
         gmailVariant: undefined,
       };
-      $('body').append(
-        [
-          // xss-direct - not sanitized because adding a <script> in intentional here
-          '<script>',
-          '  (function() {',
-          '    const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
-          '    let e = document.getElementById("FC_VAR_PASS");',
-          '    if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
-          '    e.innerText=payload;',
-          '  })();',
-          '</script>',
-        ].join('')
-      ); // executed synchronously - we can read the vars below
+
       try {
         const extracted = (JSON.parse($('body > div#FC_VAR_PASS').text()) as unknown[]).map(String);
         if (extracted[0] === 'true') {
@@ -112,7 +107,6 @@ Catch.try(async () => {
       replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, messageRenderer, injector, notifications, relayManager);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
-      console.log('asdfasdfasdf');
       for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
         replacePgpElsAlarm = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
@@ -146,6 +140,8 @@ Catch.try(async () => {
       });
     };
 
+    injectFCVarScript();
+    await Time.sleep(100); // Wait until injected dom is added
     const hostPageInfo = getInsightsFromHostVariables();
     await contentScriptSetupIfVacant({
       name: 'gmail',
