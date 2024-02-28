@@ -28,7 +28,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   private currentlySavingDraft = false;
   private disableSendingDrafts = false;
-  private saveDraftAlarm?: string;
+  private saveDraftInterval?: number;
   private lastDraftBody = '';
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
@@ -97,7 +97,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   public draftDelete = async () => {
-    Catch.clearAlarm(this.saveDraftAlarm);
+    clearInterval(this.saveDraftInterval);
     await Time.wait(() => (!this.currentlySavingDraft ? true : undefined));
     if (this.view.draftId) {
       try {
@@ -222,11 +222,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   public startDraftTimer = () => {
-    if (this.saveDraftAlarm) {
-      Catch.clearAlarm(this.saveDraftAlarm);
-      this.saveDraftAlarm = undefined;
+    if (this.saveDraftInterval) {
+      clearInterval(this.saveDraftInterval);
+      this.saveDraftInterval = undefined;
     }
-    this.saveDraftAlarm = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
+    this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
   };
 
   private draftSetPrefixIntoBody = (sendable: SendableMsg) => {

@@ -45,15 +45,6 @@ export class BgHandlers {
     }
   };
 
-  public static createAlarmWithDelay = async ({ alarmName, ms }: Bm.CreateAlarmWithDelay) => {
-    // Create the alarm with delay
-    void chrome.alarms.create(alarmName, { when: Date.now() + ms });
-  };
-
-  public static clearAlarm = async ({ alarmName }: Bm.ClearAlarm) => {
-    void chrome.alarms.clear(alarmName);
-  };
-
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () =>
     new Promise((resolve, reject) => {
       chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {

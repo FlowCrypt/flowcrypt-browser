@@ -2,8 +2,6 @@
 
 'use strict';
 
-import { Bm, BrowserMsg } from '../browser/browser-msg.js';
-import { Env } from '../browser/env.js';
 import { Url } from '../core/common.js';
 import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
 import { InMemoryStore } from './store/in-memory-store.js';
@@ -249,40 +247,12 @@ export class Catch {
     }
   };
 
-  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): string => {
-    if (Env.isBackgroundPage()) {
-      // Couldn't set chrome.alrams here because chrome.alrams becomes undefined in gmail.com content script
-      const alarmName = `interval_${new Date().getTime()}_${ms}`;
-      BrowserMsg.send.bg.createAlarmWithDelay({ alarmName, ms });
-      BrowserMsg.addListener('perform_timeout_action', async ({ alarmName: intervalAlarmName }: Bm.PerformTimeoutAction) => {
-        console.log('perform_timeout_action receive');
-        if (alarmName === intervalAlarmName) {
-          Catch.try(cb)();
-        }
-      });
-      return alarmName;
-    }
-    return `${window.setTimeout(Catch.try(cb), ms)}`; // error-handled: else setTimeout will silently swallow errors
+  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
+    return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   };
 
-  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): string => {
-    if (Env.isBackgroundPage()) {
-      // Couldn't set chrome.alrams here because chrome.alrams becomes undefined in gmail.com content script
-      const alarmName = `timeout_${new Date().getTime()}`;
-      BrowserMsg.send.bg.createAlarmWithDelay({ alarmName, ms });
-      BrowserMsg.addListener('perform_timeout_action', async ({ alarmName: timeoutAlarmName }: Bm.PerformTimeoutAction) => {
-        if (alarmName === timeoutAlarmName) {
-          Catch.try(cb)();
-        }
-      });
-      return alarmName;
-    } else {
-      return `${window.setInterval(Catch.try(cb), ms)}`; // error-handled: else setTimeout will silently swallow errors
-    }
-  };
-
-  public static clearAlarm = (alarmName: string | undefined) => {
-    BrowserMsg.send.bg.clearAlarm({ alarmName });
+  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
+    return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {

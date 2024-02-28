@@ -474,14 +474,18 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     win.destruction_event = Env.runtimeId() + '_destroy';
     win.destroyable_class = Env.runtimeId() + '_destroyable';
     win.reloadable_class = Env.runtimeId() + '_reloadable';
-    win.destroyable_alarms = [];
+    win.destroyable_intervals = [];
+    win.destroyable_timeouts = [];
 
     win.destroy = () => {
       Catch.try(() => {
         console.info('Updating FlowCrypt');
         document.removeEventListener(win.destruction_event, win.destroy);
-        for (const id of win.destroyable_alarms) {
-          Catch.clearAlarm(id);
+        for (const id of win.destroyable_intervals) {
+          clearInterval(id);
+        }
+        for (const id of win.destroyable_timeouts) {
+          clearTimeout(id);
         }
         $('.' + win.destroyable_class).remove();
         // eslint-disable-next-line local-rules/standard-loops
@@ -498,13 +502,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
     win.TrySetDestroyableInterval = (code, ms) => {
       const id = Catch.setHandledInterval(code, ms);
-      win.destroyable_alarms.push(id);
+      win.destroyable_intervals.push(id);
       return id;
     };
 
     win.TrySetDestroyableTimeout = (code, ms) => {
       const id = Catch.setHandledTimeout(code, ms);
-      win.destroyable_alarms.push(id);
+      win.destroyable_timeouts.push(id);
       return id;
     };
 

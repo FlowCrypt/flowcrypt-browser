@@ -21,7 +21,7 @@ import { Time } from '../../common/browser/time.js';
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
-    let replacePgpElsAlarm: string;
+    let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
 
     const getUserAccountEmail = (): undefined | string => {
@@ -109,13 +109,13 @@ Catch.try(async () => {
       const intervaliFunctions = replacer.getIntervalFunctions();
       for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
-        replacePgpElsAlarm = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
+        replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (typeof (window as any).$ === 'function') {
             intervalFunction.handler();
           } else {
             // firefox will unload jquery when extension is restarted or updated
-            Catch.clearAlarm(replacePgpElsAlarm);
+            clearInterval(replacePgpElsInterval);
             notifyMurdered();
           }
         }, intervalFunction.interval);

@@ -50,8 +50,6 @@ export namespace Bm {
     pageUrlParams?: UrlParams;
     addNewAcct?: boolean;
   };
-  export type CreateAlarmWithDelay = { alarmName: string; ms: number };
-  export type ClearAlarm = { alarmName: string | undefined };
   export type PassphraseDialog = { type: PassphraseDialogType; longids: string[]; initiatorFrameId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
   export type ScrollToCursorInReplyBox = { replyMsgId: string; cursorOffsetTop: number };
@@ -70,7 +68,6 @@ export namespace Bm {
   export type PassphraseEntry = { entered: boolean; initiatorFrameId?: string };
   export type AsyncResult<T> = { requestUid: string; payload: T };
   export type ConfirmationResult = AsyncResult<boolean>;
-  export type PerformTimeoutAction = { alarmName: string };
   export type AuthWindowResult = { url?: string; error?: string };
   export type Db = { f: string; args: unknown[] };
   export type InMemoryStoreSet = {
@@ -127,8 +124,6 @@ export namespace Bm {
     | NotificationShow
     | PassphraseDialog
     | Settings
-    | CreateAlarmWithDelay
-    | ClearAlarm
     | SetCss
     | AddOrRemoveClass
     | ReconnectAcctAuthPopup
@@ -139,7 +134,6 @@ export namespace Bm {
     | ShowAttachmentPreview
     | ShowConfirmation
     | ReRenderRecipient
-    | PerformTimeoutAction
     | AuthWindowResult
     | RenderMessage
     | PgpBlockReady
@@ -183,8 +177,6 @@ export class BrowserMsg {
     bg: {
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
-      createAlarmWithDelay: (bm: Bm.CreateAlarmWithDelay) => BrowserMsg.sendCatch(undefined, 'create_alarm_with_delay', bm),
-      clearAlarm: (bm: Bm.ClearAlarm) => BrowserMsg.sendCatch(undefined, 'clear_alarm', bm),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
           BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
@@ -204,7 +196,6 @@ export class BrowserMsg {
     addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'add_class', bm),
     removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'remove_class', bm),
     closeDialog: (frame: ChildFrame) => BrowserMsg.sendToParentWindow(frame, 'close_dialog', {}),
-    performTimeoutAction: (dest: Bm.Dest, bm: Bm.PerformTimeoutAction) => BrowserMsg.sendCatch(dest, 'perform_timeout_action', bm),
     authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => BrowserMsg.sendCatch(dest, 'auth_window_result', bm),
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
@@ -329,25 +320,6 @@ export class BrowserMsg {
         return true; // will respond
       }
     });
-  };
-
-  public static alarmListen = () => {
-    const alarmListener = (alarm: { name: string }) => {
-      const alarmName = alarm.name;
-      BrowserMsg.send.performTimeoutAction('broadcast', { alarmName });
-      if (alarmName.includes('timeout')) {
-        // TODO: Clear alarm for settimeout
-      } else if (alarmName.includes('interval')) {
-        const ms = alarmName.split('_')[2];
-        if (ms) {
-          // Recreate alarm so that interval can be called again
-          void chrome.alarms.create(alarmName, { when: Date.now() + parseInt(ms) });
-        }
-      }
-    };
-
-    // Listen for the alarm and execute the callback when it triggers, then clear the alarm
-    chrome.alarms.onAlarm.addListener(alarmListener);
   };
 
   protected static listenForWindowMessages = (dest: Bm.Dest) => {

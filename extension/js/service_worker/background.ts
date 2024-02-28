@@ -28,6 +28,8 @@ console.info('background.js service worker starting');
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string, string>(4 * 60 * 60 * 1000); // 4 hours
 
+  // TODO: Manifest V3
+  // Catch.setHandledInterval(() => inMemoryStore.deleteExpired(), 60000); // each minute
   try {
     await migrateGlobal();
     await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
@@ -61,13 +63,9 @@ console.info('background.js service worker starting');
   BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
-  BrowserMsg.bgAddListener('create_alarm_with_delay', BgHandlers.createAlarmWithDelay);
-  BrowserMsg.bgAddListener('clear_alarm', BgHandlers.clearAlarm);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
-  BrowserMsg.alarmListen();
   BrowserMsg.bgListen();
   await BgHandlers.updateUninstallUrl({});
-  Catch.setHandledInterval(() => inMemoryStore.deleteExpired(), 60000); // each minute
   injectFcIntoWebmail();
 })().catch(Catch.reportErr);

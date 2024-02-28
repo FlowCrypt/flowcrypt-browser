@@ -21,7 +21,6 @@ export class ExpirationCache<K, V> {
 
   public get = async (key: K): Promise<V | undefined> => {
     // const found = this.cache.get(key);
-    console.log('STORE GET ' + key);
     const result = await chrome.storage.session.get([key]);
     const found = result[String(key)] as { value: V; expiration: number };
     if (found) {

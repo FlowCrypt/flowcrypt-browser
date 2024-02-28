@@ -6,7 +6,7 @@ import { Catch } from './catch.js';
 import { Key } from '../core/crypto/key.js';
 
 let KEY_CACHE: { [longidOrArmoredKey: string]: Key } = {};
-let KEY_CACHE_WIPE_TIMEOUT: string;
+let KEY_CACHE_WIPE_TIMEOUT: number;
 
 export class KeyCache {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,7 +39,7 @@ export class KeyCache {
 
   private static extendExpiry = () => {
     if (KEY_CACHE_WIPE_TIMEOUT) {
-      Catch.clearAlarm(KEY_CACHE_WIPE_TIMEOUT);
+      clearTimeout(KEY_CACHE_WIPE_TIMEOUT);
     }
     KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(KeyCache.wipe, 2 * 60 * 1000);
   };
