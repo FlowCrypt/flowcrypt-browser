@@ -45,6 +45,51 @@ export class BgHandlers {
     }
   };
 
+  public static setHandledInterval: Bm.AsyncResponselessHandler = async ({ cb, ms }: Bm.SetHandledInterval) => {
+    console.log(cb);
+    console.log(ms);
+
+    // const alarmName = `interval_${new Date().getTime()}`;
+    // // Create the alarm with delay
+    // void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+
+    // const alarmListener = (alarm: { name: string }) => {
+    //   if (alarm.name === alarmName) {
+    //     Catch.try(cb)();
+    //     void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+    //   }
+    // };
+
+    // // Listen for the alarm and execute the callback when it triggers, then clear the alarm
+    // chrome.alarms.onAlarm.addListener(alarmListener);
+
+    // // Return the alarm name so it can be cleared if needed before it triggers
+    // return alarmName;
+  };
+
+  public static setHandledTimeout: Bm.AsyncResponselessHandler = async ({ cb, ms }: Bm.SetHandledTimeout) => {
+    console.log(cb);
+    console.log(ms);
+
+    // const alarmName = `timeout_${new Date().getTime()}`;
+    // // Create the alarm with delay
+    // void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+
+    // const alarmListener = (alarm: { name: string }) => {
+    //   if (alarm.name === alarmName) {
+    //     void chrome.alarms.clear(alarmName); // Clear the alarm after executing the callback
+    //     chrome.alarms.onAlarm.removeListener(alarmListener); // Remove the listener to clean up
+    //     Catch.try(cb)();
+    //   }
+    // };
+
+    // // Listen for the alarm and execute the callback when it triggers, then clear the alarm
+    // chrome.alarms.onAlarm.addListener(alarmListener);
+
+    // // Return the alarm name so it can be cleared if needed before it triggers
+    // return alarmName;
+  };
+
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () =>
     new Promise((resolve, reject) => {
       chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {

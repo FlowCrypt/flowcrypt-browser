@@ -50,6 +50,8 @@ export namespace Bm {
     pageUrlParams?: UrlParams;
     addNewAcct?: boolean;
   };
+  export type SetHandledInterval = { cb: () => void | Promise<void>; ms: number };
+  export type SetHandledTimeout = { cb: () => void | Promise<void>; ms: number };
   export type PassphraseDialog = { type: PassphraseDialogType; longids: string[]; initiatorFrameId?: string };
   export type ScrollToReplyBox = { replyMsgId: string };
   export type ScrollToCursorInReplyBox = { replyMsgId: string; cursorOffsetTop: number };
@@ -124,6 +126,8 @@ export namespace Bm {
     | NotificationShow
     | PassphraseDialog
     | Settings
+    | SetHandledInterval
+    | SetHandledTimeout
     | SetCss
     | AddOrRemoveClass
     | ReconnectAcctAuthPopup
@@ -177,6 +181,8 @@ export class BrowserMsg {
     bg: {
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
+      setHandledInterval: (bm: Bm.SetHandledInterval) => BrowserMsg.sendCatch(undefined, 'set_handled_interval', bm),
+      setHandledTimeout: (bm: Bm.SetHandledTimeout) => BrowserMsg.sendCatch(undefined, 'set_handled_timeout', bm),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
           BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
@@ -424,6 +430,7 @@ export class BrowserMsg {
   };
 
   private static sendRaw = (destString: string | undefined, name: string, bm: Dict<unknown>, objUrls: Dict<string>, awaitRes = false): Promise<Bm.Response> => {
+    console.log('asdf');
     const msg: Bm.Raw = {
       name,
       data: { bm, objUrls },

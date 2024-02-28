@@ -45,6 +45,16 @@ export class BgHandlers {
     }
   };
 
+  public static setHandledInterval: Bm.AsyncResponselessHandler = async ({ cb, ms }: Bm.SetHandledInterval) => {
+    console.log(cb);
+    console.log(ms);
+  };
+
+  public static setHandledTimeout: Bm.AsyncResponselessHandler = async ({ cb, ms }: Bm.SetHandledTimeout) => {
+    console.log(cb);
+    console.log(ms);
+  };
+
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () =>
     new Promise((resolve, reject) => {
       chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {

@@ -32,7 +32,7 @@ export class Env {
   };
 
   public static isBackgroundPage = () => {
-    return Boolean(window.location && window.location.href.includes('background_page.htm'));
+    return Boolean(window && window.location && window.location.href.includes('background_page.htm'));
   };
 
   public static isExtension = () => {

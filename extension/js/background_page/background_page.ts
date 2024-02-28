@@ -59,6 +59,8 @@ console.info('background_process.js starting');
   BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
+  BrowserMsg.bgAddListener('set_handled_interval', BgHandlers.setHandledInterval);
+  BrowserMsg.bgAddListener('set_handled_timeout', BgHandlers.setHandledTimeout);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
   BrowserMsg.bgListen();
