@@ -31,8 +31,12 @@ export class Env {
     return Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
   };
 
+  // Check if the current context is a Service Worker
   public static isBackgroundPage = () => {
-    return Boolean(window && window.location && window.location.href.includes('background_page.htm'));
+    // 'self.registration' exists in service worker contexts
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    return typeof self.registration !== 'undefined';
   };
 
   public static isExtension = () => {

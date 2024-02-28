@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { BrowserMsg } from '../browser/browser-msg.js';
+import { Bm, BrowserMsg } from '../browser/browser-msg.js';
 import { Url } from '../core/common.js';
 import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
 import { InMemoryStore } from './store/in-memory-store.js';
@@ -249,17 +249,31 @@ export class Catch {
   };
 
   public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): string => {
-    BrowserMsg.send.bg.setHandledInterval({ cb, ms });
-    return 'asd';
+    // Couldn't set chrome.alrams here because chrome.alrams becomes undefined in gmail.com content script
+    const alarmName = `interval_${new Date().getTime()}_${ms}`;
+    BrowserMsg.send.bg.createAlarmWithDelay({ alarmName, ms });
+    BrowserMsg.addListener('perform_timeout_action', async ({ alarmName: intervalAlarmName }: Bm.PerformTimeoutAction) => {
+      if (alarmName === intervalAlarmName) {
+        Catch.try(cb)();
+      }
+    });
+    return alarmName;
   };
 
   public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): string => {
-    BrowserMsg.send.bg.setHandledTimeout({ cb, ms });
-    return 'asd';
+    // Couldn't set chrome.alrams here because chrome.alrams becomes undefined in gmail.com content script
+    const alarmName = `timeout_${new Date().getTime()}`;
+    BrowserMsg.send.bg.createAlarmWithDelay({ alarmName, ms });
+    BrowserMsg.addListener('perform_timeout_action', async ({ alarmName: timeoutAlarmName }: Bm.PerformTimeoutAction) => {
+      if (alarmName === timeoutAlarmName) {
+        Catch.try(cb)();
+      }
+    });
+    return alarmName;
   };
 
   public static clearAlarm = (alarmName: string | undefined) => {
-    void chrome.alarms.clear(alarmName);
+    BrowserMsg.send.bg.clearAlarm({ alarmName });
   };
 
   public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {

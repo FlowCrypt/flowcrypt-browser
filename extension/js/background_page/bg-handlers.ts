@@ -45,14 +45,13 @@ export class BgHandlers {
     }
   };
 
-  public static setHandledInterval: Bm.AsyncResponselessHandler = async ({ cb, ms }: Bm.SetHandledInterval) => {
-    console.log(cb);
-    console.log(ms);
+  public static createAlarmWithDelay = async ({ alarmName, ms }: Bm.CreateAlarmWithDelay) => {
+    // Create the alarm with delay
+    void chrome.alarms.create(alarmName, { when: Date.now() + ms });
   };
 
-  public static setHandledTimeout: Bm.AsyncResponselessHandler = async ({ cb, ms }: Bm.SetHandledTimeout) => {
-    console.log(cb);
-    console.log(ms);
+  public static clearAlarm = async ({ alarmName }: Bm.ClearAlarm) => {
+    void chrome.alarms.clear(alarmName);
   };
 
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () =>

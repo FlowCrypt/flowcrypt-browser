@@ -112,6 +112,7 @@ Catch.try(async () => {
       replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, messageRenderer, injector, notifications, relayManager);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
+      console.log('asdfasdfasdf');
       for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
         replacePgpElsAlarm = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
