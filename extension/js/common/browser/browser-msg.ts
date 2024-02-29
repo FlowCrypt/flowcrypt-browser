@@ -163,6 +163,7 @@ export namespace Bm {
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
+type IntervalHandler = () => void | Promise<void>;
 type Handlers = Dict<Handler>;
 
 export class BgNotReadyErr extends Error {}
@@ -228,6 +229,7 @@ export class BrowserMsg {
   private static readonly processed = new Set<string>(); // or ExpirationCache?
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
+  private static INTERVAL_HANDLERS: Dict<IntervalHandler> = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
     set_css: BrowserMsgCommonHandlers.setCss,
     add_class: BrowserMsgCommonHandlers.addClass,
@@ -285,6 +287,16 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   };
 
+  public static createIntervalAlarm = (action: string, ms: number) => {
+    // Create the alarm with delay
+    const alarmName = `${action}_interval_${Date.now()}_${ms}`;
+    void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+  };
+
+  public static intervalAddListener = (name: string, handler: IntervalHandler) => {
+    BrowserMsg.INTERVAL_HANDLERS[name] = handler;
+  };
+
   public static bgListen = () => {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
@@ -320,6 +332,27 @@ export class BrowserMsg {
         return true; // will respond
       }
     });
+  };
+
+  public static alarmListen = () => {
+    const alarmListener = (alarm: { name: string }) => {
+      const alarmName = alarm.name;
+      const actionName = alarmName.split('_interval')[0];
+      if (BrowserMsg.INTERVAL_HANDLERS[actionName]) {
+        Catch.try(BrowserMsg.INTERVAL_HANDLERS[actionName])();
+      }
+      if (alarmName.includes('interval')) {
+        const splitAry = alarmName.split('_');
+        const ms = splitAry[splitAry.length - 1];
+        if (ms) {
+          // Recreate alarm so that interval can be called again
+          void chrome.alarms.create(alarmName, { when: Date.now() + parseInt(ms) });
+        }
+      }
+    };
+
+    // Listen for the alarm and execute the callback when it triggers, then clear the alarm
+    chrome.alarms.onAlarm.addListener(alarmListener);
   };
 
   protected static listenForWindowMessages = (dest: Bm.Dest) => {
@@ -401,6 +434,8 @@ export class BrowserMsg {
   };
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
+    console.log(name);
+    console.log(bm);
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   };
 

@@ -27,9 +27,8 @@ console.info('background.js service worker starting');
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string, string>(4 * 60 * 60 * 1000); // 4 hours
+  BrowserMsg.createIntervalAlarm('delete_expired', 60 * 1000); // each minute
 
-  // TODO: Manifest V3
-  // Catch.setHandledInterval(() => inMemoryStore.deleteExpired(), 60000); // each minute
   try {
     await migrateGlobal();
     await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
@@ -65,7 +64,9 @@ console.info('background.js service worker starting');
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
+  BrowserMsg.intervalAddListener('delete_expired', inMemoryStore.deleteExpired);
   BrowserMsg.bgListen();
+  BrowserMsg.alarmListen();
   await BgHandlers.updateUninstallUrl({});
   injectFcIntoWebmail();
 })().catch(Catch.reportErr);
