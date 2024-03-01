@@ -124,26 +124,25 @@ export class GoogleOAuth extends OAuth {
   };
 
   public static apiGoogleCallRetryAuthErrorOneTime = async <RT>(acctEmail: string, req: Ajax): Promise<RT> => {
-    try {
+    const performAjaxRequest = async <RT>(req: Ajax): Promise<RT> => {
+      // temporary use jquery for upload requests https://github.com/FlowCrypt/flowcrypt-browser/issues/5612
       if (req.progress?.upload) {
         return (await Api.ajaxWithJquery(req, 'json')) as RT;
       } else {
         return (await Api.ajax(req, 'json')) as RT;
       }
+    };
+
+    try {
+      return performAjaxRequest(req);
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
-        if (req.progress?.upload) {
-          return (await Api.ajaxWithJquery(
-            { ...req, headers: { ...(req.headers ?? {}), authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail, true) }, stack: Catch.stackTrace() },
-            'json'
-          )) as RT;
-        } else {
-          return (await Api.ajax(
-            { ...req, headers: { ...(req.headers ?? {}), authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail, true) }, stack: Catch.stackTrace() },
-            'json'
-          )) as RT;
-        }
+        return performAjaxRequest({
+          ...req,
+          headers: { ...(req.headers ?? {}), authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail, true) },
+          stack: Catch.stackTrace(),
+        });
       }
       throw firstAttemptErr;
     }
