@@ -281,11 +281,33 @@ export class Api {
     resFmt: T,
     formattedData: FormData | string | undefined = undefined
   ): Promise<FetchResult<T, RT>> => {
+    let body: BodyInit | undefined;
+    const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
+    if (req.method === 'PUT' || req.method === 'POST') {
+      if ('data' in req && typeof req.data !== 'undefined') {
+        if (req.dataType === 'JSON') {
+          body = JSON.stringify(req.data);
+          headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
+        } else {
+          body = req.data;
+
+          if (req.dataType === 'TEXT') {
+            if (typeof req.contentType === 'string') {
+              headersInit.push(['Content-Type', req.contentType]);
+            }
+          }
+        }
+      } else {
+        body = formattedData;
+      }
+    } else {
+      body = formattedData;
+    }
     const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
       xhr: Api.getAjaxProgressXhrFactory(req.progress),
       url: req.url,
       method: req.method,
-      data: formattedData,
+      data: body,
       dataType: resFmt,
       crossDomain: true,
       headers: req.headers,
