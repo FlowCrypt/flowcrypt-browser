@@ -93,6 +93,7 @@
         "/chrome/elements/backup.htm",
         "/chrome/elements/verification.htm",
         "/chrome/elements/shared/footer.htm",
+        "/chrome/elements/oauth2.htm",
         "/js/common/core/feature-config-injector.js"
       ],
       "matches": ["*://*/*"]
