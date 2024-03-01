@@ -125,7 +125,7 @@ export class GoogleOAuth extends OAuth {
 
   public static apiGoogleCallRetryAuthErrorOneTime = async <RT>(acctEmail: string, req: Ajax): Promise<RT> => {
     try {
-      if (req.progress) {
+      if (req.progress?.upload) {
         return (await Api.ajaxWithJquery(req, 'json')) as RT;
       } else {
         return (await Api.ajax(req, 'json')) as RT;
@@ -133,7 +133,7 @@ export class GoogleOAuth extends OAuth {
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
-        if (req.progress) {
+        if (req.progress?.upload) {
           return (await Api.ajaxWithJquery(
             { ...req, headers: { ...(req.headers ?? {}), authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail, true) }, stack: Catch.stackTrace() },
             'json'
