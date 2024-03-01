@@ -282,10 +282,15 @@ export class Api {
     formattedData: FormData | string | undefined = undefined
   ): Promise<FetchResult<T, RT>> => {
     let data: BodyInit | undefined = formattedData;
+    const headersInit: Dict<string> = req.headers ?? {};
 
     if (req.method === 'PUT' || req.method === 'POST') {
       if ('data' in req && typeof req.data !== 'undefined') {
         data = req.dataType === 'JSON' ? JSON.stringify(req.data) : req.data;
+
+        if (req.dataType === 'TEXT' && typeof req.contentType === 'string') {
+          headersInit['Content-Type'] = req.contentType;
+        }
       }
     }
     const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
@@ -295,7 +300,7 @@ export class Api {
       data,
       dataType: resFmt,
       crossDomain: true,
-      headers: req.headers,
+      headers: headersInit,
       processData: false,
       contentType: false,
       async: true,
