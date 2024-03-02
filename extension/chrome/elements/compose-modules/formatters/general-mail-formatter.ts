@@ -105,7 +105,7 @@ export class GeneralMailFormatter {
         filteredEmailsInSigningKey.push(email.replace(/(.+)(?=\+).*(?=@)/, '$1'));
       }
       filteredEmailsInSigningKey = filteredEmailsInSigningKey.filter((value, index) => filteredEmailsInSigningKey.indexOf(value) === index);
-      return filteredEmailsInSigningKey.some(email => emailAliases.includes(email));
+      return emailAliases.every(email => filteredEmailsInSigningKey.includes(email));
     }
     return true;
   };
