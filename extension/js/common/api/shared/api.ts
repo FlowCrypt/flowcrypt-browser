@@ -53,18 +53,20 @@ export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | 
 type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
 
 export const supportsRequestStreams = (() => {
-  let duplexAccessed = false;
+  // temporary disabled because of https://github.com/FlowCrypt/flowcrypt-browser/issues/5612
+  return false;
+  // let duplexAccessed = false;
 
-  const hasContentType = new Request('https://localhost', {
-    body: new ReadableStream(),
-    method: 'POST',
-    get duplex() {
-      duplexAccessed = true;
-      return 'half';
-    },
-  } as RequestInit).headers.has('Content-Type');
+  // const hasContentType = new Request('https://localhost', {
+  //   body: new ReadableStream(),
+  //   method: 'POST',
+  //   get duplex() {
+  //     duplexAccessed = true;
+  //     return 'half';
+  //   },
+  // } as RequestInit).headers.has('Content-Type');
 
-  return duplexAccessed && !hasContentType;
+  // return duplexAccessed && !hasContentType;
 })();
 
 export class Api {
@@ -172,7 +174,7 @@ export class Api {
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
     try {
-      const fetchPromise = Api.fetchWithRetry(url, requestInit);
+      const fetchPromise = fetch(url, requestInit);
       await uploadPromise();
       const response = await Promise.race([fetchPromise, newTimeoutPromise()]);
       if (!response.ok) {
@@ -247,7 +249,7 @@ export class Api {
           return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
         } catch (e) {
           // handle empty response https://github.com/FlowCrypt/flowcrypt-browser/issues/5601
-          if (e instanceof SyntaxError && e.message === 'Unexpected end of JSON input') {
+          if (e instanceof SyntaxError && (e.message === 'Unexpected end of JSON input' || e.message.startsWith('JSON.parse: unexpected end of data'))) {
             return undefined as FetchResult<T, RT>;
           }
           throw e;
@@ -279,14 +281,26 @@ export class Api {
     resFmt: T,
     formattedData: FormData | string | undefined = undefined
   ): Promise<FetchResult<T, RT>> => {
+    let data: BodyInit | undefined = formattedData;
+    const headersInit: Dict<string> = req.headers ?? {};
+
+    if (req.method === 'PUT' || req.method === 'POST') {
+      if ('data' in req && typeof req.data !== 'undefined') {
+        data = req.dataType === 'JSON' ? JSON.stringify(req.data) : req.data;
+
+        if (req.dataType === 'TEXT' && typeof req.contentType === 'string') {
+          headersInit['Content-Type'] = req.contentType;
+        }
+      }
+    }
     const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
       xhr: Api.getAjaxProgressXhrFactory(req.progress),
       url: req.url,
       method: req.method,
-      data: formattedData,
+      data,
       dataType: resFmt,
       crossDomain: true,
-      headers: req.headers,
+      headers: headersInit,
       processData: false,
       contentType: false,
       async: true,
