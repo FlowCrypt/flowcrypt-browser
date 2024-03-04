@@ -21,7 +21,7 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
-// import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
+import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -147,67 +147,67 @@ const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
 
 export type TestWithBrowser = typeof testWithBrowser;
 
-// test.after.always('evaluate Catch.reportErr errors', async t => {
-//   if (!isMock || testGroup !== 'STANDARD-GROUP') {
-//     // can only collect reported errs when running with a mocked api
-//     t.pass();
-//     return;
-//   }
-//   // todo - here we filter out an error that would otherwise be useful
-//   // in one test we are testing an error scenario
-//   // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
-//   const usefulErrors = reportedErrors
-//     .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
-//     // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
-//     //   and for test "setup [using key manager] - notify users when their keys expire soon"
-//     .filter(
-//       e =>
-//         e.message !== 'Some keys could not be parsed' &&
-//         !e.message.match(/Bad Request: 400 when GET-ing https:\/\/.*localhost:\d+\/flowcrypt-email-key-manager/)
-//     )
-//     // below for test "decrypt - failure retrieving chunk download - next request will try anew"
-//     .filter(
-//       e =>
-//         !/400 when GET-ing https:\/\/.*localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
-//           e.message
-//         )
-//     )
-//     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
-//     .filter(e => !e.message.includes('Test error'))
-//     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
-//     .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))
-//     // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
-//     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
-//     // below for "test allows to retry public key search when attester returns error"
-//     .filter(
-//       e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/)
-//     );
-//   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
-//   const foundUnwantedErrs = usefulErrors.filter(
-//     re =>
-//       re.message !== `intentional error for debugging` &&
-//       !re.message.includes('traversal forbidden') &&
-//       !re.message.includes('The string to be decoded is not correctly encoded')
-//   );
-//   if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
-//     // on consumer flavor app, we submit errors to flowcrypt.com backend
-//     t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
-//     return;
-//   }
-//   if (testVariant === 'ENTERPRISE-MOCK' && reportedErrors.length) {
-//     // on enterprise flavor app, we don't submit any errors anywhere yet
-//     t.fail(`Catch.reportErr errors: should not report any error on enterprise app`);
-//     return;
-//   }
-//   if (foundUnwantedErrs.length) {
-//     for (const e of foundUnwantedErrs) {
-//       console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
-//     }
-//     t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
-//   } else {
-//     t.pass();
-//   }
-// });
+test.after.always('evaluate Catch.reportErr errors', async t => {
+  if (!isMock || testGroup !== 'STANDARD-GROUP') {
+    // can only collect reported errs when running with a mocked api
+    t.pass();
+    return;
+  }
+  // todo - here we filter out an error that would otherwise be useful
+  // in one test we are testing an error scenario
+  // our S/MIME implementation is still early so it throws "reportable" errors like this during tests
+  const usefulErrors = reportedErrors
+    .filter(e => e.message !== 'Too few bytes to read ASN.1 value.')
+    // below for test "get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager"
+    //   and for test "setup [using key manager] - notify users when their keys expire soon"
+    .filter(
+      e =>
+        e.message !== 'Some keys could not be parsed' &&
+        !e.message.match(/Bad Request: 400 when GET-ing https:\/\/.*localhost:\d+\/flowcrypt-email-key-manager/)
+    )
+    // below for test "decrypt - failure retrieving chunk download - next request will try anew"
+    .filter(
+      e =>
+        !/400 when GET-ing https:\/\/.*localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
+          e.message
+        )
+    )
+    // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
+    .filter(e => !e.message.includes('Test error'))
+    // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"
+    .filter(e => !e.trace.includes('-1 when GET-ing https://fes.example.com'))
+    // todo - ideally mock tests would never call this. But we do tests with human@flowcrypt.com so it's calling here
+    .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
+    // below for "test allows to retry public key search when attester returns error"
+    .filter(
+      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/)
+    );
+  const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
+  const foundUnwantedErrs = usefulErrors.filter(
+    re =>
+      re.message !== `intentional error for debugging` &&
+      !re.message.includes('traversal forbidden') &&
+      !re.message.includes('The string to be decoded is not correctly encoded')
+  );
+  if (testVariant === 'CONSUMER-MOCK' && internalTestState.expectIntentionalErrReport && !foundExpectedErr) {
+    // on consumer flavor app, we submit errors to flowcrypt.com backend
+    t.fail(`Catch.reportErr errors: missing intentional error report on consumer flavor`);
+    return;
+  }
+  if (testVariant === 'ENTERPRISE-MOCK' && reportedErrors.length) {
+    // on enterprise flavor app, we don't submit any errors anywhere yet
+    t.fail(`Catch.reportErr errors: should not report any error on enterprise app`);
+    return;
+  }
+  if (foundUnwantedErrs.length) {
+    for (const e of foundUnwantedErrs) {
+      console.info(`----- mockBackendData Catch.reportErr -----\nname: ${e.name}\nmessage: ${e.message}\nurl: ${e.url}\ntrace: ${e.trace}`);
+    }
+    t.fail(`Catch.reportErr errors: ${foundUnwantedErrs.length}`);
+  } else {
+    t.pass();
+  }
+});
 
 test.afterEach.always('send debug info if any', async t => {
   console.info(`${t.passed ? 'passed' : 'FAILED'} test, ${t.title}`);
