@@ -5,11 +5,10 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 
 import { BrowserHandle, BrowserPool } from './browser';
-import { AvaContext, minutes } from './tests/tooling';
-import { getParsedCliParams } from './util';
+import { AvaContext, TestContext, getDebugHtmlAtts, minutes } from './tests/tooling';
+import { Util, getParsedCliParams } from './util';
 
-// import { mkdirSync, realpathSync, writeFileSync } from 'fs';
-import { writeFileSync } from 'fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'fs';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
 import { defineComposeTests } from './tests/compose';
@@ -210,36 +209,36 @@ export type TestWithBrowser = typeof testWithBrowser;
 //   }
 // });
 
-// test.afterEach.always('send debug info if any', async t => {
-//   console.info(`${t.passed ? 'passed' : 'FAILED'} test, ${t.title}`);
-//   const failRnd = Util.lousyRandom();
-//   const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
-//   const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
-//   if (debugHtmlAttachments.length) {
-//     console.info(`FAIL ID ${testId}`);
-//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//     // @ts-expect-error
-//     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-//     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
-//     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
-//     try {
-//       mkdirSync(debugArtifactDir);
-//     } catch (error) {
-//       if (error.code !== 'EEXIST') throw error;
-//     }
-//     for (let i = 0; i < debugHtmlAttachments.length; i++) {
-//       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
-//       const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
-//       const filePath = `${debugArtifactDir}/${fileName}`;
-//       console.info(`Writing debug file ${fileName}`);
-//       writeFileSync(filePath, debugHtmlAttachments[i]);
-//     }
-//     console.info('All debug files written.');
-//   } else if (!t.passed) {
-//     console.info(`no fails to debug`);
-//   }
-//   t.pass();
-// });
+test.afterEach.always('send debug info if any', async t => {
+  console.info(`${t.passed ? 'passed' : 'FAILED'} test, ${t.title}`);
+  const failRnd = Util.lousyRandom();
+  const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
+  const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
+  if (debugHtmlAttachments.length) {
+    console.info(`FAIL ID ${testId}`);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+    console.info(`There are ${debugHtmlAttachments.length} debug files.`);
+    const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
+    try {
+      mkdirSync(debugArtifactDir);
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+    }
+    for (let i = 0; i < debugHtmlAttachments.length; i++) {
+      // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
+      const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
+      const filePath = `${debugArtifactDir}/${fileName}`;
+      console.info(`Writing debug file ${fileName}`);
+      writeFileSync(filePath, debugHtmlAttachments[i]);
+    }
+    console.info('All debug files written.');
+  } else if (!t.passed) {
+    console.info(`no fails to debug`);
+  }
+  t.pass();
+});
 
 if (testGroup === 'UNIT-TESTS') {
   defineUnitNodeTests(testVariant);
