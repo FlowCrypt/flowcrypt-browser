@@ -315,7 +315,6 @@ export class BrowserMsg {
         }
       };
       try {
-        console.log('GOT BG MESSAGE ' + msg.name);
         if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
