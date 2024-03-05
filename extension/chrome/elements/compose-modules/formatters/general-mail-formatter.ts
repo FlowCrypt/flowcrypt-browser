@@ -13,7 +13,6 @@ import { KeyStoreUtil, ParsedKeyInfo } from '../../../../js/common/core/crypto/k
 import { UnreportableError } from '../../../../js/common/platform/catch.js';
 import { ParsedRecipients } from '../../../../js/common/api/email-provider/email-provider-api.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
-import { AcctStore } from '../../../../js/common/platform/store/acct-store.js';
 
 export type MultipleMessages = {
   msgs: SendableMsg[];
@@ -92,20 +91,12 @@ export class GeneralMailFormatter {
 
   private static isSenderInKeyUserIds = async (view: ComposeView, signingKey: ParsedKeyInfo): Promise<boolean> => {
     const senderEmail = view.senderModule.getSender();
-    if (senderEmail !== view.acctEmail && signingKey.keyInfo.emails) {
-      const storage = await AcctStore.get(view.acctEmail, ['sendAs']);
-      const emailAliases = Object.keys(storage.sendAs || {});
-      const senderAliasIndex = emailAliases.indexOf(view.acctEmail);
-      if (senderAliasIndex !== -1) {
-        emailAliases.splice(senderAliasIndex, 1);
-      }
-      const emailsInSigningKey = signingKey.keyInfo.emails || [];
-      let filteredEmailsInSigningKey: string[] = [];
-      for (const email of emailsInSigningKey) {
-        filteredEmailsInSigningKey.push(email.replace(/(.+)(?=\+).*(?=@)/, '$1'));
-      }
-      filteredEmailsInSigningKey = filteredEmailsInSigningKey.filter((value, index) => filteredEmailsInSigningKey.indexOf(value) === index);
-      return emailAliases.every(email => filteredEmailsInSigningKey.includes(email));
+    if (!signingKey.keyInfo.emails) {
+      return false;
+    } else if (senderEmail !== view.acctEmail) {
+      const baseSenderEmail = senderEmail.replace(/(.+)(?=\+).*(?=@)/, '$1');
+      const emailsInSigningKey = signingKey.keyInfo.emails;
+      return emailsInSigningKey.some(email => email.includes(baseSenderEmail));
     }
     return true;
   };
