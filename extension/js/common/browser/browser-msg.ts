@@ -5,7 +5,7 @@
 import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
+import { Dict, Str, UrlParams, Value } from '../core/common.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
@@ -189,7 +189,7 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
       },
     },
-    passphraseEntry: (bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm),
+    passphraseEntry: (bm: Bm.PassphraseEntry, sendCallback = Value.noop) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm, sendCallback, false),
     addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
     openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
     setCss: (dest: Bm.Dest, bm: Bm.SetCss) => BrowserMsg.sendCatch(dest, 'set_css', bm),
@@ -323,24 +323,26 @@ export class BrowserMsg {
 
   protected static listenForWindowMessages = (dest: Bm.Dest) => {
     const extensionOrigin = Env.getExtensionOrigin();
-    window.addEventListener('message', async e => {
+    window.addEventListener('message', e => {
       if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
       const encryptedMsg = e.data as SymEncryptedMessage;
-      if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
-      let handled = false;
-      if ([dest, 'broadcast'].includes(encryptedMsg.to)) {
-        const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
-        handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
-          if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
-            // send response as a new request
-            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
-          }
-        });
-      }
-      if (!handled && encryptedMsg.propagateToParent) {
-        BrowserMsg.processed.add(encryptedMsg.uid);
-        BrowserMsg.sendUpParentLine(encryptedMsg);
-      }
+      if (!encryptedMsg || typeof encryptedMsg.uid !== 'string' || BrowserMsg.processed.has(encryptedMsg.uid)) return;
+      Catch.try(async () => {
+        let handled = false;
+        if ([dest, 'broadcast'].includes(encryptedMsg.to)) {
+          const msg = await SymmetricMessageEncryption.decrypt(encryptedMsg);
+          handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
+            if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
+              // send response as a new request
+              BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
+            }
+          });
+        }
+        if (!handled && encryptedMsg.propagateToParent) {
+          BrowserMsg.processed.add(encryptedMsg.uid);
+          BrowserMsg.sendUpParentLine(encryptedMsg);
+        }
+      })();
     });
   };
 
@@ -399,11 +401,18 @@ export class BrowserMsg {
     return false;
   };
 
-  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
-    BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
+  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>, sendCallback = Value.noop, postToSelf = true) => {
+    BrowserMsg.sendAwait(dest, name, bm, false, sendCallback, postToSelf).catch(Catch.reportErr);
   };
 
-  private static sendAwait = async (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => {
+  private static sendAwait = async (
+    destString: string | undefined,
+    name: string,
+    bm?: Dict<unknown>,
+    awaitRes = false,
+    sendCallback = Value.noop,
+    postToSelf = true
+  ): Promise<Bm.Response> => {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
     const isBackgroundPage = Env.isBackgroundPage();
@@ -418,11 +427,21 @@ export class BrowserMsg {
       bm,
       // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
       BrowserMsg.replaceBufWithObjUrlInplace(bm),
-      awaitRes
+      awaitRes,
+      sendCallback,
+      postToSelf
     );
   };
 
-  private static sendRaw = (destString: string | undefined, name: string, bm: Dict<unknown>, objUrls: Dict<string>, awaitRes = false): Promise<Bm.Response> => {
+  private static sendRaw = async (
+    destString: string | undefined,
+    name: string,
+    bm: Dict<unknown>,
+    objUrls: Dict<string>,
+    awaitRes = false,
+    sendCallback = Value.noop,
+    postToSelf = true
+  ): Promise<Bm.Response> => {
     const msg: Bm.Raw = {
       name,
       data: { bm, objUrls },
@@ -430,19 +449,7 @@ export class BrowserMsg {
       uid: SymmetricMessageEncryption.generateIV(),
       stack: Catch.stackTrace(),
     };
-    // eslint-disable-next-line no-null/no-null
-    if (!Env.isBackgroundPage() && msg.to !== null) {
-      const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
-      // send via window messaging in parallel
-      Catch.try(async () => {
-        // todo: can objUrls be deleted by another recipient?
-        const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
-        BrowserMsg.sendToChildren(encryptedMsg);
-        window.postMessage(encryptedMsg, '*');
-        BrowserMsg.sendUpParentLine(encryptedMsg);
-      })();
-    }
-    return new Promise((resolve, reject) => {
+    const runtimeMessagePromise = new Promise((resolve, reject) => {
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve(undefined);
@@ -498,6 +505,21 @@ export class BrowserMsg {
         }
       }
     });
+    // eslint-disable-next-line no-null/no-null
+    if (!Env.isBackgroundPage() && msg.to !== null) {
+      // send via window messaging in parallel
+      const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
+      // todo: can objUrls be deleted by another recipient?
+      const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
+      BrowserMsg.sendToChildren(encryptedMsg);
+      if (postToSelf) {
+        window.postMessage(encryptedMsg, '*');
+      }
+      BrowserMsg.sendUpParentLine(encryptedMsg);
+    }
+    sendCallback();
+    // only runtimeMessagePromise can potentially yield a result
+    return runtimeMessagePromise;
   };
 
   private static sendUpParentLine = (encryptedMsg: SymEncryptedMessage) => {

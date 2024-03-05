@@ -339,13 +339,15 @@ export class GoogleOAuth extends OAuth {
         client_secret: GoogleOAuth.OAUTH.client_secret,
       });
     /* eslint-enable @typescript-eslint/naming-convention */
-    const req: Ajax = {
-      url,
-      method: 'POST',
-      stack: Catch.stackTrace(),
-    };
 
-    return (await Api.ajax(req, 'json')) as GoogleAuthTokensResponse;
+    return (await Api.ajax(
+      {
+        url,
+        method: 'POST',
+        stack: Catch.stackTrace(),
+      },
+      'json'
+    )) as GoogleAuthTokensResponse;
   };
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
