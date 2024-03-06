@@ -433,8 +433,6 @@ export class BrowserMsg {
   };
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<unknown>) => {
-    console.log(name);
-    console.log(bm);
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   };
 

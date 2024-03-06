@@ -44,7 +44,6 @@
         "/lib/trusted-types.js",
         "/lib/purify.js",
         "/lib/jquery.min.js",
-        "/lib/openpgp.js",
         "/lib/sweetalert2.js",
         "/lib/streams_web.js",
         "/lib/emailjs/punycode.js",

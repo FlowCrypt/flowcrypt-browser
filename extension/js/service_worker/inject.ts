@@ -55,7 +55,7 @@ const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: bool
       },
     },
     results => {
-      callback(results[0].result === true);
+      callback(results && results.length > 0 && results[0].result === true);
     }
   );
 };
