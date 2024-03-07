@@ -43,7 +43,7 @@ export class GeneralMailFormatter {
       if (!signingKey) {
         throw new UnreportableError("Could not find account's key usable for signing this plain text message");
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey!.key))) {
+      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey.key))) {
         throw new UnreportableError(
           `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
         );
