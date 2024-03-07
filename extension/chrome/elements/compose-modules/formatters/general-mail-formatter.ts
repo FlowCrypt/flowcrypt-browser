@@ -3,7 +3,7 @@
 'use strict';
 
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
-import { KeyInfoWithIdentity } from '../../../../js/common/core/crypto/key.js';
+import { Key, KeyInfoWithIdentity } from '../../../../js/common/core/crypto/key.js';
 import { getUniqueRecipientEmails, NewMsgData } from '../compose-types.js';
 import { PlainMsgMailFormatter } from './plain-mail-msg-formatter.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
@@ -43,7 +43,7 @@ export class GeneralMailFormatter {
       if (!signingKey) {
         throw new UnreportableError("Could not find account's key usable for signing this plain text message");
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey!))) {
+      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey!.key))) {
         throw new UnreportableError(
           `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
         );
@@ -68,7 +68,7 @@ export class GeneralMailFormatter {
         // we are ignoring missing signing keys for x509 family for now. We skip signing when missing
         //   see https://github.com/FlowCrypt/flowcrypt-browser/pull/4372/files#r845012403
         throw new UnreportableError(`Could not find account's ${singleFamilyKeys.family} key usable for signing this encrypted message`);
-      } else if (!(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey!))) {
+      } else if (!!signingKey?.key && !(await GeneralMailFormatter.isSenderInKeyUserIds(view, signingKey.key))) {
         throw new UnreportableError(
           `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
         );
@@ -90,16 +90,16 @@ export class GeneralMailFormatter {
     return await view.storageModule.decryptSenderKey(parsedSenderPrv);
   };
 
-  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey: ParsedKeyInfo): Promise<boolean> => {
+  private static isSenderInKeyUserIds = async (view: ComposeView, signingKey: Key): Promise<boolean> => {
     const senderEmail = view.senderModule.getSender();
-    if (!signingKey.keyInfo.emails) {
+    const emailsInSigningKey = signingKey.emails;
+    if (!emailsInSigningKey) {
       return false;
     } else if (senderEmail !== view.acctEmail) {
       // Transpose the email to its base form when a filter is present. This is important
       // to consider when an email with a filter is present on the signingKey, as
       // technically it is the same email despite the filter.
       const baseSenderEmail = senderEmail.indexOf('+') !== -1 ? senderEmail.replace(/(.+)(?=\+).*(?=@)/, '$1') : senderEmail;
-      const emailsInSigningKey = signingKey.keyInfo.emails;
       return emailsInSigningKey.some(email => email.includes(baseSenderEmail));
     }
     return true;
