@@ -32,7 +32,13 @@ export const setPassphraseForPrvs = async (clientConfiguration: ClientConfigurat
 // note: for `replaceKeys = true` need to make sure that `prvs` don't have duplicate identities,
 // they is currently guaranteed by filterKeysToSave()
 // todo: perhaps split into two different functions for add or replace as part of #4545?
-const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys = false) => {
+const addOrReplaceKeysAndPassPhrase = async (
+  acctEmail: string,
+  prvs: Key[],
+  ppOptions?: PassphraseOptions,
+  submitKeyForAddrs: string[] = [],
+  replaceKeys = false
+) => {
   if (replaceKeys) {
     // track longids to remove related passhprases
     const existingKeys = await KeyStore.get(acctEmail);
@@ -48,9 +54,10 @@ const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppO
   if (ppOptions !== undefined) {
     await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
-  const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
+  const { full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
+  submitKeyForAddrs.push(acctEmail);
+  const myOwnEmailsAddrs = submitKeyForAddrs;
   for (const email of myOwnEmailsAddrs) {
     if (ppOptions !== undefined) {
       // first run, update `name`, todo: refactor in #4545
@@ -62,7 +69,8 @@ const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppO
   }
 };
 
-export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => Promise<void> = addOrReplaceKeysAndPassPhrase;
+export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, submitKeyForAddrs?: string[]) => Promise<void> =
+  addOrReplaceKeysAndPassPhrase;
 
 const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
   const unencryptedPrvs: Key[] = [];
@@ -160,7 +168,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   }
   // stage 1. Clear all existingKeys, except for keysToRetain
   if (existingKeys.length !== keysToRetain.length) {
-    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, true);
+    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, [], true);
   }
   // stage 2. Adding new keys
   if (encryptedKeys?.keys.length) {
