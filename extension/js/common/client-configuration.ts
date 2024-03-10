@@ -57,7 +57,7 @@ export class ClientConfiguration {
     public domainName: string
   ) {}
 
-  public static newInstance = async (acctEmail: string): Promise<ClientConfiguration> => {
+  public static async newInstance(acctEmail: string): Promise<ClientConfiguration> {
     const email = Str.parseEmail(acctEmail).email;
     if (!email) {
       throw new Error(`Not a valid email`);
@@ -67,7 +67,7 @@ export class ClientConfiguration {
       throw new ClientConfigurationError('missing_flags');
     }
     return new ClientConfiguration(storage.rules ?? {}, Str.getDomainFromEmailAddress(acctEmail));
-  };
+  }
 
   // optional urls
 

@@ -23,7 +23,7 @@ type SanitizedBlocks = {
 export class MsgBlockParser {
   private static ARMOR_HEADER_MAX_LENGTH = 50;
 
-  public static detectBlocks = (origText: string, completeOnly?: boolean) => {
+  public static detectBlocks(origText: string, completeOnly?: boolean) {
     const blocks: MsgBlock[] = [];
     const normalized = Str.normalize(origText);
     let startAt = 0;
@@ -42,12 +42,9 @@ export class MsgBlockParser {
         startAt = continueAt;
       }
     }
-  };
+  }
 
-  public static fmtDecryptedAsSanitizedHtmlBlocks = async (
-    decryptedContent: Uint8Array,
-    imgHandling: SanitizeImgHandling = 'IMG-KEEP'
-  ): Promise<SanitizedBlocks> => {
+  public static async fmtDecryptedAsSanitizedHtmlBlocks(decryptedContent: Uint8Array, imgHandling: SanitizeImgHandling = 'IMG-KEEP'): Promise<SanitizedBlocks> {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
     let webReplyToken: unknown | undefined;
@@ -96,9 +93,9 @@ export class MsgBlockParser {
       }
     }
     return { blocks, subject: decoded.subject, isRichText, webReplyToken };
-  };
+  }
 
-  public static extractFcAttachments = (decryptedContent: string, blocks: MsgBlock[]) => {
+  public static extractFcAttachments(decryptedContent: string, blocks: MsgBlock[]) {
     // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
@@ -126,9 +123,9 @@ export class MsgBlockParser {
       );
     }
     return decryptedContent;
-  };
+  }
 
-  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+  public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
     let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
     for (const block of blocks) {
       if (block.type === 'publicKey') {
@@ -138,9 +135,9 @@ export class MsgBlockParser {
       }
     }
     return normalized;
-  };
+  }
 
-  public static extractFcReplyToken = (decryptedContent: string): unknown | undefined => {
+  public static extractFcReplyToken(decryptedContent: string): unknown | undefined {
     const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
     if (fcTokenElement.length) {
       const fcData = fcTokenElement.attr('cryptup-data');
@@ -149,13 +146,13 @@ export class MsgBlockParser {
       }
     }
     return undefined;
-  };
+  }
 
-  public static stripFcReplyToken = (decryptedContent: string) => {
+  public static stripFcReplyToken(decryptedContent: string) {
     return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
-  };
+  }
 
-  private static isFcAttachmentLinkData = (o: unknown): o is FcAttachmentLinkData => {
+  private static isFcAttachmentLinkData(o: unknown): o is FcAttachmentLinkData {
     return (
       !!o &&
       typeof o === 'object' &&
@@ -163,9 +160,9 @@ export class MsgBlockParser {
       typeof (o as FcAttachmentLinkData).size !== 'undefined' &&
       typeof (o as FcAttachmentLinkData).type !== 'undefined'
     );
-  };
+  }
 
-  private static detectBlockNext = (origText: string, startAt: number, completeOnly?: boolean) => {
+  private static detectBlockNext(origText: string, startAt: number, completeOnly?: boolean) {
     const armorHdrTypes = Object.keys(PgpArmor.ARMOR_HEADER_DICT) as ReplaceableMsgBlockType[];
     const result: { found: MsgBlock[]; continueAt?: number } = { found: [] as MsgBlock[] };
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
@@ -231,9 +228,9 @@ export class MsgBlockParser {
       }
     }
     return result;
-  };
+  }
 
-  private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
+  private static async pushArmoredPubkeysToBlocks(armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> {
     for (const armoredPubkey of armoredPubkeys) {
       const keys = await KeyUtil.parseMany(armoredPubkey);
       for (const key of keys) {
@@ -241,5 +238,5 @@ export class MsgBlockParser {
         blocks.push(MsgBlock.fromContent('publicKey', KeyUtil.armor(pub)));
       }
     }
-  };
+  }
 }

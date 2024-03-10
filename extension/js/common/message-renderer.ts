@@ -57,14 +57,14 @@ export class MessageRenderer {
     this.downloader = new Downloader(gmail);
   }
 
-  public static newInstance = async (acctEmail: string, gmail: Gmail, relayManager: RelayManager, factory: XssSafeFactory, debug = false) => {
+  public static async newInstance(acctEmail: string, gmail: Gmail, relayManager: RelayManager, factory: XssSafeFactory, debug = false) {
     const { sendAs, full_name: fullName } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
     return new MessageRenderer(acctEmail, gmail, relayManager, factory, new Set(sendAs ? Object.keys(sendAs) : [acctEmail]), fullName, debug);
-  };
+  }
 
-  public static isPwdMsg = (text: string) => {
+  public static isPwdMsg(text: string) {
     return /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(text);
-  };
+  }
 
   /**
    * Replaces inline image CID references with base64 encoded data in sanitized HTML
@@ -74,7 +74,7 @@ export class MessageRenderer {
    * @param attachments - An array of email attachments.
    * @returns An object containing sanitized HTML and an array of inline CID attachments.
    */
-  private static replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Set<Attachment> } => {
+  private static replaceInlineImageCIDs(html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Set<Attachment> } {
     // Set to store inline CID attachments
     const inlineCIDAttachments = new Set<Attachment>();
 
@@ -107,9 +107,9 @@ export class MessageRenderer {
     DOMPurify.removeAllHooks();
 
     return { sanitizedHtml, inlineCIDAttachments };
-  };
+  }
 
-  private static getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
+  private static getEncryptedSubjectText(subject: string, isHtml: boolean) {
     if (isHtml) {
       return `<div style="white-space: normal"> Encrypted Subject:
                 <b> ${Xss.escape(subject)}</b>
@@ -118,19 +118,19 @@ export class MessageRenderer {
     } else {
       return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
     }
-  };
+  }
 
-  private static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
+  private static async decryptFunctionToVerifyRes(decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> {
     const decryptResult = await decrypt();
     if (!decryptResult.success) {
       return undefined; // note: this internal error results in a wrong "Not Signed" badge
     } else {
       return decryptResult.signature;
     }
-  };
+  }
 
   // attachments returned by this method are missing data, so they need to be fetched
-  private static getMessageBodyAndAttachments = (gmailMsg: GmailRes.GmailMsg): { body: MessageBody; attachments: Attachment[] } => {
+  private static getMessageBodyAndAttachments(gmailMsg: GmailRes.GmailMsg): { body: MessageBody; attachments: Attachment[] } {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
@@ -145,14 +145,14 @@ export class MessageRenderer {
       },
       attachments,
     };
-  };
+  }
 
-  private static renderPgpSignatureCheckResult = async (
+  private static async renderPgpSignatureCheckResult(
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
     wasSignerEmailSupplied: boolean,
     retryVerification?: () => Promise<VerifyRes | undefined>
-  ) => {
+  ) {
     if (verifyRes?.error) {
       renderModule.renderSignatureStatus(`error verifying signature: ${verifyRes.error}`);
       renderModule.setFrameColor('red');
@@ -192,35 +192,35 @@ export class MessageRenderer {
     } else {
       MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes);
     }
-  };
+  }
 
-  private static renderMissingPubkeyOrBadSignature = (renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void => {
+  private static renderMissingPubkeyOrBadSignature(renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void {
     // eslint-disable-next-line no-null/no-null
     if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
       MessageRenderer.renderMissingPubkey(renderModule, verifyRes.signerLongids[0]);
     } else {
       MessageRenderer.renderBadSignature(renderModule);
     }
-  };
+  }
 
-  private static renderMissingPubkey = (renderModule: RenderInterfaceBase, signerLongid: string) => {
+  private static renderMissingPubkey(renderModule: RenderInterfaceBase, signerLongid: string) {
     renderModule.renderSignatureStatus(`could not verify signature: missing pubkey ${signerLongid}`);
-  };
+  }
 
-  private static renderBadSignature = (renderModule: RenderInterfaceBase) => {
+  private static renderBadSignature(renderModule: RenderInterfaceBase) {
     renderModule.renderSignatureStatus('bad signature');
     renderModule.setFrameColor('red');
-  };
+  }
 
-  private static getVerificationPubs = async (signerEmail: string) => {
+  private static async getVerificationPubs(signerEmail: string) {
     const email = Str.parseEmail(signerEmail).email;
     if (!email) return [];
     const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, email))?.sortedPubkeys ?? [];
     // todo: we're armoring pubkeys here to pass them to MsgUtil. Perhaps, we can optimize this
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-  };
+  }
 
-  private static handlePrivateKeyMismatch = async (renderModule: RenderInterface, armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) => {
+  private static async handlePrivateKeyMismatch(renderModule: RenderInterface, armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) {
     // todo - make it work for multiple stored keys
     const msgDiagnosis = await MsgUtil.diagnosePubkeys({ armoredPubs, message });
     if (msgDiagnosis.found_match) {
@@ -245,11 +245,11 @@ export class MessageRenderer {
         undefined
       );
     }
-  };
+  }
 
-  private static btnHtml = (text: string, addClasses: string) => {
+  private static btnHtml(text: string, addClasses: string) {
     return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
-  };
+  }
 
   public renderMsg = ({ senderEmail, blocks }: { blocks: MsgBlock[]; senderEmail?: string }, showOriginal: boolean) => {
     const isOutgoing = this.isOutgoing(senderEmail);
