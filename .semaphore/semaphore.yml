@@ -99,7 +99,7 @@ blocks:
     task:
       agent:
         machine:
-          type: e2-standard-2
+          type: e1-standard-2
           os_image: ubuntu2004
       secrets:
         - name: flowcrypt-browser-ci-secrets
