@@ -44,25 +44,25 @@ export type GlobalIndex =
 export class GlobalStore extends AbstractStore {
   private static globalStorageScope = 'global' as const;
 
-  public static set = async (values: GlobalStoreDict): Promise<void> => {
+  public static async set(values: GlobalStoreDict): Promise<void> {
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
       const index = GlobalStore.singleScopeRawIndex(GlobalStore.globalStorageScope, key);
       storageUpdate[index] = values[key as GlobalIndex];
     }
     await storageLocalSet(storageUpdate);
-  };
+  }
 
-  public static get = async (keys: GlobalIndex[]): Promise<GlobalStoreDict> => {
+  public static async get(keys: GlobalIndex[]): Promise<GlobalStoreDict> {
     const storageObj = (await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
-  };
+  }
 
-  public static remove = async (keys: string[]) => {
+  public static async remove(keys: string[]) {
     await storageLocalRemove(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys));
-  };
+  }
 
-  public static acctEmailsGet = async (): Promise<string[]> => {
+  public static async acctEmailsGet(): Promise<string[]> {
     const storage = await GlobalStore.get(['account_emails']);
     const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
@@ -73,9 +73,9 @@ export class GlobalStore extends AbstractStore {
       }
     }
     return acctEmails;
-  };
+  }
 
-  public static acctEmailsAdd = async (acctEmail: string): Promise<void> => {
+  public static async acctEmailsAdd(acctEmail: string): Promise<void> {
     // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
       throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
@@ -92,12 +92,12 @@ export class GlobalStore extends AbstractStore {
       });
       BrowserMsg.send.bg.updateUninstallUrl();
     }
-  };
+  }
 
-  public static acctEmailsRemove = async (acctEmail: string): Promise<void> => {
+  public static async acctEmailsRemove(acctEmail: string): Promise<void> {
     // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await GlobalStore.acctEmailsGet();
     await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) }); // eslint-disable-line @typescript-eslint/naming-convention
     BrowserMsg.send.bg.updateUninstallUrl();
-  };
+  }
 }
