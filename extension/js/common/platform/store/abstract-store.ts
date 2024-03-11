@@ -29,7 +29,7 @@ export abstract class AbstractStore {
     return `cryptup_${emailKeyIndex(scope, key)}`;
   };
 
-  public static errCategorize = (err: unknown): Error => {
+  public static errCategorize(err: unknown): Error {
     let message: string;
     if (err instanceof Error) {
       message = err.message;
@@ -58,18 +58,18 @@ export abstract class AbstractStore {
       Catch.reportErr(err instanceof Error ? err : new Error(message));
       return new StoreFailedError(message);
     }
-  };
+  }
 
-  public static setReqOnError = (req: IDBRequest | IDBTransaction, reject: (reason?: unknown) => void) => {
+  public static setReqOnError(req: IDBRequest | IDBTransaction, reject: (reason?: unknown) => void) {
     req.onerror = () => reject(AbstractStore.errCategorize(req.error || new Error('Unknown db error')));
-  };
+  }
 
-  public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) => {
+  public static setTxHandlers(tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) {
     tx.oncomplete = () => resolve(undefined);
     AbstractStore.setReqOnError(tx, reject);
-  };
+  }
 
-  protected static buildSingleAccountStoreFromRawResults = (scope: string, storageObj: RawStore): AcctStoreDict => {
+  protected static buildSingleAccountStoreFromRawResults(scope: string, storageObj: RawStore): AcctStoreDict {
     const accountStore: AcctStoreDict = {};
     for (const k of Object.keys(storageObj)) {
       const fixedKey = k.replace(AbstractStore.singleScopeRawIndex(scope, ''), '');
@@ -80,11 +80,11 @@ export abstract class AbstractStore {
       }
     }
     return accountStore;
-  };
+  }
 
-  protected static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
+  protected static singleScopeRawIndexArr(scope: string, keys: string[]) {
     return keys.map(key => AbstractStore.singleScopeRawIndex(scope, key));
-  };
+  }
 
   protected static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
     const allResults: string[] = [];
