@@ -9,18 +9,15 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
  * see background_page.ts for the other end, also ExpirationCache class
  */
 export class InMemoryStore extends AbstractStore {
-  public static set = async (acctEmail: string, key: string, value?: string, expiration?: number) => {
+  public static async set(acctEmail: string, key: string, value?: string, expiration?: number) {
     return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration });
-    // console.log(expiration);
-    // return chrome.storage.session.set({ [`${emailKeyIndex(acctEmail, key)}`]: value });
-  };
+  }
 
-  public static get = async (acctEmail: string, key: string): Promise<string | undefined> => {
+  public static async get(acctEmail: string, key: string): Promise<string | undefined> {
     return (await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key })) ?? undefined;
-    // return ((await chrome.storage.session.get([emailKeyIndex(acctEmail, key)])) as unknown as string) ?? undefined;
-  };
+  }
 
-  public static getUntilAvailable = async (acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> => {
+  public static async getUntilAvailable(acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> {
     for (let i = 0; i < retryCount; i++) {
       const value = await InMemoryStore.get(acctEmail, key);
       if (value) {
@@ -29,5 +26,5 @@ export class InMemoryStore extends AbstractStore {
       await Time.sleep(300);
     }
     return undefined;
-  };
+  }
 }

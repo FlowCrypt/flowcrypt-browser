@@ -16,25 +16,26 @@
   <body id="settings">
     <div id="content" class="my_key page" style="text-align: left">
       <div class="line">
-        <b class="key_type">Public Key Info</b> for <span class="email" data-test="content-emails"></span>&nbsp;&nbsp;<a href="#" class="action_view_user_ids"
-          >show user ids</a
+        <b class="key_type">Public key info</b> for <span class="email" data-test="content-emails"></span>&nbsp;&nbsp;<a href="#" class="action_view_user_ids"
+          >show user IDs</a
         >
       </div>
       <div class="line">
-        Public Fingerprint: <span class="fingerprint good" data-test="content-fingerprint"></span>. This Fingerprint is unique to your public key. Share this so
-        that your contacts can verify that they have the right key to encrypt for.
+        Public fingerprint: <span class="fingerprint good" data-test="content-fingerprint"></span>.
+        <br />
+        This fingerprint is unique to your public key. Share it so your contacts can verify that they have the right key to encrypt for.
       </div>
-      <div class="line"><span class="green_label">Public Key Below is safe to share with others</span></div>
+      <div class="line"><span class="green_label">Public keys are safe to share with others</span></div>
       <div class="line">
         <a href="#" class="action_copy_pubkey">Copy public key to clipboard</a>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         <a href="#" class="action_download_pubkey">Save public key to a file</a>
       </div>
-      <div class="line show_when_showing_public pubkey_link_container" style="display: none">Share your Public Key: <a href="" target="_blank"></a></div>
+      <div class="line show_when_showing_public pubkey_link_container" style="display: none">Share your public key: <a href="" target="_blank"></a></div>
       <div class="line">Key expiration: <span class="key_expiration" data-test="content-key-expiration"></span></div>
       <div class="line-separator"></div>
       <div class="line">
-        <b class="key_type">Private Key</b> for <span class="email"></span>&nbsp;&nbsp;<a
+        <b class="key_type">Private key</b> for <span class="email"></span>&nbsp;&nbsp;<a
           href="#"
           class="action_view_update display_none"
           data-test="action-update-prv"
@@ -50,7 +51,7 @@
         <button class="button gray action_cancel_download_cert">cancel</button>
       </div>
       <div class="line">
-        <span class="red_label" style="display: none">Never send this to anyone!</span>
+        <span class="red_label" style="display: none">Never send your private key to anyone!</span>
         <span class="orange_label" style="display: none" data-test="label-download-prv">This private key is managed by Email Key Manager</span>
       </div>
       <div class="line container_download_prv">

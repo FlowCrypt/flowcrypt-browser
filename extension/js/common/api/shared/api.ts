@@ -53,22 +53,24 @@ export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | 
 type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
 
 export const supportsRequestStreams = (() => {
-  let duplexAccessed = false;
+  // temporary disabled because of https://github.com/FlowCrypt/flowcrypt-browser/issues/5612
+  return false;
+  // let duplexAccessed = false;
 
-  const hasContentType = new Request('https://localhost', {
-    body: new ReadableStream(),
-    method: 'POST',
-    get duplex() {
-      duplexAccessed = true;
-      return 'half';
-    },
-  } as RequestInit).headers.has('Content-Type');
+  // const hasContentType = new Request('https://localhost', {
+  //   body: new ReadableStream(),
+  //   method: 'POST',
+  //   get duplex() {
+  //     duplexAccessed = true;
+  //     return 'half';
+  //   },
+  // } as RequestInit).headers.has('Content-Type');
 
-  return duplexAccessed && !hasContentType;
+  // return duplexAccessed && !hasContentType;
 })();
 
 export class Api {
-  public static download = async (url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> => {
+  public static async download(url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> {
     return await new Promise((resolve, reject) => {
       Api.throwIfApiPathTraversalAttempted(url);
       const request = new XMLHttpRequest();
@@ -93,9 +95,9 @@ export class Api {
       request.onload = e => (request.status <= 299 ? resolve(new Buf(request.response as ArrayBuffer)) : errHandler(e));
       request.send();
     });
-  };
+  }
 
-  public static ajax = async <T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> => {
+  public static async ajax<T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T): Promise<FetchResult<T, RT>> {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -172,7 +174,7 @@ export class Api {
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
     try {
-      const fetchPromise = Api.fetchWithRetry(url, requestInit);
+      const fetchPromise = fetch(url, requestInit);
       await uploadPromise();
       const response = await Promise.race([fetchPromise, newTimeoutPromise()]);
       if (!response.ok) {
@@ -247,7 +249,7 @@ export class Api {
           return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
         } catch (e) {
           // handle empty response https://github.com/FlowCrypt/flowcrypt-browser/issues/5601
-          if (e instanceof SyntaxError && e.message === 'Unexpected end of JSON input') {
+          if (e instanceof SyntaxError && (e.message === 'Unexpected end of JSON input' || e.message.startsWith('JSON.parse: unexpected end of data'))) {
             return undefined as FetchResult<T, RT>;
           }
           throw e;
@@ -271,22 +273,34 @@ export class Api {
     } finally {
       abortController.abort();
     }
-  };
+  }
 
   /** @deprecated should use ajax() */
-  public static ajaxWithJquery = async <T extends ResFmt, RT = unknown>(
+  public static async ajaxWithJquery<T extends ResFmt, RT = unknown>(
     req: Ajax,
     resFmt: T,
     formattedData: FormData | string | undefined = undefined
-  ): Promise<FetchResult<T, RT>> => {
+  ): Promise<FetchResult<T, RT>> {
+    let data: BodyInit | undefined = formattedData;
+    const headersInit: Dict<string> = req.headers ?? {};
+
+    if (req.method === 'PUT' || req.method === 'POST') {
+      if ('data' in req && typeof req.data !== 'undefined') {
+        data = req.dataType === 'JSON' ? JSON.stringify(req.data) : req.data;
+
+        if (req.dataType === 'TEXT' && typeof req.contentType === 'string') {
+          headersInit['Content-Type'] = req.contentType;
+        }
+      }
+    }
     const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
       xhr: Api.getAjaxProgressXhrFactory(req.progress),
       url: req.url,
       method: req.method,
-      data: formattedData,
+      data,
       dataType: resFmt,
       crossDomain: true,
-      headers: req.headers,
+      headers: headersInit,
       processData: false,
       contentType: false,
       async: true,
@@ -311,9 +325,9 @@ export class Api {
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
-  };
+  }
 
-  public static isInternetAccessible = async () => {
+  public static async isInternetAccessible() {
     try {
       await Api.download('https://google.com');
       return true;
@@ -323,18 +337,18 @@ export class Api {
       }
       throw e;
     }
-  };
+  }
 
-  public static randomFortyHexChars = (): string => {
+  public static randomFortyHexChars(): string {
     const bytes = Array.from(secureRandomBytes(20));
     return bytes.map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
-  };
+  }
 
-  public static isRecipientHeaderNameType = (value: string): value is 'to' | 'cc' | 'bcc' => {
+  public static isRecipientHeaderNameType(value: string): value is 'to' | 'cc' | 'bcc' {
     return ['to', 'cc', 'bcc'].includes(value);
-  };
+  }
 
-  protected static apiCall = async <T extends ResFmt, RT>(
+  protected static async apiCall<T extends ResFmt, RT>(
     url: string,
     path: string,
     values:
@@ -357,7 +371,7 @@ export class Api {
     progress?: ProgressCbs,
     headers?: AjaxHeaders,
     resFmt?: T
-  ): Promise<FetchResult<T, RT>> => {
+  ): Promise<FetchResult<T, RT>> {
     progress = progress || ({} as ProgressCbs);
     let formattedData: FormData | string | undefined;
     let dataPart:
@@ -397,9 +411,9 @@ export class Api {
     } else {
       return await Api.ajax(req, resFmt);
     }
-  };
+  }
 
-  private static getAjaxProgressXhrFactory = (progressCbs: ProgressCbs | undefined): (() => XMLHttpRequest) | undefined => {
+  private static getAjaxProgressXhrFactory(progressCbs: ProgressCbs | undefined): (() => XMLHttpRequest) | undefined {
     if (Env.isContentScript() || !progressCbs || !(progressCbs.upload || progressCbs.download)) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts
@@ -439,30 +453,19 @@ export class Api {
       }
       return progressPeportingXhr;
     };
-  };
+  }
 
-  private static isRawAjaxErr = (e: unknown): e is RawAjaxErr => {
+  private static isRawAjaxErr(e: unknown): e is RawAjaxErr {
     return !!e && typeof e === 'object' && typeof (e as RawAjaxErr).readyState === 'number';
-  };
+  }
 
   /**
    * Security check, in case attacker modifies parameters which are then used in an url
    * https://github.com/FlowCrypt/flowcrypt-browser/issues/2646
    */
-  private static throwIfApiPathTraversalAttempted = (requestUrl: string) => {
+  private static throwIfApiPathTraversalAttempted(requestUrl: string) {
     if (requestUrl.includes('../') || requestUrl.includes('/..')) {
       throw new Error(`API path traversal forbidden: ${requestUrl}`);
     }
-  };
-
-  private static fetchWithRetry = async (url: string, options: RequestInit, attempts = 2): Promise<Response> => {
-    // in firefox fetch sends pre-flight OPTIONS request which sometimes returns CORS error
-    // on retry fetch sends original request and it passes
-    try {
-      return await fetch(url, options);
-    } catch (err) {
-      if (err.code !== undefined || attempts <= 1) throw err;
-      return await Api.fetchWithRetry(url, options, attempts - 1);
-    }
-  };
+  }
 }

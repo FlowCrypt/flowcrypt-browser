@@ -11,7 +11,7 @@ export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 
 export class Env {
-  public static runtimeId = (orig = false) => {
+  public static runtimeId(orig = false) {
     if (chrome?.runtime?.id) {
       if (orig === true) {
         return chrome.runtime.id;
@@ -20,14 +20,14 @@ export class Env {
       }
     }
     return undefined;
-  };
+  }
 
-  public static getExtensionOrigin = () => {
+  public static getExtensionOrigin() {
     const url = chrome.runtime.getURL('');
     return Url.removeTrailingSlash(url);
-  };
+  }
 
-  public static isContentScript = () => {
+  public static isContentScript() {
     if (Env.isExtension()) {
       try {
         // Attempt to get the URL of an extension resource. This will succeed if we're in an extension context.
@@ -41,35 +41,35 @@ export class Env {
     }
     // chrome.runtime is not available, so it's not running within an extension
     return false;
-  };
+  }
 
   // Check if the current context is a Service Worker
-  public static isBackgroundPage = () => {
+  public static isBackgroundPage() {
     // 'self.registration' exists in service worker contexts
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     return typeof self.registration !== 'undefined';
-  };
+  }
 
-  public static isExtension = () => {
+  public static isExtension() {
     return typeof Env.runtimeId() !== 'undefined';
-  };
+  }
 
-  public static keyCodes = () => {
+  public static keyCodes() {
     // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
     // eslint-disable-next-line @typescript-eslint/naming-convention
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188 };
-  };
+  }
 
-  public static webmails = async (): Promise<WebMailName[]> => {
+  public static async webmails(): Promise<WebMailName[]> {
     return ['gmail']; // async because storage may be involved in the future
-  };
+  }
 
-  public static getBaseUrl = () => {
+  public static getBaseUrl() {
     return window.location.protocol + '//' + window.location.hostname;
-  };
+  }
 
-  public static getUrlNoParams = () => {
+  public static getUrlNoParams() {
     return window.location.protocol + '//' + window.location.hostname + window.location.pathname;
-  };
+  }
 }
