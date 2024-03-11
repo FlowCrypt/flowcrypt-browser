@@ -59,7 +59,7 @@ blocks:
   - name: Live UI Gmail tests
     dependencies: []
     run:
-      when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
+      when: branch = 'master' OR branch =~ 'live-test' OR branch =~ 'gmail-test' OR branch =~ 'unwanted-drafts'
     execution_time_limit:
       minutes: 45
     task:

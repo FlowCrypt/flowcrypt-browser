@@ -632,6 +632,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
+      this.replyOption = undefined;
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
@@ -684,12 +685,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
+            this.shouldShowEditableSecureReply = !isReplyButtonView;
             const secureReplyBoxXssSafe = /* xss-safe-factory */ `
               <div class="remove_borders reply_message_iframe_container">
                 ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
               </div>
             `;
-            this.shouldShowEditableSecureReply = !isReplyButtonView;
             if (hasDraft || alreadyHasSecureReplyBox) {
               replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
               replyBox.hide();
