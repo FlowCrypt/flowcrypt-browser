@@ -2,7 +2,7 @@ version: v1.0
 name: Flowcrypt Node Core Tests
 agent:
   machine:
-    type: e1-standard-8
+    type: e2-standard-4
     os_image: ubuntu2004
 auto_cancel:
   running:
@@ -99,7 +99,7 @@ blocks:
     task:
       agent:
         machine:
-          type: e1-standard-2
+          type: e2-standard-2
           os_image: ubuntu2004
       secrets:
         - name: flowcrypt-browser-ci-secrets
