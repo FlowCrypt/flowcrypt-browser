@@ -3,26 +3,39 @@
 /**
  * Cache, keeping entries for limited duration
  */
+type ExpirationCacheType<V> = { value: V; expiration: number };
 export class ExpirationCache<K, V> {
-  private cache = new Map<K, { value: V; expiration: number }>();
+  private cache = new Map<K, ExpirationCacheType<V>>();
 
   public constructor(public expirationTicks: number) {}
 
   public set = async (key: K, value?: V, expiration?: number) => {
     console.log('STORE SET ' + key);
     if (value) {
-      await chrome.storage.session.set({ [`${key}`]: { value, expiration: expiration || Date.now() + this.expirationTicks } });
-      // this.cache.set(key, { value, expiration: expiration || Date.now() + this.expirationTicks });
+      const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
+      if (this.isChromeSupported()) {
+        await chrome.storage.session.set({ [`${key}`]: expirationVal });
+      } else {
+        this.cache.set(key, expirationVal);
+      }
     } else {
-      await chrome.storage.session.remove(`${key}`); // set({ [`${key}`]: value });
-      // this.cache.delete(key);
+      if (this.isChromeSupported()) {
+        await chrome.storage.session.remove(`${key}`); // set({ [`${key}`]: value });
+      } else {
+        this.cache.delete(key);
+      }
     }
   };
 
   public get = async (key: K): Promise<V | undefined> => {
-    // const found = this.cache.get(key);
-    const result = await chrome.storage.session.get([key]);
-    const found = result[String(key)] as { value: V; expiration: number };
+    let found: ExpirationCacheType<V> | undefined;
+    if (this.isChromeSupported()) {
+      const result = await chrome.storage.session.get([key]);
+      found = result[String(key)];
+    } else {
+      found = this.cache.get(key);
+    }
+
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
@@ -55,6 +68,10 @@ export class ExpirationCache<K, V> {
       if ((await this.get(key)) === value) await this.set(key); // remove faulty record
       return Promise.reject(e);
     }
+  };
+
+  private isChromeSupported = () => {
+    return typeof chrome !== 'undefined';
   };
 }
 
