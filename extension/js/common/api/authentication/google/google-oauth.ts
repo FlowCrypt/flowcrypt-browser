@@ -64,7 +64,7 @@ export class GoogleOAuth extends OAuth {
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 
-  public static defaultScopes = (group: 'default' | 'contacts' = 'default') => {
+  public static defaultScopes(group: 'default' | 'contacts' = 'default') {
     const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = GoogleOAuth.OAUTH.scopes;
     if (group === 'default') {
       if (FLAVOR === 'consumer') {
@@ -79,9 +79,9 @@ export class GoogleOAuth extends OAuth {
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
-  };
+  }
 
-  public static getTokenInfo = async (accessToken: string): Promise<GoogleTokenInfo> => {
+  public static async getTokenInfo(accessToken: string): Promise<GoogleTokenInfo> {
     return (await Api.ajax(
       {
         url: `${OAUTH_GOOGLE_API_HOST}/tokeninfo?access_token=${accessToken}`,
@@ -91,9 +91,9 @@ export class GoogleOAuth extends OAuth {
       },
       'json'
     )) as GoogleTokenInfo;
-  };
+  }
 
-  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
+  public static async googleApiAuthHeader(acctEmail: string, forceRefresh = false): Promise<string> {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
@@ -121,9 +121,9 @@ export class GoogleOAuth extends OAuth {
         refreshTokenRes.expires_in
       },now:${Date.now()})`
     );
-  };
+  }
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async <RT>(acctEmail: string, req: Ajax): Promise<RT> => {
+  public static async apiGoogleCallRetryAuthErrorOneTime<RT>(acctEmail: string, req: Ajax): Promise<RT> {
     const performAjaxRequest = async <RT>(req: Ajax): Promise<RT> => {
       // temporary use jquery for upload requests https://github.com/FlowCrypt/flowcrypt-browser/issues/5612
       if (req.progress?.upload) {
@@ -146,9 +146,9 @@ export class GoogleOAuth extends OAuth {
       }
       throw firstAttemptErr;
     }
-  };
+  }
 
-  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string; scopes?: string[]; save?: boolean }): Promise<AuthRes> => {
+  public static async newAuthPopup({ acctEmail, scopes, save }: { acctEmail?: string; scopes?: string[]; save?: boolean }): Promise<AuthRes> {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -207,9 +207,9 @@ export class GoogleOAuth extends OAuth {
       }
     }
     return authRes;
-  };
+  }
 
-  private static getAuthRes = async ({
+  private static async getAuthRes({
     acctEmail,
     save,
     requestedScopes,
@@ -221,7 +221,7 @@ export class GoogleOAuth extends OAuth {
     requestedScopes: string[];
     expectedState: string;
     authWindowResult: Bm.AuthWindowResult;
-  }): Promise<AuthRes> => {
+  }): Promise<AuthRes> {
     /* eslint-disable @typescript-eslint/naming-convention */
     try {
       if (!authWindowResult.url) {
@@ -265,9 +265,9 @@ export class GoogleOAuth extends OAuth {
       return { acctEmail, result: 'Denied', error: String(err), id_token: undefined };
     }
     /* eslint-enable @typescript-eslint/naming-convention */
-  };
+  }
 
-  private static newAuthRequest = (acctEmail: string | undefined, scopes: string[]): AuthReq => {
+  private static newAuthRequest(acctEmail: string | undefined, scopes: string[]): AuthReq {
     const authReq = {
       acctEmail,
       scopes,
@@ -277,9 +277,9 @@ export class GoogleOAuth extends OAuth {
       ...authReq,
       expectedState: GoogleOAuth.OAUTH.state_header + JSON.stringify(authReq),
     };
-  };
+  }
 
-  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => {
+  private static apiGoogleAuthCodeUrl(authReq: AuthReq) {
     /* eslint-disable @typescript-eslint/naming-convention */
     return Url.create(GoogleOAuth.OAUTH.url_code, {
       client_id: GoogleOAuth.OAUTH.client_id,
@@ -292,9 +292,9 @@ export class GoogleOAuth extends OAuth {
       login_hint: authReq.acctEmail,
     });
     /* eslint-enable @typescript-eslint/naming-convention */
-  };
+  }
 
-  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse) => {
+  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: GoogleAuthTokensResponse) {
     const parsedOpenId = GoogleOAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']); // eslint-disable-line @typescript-eslint/naming-convention
     const googleTokenExpires = new Date().getTime() + ((tokensObj.expires_in as number) - 120) * 1000; // let our copy expire 2 minutes beforehand
@@ -308,9 +308,9 @@ export class GoogleOAuth extends OAuth {
     await AcctStore.set(acctEmail, toSave);
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.ID_TOKEN, tokensObj.id_token);
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
-  };
+  }
 
-  private static googleAuthGetTokens = async (code: string) => {
+  private static async googleAuthGetTokens(code: string) {
     return (await Api.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */
@@ -327,9 +327,9 @@ export class GoogleOAuth extends OAuth {
       },
       'json'
     )) as GoogleAuthTokensResponse;
-  };
+  }
 
-  private static googleAuthRefreshToken = async (refreshToken: string) => {
+  private static async googleAuthRefreshToken(refreshToken: string) {
     const url =
       /* eslint-disable @typescript-eslint/naming-convention */
       Url.create(GoogleOAuth.OAUTH.url_tokens, {
@@ -346,10 +346,10 @@ export class GoogleOAuth extends OAuth {
     };
 
     return (await Api.ajax(req, 'json')) as GoogleAuthTokensResponse;
-  };
+  }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  private static retrieveAndSaveAuthToken = async (authCode: string): Promise<{ id_token: string }> => {
+  private static async retrieveAndSaveAuthToken(authCode: string): Promise<{ id_token: string }> {
     const tokensObj = await GoogleOAuth.googleAuthGetTokens(authCode);
     const claims = GoogleOAuth.parseIdToken(tokensObj.id_token);
     if (!claims.email) {
@@ -357,9 +357,9 @@ export class GoogleOAuth extends OAuth {
     }
     await GoogleOAuth.googleAuthSaveTokens(claims.email, tokensObj);
     return { id_token: tokensObj.id_token }; // eslint-disable-line @typescript-eslint/naming-convention
-  };
+  }
 
-  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (addScopes: string[]): Promise<string[]> => {
+  private static async apiGoogleAuthPopupPrepareAuthReqScopes(addScopes: string[]): Promise<string[]> {
     if (!addScopes.includes(GoogleOAuth.OAUTH.scopes.email)) {
       addScopes.push(GoogleOAuth.OAUTH.scopes.email);
     }
@@ -370,5 +370,5 @@ export class GoogleOAuth extends OAuth {
       addScopes.push(GoogleOAuth.OAUTH.scopes.profile);
     }
     return addScopes;
-  };
+  }
 }
