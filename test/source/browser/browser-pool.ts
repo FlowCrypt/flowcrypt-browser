@@ -146,6 +146,8 @@ export class BrowserPool {
   };
 
   private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: unknown): Promise<string> => {
+    console.log('GOT ERROR');
+    console.log(err);
     return `
     <div class="attempt">
       <div style="display:none;">
