@@ -132,6 +132,9 @@ main() {
   ( cd conf && npx webpack ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
+( cd conf && npx webpack --config webpack.background-config.js ) & pids+=($!)
+  for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
+
   # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
   # cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build
   # cp dist/forge.js ../flowcrypt-browser/extension/lib/forge.js
