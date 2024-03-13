@@ -2732,27 +2732,10 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
     test(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
       const cache = new ExpirationCache(2000); // 2 seconds
       await cache.set('test-key', 'test-value');
-      expect(cache.get('test-key')).to.equal('test-value');
+      expect(await cache.get('test-key')).to.equal('test-value');
       await Util.sleep(2);
-      expect(cache.get('test-key')).to.be.an('undefined');
+      expect(await cache.get('test-key')).to.be.an('undefined');
       t.pass();
-    });
-
-    test(`[unit][ExpirationCache.await] removes rejected promises from cache`, async t => {
-      const cache = new ExpirationCache<string, Promise<string>>(24 * 60 * 60 * 1000); // 24 hours
-      const rejectionPromise = Promise.reject(Error('test-error'));
-      await cache.set('test-key', rejectionPromise);
-      await t.throwsAsync(() => cache.await('test-key', rejectionPromise) as Promise<Promise<string>>, {
-        instanceOf: Error,
-        message: 'test-error',
-      });
-      expect(cache.get('test-key')).to.be.an('undefined'); // next call simply returns undefined
-      const fulfilledPromise = Promise.resolve('new-test-value');
-      await cache.set('test-key', fulfilledPromise);
-      // good value is returned indefinitely
-      expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
-      expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
-      expect(cache.get('test-key')).to.equal(fulfilledPromise);
     });
 
     test(`[unit][Str] splitAlphanumericExtended returns all parts extendec till the end of the original string`, async t => {

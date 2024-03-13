@@ -10,7 +10,6 @@ export class ExpirationCache<K, V> {
   public constructor(public expirationTicks: number) {}
 
   public set = async (key: K, value?: V, expiration?: number) => {
-    console.log('STORE SET ' + key);
     if (value) {
       const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
       if (this.isChromeSupported()) {
@@ -35,7 +34,6 @@ export class ExpirationCache<K, V> {
     } else {
       found = this.cache.get(key);
     }
-
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
@@ -56,17 +54,6 @@ export class ExpirationCache<K, V> {
     }
     for (const key of keysToDelete) {
       this.cache.delete(key);
-    }
-  };
-
-  // await the value if it's a promise and remove from cache in case of exception
-  // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
-  public await = async (key: K, value: V): Promise<V> => {
-    try {
-      return await value;
-    } catch (e) {
-      if ((await this.get(key)) === value) await this.set(key); // remove faulty record
-      return Promise.reject(e);
     }
   };
 
