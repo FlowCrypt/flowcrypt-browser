@@ -7,7 +7,7 @@
 		exports["forge"] = factory();
 	else
 		root["forge"] = factory();
-})(typeof window !== 'undefined' ? window : self, function() {
+})(window, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
