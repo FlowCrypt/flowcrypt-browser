@@ -17,6 +17,9 @@ import { injectFcIntoWebmail } from './inject.js';
 
 console.info('background.js service worker starting');
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(globalThis as any).forge = require('node-forge');
+
 (async () => {
   chrome.storage.onChanged.addListener((changes, namespace) => {
     for (const [key, { oldValue, newValue }] of Object.entries(changes)) {
