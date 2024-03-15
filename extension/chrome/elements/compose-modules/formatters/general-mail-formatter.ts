@@ -22,7 +22,7 @@ export type MultipleMessages = {
 
 export class GeneralMailFormatter {
   // returns undefined in case user cancelled decryption of the signing key
-  public static processNewMsg = async (view: ComposeView, newMsgData: NewMsgData): Promise<MultipleMessages> => {
+  public static async processNewMsg(view: ComposeView, newMsgData: NewMsgData): Promise<MultipleMessages> {
     const choices = view.sendBtnModule.popover.choices;
     const recipientsEmails = getUniqueRecipientEmails(newMsgData.recipients);
     if (!choices.encrypt && !choices.sign) {
@@ -76,9 +76,9 @@ export class GeneralMailFormatter {
     }
     view.S.now('send_btn_text').text('Encrypting...');
     return await new EncryptedMsgMailFormatter(view).sendableMsgs(newMsgData, singleFamilyKeys.pubkeys, signingKey);
-  };
+  }
 
-  private static chooseSigningKeyAndDecryptIt = async (view: ComposeView, senderKis: KeyInfoWithIdentity[]): Promise<ParsedKeyInfo | undefined> => {
+  private static async chooseSigningKeyAndDecryptIt(view: ComposeView, senderKis: KeyInfoWithIdentity[]): Promise<ParsedKeyInfo | undefined> {
     const parsedSenderPrvs = await KeyStoreUtil.parse(senderKis);
     // to consider - currently we choose first valid key for signing. Should we sign with all?
     //   alternatively we could use most recenlty modified valid key
@@ -88,7 +88,7 @@ export class GeneralMailFormatter {
     }
     // throws ComposerResetBtnTrigger when user closes pass phrase dialog without entering
     return await view.storageModule.decryptSenderKey(parsedSenderPrv);
-  };
+  }
 
   private static isSenderInKeyUserIds = async (view: ComposeView, signingKey: Key): Promise<boolean> => {
     const senderEmail = view.senderModule.getSender();
