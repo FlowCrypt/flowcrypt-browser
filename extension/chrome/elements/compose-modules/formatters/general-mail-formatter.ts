@@ -93,15 +93,12 @@ export class GeneralMailFormatter {
 
   private static isSenderInKeyUserIds = async (view: ComposeView, signingKey: Key): Promise<boolean> => {
     const senderEmail = view.senderModule.getSender();
-    const emailsInSigningKey = signingKey.emails;
-    if (!emailsInSigningKey) {
-      return false;
-    } else if (senderEmail !== view.acctEmail) {
+    if (senderEmail !== view.acctEmail) {
       // Transpose the email to its base form when a filter is present. This is important
       // to consider when an email with a filter is present on the signingKey, as
       // technically it is the same email despite the filter.
       const baseSenderEmail = senderEmail.indexOf('+') !== -1 ? senderEmail.replace(/(.+)(?=\+).*(?=@)/, '$1') : senderEmail;
-      return emailsInSigningKey.some(email => email.includes(baseSenderEmail));
+      return signingKey.emails.some(email => email.includes(baseSenderEmail));
     }
     return true;
   };
