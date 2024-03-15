@@ -31,7 +31,7 @@
       "zxcvbn": ["lib/zxcvbn.js", "COMMENT"],
       "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js", "COMMENT"],
       "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
-      "node-forge": ["lib/forge.js"],
+      "node-forge": ["./extension/types/node-forge.d.ts", "COMMENT"],
       "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"]
     },
     "typeRoots": ["./extension/js/common/core/types", "./extension/types"]

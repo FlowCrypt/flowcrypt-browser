@@ -1,0 +1,7 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+
+'use strict';
+
+import { requireForge } from '../../../platform/require.js';
+
+export const forge = requireForge();

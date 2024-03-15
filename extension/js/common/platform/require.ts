@@ -26,6 +26,10 @@ import type * as OpenPGP from 'openpgp';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import * as openpgp from '../../../lib/openpgp.min.mjs';
+import type * as Forge from 'node-forge';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+import * as forge from '../../../lib/forge.mjs';
 
 type Codec = {
   encode: (text: string, mode: 'fatal' | 'html') => string;
@@ -37,6 +41,11 @@ type Codec = {
 export const requireOpenpgp = (): typeof OpenPGP => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return openpgp;
+};
+
+export const requireForge = (): typeof Forge => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return forge.default;
 };
 
 export const requireMimeParser = (): typeof MimeParser => {

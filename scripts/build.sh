@@ -12,7 +12,7 @@ synchronize_files() {
   local OUTDIR="$1"
 
   # Copying files with the given extensions
-  find . -type f \( -name '*.js' -o -name '*.htm' -o -name '*.css' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.txt' \) \
+  find . -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.htm' -o -name '*.css' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.txt' \) \
       -exec rsync -R {} "../$OUTDIR" \;
 }
 
@@ -130,9 +130,6 @@ main() {
 
   # bundle web-stream-tools as Stream var for the content script
   ( cd conf && npx webpack ) & pids+=($!)
-  for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
-
-( cd conf && npx webpack --config webpack.background-config.js ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
 
   # to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
