@@ -2,8 +2,8 @@ version: v1.0
 name: Flowcrypt Node Core Tests
 agent:
   machine:
-    type: e2-standard-4
-    os_image: ubuntu2004
+    type: f1-standard-2
+    os_image: ubuntu2204
 auto_cancel:
   running:
     when: branch != 'master'
