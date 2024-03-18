@@ -2,10 +2,6 @@ const globalThis = typeof window !== 'undefined' ? window : typeof global !== 'u
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
-function getDefaultExportFromCjs (x) {
-	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-}
-
 /**
  * Node.js module for Forge.
  *
@@ -27958,6 +27954,4 @@ function _sha1() {
 
 var lib = forge$C;
 
-var index = /*@__PURE__*/getDefaultExportFromCjs(lib);
-
-export { index as default };
+export { lib as default };
