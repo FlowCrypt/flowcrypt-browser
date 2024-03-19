@@ -17,7 +17,7 @@ import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-me
 import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-
+export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
 export interface ChildFrame {
   readonly parentTabId: string;
 }
@@ -77,7 +77,7 @@ export namespace Bm {
     expiration: number | undefined;
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
-  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
+  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[]; screenDimensions: ScreenDimensions };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
