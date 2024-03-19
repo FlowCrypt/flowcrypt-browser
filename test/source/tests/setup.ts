@@ -2030,7 +2030,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const savedKey = (t.context.mockApi!.configProvider.config.ekm?.keys ?? [])[0];
         const k = await KeyUtil.parse(savedKey);
         expect(await myKeyFrame.read('@content-fingerprint')).to.equal(Str.spaced(k.id));
-        expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Key does not expire');
+        expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Does not expire');
         await SettingsPageRecipe.closeDialog(settingsPage);
         await Util.sleep(2);
         // check that it does not offer any pass phrase options

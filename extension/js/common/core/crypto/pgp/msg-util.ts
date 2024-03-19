@@ -157,12 +157,12 @@ export class MsgUtil {
    * Returns signed data if detached=false, armored
    * Returns signature if detached=true, armored
    */
-  public static sign = async (signingPrivate: Key, data: string, detached = false): Promise<string> => {
+  public static async sign(signingPrivate: Key, data: string, detached = false): Promise<string> {
     // TODO: Delegate to appropriate key type
     return await OpenPGPKey.sign(signingPrivate, data, detached);
-  };
+  }
 
-  public static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText, verificationPubs }) => {
+  public static async verifyDetached({ plaintext, sigText, verificationPubs }: PgpMsgMethod.Arg.VerifyDetached) {
     const message = await opgp.createMessage({ text: Str.with(plaintext) });
     try {
       await message.appendSignature(sigText);
@@ -176,9 +176,9 @@ export class MsgUtil {
       };
     }
     return await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
-  };
+  }
 
-  public static decryptMessage: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd, verificationPubs }) => {
+  public static async decryptMessage({ kisWithPp, encryptedData, msgPwd, verificationPubs }: PgpMsgMethod.Arg.Decrypt): Promise<DecryptResult> {
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     let prepared: PreparedForDecrypt;
     try {
@@ -272,9 +272,9 @@ export class MsgUtil {
     } catch (e) {
       return { success: false, error: MsgUtil.cryptoMsgDecryptCategorizeErr(e, msgPwd), longids, isEncrypted };
     }
-  };
+  }
 
-  public static encryptMessage: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
+  public static async encryptMessage({ pubkeys, signingPrv, pwd, data, filename, armor, date }: PgpMsgMethod.Arg.Encrypt): Promise<PgpMsgMethod.EncryptResult> {
     const keyFamilies = new Set(pubkeys.map(k => k.family));
     if (keyFamilies.has('openpgp') && keyFamilies.has('x509')) {
       throw new Error('Mixed key families are not allowed: ' + [...keyFamilies]);
@@ -284,9 +284,9 @@ export class MsgUtil {
       return await SmimeKey.encryptMessage(input);
     }
     return await OpenPGPKey.encryptMessage(input);
-  };
+  }
 
-  public static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ armoredPubs, message }) => {
+  public static async diagnosePubkeys({ armoredPubs, message }: PgpMsgMethod.Arg.DiagnosePubkeys) {
     const m = await opgp.readMessage({ armoredMessage: Str.with(message) });
     const msgKeyIds = m.getEncryptionKeyIDs();
     const localKeyIds: string[] = [];
@@ -304,9 +304,9 @@ export class MsgUtil {
       }
     }
     return diagnosis;
-  };
+  }
 
-  private static getSortedKeys = async (kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.Message<OpenPGP.Data>): Promise<SortedKeysForDecrypt> => {
+  private static async getSortedKeys(kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.Message<OpenPGP.Data>): Promise<SortedKeysForDecrypt> {
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],
       signedBy: [],
@@ -343,9 +343,9 @@ export class MsgUtil {
       }
     }
     return keys;
-  };
+  }
 
-  private static getSmimeKeys = async (kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: SmimeMsg): Promise<SortedKeysForDecrypt> => {
+  private static async getSmimeKeys(kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: SmimeMsg): Promise<SortedKeysForDecrypt> {
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],
       signedBy: [],
@@ -377,13 +377,13 @@ export class MsgUtil {
       }
     }
     return keys;
-  };
+  }
 
-  private static matchingKeyids = (longids: string[], encryptedForKeyids: OpenPGP.KeyID[]): OpenPGP.KeyID[] => {
+  private static matchingKeyids(longids: string[], encryptedForKeyids: OpenPGP.KeyID[]): OpenPGP.KeyID[] {
     return encryptedForKeyids.filter(kid => longids.includes(OpenPGPKey.bytesToLongid(kid.bytes)));
-  };
+  }
 
-  private static decryptKeyFor = async (prv: Key, passphrase: string, matchingKeyIds: OpenPGP.KeyID[]): Promise<boolean> => {
+  private static async decryptKeyFor(prv: Key, passphrase: string, matchingKeyIds: OpenPGP.KeyID[]): Promise<boolean> {
     if (!matchingKeyIds.length) {
       // we don't know which keyids match, decrypt all key packets
       return await KeyUtil.decrypt(prv, passphrase, undefined, 'OK-IF-ALREADY-DECRYPTED');
@@ -395,9 +395,9 @@ export class MsgUtil {
       }
     }
     return true;
-  };
+  }
 
-  private static isKeyDecryptedFor = async (prv: Key, msgKeyIds: OpenPGP.KeyID[]): Promise<boolean> => {
+  private static async isKeyDecryptedFor(prv: Key, msgKeyIds: OpenPGP.KeyID[]): Promise<boolean> {
     if (prv.fullyDecrypted) {
       return true; // primary k + all subkeys decrypted, therefore it must be decrypted for any/every particular keyid
     }
@@ -408,9 +408,9 @@ export class MsgUtil {
       return false; // we don't know which keyId to decrypt - must decrypt all (but key is only partially decrypted)
     }
     return (await Promise.all(msgKeyIds.map(kid => OpenPGPKey.isPacketDecrypted(prv, kid)))).every(Boolean); // test if all needed key packets are decrypted
-  };
+  }
 
-  private static cryptoMsgDecryptCategorizeErr = (decryptErr: unknown, msgPwd?: string): DecryptError$error => {
+  private static cryptoMsgDecryptCategorizeErr(decryptErr: unknown, msgPwd?: string): DecryptError$error {
     const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
     const keyMismatchErrStrings = [
       "Cannot read property 'isDecrypted' of null",
@@ -440,5 +440,5 @@ export class MsgUtil {
     } else {
       return { type: DecryptErrTypes.other, message: e };
     }
-  };
+  }
 }

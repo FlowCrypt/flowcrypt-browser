@@ -93,7 +93,7 @@ module.exports = {
     '@typescript-eslint/prefer-namespace-keyword': 'error',
     '@typescript-eslint/type-annotation-spacing': 'off',
     '@typescript-eslint/typedef': 'off',
-    '@typescript-eslint/unbound-method': 'error',
+    '@typescript-eslint/unbound-method': ['error', { ignoreStatic: true }],
     '@typescript-eslint/unified-signatures': 'error',
     complexity: 'off',
     'constructor-super': 'error',

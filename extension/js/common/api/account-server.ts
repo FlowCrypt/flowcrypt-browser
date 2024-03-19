@@ -27,11 +27,11 @@ export class AccountServer extends Api {
     this.externalService = new ExternalService(this.acctEmail);
   }
 
-  public static init = async (acctEmail: string) => {
+  public static async init(acctEmail: string) {
     const acctServer = new AccountServer(acctEmail);
     await acctServer.initialize();
     return acctServer;
-  };
+  }
 
   public initialize = async () => {
     if (!(await isCustomerUrlFesUsed(this.acctEmail))) {
