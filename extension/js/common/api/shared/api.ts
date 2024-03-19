@@ -327,16 +327,8 @@ export class Api {
     }
   }
 
-  public static async isInternetAccessible() {
-    try {
-      await Api.download('https://google.com');
-      return true;
-    } catch (e) {
-      if (ApiErr.isNetErr(e)) {
-        return false;
-      }
-      throw e;
-    }
+  public static isInternetAccessible() {
+    return window.navigator.onLine;
   }
 
   public static randomFortyHexChars(): string {
