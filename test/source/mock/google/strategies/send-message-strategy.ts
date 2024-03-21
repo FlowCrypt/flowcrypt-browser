@@ -266,7 +266,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
 
 class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Signed Message (Mock Test)';
-  private readonly signedBy = 'B6BE3C4293DDCF66'; // could potentially grab this from test-secrets.json file
+  private readonly signedBy = 'ADAC279C95093207'; // could potentially grab this from test-secrets.json file
 
   public test = async (parseResult: ParseMsgResult) => {
     const text = parseResult.mimeMsg.text ?? '';
