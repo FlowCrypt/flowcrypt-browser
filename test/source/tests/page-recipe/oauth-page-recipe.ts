@@ -112,7 +112,7 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
-      if (await oauthPage.isElementPresent('.F9NWFb')) {
+      if ((await oauthPage.isElementPresent('.F9NWFb')) || (await oauthPage.isElementPresent('.Svhjgc'))) {
         // additional confirmation screen
         const actionButtons = await oauthPage.target.$$(selectors.googleContinueAuthBtn);
         await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
