@@ -461,6 +461,26 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      "compose - forbid sending signed messages if alias is absent from signing key's user ID",
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail', {
+          attester: { includeHumanKey: true },
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const emailAlias = 'flowcryptcompatibility@gmail.com';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+        await ComposePageRecipe.selectFromOption(composePage, emailAlias);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'from alias');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await composePage.waitAndRespondToModal(
+          'error',
+          'confirm',
+          `Failed to send message due to: Error: Could not sign this encrypted message. The sender email ${emailAlias} isn't present in the signing key's user ids`
+        );
+      })
+    );
+
+    test(
       'compose - with attachments + nopgp',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
