@@ -155,7 +155,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - rendering attachments',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -167,7 +167,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - msg.asc message content renders',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -187,7 +187,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - Thunderbird signature [html] is recognized',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -214,7 +214,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - Thunderbird signature [plain] is recognized + correct height',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -241,7 +241,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - pubkey gets rendered with new signed and encrypted Thunderbird signature',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -361,7 +361,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    test.skip(
+    test(
       'mail.google.com - plain message contains smart replies',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -372,7 +372,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - plain reply to encrypted and signed messages',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -398,7 +398,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - switch to encrypted reply for middle message',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -427,7 +427,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - plain reply with dot menu',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -480,7 +480,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    test.skip(
+    test(
       'mail.google.com - Outlook encrypted message with attachment is recognized',
       testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -501,7 +501,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - simple attachments triggering processAttachments() keep "download all" button visible`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -514,7 +514,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - encrypted text inside "message" attachment`,
       testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -534,7 +534,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - large clipped PGP/MIME encrypted message rendered correctly`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -552,7 +552,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - attachments which contain emoji in filename are rendered correctly`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -569,7 +569,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -584,7 +584,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - pubkey file gets rendered',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -599,7 +599,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // uses live openpgpkey.flowcrypt.com WKD
-    test.skip(
+    test(
       'can lookup public key from WKD directly',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
