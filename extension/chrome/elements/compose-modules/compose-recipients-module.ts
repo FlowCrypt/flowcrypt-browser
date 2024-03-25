@@ -201,7 +201,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}).4`);
       } else {
         this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
-        $('body').attr('data-test-state', 'ready');
+        document.querySelector('body')?.setAttribute('data-test-state', 'ready');
       }
     }
   };
@@ -282,7 +282,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   public evaluateRecipients = async (recipientEls: ValidRecipientElement[], triggerCallback = true) => {
     this.view.errModule.debug(`evaluateRecipients`);
-    $('body').attr('data-test-state', 'working');
+    document.querySelector('body')?.setAttribute('data-test-state', 'working');
     for (const recipientEl of recipientEls) {
       this.view.S.now('send_btn_text').text(this.BTN_LOADING);
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
@@ -307,7 +307,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       }
     }
     this.setEmailsPreview();
-    $('body').attr('data-test-state', 'ready');
+    document.querySelector('body')?.setAttribute('data-test-state', 'ready');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 
