@@ -292,7 +292,15 @@ export class MessageRenderer {
         if (this.debug) {
           console.debug('processAttachment() try -> awaiting chunk + awaiting type');
         }
-        const data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
+        let data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
+        // For some reason, it sometimes doesn't return Buf and instead returns object
+        // Need to convert it to Buf
+        if (!(data instanceof Buf)) {
+          const att = Object.entries(data).map(entry => {
+            return entry[1] as number;
+          });
+          data = new Buf(att);
+        }
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // todo: publicKey attachment can't be too big, so we could do preparePubkey() call (checking file length) right here

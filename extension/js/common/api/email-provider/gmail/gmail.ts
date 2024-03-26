@@ -221,14 +221,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           let completeChunk = '';
           while (true) {
             const { done, value } = await reader.read();
-            console.log(done);
-            console.log(value);
-            console.log(treatAs);
             if (done) break;
             const chunk = new TextDecoder().decode(value);
             totalBytes += value.length; // Update total bytes based on the Uint8Array length
-            console.log(totalBytes);
-            console.log(chunk);
             completeChunk += chunk;
             if (totalBytes >= minBytes || treatAs === 'publicKey') {
               // Process and return the chunk if the conditions are met
