@@ -10,7 +10,6 @@ import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
-import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
@@ -26,17 +25,17 @@ export namespace Bm {
   export type Dest = string;
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = unknown;
-  export type RawResponse = { result: unknown; objUrls: { [name: string]: string }; exception?: Bm.ErrAsJson };
+  export type RawResponse = { result: unknown; exception?: Bm.ErrAsJson };
   export type Raw = {
     name: string;
-    data: { bm: AnyRequest | object; objUrls: Dict<string> };
+    data: { bm: AnyRequest | object };
     to: Dest | null;
     uid: string;
     stack: string;
   };
   export type RawWithWindowExtensions = Raw & {
     to: Dest;
-    data: { bm: AnyRequest & { messageSender?: Dest }; objUrls: Dict<string> };
+    data: { bm: AnyRequest & { messageSender?: Dest } };
     responseName?: string;
     propagateToParent?: boolean;
   };
@@ -318,9 +317,7 @@ export class BrowserMsg {
         if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
-          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-            .then(bm => BrowserMsg.sendRawResponse(handler(bm), respondIfPageStillOpen))
-            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
+          BrowserMsg.sendRawResponse(handler(msg.data.bm), respondIfPageStillOpen);
           return true; // will respond
         } else {
           // broadcast message that backend does not have a handler for - ignored
@@ -366,7 +363,7 @@ export class BrowserMsg {
         handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
             // send response as a new request
-            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
+            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>).catch(Catch.reportErr);
           }
         });
       }
@@ -379,7 +376,7 @@ export class BrowserMsg {
 
   private static sendToParentWindow(parentReference: ChildFrame, name: string, bm: Dict<unknown> & { messageSender?: Bm.Dest }, responseName?: string) {
     const raw: Bm.RawWithWindowExtensions = {
-      data: { bm, objUrls: {} },
+      data: { bm },
       name,
       stack: '',
       to: parentReference.parentTabId,
@@ -411,9 +408,7 @@ export class BrowserMsg {
         BrowserMsg.processed.add(msg.uid);
         if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
-          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-            .then(bm => BrowserMsg.sendRawResponse(handler(bm), rawRespond))
-            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
+          BrowserMsg.sendRawResponse(handler(msg.data.bm), rawRespond);
           return true;
         }
       } else {
@@ -445,20 +440,13 @@ export class BrowserMsg {
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
       return await handler(bm);
     }
-    return await BrowserMsg.sendRaw(
-      destString,
-      name,
-      bm,
-      // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
-      BrowserMsg.replaceBufWithObjUrlInplace(bm),
-      awaitRes
-    );
+    return await BrowserMsg.sendRaw(destString, name, bm, awaitRes);
   }
 
-  private static sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, objUrls: Dict<string>, awaitRes = false): Promise<Bm.Response> {
+  private static sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     const msg: Bm.Raw = {
       name,
-      data: { bm, objUrls },
+      data: { bm },
       to: destString || null, // eslint-disable-line no-null/no-null
       uid: SymmetricMessageEncryption.generateIV(),
       stack: Catch.stackTrace(),
@@ -506,7 +494,7 @@ export class BrowserMsg {
         } else if (!r.result || typeof r.result !== 'object') {
           resolve(r.result as Bm.Response);
         } else {
-          BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
+          resolve(r.result);
         }
       };
       try {
@@ -541,39 +529,6 @@ export class BrowserMsg {
       parent.postMessage(encryptedWithPropagationFlag, '*');
     }
   }
-  /**
-   * Browser messages cannot send a lot of data per message. This will replace Buf objects (which can be large) with an ObjectURL
-   * Be careful when editting - the type system won't help you here and you'll likely make mistakes
-   * The requestOrResponse object will get directly updated in this function
-   */
-  private static replaceBufWithObjUrlInplace(requestOrResponse: unknown): Dict<string> {
-    const objUrls: Dict<string> = {};
-    // eslint-disable-next-line no-null/no-null
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) {
-      for (const possibleBufName of Object.keys(requestOrResponse)) {
-        const possibleBufs = (requestOrResponse as Record<string, unknown>)[possibleBufName];
-        if (possibleBufs instanceof Uint8Array) {
-          objUrls[possibleBufName] = Browser.objUrlCreate(possibleBufs);
-          (requestOrResponse as Record<string, unknown>)[possibleBufName] = undefined;
-        }
-      }
-    }
-    return objUrls;
-  }
-
-  /**
-   * This method does the opposite of replaceBufWithObjUrlInplace so we end up with original message (or response) containing possibly a large Buf
-   * Be careful when editting - the type system won't help you here and you'll likely make mistakes
-   */
-  private static async replaceObjUrlWithBuf<T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> {
-    // eslint-disable-next-line no-null/no-null
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) {
-      for (const consumableObjUrlName of Object.keys(objUrls)) {
-        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
-      }
-    }
-    return requestOrResponse;
-  }
 
   private static errToJson(e: unknown): Bm.ErrAsJson {
     if (e instanceof AjaxErr) {
@@ -604,14 +559,13 @@ export class BrowserMsg {
     try {
       handlerPromise
         .then(result => {
-          const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
-          rawRespond({ result, exception: undefined, objUrls });
+          rawRespond({ result, exception: undefined });
         })
         .catch(e => {
-          rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
+          rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e) });
         });
     } catch (e) {
-      rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
+      rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e) });
     }
   }
 }
