@@ -5,6 +5,6 @@ const win: Window = window;
 
 // Redirect back to the extension itself so that we have priveledged access again
 // Need to send BrowserMsg event back to GoogleAuth
-const redirect = chrome.extension.getURL('/chrome/elements/oauth2.htm');
+const redirect = chrome.runtime.getURL('/chrome/elements/oauth2.htm');
 
 win.location = redirect + win.location.search;

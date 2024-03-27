@@ -25,7 +25,6 @@ import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
-import { BrowserMsg } from './browser/browser-msg.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
@@ -436,7 +435,7 @@ export class Settings {
       await Ui.modal.info(`Reload after logging in.`);
       return window.location.reload();
     }
-    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
+    const authRes = await GoogleOAuth.newAuthPopup({ acctEmail });
     if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
       then();
     } else {

@@ -7,7 +7,7 @@ import { Catch } from '../platform/catch.js';
 import { Dict, Str, Url } from '../core/common.js';
 import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
-import { Bm, BrowserMsg, ChildFrame } from './browser-msg.js';
+import { Bm, BrowserMsg, ChildFrame, ScreenDimensions } from './browser-msg.js';
 
 type NamedSels = Dict<JQuery<HTMLElement>>;
 
@@ -343,6 +343,17 @@ export class Ui {
   };
 
   public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+
+  public static getScreenDimensions = (): ScreenDimensions => {
+    const { availLeft, availTop } = window.screen as unknown as { availLeft?: number; availTop?: number };
+
+    return {
+      width: window.screen.width,
+      height: window.screen.height,
+      availLeft: availLeft ?? 0,
+      availTop: availTop ?? 0,
+    };
+  };
 
   public static modalInParentTab = (confirmationResultTracker: ConfirmationResultTracker) => {
     return {

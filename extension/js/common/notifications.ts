@@ -67,7 +67,10 @@ export class Notifications {
   };
 
   private reconnectAcctAuthPopup = async (acctEmail: string) => {
-    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
+    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({
+      acctEmail,
+      screenDimensions: Ui.getScreenDimensions(),
+    });
     if (authRes.result === 'Success') {
       this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
     } else if (authRes.result === 'Denied') {
