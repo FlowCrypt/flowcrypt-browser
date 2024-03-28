@@ -79,7 +79,7 @@ export class SetupWithEmailKeyManagerModule {
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
-      if (ApiErr.isNetErr(e) && (await Api.isInternetAccessible())) {
+      if (ApiErr.isNetErr(e) && Api.isInternetAccessible()) {
         // frendly message when key manager is down, helpful during initial infrastructure setup
         const url = this.view.clientConfiguration.getKeyManagerUrlForPrivateKeys();
         const message =

@@ -13,12 +13,12 @@ import { GlobalStore } from '../platform/store/global-store.js';
 
 export class Browser {
   public static objUrlCreate = (content: Uint8Array | string) => {
-    return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+    return URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
   };
 
   public static objUrlConsume = async (url: string) => {
     const buf = await Api.download(url);
-    window.URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url);
     return buf;
   };
 

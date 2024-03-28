@@ -50,16 +50,26 @@ export class BgHandlers {
       chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {
         if (activeTabs.length) {
           if (activeTabs[0].id !== undefined) {
-            type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
-            chrome.tabs.executeScript(
-              activeTabs[0].id,
-              { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
-              (result: ScriptRes) => {
-                resolve({
-                  provider: 'gmail',
-                  acctEmail: result[0].acctEmail,
-                  sameWorld: result[0].sameWorld === true,
-                });
+            type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined };
+            chrome.scripting.executeScript(
+              {
+                target: { tabId: activeTabs[0].id },
+                func: () => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  return { acctEmail: (window as any).account_email_global, sameWorld: (window as any).same_world_global };
+                },
+              },
+              results => {
+                const scriptResult = results[0].result as ScriptRes;
+                if (scriptResult) {
+                  resolve({
+                    provider: 'gmail',
+                    acctEmail: scriptResult.acctEmail,
+                    sameWorld: scriptResult.sameWorld === true,
+                  });
+                } else {
+                  reject(new Error('Script execution failed'));
+                }
               }
             );
           } else {
