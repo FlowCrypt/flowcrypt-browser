@@ -37,6 +37,7 @@ const addOrReplaceKeysAndPassPhrase = async (
   prvs: Key[],
   ppOptions?: PassphraseOptions,
   submitKeyForAddrs: string[] = [],
+  cameFromRecoveryPage = false,
   replaceKeys = false
 ) => {
   if (replaceKeys) {
@@ -54,11 +55,12 @@ const addOrReplaceKeysAndPassPhrase = async (
   if (ppOptions !== undefined) {
     await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
-  const { full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
+  const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
   submitKeyForAddrs.push(acctEmail);
-  const myOwnEmailsAddrs = submitKeyForAddrs;
-  for (const email of myOwnEmailsAddrs) {
+  const emailsInContacts = cameFromRecoveryPage ? myOwnEmailsAddrs : submitKeyForAddrs;
+  for (const email of emailsInContacts) {
     if (ppOptions !== undefined) {
       // first run, update `name`, todo: refactor in #4545
       await ContactStore.update(undefined, email, { name });
@@ -69,8 +71,13 @@ const addOrReplaceKeysAndPassPhrase = async (
   }
 };
 
-export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, submitKeyForAddrs?: string[]) => Promise<void> =
-  addOrReplaceKeysAndPassPhrase;
+export const saveKeysAndPassPhrase: (
+  acctEmail: string,
+  prvs: Key[],
+  ppOptions?: PassphraseOptions,
+  submitKeyForAddrs?: string[],
+  cameFromRecoveryPage?: boolean
+) => Promise<void> = addOrReplaceKeysAndPassPhrase;
 
 const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
   const unencryptedPrvs: Key[] = [];
@@ -168,7 +175,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   }
   // stage 1. Clear all existingKeys, except for keysToRetain
   if (existingKeys.length !== keysToRetain.length) {
-    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, [], true);
+    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, [], false, false);
   }
   // stage 2. Adding new keys
   if (encryptedKeys?.keys.length) {
