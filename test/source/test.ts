@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 
 import { BrowserHandle, BrowserPool } from './browser';
-import { AvaContext, TestContext, getDebugHtmlAtts, minutes } from './tests/tooling';
+import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
 import { mkdirSync, realpathSync, writeFileSync } from 'fs';
@@ -216,9 +216,7 @@ test.afterEach.always('send debug info if any', async t => {
   const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+    standaloneTestTimeout(t as AvaContext, consts.TIMEOUT_SHORT, t.title);
     console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
     try {
