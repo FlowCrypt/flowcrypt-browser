@@ -3,16 +3,10 @@
 'use strict';
 
 import type OpenPGP from 'openpgp';
-import type Forge from 'node-forge';
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   return require('openpgp') as unknown as typeof OpenPGP;
-};
-
-export const requireForge = (): typeof Forge => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return require('node-forge') as unknown as typeof Forge;
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

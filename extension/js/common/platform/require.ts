@@ -22,10 +22,7 @@
  */
 
 import { MimeParser } from '../core/types/emailjs.js';
-import type * as OpenPGP from 'openpgp';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import * as openpgp from '../../../lib/openpgp.min.mjs';
+import * as openpgp from 'openpgp';
 
 type Codec = {
   encode: (text: string, mode: 'fatal' | 'html') => string;
@@ -34,8 +31,7 @@ type Codec = {
   version: string;
 };
 
-export const requireOpenpgp = (): typeof OpenPGP => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+export const requireOpenpgp = () => {
   return openpgp;
 };
 

@@ -3,7 +3,7 @@
 'use strict';
 
 // todo: move this file level up as it handles both S/MIME and OpenPGP?
-import type * as Forge from 'node-forge';
+import * as forge from 'node-forge';
 import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
@@ -20,7 +20,7 @@ export type PreparedForDecrypt =
       message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGP.Data>;
     }
   | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.Message<OpenPGP.Data> }
-  | { isArmored: boolean; isCleartext: false; isPkcs7: true; message: Forge.pkcs7.PkcsEnvelopedData };
+  | { isArmored: boolean; isCleartext: false; isPkcs7: true; message: forge.pkcs7.PkcsEnvelopedData };
 
 type CryptoArmorHeaderDefinitions = {
   readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition;
