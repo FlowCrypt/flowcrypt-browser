@@ -100,7 +100,6 @@ export class Google {
   public static getNames = async (acctEmail: string) => {
     const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
     const data = { personFields: 'names' };
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const contacts = GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
       url: getProfileUrl,

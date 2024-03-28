@@ -74,7 +74,7 @@ export class OauthPageRecipe extends PageRecipe {
       googleContinueAuthBtn: '.VfPpkd-LgbsSe',
     };
     try {
-      const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
+      const alreadyLoggedSelector = '.w6VTHd, .wLBAL, .yAlK0b';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
       await oauthPage.waitAny(
         `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
@@ -91,6 +91,9 @@ export class OauthPageRecipe extends PageRecipe {
       } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`)) {
         // already logged in - just choose an account
         await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
+      } else if (await oauthPage.target.$(`.yAlK0b[data-email="${acctEmail}"]`)) {
+        // already logged in - just choose an account (google ui update 2024)
+        await oauthPage.waitAndClick(`.yAlK0b[data-email="${acctEmail}"]`, { delay: 1 });
       } else if (await oauthPage.target.$(alreadyLoggedSelector)) {
         // select from accounts where already logged in
         await oauthPage.waitAndClick(alreadyLoggedChooseOtherAccountSelector, { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
@@ -109,7 +112,7 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
-      if (await oauthPage.isElementPresent('.F9NWFb')) {
+      if ((await oauthPage.isElementPresent('.F9NWFb')) || (await oauthPage.isElementPresent('.Svhjgc'))) {
         // additional confirmation screen
         const actionButtons = await oauthPage.target.$$(selectors.googleContinueAuthBtn);
         await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
