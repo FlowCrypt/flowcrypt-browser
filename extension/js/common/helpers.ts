@@ -58,8 +58,7 @@ const addOrReplaceKeysAndPassPhrase = async (
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
-  submitKeyForAddrs.push(acctEmail);
-  const emailsInContacts = cameFromRecoveryPage ? myOwnEmailsAddrs : submitKeyForAddrs;
+  const emailsInContacts = cameFromRecoveryPage ? myOwnEmailsAddrs : (submitKeyForAddrs.push(acctEmail), submitKeyForAddrs);
   for (const email of emailsInContacts) {
     if (ppOptions !== undefined) {
       // first run, update `name`, todo: refactor in #4545
