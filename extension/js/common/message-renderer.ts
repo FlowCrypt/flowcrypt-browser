@@ -295,6 +295,8 @@ export class MessageRenderer {
         let data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
         // For some reason, it sometimes doesn't return Buf and instead returns object
         // Need to convert it to Buf
+        // todo: this is a temporary fix, should be removed
+        // https://github.com/FlowCrypt/flowcrypt-browser/pull/5607#discussion_r1540198173
         if (!(data instanceof Buf)) {
           const att = Object.entries(data).map(entry => {
             return entry[1] as number;
