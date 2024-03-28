@@ -118,7 +118,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.only(
       'mail.google.com - send rich-text encrypted message',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.dev';

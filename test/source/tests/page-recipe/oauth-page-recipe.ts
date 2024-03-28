@@ -72,6 +72,7 @@ export class OauthPageRecipe extends PageRecipe {
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
       googleContinueAuthBtn: '.VfPpkd-LgbsSe',
+      verifyAccountBtn: '.nCP5yc.AjY5Oe',
     };
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
@@ -126,6 +127,17 @@ export class OauthPageRecipe extends PageRecipe {
       }
       await Util.sleep(1);
       const button = await oauthPage.waitAny('button');
+      if (await oauthPage.isElementPresent(selectors.verifyAccountBtn)) {
+        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.verifyAccountBtn));
+        await Util.sleep(2);
+        if (await oauthPage.target.$(`.yAlK0b[data-email="${acctEmail}"]`)) {
+          // already logged in - just choose an account
+          await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(`.yAlK0b[data-email="${acctEmail}"]`, { delay: 1 }));
+        }
+        await Util.sleep(2);
+        const actionButtons = await oauthPage.target.$$('.VfPpkd-LgbsSe');
+        await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
+      }
       const formAction = await button.evaluate(button => (button as HTMLButtonElement).formAction);
       if (formAction?.includes('confirmaccount?')) {
         // click on "Continue" on "Verify it's you" screen
