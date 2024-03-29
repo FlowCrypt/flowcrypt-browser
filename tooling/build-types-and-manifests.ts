@@ -27,13 +27,15 @@ addManifest('chrome-consumer', manifest => {
 
 addManifest('firefox-consumer', manifest => {
   manifest.version = version;
-  manifest.applications = {
+  manifest.browser_specific_settings = {
     gecko: {
       id: 'firefox@cryptup.io',
       update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
       strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
+  manifest.background.scripts = ['/js/service_worker/background.js'];
+  delete manifest.background.service_worker;
   manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
 });
