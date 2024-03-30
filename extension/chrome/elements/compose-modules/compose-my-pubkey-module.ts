@@ -76,11 +76,10 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
             // they do need pubkey
             // However, on GH issue #5609, users doesn't seem to like it auto-included so
             // a prompt with a hint would be a great replacement.
-            await Ui.modal.info(
+            return await Ui.modal.info(
               `We couldn't locate your public key on the server for others to use. You can manually        include it in this email by clicking the certificate icon beside the trash.\n\nIf you want to submit your public key to the server, please ask ${this.view.fesUrl ? 'your administrator' : 'human@flowcrypt.com'} for an assistance.`,
               true
             );
-            return;
           }
         }
         this.setAttachPreference(false);
