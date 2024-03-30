@@ -123,6 +123,11 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['flowcryptcompatibility@gmail.com']).not.to.be.an('undefined');
+        // Additional test for https://github.com/FlowCrypt/flowcrypt-browser/pull/5633
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom(flowcrypt.compatibility)')).to.be.true; // main user email
+        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom')).to.be.true; // user email alias
         await settingsPage.close();
       })
     );
