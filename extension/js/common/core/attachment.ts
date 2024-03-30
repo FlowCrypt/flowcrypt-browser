@@ -206,7 +206,7 @@ export class Attachment {
       return 'signature';
     } else if (this.inline && this.isAttachmentAnImage()) {
       return 'inlineImage';
-    } else if (!this.name && !this.isAttachmentAnImage() && this.type !== 'application/octet-stream') {
+    } else if (!this.name && !this.isAttachmentAnImage() && this.type !== 'application/octet-stream' && this.type !== 'multipart/mixed') {
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
