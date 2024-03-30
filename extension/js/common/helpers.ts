@@ -174,7 +174,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   }
   // stage 1. Clear all existingKeys, except for keysToRetain
   if (existingKeys.length !== keysToRetain.length) {
-    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, [], false, false);
+    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, [], false, true);
   }
   // stage 2. Adding new keys
   if (encryptedKeys?.keys.length) {
