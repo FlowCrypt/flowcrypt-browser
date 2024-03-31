@@ -541,7 +541,7 @@ export class Ui {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     Ui.swal().fire({
       toast: true,
-      title: text,
+      title: `<div data-test="container-ui-toast-text">${text}</div>`,
       icon,
       showConfirmButton: false,
       position,

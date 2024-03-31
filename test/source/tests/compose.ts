@@ -363,6 +363,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndFocus('@input-body');
         await composePage.waitTillGone('@spinner');
         await Util.sleep(3); // allow some time to search for messages
+        await composePage.waitForContent(
+          '@container-ui-toast-text',
+          "We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted."
+        );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
     );

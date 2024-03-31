@@ -188,6 +188,7 @@ button.btn_disabled,
 
 .swal2-container.ui-toast-container {
   width: 77%;
+  overflow-y: hidden !important;
 }
 
 .swal2-popup.swal2-toast.ui-toast {
@@ -199,6 +200,10 @@ button.btn_disabled,
 .swal2-popup.swal2-toast .swal2-title.ui-toast-title {
   color: #fff;
   margin: 0 0.6em 0.3em;
+}
+
+.swal2-popup.swal2-toast.ui-toast .link {
+  color: #337ab7;
 }
 
 .swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar {
