@@ -327,8 +327,19 @@ export class Api {
     }
   }
 
-  public static isInternetAccessible() {
-    return window.navigator.onLine;
+  public static async isInternetAccessible() {
+    try {
+      await fetch('https://google.com', {
+        method: 'GET',
+        mode: 'no-cors',
+      });
+      return true;
+    } catch (e) {
+      if (ApiErr.isNetErr(e)) {
+        return false;
+      }
+      throw e;
+    }
   }
 
   public static randomFortyHexChars(): string {
