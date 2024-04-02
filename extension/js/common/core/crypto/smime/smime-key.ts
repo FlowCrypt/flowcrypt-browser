@@ -12,7 +12,7 @@ export const DATA_OID = '1.2.840.113549.1.7.1';
 export const SIGNED_DATA_OID = '1.2.840.113549.1.7.2';
 export const ENVELOPED_DATA_OID = '1.2.840.113549.1.7.3';
 export class SmimeKey {
-  private static get forgeCustom(): typeof forge {
+  private static get forgeDefault(): typeof forge {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -45,23 +45,23 @@ export class SmimeKey {
 
   public static parseDecryptBinary(buffer: Uint8Array, password: string): Key {
     const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]) as string;
-    const asn1 = SmimeKey.forgeCustom.asn1.fromDer(bytes);
+    const asn1 = SmimeKey.forgeDefault.asn1.fromDer(bytes);
     let certificate: forge.pki.Certificate | undefined;
     try {
       // try to recognize a certificate
-      certificate = SmimeKey.forgeCustom.pki.certificateFromAsn1(asn1);
+      certificate = SmimeKey.forgeDefault.pki.certificateFromAsn1(asn1);
     } catch (e) {
       // fall back to p12
     }
     if (certificate) {
       return SmimeKey.getKeyFromCertificate(certificate, undefined);
     }
-    const p12 = SmimeKey.forgeCustom.pkcs12.pkcs12FromAsn1(asn1, password);
-    const certBags = p12.getBags({ bagType: SmimeKey.forgeCustom.pki.oids.certBag });
+    const p12 = SmimeKey.forgeDefault.pkcs12.pkcs12FromAsn1(asn1, password);
+    const certBags = p12.getBags({ bagType: SmimeKey.forgeDefault.pki.oids.certBag });
     if (!certBags) {
       throw new Error('No user certificate found.');
     }
-    const certBag = certBags[SmimeKey.forgeCustom.pki.oids.certBag];
+    const certBag = certBags[SmimeKey.forgeDefault.pki.oids.certBag];
     if (!certBag) {
       throw new Error('No user certificate found.');
     }
@@ -70,8 +70,8 @@ export class SmimeKey {
       throw new Error('No user certificate found.');
     }
     const keyBags = (
-      p12.getBags({ bagType: SmimeKey.forgeCustom.pki.oids.pkcs8ShroudedKeyBag })[SmimeKey.forgeCustom.pki.oids.pkcs8ShroudedKeyBag] ?? []
-    ).concat(p12.getBags({ bagType: SmimeKey.forgeCustom.pki.oids.keyBag })[SmimeKey.forgeCustom.pki.oids.keyBag] ?? []);
+      p12.getBags({ bagType: SmimeKey.forgeDefault.pki.oids.pkcs8ShroudedKeyBag })[SmimeKey.forgeDefault.pki.oids.pkcs8ShroudedKeyBag] ?? []
+    ).concat(p12.getBags({ bagType: SmimeKey.forgeDefault.pki.oids.keyBag })[SmimeKey.forgeDefault.pki.oids.keyBag] ?? []);
     const privateKey = keyBags[0]?.key;
     return SmimeKey.getKeyFromCertificate(certificate, privateKey);
   }
@@ -88,7 +88,7 @@ export class SmimeKey {
     data: Uint8Array;
     armor: boolean;
   }): Promise<{ data: Uint8Array; type: 'smime' }> {
-    const p7 = SmimeKey.forgeCustom.pkcs7.createEnvelopedData();
+    const p7 = SmimeKey.forgeDefault.pkcs7.createEnvelopedData();
     // collapse duplicate certificates into one
     // check both fingerprints and longids (certificate Serial Number and Issuer)
     const longids: string[] = [];
@@ -107,11 +107,11 @@ export class SmimeKey {
       }
       p7.addRecipient(certificate);
     }
-    p7.content = SmimeKey.forgeCustom.util.createBuffer(input);
+    p7.content = SmimeKey.forgeDefault.util.createBuffer(input);
     p7.encrypt();
     let data: Uint8Array;
     if (armor) {
-      data = Buf.fromRawBytesStr(SmimeKey.forgeCustom.pkcs7.messageToPem(p7));
+      data = Buf.fromRawBytesStr(SmimeKey.forgeDefault.pkcs7.messageToPem(p7));
     } else {
       data = SmimeKey.messageToDer(p7);
     }
@@ -121,13 +121,13 @@ export class SmimeKey {
   public static readArmoredPkcs7Message(
     encrypted: Uint8Array | string
   ): forge.pkcs7.PkcsEnvelopedData | forge.pkcs7.PkcsEncryptedData | forge.pkcs7.PkcsSignedData {
-    return SmimeKey.forgeCustom.pkcs7.messageFromPem(Str.with(encrypted));
+    return SmimeKey.forgeDefault.pkcs7.messageFromPem(Str.with(encrypted));
   }
 
   public static decryptMessage(p7: forge.pkcs7.PkcsEnvelopedData, key: Key): Uint8Array {
     // todo: make sure private, decrypted ? and x509
     const armoredPrivateKey = SmimeKey.getArmoredPrivateKey(key);
-    const decryptedPrivateKey = SmimeKey.forgeCustom.pki.privateKeyFromPem(armoredPrivateKey);
+    const decryptedPrivateKey = SmimeKey.forgeDefault.pki.privateKeyFromPem(armoredPrivateKey);
     // find a recipient by the issuer of a certificate
     const recipient = p7.findRecipient(SmimeKey.getCertificate(key));
     // decrypt
@@ -138,7 +138,7 @@ export class SmimeKey {
   // signs binary data and returns DER-encoded PKCS#7 message
   public static async sign(signingPrivate: Key, data: Uint8Array): Promise<Uint8Array> {
     // todo: !isFullyDecrypted
-    const p7 = SmimeKey.forgeCustom.pkcs7.createSignedData();
+    const p7 = SmimeKey.forgeDefault.pkcs7.createSignedData();
     p7.addSigner({
       certificate: SmimeKey.getCertificate(signingPrivate),
       key: SmimeKey.getArmoredPrivateKey(signingPrivate),
@@ -151,7 +151,7 @@ export class SmimeKey {
         type: SmimeKey.forgeCustom.pki.oids.messageDigest
       }] */
     });
-    p7.content = SmimeKey.forgeCustom.util.createBuffer(data);
+    p7.content = SmimeKey.forgeDefault.util.createBuffer(data);
     p7.sign();
     return SmimeKey.messageToDer(p7);
   }
@@ -168,7 +168,7 @@ export class SmimeKey {
       }
     }
     const encryptedPrivateKey = SmimeKey.getArmoredPrivateKey(key);
-    const privateKey = await SmimeKey.forgeCustom.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // null on password mismatch
+    const privateKey = await SmimeKey.forgeDefault.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // null on password mismatch
     if (!privateKey) {
       return false;
     }
@@ -187,7 +187,7 @@ export class SmimeKey {
     if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
       throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
     }
-    const encryptedPrivateKey = SmimeKey.forgeCustom.pki.encryptRsaPrivateKey(SmimeKey.forgeCustom.pki.privateKeyFromPem(armoredPrivateKey), passphrase);
+    const encryptedPrivateKey = SmimeKey.forgeDefault.pki.encryptRsaPrivateKey(SmimeKey.forgeDefault.pki.privateKeyFromPem(armoredPrivateKey), passphrase);
     if (!encryptedPrivateKey) {
       throw new Error('Failed to encrypt the private key.');
     }
@@ -219,14 +219,14 @@ export class SmimeKey {
   public static getMessageLongids(msg: SmimeMsg): string[] {
     return msg.recipients.map(recipient => {
       const asn1 = SmimeKey.createIssuerAndSerialNumberAsn1(SmimeKey.attributesToDistinguishedNameAsn1(recipient.issuer), recipient.serialNumber);
-      const der = SmimeKey.forgeCustom.asn1.toDer(asn1).getBytes();
+      const der = SmimeKey.forgeDefault.asn1.toDer(asn1).getBytes();
       return SmimeKey.getLongIdFromDer(der);
     });
   }
 
   private static messageToDer(p7: forge.pkcs7.Pkcs7Data): Uint8Array {
     const asn1 = p7.toAsn1();
-    return Buf.fromRawBytesStr(SmimeKey.forgeCustom.asn1.toDer(asn1).getBytes());
+    return Buf.fromRawBytesStr(SmimeKey.forgeDefault.asn1.toDer(asn1).getBytes());
   }
 
   // convert from binary string as provided by Forge to a 'X509-' prefixed base64 longid
@@ -236,7 +236,7 @@ export class SmimeKey {
 
   private static getLeafCertificates(msgBlocks: MsgBlock[]): { pem: string; certificate: forge.pki.Certificate }[] {
     const parsed = msgBlocks.map(cert => {
-      return { pem: cert.content as string, certificate: SmimeKey.forgeCustom.pki.certificateFromPem(cert.content as string) };
+      return { pem: cert.content as string, certificate: SmimeKey.forgeDefault.pki.certificateFromPem(cert.content as string) };
     });
     // Note: no signature check is performed.
     return parsed.filter((c, i) => !parsed.some((other, j) => j !== i && other.certificate.isIssuer(c.certificate)));
@@ -264,7 +264,7 @@ export class SmimeKey {
   }
 
   private static getKeyFromCertificate(certificateOrText: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined): Key {
-    const certificate = typeof certificateOrText === 'string' ? SmimeKey.forgeCustom.pki.certificateFromPem(certificateOrText) : certificateOrText;
+    const certificate = typeof certificateOrText === 'string' ? SmimeKey.forgeDefault.pki.certificateFromPem(certificateOrText) : certificateOrText;
     if (!certificate.publicKey) {
       throw new UnreportableError(`This S/MIME x.509 certificate doesn't have a public key`);
     }
@@ -274,17 +274,17 @@ export class SmimeKey {
         encrypted = true;
       } else {
         // test that we can read the unencrypted key
-        const unencryptedKey = SmimeKey.forgeCustom.pki.privateKeyFromPem(privateKey);
+        const unencryptedKey = SmimeKey.forgeDefault.pki.privateKeyFromPem(privateKey);
         if (!unencryptedKey) {
           privateKey = undefined;
         }
         SmimeKey.checkPrivateKeyCertificateMatchOrThrow(certificate, unencryptedKey);
       }
     }
-    const fingerprint = SmimeKey.forgeCustom.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
+    const fingerprint = SmimeKey.forgeDefault.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
     const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
     const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
-      SmimeKey.forgeCustom.pki.distinguishedNameToAsn1(certificate.issuer),
+      SmimeKey.forgeDefault.pki.distinguishedNameToAsn1(certificate.issuer),
       certificate.serialNumber
     );
 
@@ -310,34 +310,34 @@ export class SmimeKey {
       isPublic: !privateKey,
       isPrivate: !!privateKey,
       revoked: false,
-      issuerAndSerialNumber: SmimeKey.forgeCustom.asn1.toDer(issuerAndSerialNumberAsn1).getBytes(),
+      issuerAndSerialNumber: SmimeKey.forgeDefault.asn1.toDer(issuerAndSerialNumberAsn1).getBytes(),
     } as Key;
     SmimeKey.saveArmored(key, certificateOrText, privateKey);
     return key;
   }
 
   private static attributesToDistinguishedNameAsn1(attributes: forge.pki.Attribute[]): forge.asn1.Asn1 {
-    return SmimeKey.forgeCustom.asn1.create(
-      SmimeKey.forgeCustom.asn1.Class.UNIVERSAL,
-      SmimeKey.forgeCustom.asn1.Type.SEQUENCE,
+    return SmimeKey.forgeDefault.asn1.create(
+      SmimeKey.forgeDefault.asn1.Class.UNIVERSAL,
+      SmimeKey.forgeDefault.asn1.Type.SEQUENCE,
       true,
       attributes.map(attr => {
-        const valueTagClass = attr.valueTagClass || SmimeKey.forgeCustom.asn1.Type.PRINTABLESTRING;
-        return SmimeKey.forgeCustom.asn1.create(SmimeKey.forgeCustom.asn1.Class.UNIVERSAL, SmimeKey.forgeCustom.asn1.Type.SET, true, [
-          SmimeKey.forgeCustom.asn1.create(SmimeKey.forgeCustom.asn1.Class.UNIVERSAL, SmimeKey.forgeCustom.asn1.Type.SEQUENCE, true, [
+        const valueTagClass = attr.valueTagClass || SmimeKey.forgeDefault.asn1.Type.PRINTABLESTRING;
+        return SmimeKey.forgeDefault.asn1.create(SmimeKey.forgeDefault.asn1.Class.UNIVERSAL, SmimeKey.forgeDefault.asn1.Type.SET, true, [
+          SmimeKey.forgeDefault.asn1.create(SmimeKey.forgeDefault.asn1.Class.UNIVERSAL, SmimeKey.forgeDefault.asn1.Type.SEQUENCE, true, [
             // AttributeType
-            SmimeKey.forgeCustom.asn1.create(
-              SmimeKey.forgeCustom.asn1.Class.UNIVERSAL,
-              SmimeKey.forgeCustom.asn1.Type.OID,
+            SmimeKey.forgeDefault.asn1.create(
+              SmimeKey.forgeDefault.asn1.Class.UNIVERSAL,
+              SmimeKey.forgeDefault.asn1.Type.OID,
               false,
-              SmimeKey.forgeCustom.asn1.oidToDer(attr.type).getBytes()
+              SmimeKey.forgeDefault.asn1.oidToDer(attr.type).getBytes()
             ),
             // AttributeValue
-            SmimeKey.forgeCustom.asn1.create(
-              SmimeKey.forgeCustom.asn1.Class.UNIVERSAL,
+            SmimeKey.forgeDefault.asn1.create(
+              SmimeKey.forgeDefault.asn1.Class.UNIVERSAL,
               attr.valueTagClass,
               false,
-              valueTagClass === SmimeKey.forgeCustom.asn1.Type.UTF8 ? SmimeKey.forgeCustom.util.encodeUtf8(attr.value) : attr.value
+              valueTagClass === SmimeKey.forgeDefault.asn1.Type.UTF8 ? SmimeKey.forgeDefault.util.encodeUtf8(attr.value) : attr.value
             ),
           ]),
         ]);
@@ -346,15 +346,15 @@ export class SmimeKey {
   }
 
   private static createIssuerAndSerialNumberAsn1(issuerAsn1: forge.asn1.Asn1, serialNumberHex: string) {
-    return SmimeKey.forgeCustom.asn1.create(SmimeKey.forgeCustom.asn1.Class.UNIVERSAL, SmimeKey.forgeCustom.asn1.Type.SEQUENCE, true, [
+    return SmimeKey.forgeDefault.asn1.create(SmimeKey.forgeDefault.asn1.Class.UNIVERSAL, SmimeKey.forgeDefault.asn1.Type.SEQUENCE, true, [
       // Issuer
       issuerAsn1,
       // Serial
-      SmimeKey.forgeCustom.asn1.create(
-        SmimeKey.forgeCustom.asn1.Class.UNIVERSAL,
-        SmimeKey.forgeCustom.asn1.Type.INTEGER,
+      SmimeKey.forgeDefault.asn1.create(
+        SmimeKey.forgeDefault.asn1.Class.UNIVERSAL,
+        SmimeKey.forgeDefault.asn1.Type.INTEGER,
         false,
-        SmimeKey.forgeCustom.util.hexToBytes(serialNumberHex)
+        SmimeKey.forgeDefault.util.hexToBytes(serialNumberHex)
       ),
     ]);
   }
@@ -368,20 +368,20 @@ export class SmimeKey {
   }
 
   private static getCertificate(key: Key) {
-    return SmimeKey.forgeCustom.pki.certificateFromPem(SmimeKey.getArmoredCertificate(key));
+    return SmimeKey.forgeDefault.pki.certificateFromPem(SmimeKey.getArmoredCertificate(key));
   }
 
   private static saveArmored(key: Key, certificate: forge.pki.Certificate | string, privateKey: forge.pki.PrivateKey | string | undefined) {
     const armored: string[] = [];
     if (privateKey) {
-      let armoredPrivateKey = typeof privateKey === 'string' ? privateKey : SmimeKey.forgeCustom.pki.privateKeyToPem(privateKey);
+      let armoredPrivateKey = typeof privateKey === 'string' ? privateKey : SmimeKey.forgeDefault.pki.privateKeyToPem(privateKey);
       if (armoredPrivateKey[armoredPrivateKey.length - 1] !== '\n') {
         armoredPrivateKey += '\r\n';
       }
       armored.push(armoredPrivateKey);
       (key as unknown as { privateKeyArmored: string }).privateKeyArmored = armoredPrivateKey;
     }
-    let armoredCertificate = typeof certificate === 'string' ? certificate : SmimeKey.forgeCustom.pki.certificateToPem(certificate);
+    let armoredCertificate = typeof certificate === 'string' ? certificate : SmimeKey.forgeDefault.pki.certificateToPem(certificate);
     if (armoredCertificate[armoredCertificate.length - 1] !== '\n') {
       armoredCertificate += '\r\n';
     }

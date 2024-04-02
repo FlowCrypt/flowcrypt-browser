@@ -2,7 +2,7 @@
 
 'use strict';
 
-// import { Catch } from '../common/platform/catch.js';
+import { Catch } from '../common/platform/catch.js';
 
 export const injectFcIntoWebmail = () => {
   const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
@@ -16,19 +16,19 @@ export const injectFcIntoWebmail = () => {
   }
   // on Firefox, standard way of loading content scripts stopped working. We have to listen to tab loaded events, and inject then
   // basically here we do what normally the browser is supposed to do (inject content scripts when page is done loading)
-  // if (Catch.browser().name === 'firefox') {
-  chrome.tabs.onUpdated.addListener((tabId, changed, tab) => {
-    if (changed.status === 'complete' && tab.active && tab.url) {
-      for (const group of contentScriptGroups) {
-        for (const groupMatchUrl of group.matches || []) {
-          if (tab.url.startsWith(groupMatchUrl.replace(/\*$/, ''))) {
-            injectContentScriptIntoTabIfNeeded(tabId, group.js || []);
+  if (Catch.browser().name === 'firefox') {
+    chrome.tabs.onUpdated.addListener((tabId, changed, tab) => {
+      if (changed.status === 'complete' && tab.active && tab.url) {
+        for (const group of contentScriptGroups) {
+          for (const groupMatchUrl of group.matches || []) {
+            if (tab.url.startsWith(groupMatchUrl.replace(/\*$/, ''))) {
+              injectContentScriptIntoTabIfNeeded(tabId, group.js || []);
+            }
           }
         }
       }
-    }
-  });
-  // }
+    });
+  }
 };
 
 const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
@@ -70,7 +70,6 @@ const injectContentScripts = (tabId: number, files: string[], callback?: () => v
       injectImmediately: true,
     },
     () => {
-      console.log(filesCopy.length);
       if (filesCopy.length) {
         injectContentScripts(tabId, filesCopy, callback);
       } else if (callback) {

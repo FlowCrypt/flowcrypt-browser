@@ -286,10 +286,10 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static createIntervalAlarm(action: string, ms: number) {
+  public static createIntervalAlarm(action: string, periodInMinutes: number) {
     // Create the alarm with delay
-    const alarmName = `${action}_interval_${Date.now()}_${ms}`;
-    void chrome.alarms.create(alarmName, { when: Date.now() + ms });
+    const alarmName = `${action}_interval_${Date.now()}`;
+    void chrome.alarms.create(alarmName, { periodInMinutes });
   }
 
   public static intervalAddListener(name: string, handler: IntervalHandler) {
@@ -336,14 +336,6 @@ export class BrowserMsg {
       const actionName = alarmName.split('_interval')[0];
       if (BrowserMsg.INTERVAL_HANDLERS[actionName]) {
         Catch.try(BrowserMsg.INTERVAL_HANDLERS[actionName])();
-      }
-      if (alarmName.includes('interval')) {
-        const splitAry = alarmName.split('_');
-        const ms = splitAry[splitAry.length - 1];
-        if (ms) {
-          // Recreate alarm so that interval can be called again
-          void chrome.alarms.create(alarmName, { when: Date.now() + parseInt(ms) });
-        }
       }
     };
 

@@ -18,16 +18,10 @@ import { injectFcIntoWebmail } from './inject.js';
 console.info('background.js service worker starting');
 
 (async () => {
-  chrome.storage.onChanged.addListener((changes, namespace) => {
-    for (const [key, { oldValue, newValue }] of Object.entries(changes)) {
-      console.log(`Storage key "${key}" in namespace "${namespace}" changed.`, `Old value was "${oldValue}", new value is "${newValue}".`);
-    }
-  });
-
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string, string>(4 * 60 * 60 * 1000); // 4 hours
-  BrowserMsg.createIntervalAlarm('delete_expired', 60 * 1000); // each minute
+  BrowserMsg.createIntervalAlarm('delete_expired', 0.5); // each minute
 
   try {
     await migrateGlobal();
