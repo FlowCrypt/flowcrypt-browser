@@ -24,6 +24,8 @@ console.info('background.js service worker starting');
   BrowserMsg.createIntervalAlarm('delete_expired', 0.5); // each minute
 
   try {
+    await chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
+
     await migrateGlobal();
     await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
     storage = await GlobalStore.get(['settings_seen']);
