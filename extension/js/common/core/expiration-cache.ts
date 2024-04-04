@@ -63,7 +63,7 @@ export class ExpirationCache<K, V> {
     try {
       return await value;
     } catch (e) {
-      if (this.get(key) === value) await this.set(key); // remove faulty record
+      if ((await this.get(key)) === value) await this.set(key); // remove faulty record
       return Promise.reject(e);
     }
   };
