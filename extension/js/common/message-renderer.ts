@@ -32,7 +32,7 @@ import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js'
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
-import { SimpleExpirationCache } from './core/expiration-cache.js';
+import { ExpirationCache } from './core/expiration-cache.js';
 
 type ProcessedMessage = {
   body: MessageBody;
@@ -43,7 +43,7 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly processedMessages = new SimpleExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly processedMessages = new ExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
 
   private constructor(
     private readonly acctEmail: string,
@@ -401,14 +401,25 @@ export class MessageRenderer {
   };
 
   public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
-    let processed = this.processedMessages.get(msgId);
-    if (!processed) {
-      processed = (async () => {
-        return this.processFull(await this.downloader.msgGetFull(msgId));
-      })();
-      this.processedMessages.set(msgId, processed);
-    }
-    return this.processedMessages.await(msgId, processed);
+    // Couldn't use async await for chunkDownloads.get
+    // because if we call `await chunkDownloads.get`
+    // then return type becomes Buf|undfined instead of Promise<Buf>|undfined
+    return new Promise((resolve, reject) => {
+      this.processedMessages
+        .get(msgId)
+        .then(async processed => {
+          if (!processed) {
+            processed = (async () => {
+              return this.processFull(await this.downloader.msgGetFull(msgId));
+            })();
+          }
+          await this.processedMessages.set(msgId, processed);
+          resolve(await this.processedMessages.await(msgId, processed));
+        })
+        .catch(e => {
+          reject(e);
+        });
+    });
   };
 
   private processFull = async (fullMsg: GmailRes.GmailMsg): Promise<ProcessedMessage> => {
@@ -421,11 +432,11 @@ export class MessageRenderer {
       const treatAs = a.treatAs(attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
-        this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        await this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else if (treatAs === 'publicKey') {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
-        this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        await this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
