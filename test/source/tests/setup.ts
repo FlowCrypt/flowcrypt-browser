@@ -128,44 +128,6 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'setup - unsubmitted public key for email alias should not be saved in contacts',
-      testWithBrowser(async (t, browser) => {
-        const acct = 'flowcrypt.compatibility@gmail.com';
-        t.context.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              [acct]: {
-                pubkey: somePubkey,
-              },
-            },
-          },
-          google: {
-            aliases: {
-              [acct]: flowcryptCompatibilityAliasList,
-            },
-          },
-        });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await Util.sleep(5);
-        await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
-          key: { passphrase: 'long enough to suit requirements' },
-          usedPgpBefore: false,
-          skipForPassphrase: true,
-          submitPubkey: true,
-          pageEvaluator: async () => {
-            expect(await settingsPage.isChecked('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(false);
-          },
-        });
-        expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['flowcryptcompatibility@gmail.com']).to.be.an('undefined');
-        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
-        expect(await contactsFrame.isElementPresent('@action-show-email-flowcryptcompatibilitygmailcom(flowcrypt.compatibility)')).to.be.true; // main user email
-        await contactsFrame.ensureElementsCount('@action-show-email-flowcryptcompatibilitygmailcom', 1);
-        await settingsPage.close();
-      })
-    );
-
-    test(
       'setup - import key - do not submit - did not use before',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -2642,6 +2604,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['alias1@example.com']).not.to.be.an('undefined');
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['alias2@example.com']).to.be.an('undefined');
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        expect(await contactsFrame.isElementPresent('@action-show-email-alias1examplecom')).to.be.true;
+        expect(await contactsFrame.isElementPresent('@action-show-email-alias2examplecom')).to.be.false;
         await settingsPage.close();
       })
     );
