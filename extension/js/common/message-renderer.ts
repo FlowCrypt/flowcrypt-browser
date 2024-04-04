@@ -43,7 +43,7 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly processedMessages = new ExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly processedMessages = new ExpirationCache<Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
 
   private constructor(
     private readonly acctEmail: string,
@@ -396,7 +396,7 @@ export class MessageRenderer {
   };
 
   public deleteExpired = (): void => {
-    this.processedMessages.deleteExpired();
+    void this.processedMessages.deleteExpired();
     this.downloader.deleteExpired();
   };
 
@@ -408,7 +408,7 @@ export class MessageRenderer {
       this.processedMessages
         .get(msgId)
         .then(async processed => {
-          if (!processed) {
+          if (!processed || Object.keys(processed).length < 1) {
             processed = (async () => {
               return this.processFull(await this.downloader.msgGetFull(msgId));
             })();

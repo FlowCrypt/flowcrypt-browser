@@ -9,18 +9,17 @@ import { Buf } from './core/buf.js';
 import { ExpirationCache } from './core/expiration-cache.js';
 
 export class Downloader {
-  private readonly chunkDownloads = new ExpirationCache<Attachment, Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
-  private readonly fullMessages = new ExpirationCache<string, Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
-  private readonly rawMessages = new ExpirationCache<string, Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly chunkDownloads = new ExpirationCache<Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
+  private readonly fullMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly rawMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
 
   public constructor(private readonly gmail: Gmail) {}
 
   public deleteExpired = (): void => {
-    this.fullMessages.deleteExpired();
-    this.rawMessages.deleteExpired();
-    this.chunkDownloads.deleteExpired(attachment => {
-      return attachment.hasData();
-    });
+    void this.fullMessages.deleteExpired();
+    void this.rawMessages.deleteExpired();
+    // todo: delete attachment has data
+    void this.chunkDownloads.deleteExpired();
   };
 
   public queueAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs): Promise<{ result: Promise<Buf> }> => {
@@ -32,12 +31,12 @@ export class Downloader {
     // then return type becomes Buf|undfined instead of Promise<Buf>|undfined
     return new Promise((resolve, reject) => {
       this.chunkDownloads
-        .get(a)
+        .get(a.id ?? '')
         .then(async download => {
-          if (!download) {
+          if (!download || Object.keys(download).length < 1) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             download = this.gmail.attachmentGetChunk(a.msgId!, a.id!, treatAs);
-            await this.chunkDownloads.set(a, download);
+            await this.chunkDownloads.set(a.id ?? '', download);
           }
           resolve({ result: download });
         })
@@ -49,7 +48,7 @@ export class Downloader {
 
   public waitForAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs) => {
     if (a.hasData()) return a.getData();
-    return this.chunkDownloads.await(a, (await this.queueAttachmentChunkDownload(a, treatAs)).result);
+    return this.chunkDownloads.await(a.id ?? '', (await this.queueAttachmentChunkDownload(a, treatAs)).result);
   };
 
   public msgGetRaw = async (msgId: string): Promise<string> => {
@@ -57,7 +56,7 @@ export class Downloader {
       this.rawMessages
         .get(msgId)
         .then(async msgDownload => {
-          if (!msgDownload) {
+          if (!msgDownload || Object.keys(msgDownload).length < 1) {
             msgDownload = this.gmail.msgGet(msgId, 'raw');
             await this.rawMessages.set(msgId, msgDownload);
           }
@@ -75,7 +74,7 @@ export class Downloader {
       this.fullMessages
         .get(msgId)
         .then(async msgDownload => {
-          if (!msgDownload) {
+          if (!msgDownload || Object.keys(msgDownload).length < 1) {
             msgDownload = this.gmail.msgGet(msgId, 'full');
             await this.fullMessages.set(msgId, msgDownload);
           }

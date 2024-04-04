@@ -4,12 +4,12 @@
  * Cache, keeping entries for limited duration
  */
 type ExpirationCacheType<V> = { value: V; expiration: number };
-export class ExpirationCache<K, V> {
-  private cache = new Map<K, ExpirationCacheType<V>>();
+export class ExpirationCache<V> {
+  private cache = new Map<string, ExpirationCacheType<V>>();
 
   public constructor(public expirationTicks: number) {}
 
-  public set = async (key: K, value?: V, expiration?: number) => {
+  public set = async (key: string, value?: V, expiration?: number) => {
     if (value) {
       const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
       if (this.isChromeSupported()) {
@@ -26,11 +26,11 @@ export class ExpirationCache<K, V> {
     }
   };
 
-  public get = async (key: K): Promise<V | undefined> => {
+  public get = async (key: string): Promise<V | undefined> => {
     let found: ExpirationCacheType<V> | undefined;
     if (this.isChromeSupported()) {
       const result = await chrome.storage.session.get([key]);
-      found = result[String(key)];
+      found = result[key];
     } else {
       found = this.cache.get(key);
     }
@@ -45,21 +45,22 @@ export class ExpirationCache<K, V> {
     return undefined;
   };
 
-  public deleteExpired = (additionalPredicate: (key: K, value: V) => boolean = () => false): void => {
-    const keysToDelete: K[] = [];
+  public deleteExpired = async (additionalPredicate: (key: string, value: V) => boolean = () => false): Promise<void> => {
+    const keysToDelete = [];
+    // todo: get from chrome.storage
     for (const [key, value] of this.cache.entries()) {
       if (value.expiration <= Date.now() || additionalPredicate(key, value.value)) {
         keysToDelete.push(key);
       }
     }
     for (const key of keysToDelete) {
-      this.cache.delete(key);
+      await this.set(key);
     }
   };
 
   // await the value if it's a promise and remove from cache in case of exception
   // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
-  public await = async (key: K, value: V): Promise<V> => {
+  public await = async (key: string, value: V): Promise<V> => {
     try {
       return await value;
     } catch (e) {
