@@ -2604,6 +2604,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['alias1@example.com']).not.to.be.an('undefined');
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.['alias2@example.com']).to.be.an('undefined');
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        expect(await contactsFrame.isElementPresent('@action-show-email-alias1examplecom')).to.be.true;
+        expect(await contactsFrame.isElementPresent('@action-show-email-alias2examplecom')).to.be.false;
         await settingsPage.close();
       })
     );
