@@ -5,50 +5,36 @@
  */
 type ExpirationCacheType<V> = { value: V; expiration: number };
 export class ExpirationCache<V> {
-  private cache = new Map<string, ExpirationCacheType<V>>();
-
   public constructor(public expirationTicks: number) {}
 
   public set = async (key: string, value?: V, expiration?: number) => {
     if (value) {
       const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
-      if (this.isChromeSupported()) {
-        await chrome.storage.session.set({ [`${key}`]: expirationVal });
-      } else {
-        this.cache.set(key, expirationVal);
-      }
+      await chrome.storage.session.set({ [`${key}`]: expirationVal });
     } else {
-      if (this.isChromeSupported()) {
-        await chrome.storage.session.remove(`${key}`); // set({ [`${key}`]: value });
-      } else {
-        this.cache.delete(key);
-      }
+      await chrome.storage.session.remove(key);
     }
   };
 
   public get = async (key: string): Promise<V | undefined> => {
-    let found: ExpirationCacheType<V> | undefined;
-    if (this.isChromeSupported()) {
-      const result = await chrome.storage.session.get([key]);
-      found = result[key];
-    } else {
-      found = this.cache.get(key);
-    }
+    const result = await chrome.storage.session.get([key]);
+    const found: ExpirationCacheType<V> = result[key];
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
       } else {
         // expired, so delete it and return as if not found
-        this.cache.delete(key);
+        await chrome.storage.session.remove(key);
       }
     }
     return undefined;
   };
 
   public deleteExpired = async (additionalPredicate: (key: string, value: V) => boolean = () => false): Promise<void> => {
-    const keysToDelete = [];
-    // todo: get from chrome.storage
-    for (const [key, value] of this.cache.entries()) {
+    const keysToDelete: string[] = [];
+    const entries = (await chrome.storage.session.get()) as Record<string, ExpirationCacheType<V>>;
+    for (const key of Object.keys(entries)) {
+      const value = entries[key];
       if (value.expiration <= Date.now() || additionalPredicate(key, value.value)) {
         keysToDelete.push(key);
       }
@@ -67,9 +53,5 @@ export class ExpirationCache<V> {
       if ((await this.get(key)) === value) await this.set(key); // remove faulty record
       return Promise.reject(e);
     }
-  };
-
-  private isChromeSupported = () => {
-    return typeof chrome !== 'undefined';
   };
 }

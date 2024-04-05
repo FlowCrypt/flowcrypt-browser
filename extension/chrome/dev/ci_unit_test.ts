@@ -21,6 +21,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { PgpHash } from '../../js/common/core/crypto/pgp/pgp-hash.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { ExpirationCache } from '../../js/common/core/expiration-cache.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -31,6 +32,7 @@ const libs: unknown[] = [
   Attachment,
   AttachmentUI,
   Buf,
+  ExpirationCache,
   KeyUtil,
   Mime,
   Wkd,

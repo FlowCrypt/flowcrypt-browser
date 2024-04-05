@@ -4,7 +4,7 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
-import { Config, TestVariant, Util } from '../util';
+import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
@@ -17,7 +17,6 @@ import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
-import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
@@ -2726,15 +2725,6 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       expect(PgpArmor.clipIncomplete('')).to.be.an.undefined;
       expect(PgpArmor.clipIncomplete('plain text')).to.be.an.undefined;
       expect(PgpArmor.clipIncomplete('prefix -----BEGIN PGP MESSAGE-----\n\nexample')).to.equal('-----BEGIN PGP MESSAGE-----\n\nexample');
-      t.pass();
-    });
-
-    test(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
-      const cache = new ExpirationCache(2000); // 2 seconds
-      await cache.set('test-key', 'test-value');
-      expect(await cache.get('test-key')).to.equal('test-value');
-      await Util.sleep(2);
-      expect(await cache.get('test-key')).to.be.an('undefined');
       t.pass();
     });
 
