@@ -373,7 +373,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAndClick('@action-show-import-public-keys-form', { confirmGone: true });
         const [fileChooser] = await Promise.all([
           settingsPage.page.waitForFileChooser(),
-          contactsFrame.waitAndClick('@action-attach-files', { retryErrs: true }),
+          contactsFrame.waitAndClick('@action-upload-key', { retryErrs: true }),
         ]);
         await fileChooser.accept(['test/samples/openpgp/pub_keys_5_good_1_unsupported.txt']);
         await Util.sleep(1);
