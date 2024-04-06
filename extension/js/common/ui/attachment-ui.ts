@@ -54,6 +54,7 @@ export class AttachmentUI {
         },
       };
       this.uploader = new qq.FineUploader(config);
+      $('#' + btnId).attr('data-test', 'action-attach-files');
       this.setInputAttributes();
     });
   };
@@ -62,7 +63,7 @@ export class AttachmentUI {
     const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // eslint-disable-line
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
-    input.setAttribute('data-test', 'action-attach-files');
+    // input.setAttribute('data-test', 'action-attach-files');
     return input;
   };
 
