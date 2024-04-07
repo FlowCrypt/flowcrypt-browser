@@ -18,7 +18,12 @@ export class Downloader {
   public deleteExpired = (): void => {
     void this.fullMessages.deleteExpired();
     void this.rawMessages.deleteExpired();
-    // todo: delete attachment has data
+    // todo: delete attachment which has data
+    // (not sure how to implement this as chrome.storage doesn't accept keys which are not string types)
+    // Original code is like as follows
+    // this.chunkDownloads.deleteExpired(attachment => {
+    //   return attachment.hasData();
+    // });
     void this.chunkDownloads.deleteExpired();
   };
 

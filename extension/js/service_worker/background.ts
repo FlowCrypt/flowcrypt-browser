@@ -24,8 +24,6 @@ console.info('background.js service worker starting');
   BrowserMsg.createIntervalAlarm('delete_expired', 0.5); // each minute
 
   try {
-    await chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
-
     await migrateGlobal();
     await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
     storage = await GlobalStore.get(['settings_seen']);
@@ -56,6 +54,9 @@ console.info('background.js service worker starting');
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
+  BrowserMsg.bgAddListener('expirationCacheGet', BgHandlers.expirationCacheGetHandler);
+  BrowserMsg.bgAddListener('expirationCacheSet', BgHandlers.expirationCacheSetHandler);
+  BrowserMsg.bgAddListener('expirationCacheDeleteExpired', BgHandlers.expirationCacheDeleteExpiredHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);

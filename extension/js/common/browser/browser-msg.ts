@@ -80,6 +80,9 @@ export namespace Bm {
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
+  export type ExpirationCacheGet = { key: string; expirationTicks: number };
+  export type ExpirationCacheSet<V> = { key: string; value: V | undefined; expirationTicks: number; expiration?: number };
+  export type ExpirationCacheDeleteExpired = { expirationTicks: number };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: Dest; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
@@ -97,17 +100,32 @@ export namespace Bm {
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
+    export type ExpirationCacheGet<V> = Promise<V | undefined>;
+    export type ExpirationCacheSet = Promise<void>;
+    export type ExpirationCacheDeleteExpired = Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | ReconnectAcctAuthPopup | InMemoryStoreGet | InMemoryStoreSet | AjaxGmailAttachmentGetChunk | ConfirmationResult;
+    export type Any =
+      | GetActiveTabInfo
+      | ReconnectAcctAuthPopup
+      | InMemoryStoreGet
+      | InMemoryStoreSet
+      | ExpirationCacheGet<unknown>
+      | ExpirationCacheSet
+      | ExpirationCacheDeleteExpired
+      | AjaxGmailAttachmentGetChunk
+      | ConfirmationResult;
   }
 
   export type AnyRequest =
     | PassphraseEntry
     | OpenPage
+    | ExpirationCacheGet
+    | ExpirationCacheSet<unknown>
+    | ExpirationCacheDeleteExpired
     | OpenGoogleAuthDialog
     | Redirect
     | Reload
@@ -187,6 +205,12 @@ export class BrowserMsg {
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
+        expirationCacheGet: <V>(bm: Bm.ExpirationCacheGet) =>
+          BrowserMsg.sendAwait(undefined, 'expirationCacheGet', bm, true) as Promise<Bm.Res.ExpirationCacheGet<V>>,
+        expirationCacheSet: <V>(bm: Bm.ExpirationCacheSet<V>) =>
+          BrowserMsg.sendAwait(undefined, 'expirationCacheSet', bm, true) as Promise<Bm.Res.ExpirationCacheSet>,
+        expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
+          BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm),
