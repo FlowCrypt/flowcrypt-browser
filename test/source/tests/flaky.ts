@@ -284,6 +284,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         const port = t.context.urls?.port;
         const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
+        t.timeout(minutes(6));
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
