@@ -157,12 +157,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
         !e.message.match(/Bad Request: 400 when GET-ing https:\/\/.*localhost:\d+\/flowcrypt-email-key-manager/)
     )
     // below for test "decrypt - failure retrieving chunk download - next request will try anew"
-    .filter(
-      e =>
-        !/400 when GET-ing https:\/\/.*localhost:\d+\/gmail\/v1\/users\/me\/messages\/1885ded59a2b5a8d\/attachments\/ANGjdJ_0g7PGqJSjI8-Wjd5o8HcVnAHxIk-H210TAxxwf/.test(
-          e.message
-        )
-    )
+    .filter(e => !/https:\/\/gmail\.localhost:[\d]*\/gmail\/1885ded59a2b5a8d/.test(e.url))
     // below for test "user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error"
     .filter(e => !e.message.includes('Test error'))
     // below for test "no.fes@example.com - skip FES on consumer, show friendly message on enterprise"

@@ -12,7 +12,7 @@ export class ExpirationCache<V> {
 
   public set = async (key: string, value?: V, expiration?: number) => {
     if (Env.isContentScript()) {
-      // Get chrome storage data from content script now allowed
+      // Get chrome storage data from content script not allowed
       // Need to get data from service worker
       await BrowserMsg.send.bg.await.expirationCacheSet<V>({
         key,
@@ -32,7 +32,7 @@ export class ExpirationCache<V> {
 
   public get = async (key: string): Promise<V | undefined> => {
     if (Env.isContentScript()) {
-      // Get chrome storage data from content script now allowed
+      // Get chrome storage data from content script not allowed
       // Need to get data from service worker
       // Just disable eslint warning as setting expirationCacheGet interface
       // will require lots of code changes in browser-msg.ts
@@ -57,7 +57,7 @@ export class ExpirationCache<V> {
 
   public deleteExpired = async (additionalPredicate: (key: string, value: V) => boolean = () => false): Promise<void> => {
     if (Env.isContentScript()) {
-      // Get chrome storage data from content script now allowed
+      // Get chrome storage data from content script not allowed
       // Need to get data from service worker
       await BrowserMsg.send.bg.await.expirationCacheDeleteExpired({
         expirationTicks: this.expirationTicks,
