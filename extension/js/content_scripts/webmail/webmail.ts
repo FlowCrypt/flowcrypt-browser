@@ -25,11 +25,14 @@ Catch.try(async () => {
     let replacer: GmailElementReplacer;
 
     const getUserAccountEmail = (): undefined | string => {
+      console.log(`window.location.search.indexOf('&view=btop&'): ${window.location.search.indexOf('&view=btop&')}`);
       if (window.location.search.indexOf('&view=btop&') === -1) {
         // when view=btop present, FlowCrypt should not be activated
+        console.log(`hostPageInfo.email: ${hostPageInfo.email}`);
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
+        console.log($('#loading div.msg').text());
         const acctEmailLoadingMatch = $('#loading div.msg')
           .text()
           .match(/[a-z0-9._\-]+@[^…< ]+/gi);
@@ -38,11 +41,13 @@ Catch.try(async () => {
           return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
         const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
+        console.log($('div.gb_Cb > div.gb_Ib').text());
         if (Str.isEmailValid(emailFromAccountDropdown)) {
           return emailFromAccountDropdown;
         }
 
         const emailFromAccountModal = $('div.gb_Dc > div').last().text().trim().toLowerCase();
+        console.log(emailFromAccountModal);
         if (Str.isEmailValid(emailFromAccountModal)) {
           return emailFromAccountModal;
         }
