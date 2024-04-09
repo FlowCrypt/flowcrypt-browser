@@ -18,6 +18,12 @@ import { RelayManager } from '../../common/relay-manager.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
 import { Time } from '../../common/browser/time.js';
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    gbar_: any;
+  }
+}
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
@@ -28,11 +34,9 @@ Catch.try(async () => {
       console.log(`window.location.search.indexOf('&view=btop&'): ${window.location.search.indexOf('&view=btop&')}`);
       if (window.location.search.indexOf('&view=btop&') === -1) {
         // when view=btop present, FlowCrypt should not be activated
-        console.log(`hostPageInfo.email: ${hostPageInfo.email}`);
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
-        console.log($('#loading div.msg').text());
         const acctEmailLoadingMatch = $('#loading div.msg')
           .text()
           .match(/[a-z0-9._\-]+@[^…< ]+/gi);
@@ -40,16 +44,22 @@ Catch.try(async () => {
           // try parse from loading div
           return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
-        const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
-        console.log($('div.gb_Cb > div.gb_Ib').text());
+        const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text()?.trim()?.toLowerCase();
         if (Str.isEmailValid(emailFromAccountDropdown)) {
           return emailFromAccountDropdown;
         }
 
-        const emailFromAccountModal = $('div.gb_Dc > div').last().text().trim().toLowerCase();
-        console.log(emailFromAccountModal);
+        const emailFromAccountModal = $('div.gb_Dc > div').last()?.text()?.trim()?.toLowerCase();
         if (Str.isEmailValid(emailFromAccountModal)) {
           return emailFromAccountModal;
+        }
+        // eslint-disable-next-line no-underscore-dangle
+        const emailFromConfigVariable = window.gbar_?.CONFIG?.[0]?.[4]?.qa?.[5];
+        console.log(`emailFromConfigVariable: ${emailFromConfigVariable}`);
+        const emailFromUserNameAndEmail = $('.gb_s .gb_Hc :last-child').text();
+        console.log(`emailFromUserNameAndEmail: ${emailFromUserNameAndEmail}`);
+        if (Str.isEmailValid(emailFromConfigVariable)) {
+          return String(emailFromConfigVariable);
         }
       }
       return undefined;
