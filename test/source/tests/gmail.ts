@@ -330,7 +330,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.serial.only(
+    test.serial(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(
         async (t, browser) => {
