@@ -55,11 +55,12 @@ Catch.try(async () => {
         }
         // eslint-disable-next-line no-underscore-dangle
         const emailFromConfigVariable = window.gbar_?.CONFIG?.[0]?.[4]?.qa?.[5];
-        console.log(`emailFromConfigVariable: ${emailFromConfigVariable}`);
-        const emailFromUserNameAndEmail = $('.gb_s .gb_Hc :last-child').text();
-        console.log(`emailFromUserNameAndEmail: ${emailFromUserNameAndEmail}`);
         if (Str.isEmailValid(emailFromConfigVariable)) {
           return String(emailFromConfigVariable);
+        }
+        const emailFromUserNameAndEmail = $('.gb_s .gb_Hc :last-child').text();
+        if (Str.isEmailValid(emailFromUserNameAndEmail)) {
+          return emailFromUserNameAndEmail;
         }
       }
       return undefined;
