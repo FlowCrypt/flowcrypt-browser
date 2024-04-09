@@ -145,14 +145,7 @@ abstract class ControllableBase {
     const e = await this.singleElement(selector);
     this.log(`click:2:${selector}`);
     try {
-      const tagName = await PageRecipe.getElementPropertyJson(e, 'tagName');
-      const elementType = await PageRecipe.getElementPropertyJson(e, 'type');
-      if (tagName === 'INPUT' && elementType === 'TEXT') {
-        await e.focus();
-        await e.type('\n');
-      } else {
-        await e.click();
-      }
+      await e.click();
     } catch (e) {
       if (e instanceof Error) {
         e.stack += ` SELECTOR: ${selector}`;
