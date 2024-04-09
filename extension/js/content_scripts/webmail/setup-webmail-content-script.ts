@@ -92,7 +92,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           throw new DestroyTrigger();
         }
       }
-      if (acctEmailInterval > 6000) {
+      if (acctEmailInterval > 10000) {
         console.info(`Cannot load FlowCrypt yet. Page: ${window.location} (${document.title})`);
       }
       await Time.sleep(acctEmailInterval, win.TrySetDestroyableTimeout);

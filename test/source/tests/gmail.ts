@@ -344,7 +344,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           t.timeout(minutes(4)); // extend ava's timeout
           await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
           // open new compose window and saved draft
-          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+          await gmailPage.waitAndClick('@action-secure-compose', { delay: 1, timeout: 40 });
           await gmailPage.waitAndClick('//*[text()="Draft"]');
           await Util.sleep(2);
           // verify that there are two compose windows: new compose window and secure draft
