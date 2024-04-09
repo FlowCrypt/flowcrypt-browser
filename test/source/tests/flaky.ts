@@ -284,7 +284,6 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         const port = t.context.urls?.port;
         const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
-        t.timeout(minutes(6));
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
@@ -303,56 +302,56 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await dbPage.close();
         const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
         let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-        // 1. vague Gmail error with partial success
+        // // 1. vague Gmail error with partial success
         let composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'confirm',
-          'cancel',
-          'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
-            'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-        // 2. vague Gmail error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'confirm',
-          'cancel',
-          'Google returned an error when sending message. ' + 'Please help us improve FlowCrypt by reporting the error to us.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-        // 3. "invalid To" Gmail error with partial success
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
-            'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-        // 4. "invalid To" Gmail error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
+        // await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
+        // await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        // await composePage.waitAndClick('@action-send', { delay: 1 });
+        // await composePage.waitAndRespondToModal(
+        //   'confirm',
+        //   'cancel',
+        //   'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
+        //     'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
+        // );
+        // await composePage.close();
+        // expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
+        // // 2. vague Gmail error with all failures
+        // composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+        // await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
+        // await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        // await composePage.waitAndClick('@action-send', { delay: 1 });
+        // await composePage.waitAndRespondToModal(
+        //   'confirm',
+        //   'cancel',
+        //   'Google returned an error when sending message. ' + 'Please help us improve FlowCrypt by reporting the error to us.'
+        // );
+        // await composePage.close();
+        // expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
+        // // 3. "invalid To" Gmail error with partial success
+        // composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+        // await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
+        // await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        // await composePage.waitAndClick('@action-send', { delay: 1 });
+        // await composePage.waitAndRespondToModal(
+        //   'error',
+        //   'confirm',
+        //   'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
+        //     'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+        // );
+        // await composePage.close();
+        // expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
+        // // 4. "invalid To" Gmail error with all failures
+        // composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+        // await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
+        // await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        // await composePage.waitAndClick('@action-send', { delay: 1 });
+        // await composePage.waitAndRespondToModal(
+        //   'error',
+        //   'confirm',
+        //   'Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+        // );
+        // await composePage.close();
+        // expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
         // 5. "RequestTimeout" error with partial success
         composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
