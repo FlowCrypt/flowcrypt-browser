@@ -297,7 +297,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test(
+    test.serial(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
