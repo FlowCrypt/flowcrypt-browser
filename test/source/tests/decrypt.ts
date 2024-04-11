@@ -1632,7 +1632,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect((await gmailPage2.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage2.getFramesUrls(['pgp_pubkey.htm'], { sleep: 0, appearIn: 0 })).length).to.equal(0);
         const attachmentFrame = await gmailPage2.getFrame(['attachment.htm']);
-        const downloadedFiles = await attachmentFrame.awaitDownloadTriggeredByClicking('@download-attachment');
+        await attachmentFrame.waitAndClick('@attachment-container');
+        const attachmentPreviewPage = await gmailPage2.getFrame(['attachment_preview.htm']);
+        const downloadedFiles = await gmailPage2.awaitDownloadTriggeredByClicking(async () => {
+          await attachmentPreviewPage.waitAndClick('@attachment-preview-download');
+        });
         const entries = Object.entries(downloadedFiles);
         expect(entries.length).to.equal(1);
         const decryptedContent = entries[0][1].toString();
