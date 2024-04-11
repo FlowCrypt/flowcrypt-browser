@@ -4,7 +4,7 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
 import { GmailRes } from '../../../common/api/email-provider/gmail/gmail-parser.js';
 import { RawStore, AbstractStore } from './abstract-store.js';
 import { Dict, Value } from '../../core/common.js';
-import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../../browser/chrome.js';
+import { storageSet, storageGet, storageRemove } from '../../browser/chrome.js';
 import { Catch } from '../catch.js';
 
 export type LocalDraft = GmailRes.GmailDraftGet & { timestamp: number; acctEmail: string };
@@ -50,16 +50,16 @@ export class GlobalStore extends AbstractStore {
       const index = GlobalStore.singleScopeRawIndex(GlobalStore.globalStorageScope, key);
       storageUpdate[index] = values[key as GlobalIndex];
     }
-    await storageLocalSet(storageUpdate);
+    await storageSet('local', storageUpdate);
   }
 
   public static async get(keys: GlobalIndex[]): Promise<GlobalStoreDict> {
-    const storageObj = (await storageLocalGet(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
+    const storageObj = (await storageGet('local', GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
     return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
   }
 
   public static async remove(keys: string[]) {
-    await storageLocalRemove(GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys));
+    await storageRemove('local', GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys));
   }
 
   public static async acctEmailsGet(): Promise<string[]> {

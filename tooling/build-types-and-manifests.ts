@@ -27,6 +27,15 @@ addManifest('chrome-consumer', manifest => {
 
 addManifest('firefox-consumer', manifest => {
   manifest.version = version;
+  // We decide to use manifest v2 for firefox and below codes are to make v3 manifest to v2
+  // Read more here: https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2029591323
+  manifest.manifest_version = 2;
+  manifest.web_accessible_resources = manifest.web_accessible_resources.resources;
+  manifest.content_security_policy = manifest.content_security_policy.extension_pages;
+  manifest.permissions = [...manifest.permissions, ...manifest.host_permissions];
+  delete manifest.host_permissions;
+  manifest.browser_action = manifest.action;
+  delete manifest.action;
   manifest.browser_specific_settings = {
     gecko: {
       id: 'firefox@cryptup.io',

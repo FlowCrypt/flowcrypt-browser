@@ -17,7 +17,7 @@ import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/ke
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { ClientConfiguration } from './client-configuration.js';
 import { Xss } from './platform/xss.js';
-import { storageLocalGetAll } from './browser/chrome.js';
+import { storageGetAll } from './browser/chrome.js';
 import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
@@ -148,7 +148,7 @@ export class Settings {
     await GlobalStore.acctEmailsAdd(newAcctEmail);
     const storageIndexesToKeepOld: string[] = [];
     const storageIndexesToKeepNew: string[] = [];
-    const storage = await storageLocalGetAll();
+    const storage = await storageGetAll('local');
     for (const acctKey of Object.keys(storage)) {
       if (acctKey.startsWith(oldAcctEmailIndexPrefix)) {
         const key = acctKey.substr(oldAcctEmailIndexPrefix.length);

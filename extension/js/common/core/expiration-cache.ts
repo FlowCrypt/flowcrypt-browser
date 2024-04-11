@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { BrowserMsg } from '../browser/browser-msg.js';
+import { storageGet, storageGetAll, storageRemove, storageSet } from '../browser/chrome.js';
 import { Env } from '../browser/env.js';
 
 /**
@@ -24,9 +25,9 @@ export class ExpirationCache<V> {
     }
     if (value) {
       const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
-      await chrome.storage.session.set({ [`${key}`]: expirationVal });
+      await storageSet('session', { [`${key}`]: expirationVal });
     } else {
-      await chrome.storage.session.remove(key);
+      await storageRemove('session', [key]);
     }
   };
 
@@ -42,14 +43,14 @@ export class ExpirationCache<V> {
         expirationTicks: this.expirationTicks,
       });
     }
-    const result = await chrome.storage.session.get([key]);
-    const found: ExpirationCacheType<V> = result[key];
+    const result = await storageGet('session', [key]);
+    const found = result[key] as ExpirationCacheType<V>;
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
       } else {
         // expired, so delete it and return as if not found
-        await chrome.storage.session.remove(key);
+        await storageRemove('session', [key]);
       }
     }
     return undefined;
@@ -66,7 +67,7 @@ export class ExpirationCache<V> {
     }
 
     const keysToDelete: string[] = [];
-    const entries = (await chrome.storage.session.get()) as Record<string, ExpirationCacheType<V>>;
+    const entries = (await storageGetAll('session')) as Record<string, ExpirationCacheType<V>>;
     for (const key of Object.keys(entries)) {
       const value = entries[key];
       if (value.expiration <= Date.now() || additionalPredicate(key, value.value)) {
