@@ -75,6 +75,11 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
           if (!(await this.view.recipientsModule.doesRecipientHaveMyPubkey(recipient))) {
             // they do need pubkey
             this.setAttachPreference(true);
+            // To improve situation reported in #5609, a notification message about the automatic public key inclusion is displayed
+            await Ui.modal.info(
+              `We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted. You may click the certificate icon to exclude it from this email.\n<p style="font-size: 0.9em">If you want to submit your public key, please ask ${this.view.fesUrl ? 'your administrator' : '<span class="link">human@flowcrypt.com</span>'} for assistance.</p>`,
+              true
+            );
             return;
           }
         }

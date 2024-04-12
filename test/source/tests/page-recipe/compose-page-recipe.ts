@@ -76,7 +76,8 @@ export class ComposePageRecipe extends PageRecipe {
     recipients: Recipients,
     subject?: string | undefined,
     body?: string | undefined,
-    sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {} // undefined means leave default
+    sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {}, // undefined means leave default
+    handleModalResponse?: () => Promise<void>
   ) {
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     const keys = ['richtext', 'encrypt', 'sign'];
@@ -92,6 +93,9 @@ export class ComposePageRecipe extends PageRecipe {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
       await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
+    }
+    if (handleModalResponse) {
+      await handleModalResponse();
     }
     await composePageOrFrame.click('@input-body');
     // bring cursor to the beginning of the multiline contenteditable
