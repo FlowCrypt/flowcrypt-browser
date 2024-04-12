@@ -30,7 +30,7 @@ addManifest('firefox-consumer', manifest => {
   // We decide to use manifest v2 for firefox and below codes are to make v3 manifest to v2
   // Read more here: https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2029591323
   manifest.manifest_version = 2;
-  manifest.web_accessible_resources = manifest.web_accessible_resources.resources;
+  manifest.web_accessible_resources = manifest.web_accessible_resources[0].resources;
   manifest.content_security_policy = manifest.content_security_policy.extension_pages;
   manifest.permissions = [...manifest.permissions, ...manifest.host_permissions];
   delete manifest.host_permissions;

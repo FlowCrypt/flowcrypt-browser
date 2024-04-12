@@ -80,9 +80,9 @@ export namespace Bm {
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
-  export type ExpirationCacheGet = { key: string; expirationTicks: number };
-  export type ExpirationCacheSet<V> = { key: string; value: V | undefined; expirationTicks: number; expiration?: number };
-  export type ExpirationCacheDeleteExpired = { expirationTicks: number };
+  export type ExpirationCacheGet = { key: string; prefix: string; expirationTicks: number };
+  export type ExpirationCacheSet<V> = { key: string; prefix: string; value: V | undefined; expirationTicks: number; expiration?: number };
+  export type ExpirationCacheDeleteExpired = { prefix: string; expirationTicks: number };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: Dest; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
