@@ -363,6 +363,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndFocus('@input-body');
         await composePage.waitTillGone('@spinner');
         await Util.sleep(3); // allow some time to search for messages
+        await composePage.waitAndRespondToModal(
+          'info',
+          'confirm',
+          "We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted."
+        );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
     );
@@ -3294,10 +3299,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
-        await Promise.all([
-          ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key'),
-          ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Error: Your account keys are revoked'),
-        ]);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key', undefined, undefined, async () => {
+          await composePage.waitAndRespondToModal(
+            'info',
+            'confirm',
+            "We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted."
+          );
+        });
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'warning', {
           contentToCheck: 'Failed to send message due to: Error: Your account keys are revoked',
