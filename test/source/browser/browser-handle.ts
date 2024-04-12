@@ -28,6 +28,15 @@ export class BrowserHandle {
     const page = await this.browser.newPage();
     if (extraHeaders !== undefined) {
       await page.setExtraHTTPHeaders(extraHeaders);
+      await page.setRequestInterception(true);
+      page.on('request', async request => {
+        const headers = request.headers();
+        if (request.url().startsWith('https://flowcrypt.s3.amazonaws.com')) {
+          // S3 returns 400 error when request contains Authorization header
+          headers.Authorization = '';
+        }
+        return await request.continue({ headers });
+      });
     }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
