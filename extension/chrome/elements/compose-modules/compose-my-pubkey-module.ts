@@ -27,7 +27,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
     Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
-    if (this.view.S.cached('warning_no_pubkey_on_attester').is(':visible')) {
+    if (!includePub && this.view.S.cached('warning_no_pubkey_on_attester').is(':visible')) {
       this.view.S.cached('warning_no_pubkey_on_attester').css('display', 'none');
     }
     this.setAttachPreference(includePub);
