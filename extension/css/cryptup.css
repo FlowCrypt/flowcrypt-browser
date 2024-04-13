@@ -188,7 +188,6 @@ button.btn_disabled,
 
 .swal2-container.ui-toast-container {
   width: 77%;
-  overflow-y: hidden !important;
 }
 
 .swal2-popup.swal2-toast.ui-toast {
@@ -200,10 +199,6 @@ button.btn_disabled,
 .swal2-popup.swal2-toast .swal2-title.ui-toast-title {
   color: #fff;
   margin: 0 0.6em 0.3em;
-}
-
-.swal2-popup.swal2-toast.ui-toast .link {
-  color: #337ab7;
 }
 
 .swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar {
@@ -2715,7 +2710,8 @@ table#compose tr#password_or_pubkey_container .password_input_container .line.pa
 }
 
 table#compose tr#password_or_pubkey_container td {
-  height: 66px;
+  max-height: 66px;
+  height: 0;
   padding: 5px 14px;
   animation: fadeInUp 1s;
   border-top: 1px solid #cfcfcf;
@@ -2778,6 +2774,11 @@ table#compose tr#password_or_pubkey_container #expiration_note_settings_link,
 table#compose tr#password_or_pubkey_container #expiration_note_settings_link:hover,
 table#compose tr#password_or_pubkey_container #expiration_note_settings_link:visited {
   color: white;
+}
+
+table#compose tr#password_or_pubkey_container .warning_no_pubkey_on_attester {
+  display: none;
+  color: #d88f00;
 }
 
 table#compose span.start,

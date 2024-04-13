@@ -27,6 +27,9 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
     Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
+    if (this.view.S.cached('warning_no_pubkey_on_attester').is(':visible')) {
+      this.view.S.cached('warning_no_pubkey_on_attester').css('display', 'none');
+    }
     this.setAttachPreference(includePub);
   };
 
@@ -75,15 +78,16 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
           if (!(await this.view.recipientsModule.doesRecipientHaveMyPubkey(recipient))) {
             // they do need pubkey
             // To improve situation reported in #5609, a notification message about the automatic public key inclusion is displayed
-            while (!$('div#input_text').is(':visible') || !$('table#compose').is(':visible')) {
-              await new Promise<void>(resolve => setTimeout(resolve, 500)); // error-handled: Add a delay until the table #compose is displayed as a workaround for the toast UI not showing up too early when the email composer is not opened.
-            }
-            Ui.toast(
-              `We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted. You may click the certificate icon to exclude it from this email.\n<p style="font-size: 0.9em">If you want to submit your public key, please ask ${this.view.fesUrl ? 'your administrator' : '<span class="link">human@flowcrypt.com</span>'} for assistance.</p>`,
-              true,
-              5
-            );
+            // while (!$('div#input_text').is(':visible') || !$('table#compose').is(':visible')) {
+            // await new Promise<void>(resolve => setTimeout(resolve, 500)); // error-handled: Add a delay until the table #compose is displayed as a workaround for the toast UI not showing up too early when the email composer is not opened.
+            // }
+            this.view.S.cached('warning_no_pubkey_on_attester').css('display', 'block');
             this.setAttachPreference(true);
+            // Ui.toast(
+            //   `We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted. You may click the certificate icon to exclude it from this email.\n<p style="font-size: 0.9em">If you want to submit your public key, please ask ${this.view.fesUrl ? 'your administrator' : '<span class="link">human@flowcrypt.com</span>'} for assistance.</p>`,
+            //   true,
+            //   5
+            // );
             return;
           }
         }

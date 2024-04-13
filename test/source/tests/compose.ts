@@ -363,9 +363,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndFocus('@input-body');
         await composePage.waitTillGone('@spinner');
         await Util.sleep(3); // allow some time to search for messages
-        await ComposePageRecipe.waitForToastToAppearAndDisappear(
-          composePage,
-          "We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted."
+        await composePage.waitForContent(
+          '@container-no-pubkey-on-attester',
+          "Your public key is missing. We've attached it for you to enable encrypted replies."
         );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
@@ -3300,10 +3300,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await Promise.all([
           ComposePageRecipe.fillMsg(composePage, { to: 'mock.only.pubkey@flowcrypt.com' }, 'no valid key'),
-          ComposePageRecipe.waitForToastToAppearAndDisappear(
-            composePage,
-            "We couldn't find your public key on the server. We've included it for you so that they can use it to reply back to you encrypted."
-          ),
+          ComposePageRecipe.waitForToastToAppearAndDisappear(composePage, 'Draft not saved: Error: Your account keys are revoked'),
         ]);
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'warning', {
