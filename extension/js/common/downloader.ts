@@ -9,9 +9,9 @@ import { Buf } from './core/buf.js';
 import { ExpirationCache } from './core/expiration-cache.js';
 
 export class Downloader {
-  private readonly chunkDownloads = new ExpirationCache<Buf>('chunk', 2 * 60 * 60 * 1000); // 2 hours
-  private readonly fullMessages = new ExpirationCache<GmailRes.GmailMsg>('full_message', 24 * 60 * 60 * 1000); // 24 hours
-  private readonly rawMessages = new ExpirationCache<GmailRes.GmailMsg>('raw_message', 24 * 60 * 60 * 1000); // 24 hours
+  private readonly chunkDownloads = new ExpirationCache<Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
+  private readonly fullMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly rawMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
 
   public constructor(private readonly gmail: Gmail) {}
 
@@ -27,36 +27,68 @@ export class Downloader {
     void this.chunkDownloads.deleteExpired();
   };
 
-  public getOrDownloadAttachment = async (a: Attachment, treatAs: Attachment$treatAs): Promise<Buf> => {
+  public queueAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs): Promise<{ result: Promise<Buf> }> => {
     if (a.hasData()) {
-      return a.getData();
+      return { result: Promise.resolve(a.getData()) };
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const attachmentId = a.id!;
-    let attachment = await this.chunkDownloads.get(a.id ?? '');
-    if (!attachment) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      attachment = await this.gmail.attachmentGetChunk(a.msgId!, attachmentId, treatAs);
-      await this.chunkDownloads.set(attachmentId, attachment);
-    }
-    return attachment;
+    // Couldn't use async await for chunkDownloads.get
+    // because if we call `await chunkDownloads.get`
+    // then return type becomes Buf|undfined instead of Promise<Buf>|undfined
+    return new Promise((resolve, reject) => {
+      this.chunkDownloads
+        .get(a.id ?? '')
+        .then(async download => {
+          if (!download || Object.keys(download).length < 1) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            download = this.gmail.attachmentGetChunk(a.msgId!, a.id!, treatAs);
+            await this.chunkDownloads.set(a.id ?? '', download);
+          }
+          resolve({ result: download });
+        })
+        .catch(e => {
+          reject(e);
+        });
+    });
+  };
+
+  public waitForAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs) => {
+    if (a.hasData()) return a.getData();
+    return this.chunkDownloads.await(a.id ?? '', (await this.queueAttachmentChunkDownload(a, treatAs)).result);
   };
 
   public msgGetRaw = async (msgId: string): Promise<string> => {
-    let cachedMessage = await this.rawMessages.get(msgId);
-    if (!cachedMessage) {
-      cachedMessage = await this.gmail.msgGet(msgId, 'raw');
-      await this.rawMessages.set(msgId, cachedMessage);
-    }
-    return cachedMessage.raw ?? '';
+    return new Promise((resolve, reject) => {
+      this.rawMessages
+        .get(msgId)
+        .then(async msgDownload => {
+          if (!msgDownload || Object.keys(msgDownload).length < 1) {
+            msgDownload = this.gmail.msgGet(msgId, 'raw');
+            await this.rawMessages.set(msgId, msgDownload);
+          }
+          const msg = await this.rawMessages.await(msgId, msgDownload);
+          resolve(msg.raw || '');
+        })
+        .catch(e => {
+          reject(e);
+        });
+    });
   };
 
   public msgGetFull = async (msgId: string): Promise<GmailRes.GmailMsg> => {
-    let cachedMessage = await this.fullMessages.get(msgId);
-    if (!cachedMessage) {
-      cachedMessage = await this.gmail.msgGet(msgId, 'full');
-      await this.fullMessages.set(msgId, cachedMessage);
-    }
-    return cachedMessage;
+    return new Promise((resolve, reject) => {
+      this.fullMessages
+        .get(msgId)
+        .then(async msgDownload => {
+          if (!msgDownload || Object.keys(msgDownload).length < 1) {
+            msgDownload = this.gmail.msgGet(msgId, 'full');
+            await this.fullMessages.set(msgId, msgDownload);
+          }
+          const msg = await this.rawMessages.await(msgId, msgDownload);
+          resolve(msg);
+        })
+        .catch(e => {
+          reject(e);
+        });
+    });
   };
 }

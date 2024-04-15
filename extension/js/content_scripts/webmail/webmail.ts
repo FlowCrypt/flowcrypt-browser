@@ -31,6 +31,7 @@ Catch.try(async () => {
     let replacer: GmailElementReplacer;
 
     const getUserAccountEmail = (): undefined | string => {
+      console.log(`window.location.search.indexOf('&view=btop&'): ${window.location.search.indexOf('&view=btop&')}`);
       if (window.location.search.indexOf('&view=btop&') === -1) {
         // when view=btop present, FlowCrypt should not be activated
         if (hostPageInfo.email) {
