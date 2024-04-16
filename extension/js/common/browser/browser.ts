@@ -37,7 +37,7 @@ export class Browser {
       ev.initMouseEvent('click', true, true, window);
       a.dispatchEvent(ev);
     }
-    if (Catch.browser().name === 'firefox') {
+    if (Catch.isFirefox()) {
       try {
         a.remove();
       } catch (err) {

@@ -105,7 +105,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight = false) => {
-    if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
+    if (!this.view.isReplyBox && Catch.isFirefox()) {
       this.view.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
       for (const cell of this.view.S.cached('all_cells_except_text')) {

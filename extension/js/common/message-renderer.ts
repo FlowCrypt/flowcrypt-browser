@@ -401,6 +401,11 @@ export class MessageRenderer {
   };
 
   public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
+    // Couldn't use caching mechanism in firefox
+    // https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2054128442
+    if (Catch.isFirefox()) {
+      return await this.processFull(await this.downloader.msgGetFull(msgId));
+    }
     // Couldn't use async await for chunkDownloads.get
     // because if we call `await chunkDownloads.get`
     // then return type becomes Buf|undfined instead of Promise<Buf>|undfined

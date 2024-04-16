@@ -16,7 +16,7 @@ export const injectFcIntoWebmail = () => {
   }
   // on Firefox, standard way of loading content scripts stopped working. We have to listen to tab loaded events, and inject then
   // basically here we do what normally the browser is supposed to do (inject content scripts when page is done loading)
-  if (Catch.browser().name === 'firefox') {
+  if (Catch.isFirefox()) {
     chrome.tabs.onUpdated.addListener((tabId, changed, tab) => {
       if (changed.status === 'complete' && tab.active && tab.url) {
         for (const group of contentScriptGroups) {

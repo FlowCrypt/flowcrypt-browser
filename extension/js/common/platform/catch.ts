@@ -167,6 +167,10 @@ export class Catch {
     }
   }
 
+  public static isFirefox(): boolean {
+    return Catch.browser().name === 'firefox';
+  }
+
   public static environment(url = location.href): string {
     const browserName = Catch.browser().name;
     const origin = new URL(location.href).origin;

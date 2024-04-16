@@ -7,6 +7,7 @@ import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { Attachment, Attachment$treatAs } from './core/attachment.js';
 import { Buf } from './core/buf.js';
 import { ExpirationCache } from './core/expiration-cache.js';
+import { Catch } from './platform/catch.js';
 
 export class Downloader {
   private readonly chunkDownloads = new ExpirationCache<Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
@@ -31,6 +32,15 @@ export class Downloader {
     if (a.hasData()) {
       return { result: Promise.resolve(a.getData()) };
     }
+    // Couldn't use caching mechanism in firefox because in firefox it throws below error
+    // because we tried to send promise with chrome.runtime and firefox doesn't support it
+    // https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2054128442
+    // Thrown[object]Error: Permission denied to access property "constructor" error
+    // Need to remove below code once firefox supports it
+    if (Catch.isFirefox()) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return { result: this.gmail.attachmentGetChunk(a.msgId!, a.id!, treatAs) };
+    }
     // Couldn't use async await for chunkDownloads.get
     // because if we call `await chunkDownloads.get`
     // then return type becomes Buf|undfined instead of Promise<Buf>|undfined
@@ -53,10 +63,19 @@ export class Downloader {
 
   public waitForAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs) => {
     if (a.hasData()) return a.getData();
+    if (Catch.isFirefox()) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const res = await this.queueAttachmentChunkDownload(a, treatAs);
+      return await res.result;
+    }
     return this.chunkDownloads.await(a.id ?? '', (await this.queueAttachmentChunkDownload(a, treatAs)).result);
   };
 
   public msgGetRaw = async (msgId: string): Promise<string> => {
+    if (Catch.isFirefox()) {
+      const msgDownload = await this.gmail.msgGet(msgId, 'raw');
+      return msgDownload.raw || '';
+    }
     return new Promise((resolve, reject) => {
       this.rawMessages
         .get(msgId)
@@ -75,6 +94,9 @@ export class Downloader {
   };
 
   public msgGetFull = async (msgId: string): Promise<GmailRes.GmailMsg> => {
+    if (Catch.isFirefox()) {
+      return await this.gmail.msgGet(msgId, 'full');
+    }
     return new Promise((resolve, reject) => {
       this.fullMessages
         .get(msgId)
