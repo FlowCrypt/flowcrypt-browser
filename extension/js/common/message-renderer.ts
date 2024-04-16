@@ -461,7 +461,7 @@ export class MessageRenderer {
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
-    const fromHtml = from?.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${fromEmail}&gt;` : fromEmail;
+    const fromHtml = from?.name ? `<b>${Xss.escape(from.name)}</b> &lt;${fromEmail}&gt;` : fromEmail;
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const ccString = GmailParser.findHeader(fullMsg, 'cc')
       ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(fullMsg, 'cc')!)}</span><br/>`
@@ -475,7 +475,7 @@ export class MessageRenderer {
         userNameAndEmail: `<b>${Xss.escape(this.fullName ?? '')}</b> &lt;${Xss.escape(this.acctEmail)}&gt;`,
         html: `
       <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(plainSubject ?? '')}</p>
+        <p class="subject-label" data-test="print-subject">${Xss.escape(plainSubject ?? '')}</p>
       <hr>
       <br/>
       <div>
