@@ -14,7 +14,7 @@ jobs:
   OSSAR-Scan:
     # OSSAR runs on windows-latest.
     # ubuntu-latest and macos-latest support coming soon
-    permission:
+    permissions:
       contents: read
       security-events: write
 
