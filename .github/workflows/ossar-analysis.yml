@@ -7,10 +7,17 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   OSSAR-Scan:
     # OSSAR runs on windows-latest.
     # ubuntu-latest and macos-latest support coming soon
+    permission:
+      contents: read
+      security-events: write
+
     runs-on: windows-latest
 
     steps:
