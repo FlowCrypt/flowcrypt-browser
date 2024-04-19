@@ -84,19 +84,16 @@
         "/img/logo/flowcrypt-logo-19-19.png",
         "/chrome/elements/compose.htm",
         "/chrome/elements/pgp_block.htm",
-        "/chrome/elements/setup_dialog.htm",
         "/chrome/elements/attachment.htm",
         "/chrome/elements/attachment_preview.htm",
         "/chrome/elements/passphrase.htm",
         "/chrome/elements/add_pubkey.htm",
         "/chrome/elements/pgp_pubkey.htm",
         "/chrome/elements/backup.htm",
-        "/chrome/elements/verification.htm",
-        "/chrome/elements/shared/footer.htm",
         "/chrome/elements/oauth2.htm",
         "/js/common/core/feature-config-injector.js"
       ],
-      "matches": ["*://*/*"]
+      "matches": ["https://mail.google.com/*", "https://accounts.google.com/*", "https://www.google.com/*"]
     }
   ],
   "minimum_chrome_version": "96",
