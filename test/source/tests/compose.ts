@@ -365,7 +365,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await Util.sleep(3); // allow some time to search for messages
         await composePage.waitForContent(
           '@container-no-pubkey-on-attester',
-          "Your public key is missing. We've attached it for you to enable encrypted replies."
+          "Your public key is attached, allowing the recipient(s) to send encrypted replies."
         );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
