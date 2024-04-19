@@ -21,7 +21,7 @@ console.info('background.js service worker starting');
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string>(4 * 60 * 60 * 1000); // 4 hours
-  BrowserMsg.createIntervalAlarm('delete_expired', 0.5); // each minute
+  BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
 
   try {
     await migrateGlobal();

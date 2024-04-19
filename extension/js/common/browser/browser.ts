@@ -5,7 +5,6 @@
 
 'use strict';
 
-import { Api } from '../api/shared/api.js';
 import { Attachment } from '../core/attachment.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
@@ -14,12 +13,6 @@ import { GlobalStore } from '../platform/store/global-store.js';
 export class Browser {
   public static objUrlCreate = (content: Uint8Array | string) => {
     return URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
-  };
-
-  public static objUrlConsume = async (url: string) => {
-    const buf = await Api.download(url);
-    URL.revokeObjectURL(url);
-    return buf;
   };
 
   public static saveToDownloads = (attachment: Attachment) => {

@@ -311,7 +311,6 @@ export class BrowserMsg {
   }
 
   public static createIntervalAlarm(action: string, periodInMinutes: number) {
-    // Create the alarm with delay
     const alarmName = `${action}_interval_${Date.now()}`;
     void chrome.alarms.create(alarmName, { periodInMinutes });
   }
@@ -363,7 +362,6 @@ export class BrowserMsg {
       }
     };
 
-    // Listen for the alarm and execute the callback when it triggers, then clear the alarm
     chrome.alarms.onAlarm.addListener(alarmListener);
   }
 

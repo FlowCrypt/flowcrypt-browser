@@ -406,8 +406,5 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-// window is undefined in background service worker
-if (typeof window !== 'undefined') {
-  onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
-}
+onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
 onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

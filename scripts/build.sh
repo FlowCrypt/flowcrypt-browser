@@ -121,16 +121,12 @@ main() {
   ISUINT8ARRAY_REGEX2="s/\(([^\(\)\x20]+)\x20instanceof\x20Uint8Array\)/\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\)/g"
   # this patch handles pattern like \x20n instanceof Uint8Array;
   ISUINT8ARRAY_REGEX3="s/return\x20([^\(\)\x20]+)\x20instanceof\x20Uint8Array;/return\x20\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\);/g"
-  # this patch replaces `return util.concatUint8Array(arr).subarray(0, numBytes);` to 
-  # `return new Uint8Array(util.concatUint8Array(arr)).subarray(0, numBytes);`
-  ISUINT8ARRAY_REGEX4="s/return\x20util\.concatUint8Array\(arr\)\.subarray\(0,\x20numBytes\);/return\x20new\x20Uint8Array\(util\.concatUint8Array\(arr\)\)\.subarray\(0,\x20numBytes\);/g"
   apply_regex_replace $STREAMS_REGEX $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $OPENPGP_FILE
   apply_regex_replace $ISUINT8ARRAY_REGEX2 $OPENPGP_FILE
   apply_regex_replace $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
-  apply_regex_replace $ISUINT8ARRAY_REGEX4 $OPENPGP_FILE
-
+  
   # bundle web-stream-tools as Stream var for the content script
   ( cd conf && npx webpack ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
