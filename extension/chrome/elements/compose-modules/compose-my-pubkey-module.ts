@@ -27,6 +27,9 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
     this.toggledManually = true;
     const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
     Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`);
+    if (!includePub && this.view.S.cached('warning_no_pubkey_on_attester').is(':visible')) {
+      this.view.S.cached('warning_no_pubkey_on_attester').css('display', 'none');
+    }
     this.setAttachPreference(includePub);
   };
 
@@ -74,7 +77,9 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
           // new message, and my key is not uploaded where the recipient would look for it
           if (!(await this.view.recipientsModule.doesRecipientHaveMyPubkey(recipient))) {
             // they do need pubkey
+            // To improve situation reported in #5609, a notification message about the automatic public key inclusion is displayed
             this.setAttachPreference(true);
+            this.view.S.cached('warning_no_pubkey_on_attester').css('display', 'block');
             return;
           }
         }

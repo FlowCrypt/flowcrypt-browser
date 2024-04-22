@@ -22,7 +22,9 @@ declare global {
 }
 
 interface SquireWillPasteEvent extends Event {
-  fragment: DocumentFragment;
+  detail: {
+    fragment: DocumentFragment;
+  };
 }
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
@@ -121,7 +123,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', async (e: SquireWillPasteEvent) => {
       const div = document.createElement('div');
-      div.appendChild(e.fragment);
+      div.appendChild(e.detail.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length as number)) {
@@ -130,7 +132,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
         return;
       }
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
-      e.fragment.appendChild(div);
+      e.detail.fragment.appendChild(div);
     });
   };
 
