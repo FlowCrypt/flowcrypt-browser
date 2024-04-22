@@ -33,7 +33,7 @@ type Codec = {
 };
 
 export const requireOpenpgp = () => {
-  if (window !== globalThis && Catch.browser().name === 'firefox') {
+  if (typeof window !== 'undefined' && typeof globalThis !== 'undefined' && window !== globalThis && Catch.browser().name === 'firefox') {
     // fix Firefox sandbox permission issues as per convo https://github.com/FlowCrypt/flowcrypt-browser/pull/5013#discussion_r1148343995
     window.Uint8Array.prototype.subarray = function (...args) {
       return new Uint8Array(this).subarray(...args);
