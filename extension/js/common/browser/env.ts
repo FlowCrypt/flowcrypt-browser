@@ -10,6 +10,8 @@ import { Url } from '../core/common.js';
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 
+declare const self: ServiceWorkerGlobalScope;
+
 export class Env {
   public static runtimeId(orig = false) {
     if (chrome?.runtime?.id) {
@@ -45,9 +47,6 @@ export class Env {
 
   // Check if the current context is a Service Worker
   public static isBackgroundPage() {
-    // 'self.registration' exists in service worker contexts
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     return typeof self.registration !== 'undefined';
   }
 
