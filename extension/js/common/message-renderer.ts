@@ -430,8 +430,8 @@ export class MessageRenderer {
   };
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
-    const sentDate = $('div.gK span[title]').attr('title');
-    const sentDateStr = sentDate ? sentDate : '';
+    const sentDate = GmailParser.findHeader(fullMsg, 'date');
+    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
