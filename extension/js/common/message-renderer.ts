@@ -433,7 +433,7 @@ export class MessageRenderer {
     const gmailDateReceived = $('div.gK span[title]').attr('title');
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const sentDateStr =
-      gmailDateReceived && new Date(gmailDateReceived)
+      gmailDateReceived && !isNaN(new Date(gmailDateReceived).getTime())
         ? gmailDateReceived.replace(', ', ' at ')
         : Str.fromDate(new Date(sentDate as string)).replace(', ', ' at ');
     const fromString = GmailParser.findHeader(fullMsg, 'from');
