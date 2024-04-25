@@ -435,7 +435,7 @@ export class MessageRenderer {
     const sentDateStr =
       gmailDateReceived && !isNaN(new Date(gmailDateReceived).getTime())
         ? gmailDateReceived.replace(', ', ' at ')
-        : Str.fromDate(new Date(sentDate as string)).replace(', ', ' at ');
+        : Str.fromDate(new Date(sentDate as string)).replace(' ', ' at ');
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
