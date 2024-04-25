@@ -363,6 +363,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndFocus('@input-body');
         await composePage.waitTillGone('@spinner');
         await Util.sleep(3); // allow some time to search for messages
+        await composePage.waitForContent(
+          '@container-no-pubkey-on-attester',
+          "Your public key is attached, allowing the recipient(s) to send encrypted replies."
+        );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
     );
