@@ -258,7 +258,7 @@ export class Str {
 
   public static fromDate = (date: Date) => {
     return date
-      .toLocaleString()
+      .toISOString()
       .replace(/T/, ' ')
       .replace(/:[^:]+$/, '');
   };
