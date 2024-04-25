@@ -208,7 +208,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const text = this.messageToReplyOrForward.text;
     const from = this.messageToReplyOrForward.headers.from;
     const date = new Date(String(this.messageToReplyOrForward.headers.date));
-    const dateStr = Str.fromDate(date).replace(' ', ' at ');
+    const dateStr = Str.fromDate(date).replace(', ', ' at ');
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
     const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
