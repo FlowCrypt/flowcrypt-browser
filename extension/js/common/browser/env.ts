@@ -45,10 +45,7 @@ export class Env {
 
   // Check if the current context is a Service Worker
   public static isBackgroundPage() {
-    // 'self.registration' exists in service worker contexts
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    return typeof self.registration !== 'undefined';
+    return typeof window === 'undefined' && typeof document === 'undefined';
   }
 
   public static isExtension() {

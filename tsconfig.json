@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["DOM", "ES6", "webworker", "DOM.Iterable"],
-    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitReturns": true,
