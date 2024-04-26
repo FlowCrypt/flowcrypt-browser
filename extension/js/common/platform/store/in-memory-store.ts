@@ -2,7 +2,8 @@
 
 import { AbstractStore } from './abstract-store.js';
 import { Time } from '../../browser/time.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
+import { BgNotReadyErr, BrowserMsg } from '../../browser/browser-msg.js';
+import { Ui } from '../../browser/ui.js';
 
 /**
  * Temporary In-Memory store for sensitive values, expiring after clientConfiguration.in_memory_pass_phrase_session_length (or default 4 hours)
@@ -10,11 +11,33 @@ import { BrowserMsg } from '../../browser/browser-msg.js';
  */
 export class InMemoryStore extends AbstractStore {
   public static async set(acctEmail: string, key: string, value?: string, expiration?: number) {
-    return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration });
+    for (let i = 0; i < 10; i++) {
+      // backend may not be immediately ready to respond - retry
+      try {
+        return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration });
+      } catch (e) {
+        if (!(e instanceof BgNotReadyErr) || i === 9) {
+          throw e;
+        }
+        await Ui.delay(300);
+      }
+    }
+    throw new BgNotReadyErr('this should never happen');
   }
 
   public static async get(acctEmail: string, key: string): Promise<string | undefined> {
-    return (await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key })) ?? undefined;
+    for (let i = 0; i < 10; i++) {
+      // backend may not be immediately ready to respond - retry
+      try {
+        return (await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key })) ?? undefined;
+      } catch (e) {
+        if (!(e instanceof BgNotReadyErr) || i === 9) {
+          throw e;
+        }
+        await Ui.delay(300);
+      }
+    }
+    throw new BgNotReadyErr('this should never happen');
   }
 
   public static async getUntilAvailable(acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> {
