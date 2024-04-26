@@ -265,7 +265,7 @@ export class Str {
       minute: '2-digit',
       hour12: ishour12Format,
     };
-    return date.toLocaleString('en-CA', formatOptions).replace(/,/g, '');
+    return date.toLocaleString('en-CA', formatOptions).replace(/,/g, ''); // en-CA produces yyyy-dd-mm, hh:mm format
   };
 
   public static mostlyRTL = (string: string): boolean => {
