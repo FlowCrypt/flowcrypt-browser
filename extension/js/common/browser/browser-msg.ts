@@ -14,6 +14,7 @@ import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
 import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -288,6 +289,20 @@ export class BrowserMsg {
 
   public static generateTabId(contentScript?: boolean) {
     return `${contentScript ? 'cs' : 'ex'}.${Str.sloppyRandom(10)}`;
+  }
+
+  public static async retryOnBgNotReadyErr<T>(operation: () => Promise<T>, maxAttempts = 10, delayMs = 300) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        return await operation();
+      } catch (e) {
+        if (!(e instanceof BgNotReadyErr) || attempt === maxAttempts - 1) {
+          throw e;
+        }
+        await Ui.delay(delayMs);
+      }
+    }
+    throw new BgNotReadyErr('Unexpected error after maximum retries');
   }
 
   public static addListener(name: string, handler: Handler) {

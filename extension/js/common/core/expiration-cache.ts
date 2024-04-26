@@ -1,9 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { BgNotReadyErr, BrowserMsg } from '../browser/browser-msg.js';
+import { BrowserMsg } from '../browser/browser-msg.js';
 import { storageGet, storageGetAll, storageRemove, storageSet } from '../browser/chrome.js';
 import { Env } from '../browser/env.js';
-import { Ui } from '../browser/ui.js';
 
 /**
  * Cache, keeping entries for limited duration
@@ -61,20 +60,9 @@ export class ExpirationCache<V> {
     if (Env.isContentScript()) {
       // Get chrome storage data from content script not allowed
       // Need to get data from service worker
-      for (let i = 0; i < 10; i++) {
-        // backend may not be immediately ready to respond - retry
-        try {
-          await BrowserMsg.send.bg.await.expirationCacheDeleteExpired({
-            expirationTicks: this.expirationTicks,
-          });
-        } catch (e) {
-          if (!(e instanceof BgNotReadyErr) || i === 9) {
-            throw e;
-          }
-          await Ui.delay(300);
-        }
-      }
-      throw new BgNotReadyErr('this should never happen');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.expirationCacheDeleteExpired({ expirationTicks: this.expirationTicks }));
+      return;
     }
 
     const keysToDelete: string[] = [];
