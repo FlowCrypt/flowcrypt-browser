@@ -256,11 +256,16 @@ export class Str {
     return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
   };
 
-  public static fromDate = (date: Date) => {
-    return date
-      .toISOString()
-      .replace(/T/, ' ')
-      .replace(/:[^:]+$/, '');
+  public static fromDate = (date: Date, ishour12Format = false) => {
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: ishour12Format,
+    };
+    return date.toLocaleString('en-CA', formatOptions).replace(/,/g, '');
   };
 
   public static mostlyRTL = (string: string): boolean => {

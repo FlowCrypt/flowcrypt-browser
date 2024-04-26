@@ -432,12 +432,8 @@ export class MessageRenderer {
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
     const gmailDateReceived = $('div.gK span[title]').attr('title');
-    let sentDateStr: string;
-    if (gmailDateReceived !== undefined && !isNaN(new Date(gmailDateReceived).getTime())) {
-      sentDateStr = gmailDateReceived.replace(', ', ' at ');
-    } else {
-      sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
-    }
+    const ishour12Format = (gmailDateReceived !== undefined && gmailDateReceived.endsWith('M') ? true : false) || false;
+    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate), ishour12Format).replace(' ', ' at ') : '';
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
