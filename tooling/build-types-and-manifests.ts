@@ -56,13 +56,13 @@ addManifest('thunderbird-consumer', manifest => {
     default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
     default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
     // default_popup will be updated later
-    default_popup: 'chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+    default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
   };
   manifest.message_display_action = {
     default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
     default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
     // default_popup will be updated later
-    default_popup: 'chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+    default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
   };
   delete manifest.minimum_chrome_version;
 });
