@@ -96,12 +96,12 @@ const expectedEnterprisePermissions = [
   'https://flowcrypt.com/*',
   'unlimitedStorage',
 ];
-for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
+for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer', 'thunderbird-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
   const expectedPermissions = buildType.includes('consumer') ? expectedConsumerPermissions : expectedEnterprisePermissions;
   for (const expectedPermission of expectedPermissions) {
     if (!manifest.permissions.includes(expectedPermission)) {
-      if (!(expectedPermission === 'unlimitedStorage' && buildType === 'firefox-consumer')) {
+      if (!(expectedPermission === 'unlimitedStorage' && (buildType === 'firefox-consumer' || buildType === 'thunderbird-consumer'))) {
         console.error(`Missing permission '${expectedPermission}' in ${buildType}/manifest.json`);
         errsFound++;
       }

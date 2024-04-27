@@ -38,6 +38,34 @@ addManifest('firefox-consumer', manifest => {
   delete manifest.minimum_chrome_version;
 });
 
+addManifest('thunderbird-consumer', manifest => {
+  manifest.version = version;
+  manifest.applications = {
+    gecko: {
+      id: 'firefox@cryptup.io',
+      update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
+      strict_min_version: '102.0', // eslint-disable-line @typescript-eslint/naming-convention
+    },
+  };
+  manifest.name = 'FlowCrypt Encryption for Thunderbird';
+  manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
+  delete manifest.permissions;
+  manifest.permissions = ['storage', 'tabs', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*', 'https://*.google.com/*'];
+  manifest.compose_action = {
+    default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
+    default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
+    // default_popup will be updated later
+    default_popup: 'chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+  };
+  manifest.message_display_action = {
+    default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
+    default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
+    // default_popup will be updated later
+    default_popup: 'chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+  };
+  delete manifest.minimum_chrome_version;
+});
+
 addManifest('chrome-enterprise', manifest => {
   manifest.version = version;
   manifest.name = 'FlowCrypt for Enterprise';

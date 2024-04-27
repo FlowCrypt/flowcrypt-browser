@@ -78,12 +78,13 @@ main() {
       synchronize_files "build/chrome-enterprise"
       synchronize_files "build/chrome-consumer"
       synchronize_files "build/firefox-consumer"
+      synchronize_files "build/thunderbird-consumer"
     }
     exit 0
   fi
 
   if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
-    delete_directories $BUILD_DIRECTORY/firefox-consumer $BUILD_DIRECTORY/chrome-consumer $BUILD_DIRECTORY/chrome-consumer-mock $BUILD_DIRECTORY/chrome-enterprise $BUILD_DIRECTORY/chrome-enterprise-mock $BUILD_DIRECTORY/generic-extension-wip/js/content_scripts
+    delete_directories $BUILD_DIRECTORY/firefox-consumer $BUILD_DIRECTORY/thunderbird-consumer $BUILD_DIRECTORY/chrome-consumer $BUILD_DIRECTORY/chrome-consumer-mock $BUILD_DIRECTORY/chrome-enterprise $BUILD_DIRECTORY/chrome-enterprise-mock $BUILD_DIRECTORY/generic-extension-wip/js/content_scripts
     # build concurrently - using standard typescript compiler with --incremental flag
     mkdir -p $BUILD_DIRECTORY
     build_typescript_project false "./tsconfig.json" true "$BUILD_DIRECTORY/tsconfig.tsbuildinfo"
@@ -148,6 +149,7 @@ main() {
   cp -r $OUTPUT_DIRECTORY ./build/chrome-enterprise
   cp -r $OUTPUT_DIRECTORY ./build/chrome-consumer
   cp -r $OUTPUT_DIRECTORY ./build/firefox-consumer
+  cp -r $OUTPUT_DIRECTORY ./build/thunderbird-consumer
   node ./build/tooling/build-types-and-manifests
 }
 
