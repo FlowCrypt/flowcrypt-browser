@@ -49,6 +49,7 @@ addManifest('thunderbird-consumer', manifest => {
   };
   manifest.name = 'FlowCrypt Encryption for Thunderbird';
   manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
+  manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
   delete manifest.permissions;
   manifest.permissions = ['storage', 'tabs', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*', 'https://*.google.com/*'];
   manifest.compose_action = {
