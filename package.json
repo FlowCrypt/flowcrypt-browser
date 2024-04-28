@@ -36,7 +36,7 @@
     "pdfjs-dist": "3.11.174",
     "prettier": "^3.2.5",
     "puppeteer": "20.9.0",
-    "stylelint": "16.3.1",
+    "stylelint": "16.4.0",
     "stylelint-config-standard": "36.0.0",
     "typescript": "5.4.5",
     "undici-types": "^6.13.0",
