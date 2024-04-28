@@ -211,7 +211,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const gmailDateReceived = $('div.gK span[title]').attr('title');
     // detects current timezone by checking if Gmail's dateTime includes trailing AM/PM otherwise its 24hour format
     const ishour12Format = (gmailDateReceived?.endsWith('M') ? true : false) || false;
-    const dateStr = Str.fromDate(date, ishour12Format).replace(', ', ' at ');
+    const dateStr = Str.fromDate(date, ishour12Format, false).replace(', ', ' at ');
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
     const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
