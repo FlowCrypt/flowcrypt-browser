@@ -705,7 +705,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await clickTripleDotAndExpectQuoteToLoad(
           composePage,
           [
-            'On 08/06/2019 at 09:57, human@flowcrypt.com wrote:',
+            'On 06/08/2019 at 09:57, human@flowcrypt.com wrote:',
             '> Used to fail on Android app',
             '>',
             '> ---------- Forwarded message ---------',
@@ -762,7 +762,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           await clickTripleDotAndExpectQuoteToLoad(
             replyFrame,
             [
-              'On 14/06/2019 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+              'On 06/15/2019 at 07:24, flowcrypt.compatibility@gmail.com wrote:',
               '> This is some message',
               '>',
               '> and below is the quote',
@@ -792,7 +792,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           expect(inputBody!.trim()).to.be.empty;
           await clickTripleDotAndExpectQuoteToLoad(
             replyFrame,
-            ['On 14//06/2019 at 23:24, flowcrypt.compatibility@gmail.com wrote:', '>', '> (Skipping previous message quote)'].join('\n')
+            ['On 06/15/2019 at 07:24, flowcrypt.compatibility@gmail.com wrote:', '>', '> (Skipping previous message quote)'].join('\n')
           );
         })
       );
@@ -919,7 +919,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const bodyContent = await composePage.read('@input-body');
         expect(bodyContent).to.include('---------- Forwarded message ---------');
         expect(bodyContent).to.include('From: henry.electrum@gmail.com');
-        expect(bodyContent).to.include('Date: 03/11/2017 at 02:42');
+        expect(bodyContent).to.include('Date: 11/03/2017 at 10:42');
         expect(bodyContent).to.include('Subject: [enigmail] signed message w/ attachment PGP/MIME');
         expect(bodyContent).to.include('To: flowcrypt.compatibility@gmail.com');
         expect(bodyContent).to.include('This message will contain a separately attached file + signature.');
