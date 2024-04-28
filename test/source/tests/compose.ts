@@ -365,7 +365,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await Util.sleep(3); // allow some time to search for messages
         await composePage.waitForContent(
           '@container-no-pubkey-on-attester',
-          "Your public key is attached, allowing the recipient(s) to send encrypted replies."
+          'Your public key is attached, allowing the recipient(s) to send encrypted replies.'
         );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
@@ -656,7 +656,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await clickTripleDotAndExpectQuoteToLoad(
           composePage,
           [
-            'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+            'On 14/06/2019 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
             '> This is some message',
             '>',
             '> and below is the quote',
@@ -684,7 +684,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await clickTripleDotAndExpectQuoteToLoad(
           composePage,
-          ['On 2018-06-15 at 09:46, info@nvimp.com wrote:', '> cropping all except for the image below'].join('\n')
+          ['On 15/06/2018 at 09:46, info@nvimp.com wrote:', '> cropping all except for the image below'].join('\n')
         );
       })
     );
@@ -705,7 +705,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await clickTripleDotAndExpectQuoteToLoad(
           composePage,
           [
-            'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
+            'On 08/06/2019 at 09:57, human@flowcrypt.com wrote:',
             '> Used to fail on Android app',
             '>',
             '> ---------- Forwarded message ---------',
@@ -731,7 +731,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await clickTripleDotAndExpectQuoteToLoad(
           composePage,
           [
-            'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
+            'On 03/10/2018 at 14:47, henry.electrum@gmail.com wrote:',
             '>',
             '> The following text is bold: this is bold',
             '>',
@@ -762,7 +762,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           await clickTripleDotAndExpectQuoteToLoad(
             replyFrame,
             [
-              'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+              'On 14/06/2019 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
               '> This is some message',
               '>',
               '> and below is the quote',
@@ -792,7 +792,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           expect(inputBody!.trim()).to.be.empty;
           await clickTripleDotAndExpectQuoteToLoad(
             replyFrame,
-            ['On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:', '>', '> (Skipping previous message quote)'].join('\n')
+            ['On 14//06/2019 at 23:24, flowcrypt.compatibility@gmail.com wrote:', '>', '> (Skipping previous message quote)'].join('\n')
           );
         })
       );
@@ -919,7 +919,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const bodyContent = await composePage.read('@input-body');
         expect(bodyContent).to.include('---------- Forwarded message ---------');
         expect(bodyContent).to.include('From: henry.electrum@gmail.com');
-        expect(bodyContent).to.include('Date: 2017-11-03 at 02:42');
+        expect(bodyContent).to.include('Date: 03/11/2017 at 02:42');
         expect(bodyContent).to.include('Subject: [enigmail] signed message w/ attachment PGP/MIME');
         expect(bodyContent).to.include('To: flowcrypt.compatibility@gmail.com');
         expect(bodyContent).to.include('This message will contain a separately attached file + signature.');
