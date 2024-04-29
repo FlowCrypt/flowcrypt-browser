@@ -14,7 +14,7 @@ export class InMemoryStore extends AbstractStore {
   }
 
   public static async get(acctEmail: string, key: string): Promise<string | undefined> {
-    return (await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key }))) ?? '';
+    return await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key }));
   }
 
   public static async getUntilAvailable(acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> {

@@ -96,7 +96,7 @@ export namespace Bm {
       acctEmail: string | undefined;
       sameWorld: boolean | undefined;
     };
-    export type InMemoryStoreGet = string | null;
+    export type InMemoryStoreGet = string | undefined;
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
@@ -291,7 +291,7 @@ export class BrowserMsg {
     return `${contentScript ? 'cs' : 'ex'}.${Str.sloppyRandom(10)}`;
   }
 
-  public static async retryOnBgNotReadyErr<T>(operation: () => Promise<T>, maxAttempts = 10, delayMs = 300) {
+  public static async retryOnBgNotReadyErr<T>(operation: () => Promise<T>, maxAttempts = 10, delayMs = 300): Promise<T> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         return await operation();
