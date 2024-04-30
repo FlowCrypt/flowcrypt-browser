@@ -365,6 +365,7 @@ body#settings {
   position: relative;
   font-family: 'Open Sans', sans-serif;
   font-size: 16px;
+  overflow: hidden;
 }
 
 body#settings.whitebg {
