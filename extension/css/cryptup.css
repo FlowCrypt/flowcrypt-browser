@@ -365,7 +365,6 @@ body#settings {
   position: relative;
   font-family: 'Open Sans', sans-serif;
   font-size: 16px;
-  overflow: hidden;
 }
 
 body#settings.whitebg {
@@ -1219,7 +1218,7 @@ body#settings > div#footer a {
 
 body#settings > div#content.dialog {
   width: 600px;
-  padding: 40px 20px;
+  padding: 20px;
   background: white;
   z-index: 2;
   margin-top: 0;
