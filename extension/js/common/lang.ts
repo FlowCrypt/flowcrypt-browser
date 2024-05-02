@@ -113,7 +113,7 @@ export const Lang = {
     },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' }, // eslint-disable-line @typescript-eslint/naming-convention
     includePubkeyIconTitle:
-      'Include your Public Key with this message.\n\nIf enabled, your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
+      'Include your public key with this email.\n\nIf enabled, your public key will be included in this email.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     headers: {
       encrypted: 'New Secure Message',
       encryptedAndSigned: 'New Signed Secure Message',

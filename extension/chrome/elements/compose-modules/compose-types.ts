@@ -74,7 +74,7 @@ export type NewMsgData = {
 
 export class SendBtnTexts {
   public static readonly BTN_SIGN_AND_SEND: string = 'Sign and Send';
-  public static readonly BTN_ENCRYPT_SIGN_AND_SEND: string = 'Encrypt, Sign and Send';
+  public static readonly BTN_ENCRYPT_SIGN_AND_SEND: string = 'Encrypt, Sign, and Send';
   public static readonly BTN_PLAIN_SEND: string = 'Send plain';
   public static readonly BTN_WRONG_ENTRY: string = 'Re-enter recipient..';
   public static readonly BTN_SENDING: string = 'Sending..';
