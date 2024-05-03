@@ -113,7 +113,7 @@ export const Lang = {
     },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' }, // eslint-disable-line @typescript-eslint/naming-convention
     includePubkeyIconTitle:
-      'Include your public key with this email.\n\nIf enabled, your public key will be included in this email.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
+      'Include your public key in this email.\n\nIf enabled, your public key will be included.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     headers: {
       encrypted: 'New Secure Message',
       encryptedAndSigned: 'New Signed Secure Message',
@@ -126,7 +126,7 @@ export const Lang = {
     addMissingPermission: 'Add missing permission',
     enterprisePasswordPolicy:
       'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &"#-\'_%-@,;:!*()\n - 8 characters length',
-    consumerPasswordPolicy: 'Please use a password at least 8 characters long',
+    consumerPasswordPolicy: 'Please use a password at least 8 characters long.',
     inputLimitExceededOnPaste: "The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.",
   },
   general: {
