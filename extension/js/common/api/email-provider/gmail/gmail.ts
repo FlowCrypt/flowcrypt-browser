@@ -17,6 +17,7 @@ import { Google } from './google.js';
 import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
+import { AjaxErr } from '../../shared/api-error.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -215,8 +216,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             }),
           });
 
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          if (!response.body) throw new Error('No response body!');
+          if (!response.ok) throw AjaxErr.fromFetchResponse(response);
+          if (!response.body) throw AjaxErr.fromNetErr('No response body!');
           const reader: ReadableStreamDefaultReader<Uint8Array> = response.body.getReader();
           let completeChunk = '';
           while (true) {
