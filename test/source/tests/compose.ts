@@ -365,7 +365,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await Util.sleep(3); // allow some time to search for messages
         await composePage.waitForContent(
           '@container-no-pubkey-on-attester',
-          "Your public key is attached, allowing the recipient(s) to send encrypted replies."
+          'Your public key is attached, allowing the recipient(s) to send encrypted replies.'
         );
         expect(await composePage.hasClass('@action-include-pubkey', 'active')).to.be.true;
       })
@@ -848,7 +848,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
           await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
           await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
-          await composeFrame.waitForContent('@action-send', 'Encrypt, Sign and Send');
+          await composeFrame.waitForContent('@action-send', 'Encrypt, Sign, and Send');
         })
       );
     } // end of tests per inputMethod
@@ -986,7 +986,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-        const correctButtonStatusTxt = 'Encrypt, Sign and Send';
+        const correctButtonStatusTxt = 'Encrypt, Sign, and Send';
         await ComposePageRecipe.showRecipientInput(composePage);
         await composePage.waitAll('@container-cc-bcc-buttons');
         await composePage.waitForContent('@action-send', correctButtonStatusTxt);
@@ -1505,14 +1505,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
         // Should still encryptSignSend because we enfore message signing when encrypting
-        expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
+        expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign, and Send');
         await ComposePageRecipe.setPopoverToggle(composePage, 'encrypt', false);
         expect(await composePage.read('@action-send')).to.eq('Sign and Send');
         await ComposePageRecipe.setPopoverToggle(composePage, 'sign', false);
         expect(await composePage.read('@action-send')).to.eq('Send plain');
         await ComposePageRecipe.setPopoverToggle(composePage, 'encrypt', true);
         // on "encrypt" clicking, if user is enabling "encrypt", it should also auto-enable "sign"
-        expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign and Send');
+        expect(await composePage.read('@action-send')).to.eq('Encrypt, Sign, and Send');
         await composePage.close();
       })
     );
