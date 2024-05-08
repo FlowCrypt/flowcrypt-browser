@@ -1154,6 +1154,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
           await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
           await printPage.waitForContent('@print-subject', '<b><h1>Test print dialog');
+          await printPage.waitForContent('@print-date', '04/11/2024 at 15:00');
           await printPage.waitForContent('@print-from', 'From: sender@domain.com');
           await printPage.waitForContent('@print-to', 'To: flowcrypt.compatibility@gmail.com');
           await printPage.waitForContent('@print-cc', 'ci.tests.gmail@flowcrypt.dev');
