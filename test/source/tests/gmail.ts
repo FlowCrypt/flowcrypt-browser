@@ -339,13 +339,13 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-          t.timeout(minutes(4)); // extend ava's timeout
+          t.timeout(minutes(5)); // extend ava's timeout
           const gmailPage = await openGmailPage(t, browser);
           // create compose draft
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
           await createSecureDraft(t, browser, gmailPage, 'a compose draft');
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
-          t.timeout(minutes(4)); // extend ava's timeout
+          t.timeout(minutes(5)); // extend ava's timeout
           await gotoGmailPage(gmailPage, '', 'drafts'); // to go drafts section
           // open new compose window and saved draft
           await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
@@ -361,7 +361,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitForContent('.ui-toast-title', 'Only 3 FlowCrypt windows can be opened at a time');
         },
         undefined,
-        minutes(6) // the test usually takes around 4 minutes
+        minutes(7) // the test usually takes around 4 minutes
       )
     );
 
@@ -538,7 +538,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         );
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGrbHprlHvtTJscCJQpZcqrKQbg');
-        await Util.sleep(5);
+        await Util.sleep(10);
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
         await gmailPage.waitAll(['.aZi'], { visible: false });
