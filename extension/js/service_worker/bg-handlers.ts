@@ -39,17 +39,17 @@ export class BgHandlers {
   };
 
   public static expirationCacheGetHandler = async <V>(r: Bm.ExpirationCacheGet): Promise<Bm.Res.ExpirationCacheGet<V>> => {
-    const expirationCache = new ExpirationCache<V>(r.expirationTicks);
+    const expirationCache = new ExpirationCache<V>(r.prefix, r.expirationTicks);
     return await expirationCache.get(r.key);
   };
 
   public static expirationCacheSetHandler = async <V>(r: Bm.ExpirationCacheSet<V>): Promise<Bm.Res.ExpirationCacheSet> => {
-    const expirationCache = new ExpirationCache<V>(r.expirationTicks);
+    const expirationCache = new ExpirationCache<V>(r.prefix, r.expirationTicks);
     await expirationCache.set(r.key, r.value, r.expiration);
   };
 
   public static expirationCacheDeleteExpiredHandler = async (r: Bm.ExpirationCacheDeleteExpired): Promise<Bm.Res.ExpirationCacheDeleteExpired> => {
-    const expirationCache = new ExpirationCache(r.expirationTicks);
+    const expirationCache = new ExpirationCache(r.prefix, r.expirationTicks);
     await expirationCache.deleteExpired();
   };
 
