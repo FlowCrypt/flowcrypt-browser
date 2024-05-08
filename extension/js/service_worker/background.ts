@@ -20,7 +20,7 @@ console.info('background.js service worker starting');
 (async () => {
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
-  const inMemoryStore = new ExpirationCache<string>(4 * 60 * 60 * 1000); // 4 hours
+  const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60 * 1000); // 4 hours
   BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
 
   try {

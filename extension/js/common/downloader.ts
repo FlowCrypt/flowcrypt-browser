@@ -10,9 +10,9 @@ import { ExpirationCache } from './core/expiration-cache.js';
 import { Catch } from './platform/catch.js';
 
 export class Downloader {
-  private readonly chunkDownloads = new ExpirationCache<Promise<Buf>>(2 * 60 * 60 * 1000); // 2 hours
-  private readonly fullMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
-  private readonly rawMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly chunkDownloads = new ExpirationCache<Promise<Buf>>('chunk', 2 * 60 * 60 * 1000); // 2 hours
+  private readonly fullMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>('full_message', 24 * 60 * 60 * 1000); // 24 hours
+  private readonly rawMessages = new ExpirationCache<Promise<GmailRes.GmailMsg>>('raw_message', 24 * 60 * 60 * 1000); // 24 hours
 
   public constructor(private readonly gmail: Gmail) {}
 
