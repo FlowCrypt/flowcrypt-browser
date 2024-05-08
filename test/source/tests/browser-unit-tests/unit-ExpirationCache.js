@@ -6,7 +6,7 @@ BROWSER_UNIT_TEST_NAME(`[unit][ExpirationCache] entry expires after configured i
   const sleep = async seconds => {
     return await new Promise(resolve => setTimeout(resolve, seconds * 1000));
   };
-  const cache = new ExpirationCache('test-cache', 2000); // 2 seconds
+  const cache = new ExpirationCache(2000); // 2 seconds
   await cache.set('test-key', 'test-value');
   let cacheValue = await cache.get('test-key');
   if (cacheValue !== 'test-value') {
@@ -22,7 +22,7 @@ BROWSER_UNIT_TEST_NAME(`[unit][ExpirationCache] entry expires after configured i
 
 BROWSER_UNIT_TEST_NAME(`[unit][ExpirationCache.await] removes rejected promises from cache`);
 (async () => {
-  const cache = new ExpirationCache('test-cache-promise', 24 * 60 * 60 * 1000); // 24 hours
+  const cache = new ExpirationCache(24 * 60 * 60 * 1000); // 24 hours
   const rejectionPromise = Promise.reject(Error('test-error'));
   cache.set('test-key', rejectionPromise);
   let cacheValue = cache.get('test-key');

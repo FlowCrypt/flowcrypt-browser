@@ -43,7 +43,7 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly processedMessages = new ExpirationCache<Promise<ProcessedMessage>>('processed_message', 24 * 60 * 60 * 1000); // 24 hours
+  private readonly processedMessages = new ExpirationCache<Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
 
   private constructor(
     private readonly acctEmail: string,

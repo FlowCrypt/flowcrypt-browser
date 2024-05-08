@@ -9,10 +9,7 @@ import { Env } from '../browser/env.js';
  */
 type ExpirationCacheType<V> = { value: V; expiration: number };
 export class ExpirationCache<V> {
-  public constructor(
-    public prefix: string,
-    public expirationTicks: number
-  ) {}
+  public constructor(public expirationTicks: number) {}
 
   public set = async (key: string, value?: V, expiration?: number) => {
     if (Env.isContentScript()) {
@@ -20,7 +17,6 @@ export class ExpirationCache<V> {
       // Need to get data from service worker
       await BrowserMsg.send.bg.await.expirationCacheSet<V>({
         key,
-        prefix: this.prefix,
         value,
         expirationTicks: this.expirationTicks,
         expiration,
@@ -29,9 +25,9 @@ export class ExpirationCache<V> {
     }
     if (value) {
       const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
-      await storageSet('session', { [this.getPrefixedKey(key)]: expirationVal });
+      await storageSet('session', { [`${key}`]: expirationVal });
     } else {
-      await storageRemove('session', [this.getPrefixedKey(key)]);
+      await storageRemove('session', [key]);
     }
   };
 
@@ -44,19 +40,17 @@ export class ExpirationCache<V> {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await BrowserMsg.send.bg.await.expirationCacheGet<V>({
         key,
-        prefix: this.prefix,
         expirationTicks: this.expirationTicks,
       });
     }
-    const prefixedKey = this.getPrefixedKey(key);
-    const result = await storageGet('session', [prefixedKey]);
-    const found = result[prefixedKey] as ExpirationCacheType<V>;
+    const result = await storageGet('session', [key]);
+    const found = result[key] as ExpirationCacheType<V>;
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
       } else {
         // expired, so delete it and return as if not found
-        await storageRemove('session', [prefixedKey]);
+        await storageRemove('session', [key]);
       }
     }
     return undefined;
@@ -66,10 +60,8 @@ export class ExpirationCache<V> {
     if (Env.isContentScript()) {
       // Get chrome storage data from content script not allowed
       // Need to get data from service worker
-      await BrowserMsg.retryOnBgNotReadyErr(() =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        BrowserMsg.send.bg.await.expirationCacheDeleteExpired({ prefix: this.prefix, expirationTicks: this.expirationTicks })
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.expirationCacheDeleteExpired({ expirationTicks: this.expirationTicks }));
       return;
     }
 
@@ -95,9 +87,5 @@ export class ExpirationCache<V> {
       if ((await this.get(key)) === value) await this.set(key); // remove faulty record
       return Promise.reject(e);
     }
-  };
-
-  private getPrefixedKey = (key: string) => {
-    return `${this.prefix}_${key}`;
   };
 }
