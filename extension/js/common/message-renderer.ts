@@ -434,7 +434,15 @@ export class MessageRenderer {
     const gmailDateReceived = $('div.gK span[title]').attr('title');
     // detects current timezone by checking if Gmail's dateTime includes trailing AM/PM otherwise its 24hour format
     const ishour12Format = (gmailDateReceived?.endsWith('M') ? true : false) || false;
-    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate), ishour12Format, false).replace(', ', ' at ') : '';
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: ishour12Format,
+    };
+    const sentDateStr = sentDate ? new Date(sentDate).toLocaleString([], formatOptions).replace(', ', ' at ') : '';
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
