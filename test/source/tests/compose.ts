@@ -1675,7 +1675,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'compose - replace &nbsp; with regular space in email footer to prevent duplicate email separators',
       testWithBrowser(async (t, browser) => {
-        const emailSignature = '<div dir="ltr">-- <br>footer with non breaking space<br></div>';
+        const emailSignature = '<div dir="ltr">-- <br>footer with non breaking space<br></div>';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           google: {
             acctPrimarySignature: emailSignature,
