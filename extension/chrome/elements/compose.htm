@@ -133,7 +133,7 @@
             <div
               class="action_add_intro good"
               data-test="add-intro"
-              title="Add a custom message that your recipient will see before they open encrypted content"
+              title="Add a custom message that your recipient will see before they open the encrypted content"
             >
               + add intro
             </div>
@@ -150,27 +150,30 @@
         <tr id="password_or_pubkey_container" data-test="password-or-pubkey-container">
           <td>
             <div id="expiration_note">
-              Recipient will have access to this message
+              The recipient will have access to this email
               <a href="#" id="expiration_note_settings_link">
                 for
                 <span id="expiration_note_message_expire">(loading)</span>
               </a>
-              . You are responsible for sharing this password with them (use other medium to share the password - not email).
+              . You are responsible for sharing this password with your recipients (use other mediums to share the password, not email).
               <br />
               <br />
               <span id="password-policy-container"></span>
               <br /><br />
-              (Messages sent to FlowCrypt users don't expire this way and don't need password exchange)
+              (Emails sent to users who have FlowCrypt installed don't expire this way and don't require you to communicate a password.)
             </div>
             <div>
-              <div class="warning_nopgp" data-test="warning-nopgp">emails <span class="grey">in grey</span> don't use encryption</div>
-              <div class="warning_revoked" data-test="warning-revoked">emails <span class="orange">in orange</span> have expired or revoked key</div>
+              <div class="warning_nopgp" data-test="warning-nopgp">Emails in <span class="grey">grey</span> don't use encryption.</div>
+              <div class="warning_revoked" data-test="warning-revoked">Emails in <span class="orange">orange</span> have expired or revoked key.</div>
               <br />
-              <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">Add their Public Key</a>
-              <div class="warning_nopgp">or ask them to get FlowCrypt.</div>
+              <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">Add their public key(s)</a>
+              <div class="warning_nopgp">or ask them to install FlowCrypt.</div>
               <div class="password_input_container" data-test="password-input-container">
-                Or send email password protected:
-                <input id="input_password" autocomplete="off" placeholder="message password" tabindex="5" data-test="input-password" maxlength="256" />
+                Alternatively, send your email
+                <a href="https://flowcrypt.com/docs/getting-started/send-and-receive/send/send-password-protected-emails.html" target="_blank"
+                  >password-protected</a
+                >:
+                <input id="input_password" autocomplete="off" placeholder="email password" tabindex="5" data-test="input-password" maxlength="256" />
               </div>
               <div class="warning_no_pubkey_on_attester">
                 <span data-test="container-no-pubkey-on-attester">
