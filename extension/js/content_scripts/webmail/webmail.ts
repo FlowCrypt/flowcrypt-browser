@@ -36,9 +36,8 @@ Catch.try(async () => {
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
-        const acctEmailLoadingMatch = $('#loading div.msg')
-          .text()
-          .match(/[a-z0-9._\-]+@[^…< ]+/gi);
+        const emailRegex = /[a-z0-9._\-]+@[^…< ]+/gi;
+        const acctEmailLoadingMatch = $('#loading div.msg').text().match(emailRegex);
         if (acctEmailLoadingMatch) {
           // try parse from loading div
           return acctEmailLoadingMatch[0].trim().toLowerCase();
@@ -47,17 +46,20 @@ Catch.try(async () => {
         if (Str.isEmailValid(emailFromAccountDropdown)) {
           return emailFromAccountDropdown;
         }
-
+        const titleMatch = document.title.match(emailRegex);
+        if (titleMatch) {
+          return titleMatch[0].trim().toLowerCase();
+        }
         const emailFromAccountModal = $('div.gb_Dc > div').last()?.text()?.trim()?.toLowerCase();
         if (Str.isEmailValid(emailFromAccountModal)) {
           return emailFromAccountModal;
         }
         // eslint-disable-next-line no-underscore-dangle
-        const emailFromConfigVariable = window.gbar_?.CONFIG?.[0]?.[4]?.qa?.[5];
+        const emailFromConfigVariable = window.gbar_?.CONFIG?.[0]?.[4]?.ka?.[5];
         if (Str.isEmailValid(emailFromConfigVariable)) {
           return String(emailFromConfigVariable);
         }
-        const emailFromUserNameAndEmail = $('.gb_s .gb_Hc :last-child').text();
+        const emailFromUserNameAndEmail = $('.gb_2e .gb_Fc :last-child').text();
         if (Str.isEmailValid(emailFromUserNameAndEmail)) {
           return emailFromUserNameAndEmail;
         }
