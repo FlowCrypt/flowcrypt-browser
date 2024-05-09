@@ -431,21 +431,10 @@ export class MessageRenderer {
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
-    const gmailDateSelector = 'div.gK span[title]';
-    // ensure that the attribute resembles a date by checking its time
-    const gmailDateReceived =
-      $(gmailDateSelector).length > 0 && !isNaN(new Date(String($(gmailDateSelector).attr('title'))).getTime()) ? $(gmailDateSelector).attr('title') : '';
-    // detects current timezone by checking if Gmail's dateTime includes trailing AM/PM otherwise its 24hour format
-    const ishour12Format = (gmailDateReceived?.endsWith('M') ? true : false) || false;
-    const formatOptions: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: ishour12Format,
-    };
-    const sentDateStr = sentDate ? new Date(sentDate).toLocaleString([], formatOptions).replace(', ', ' at ') : '';
+    let sentDateStr = $('div.gK span[title]').attr('title');
+    if (!sentDateStr || isNaN(Date.parse(sentDateStr))) {
+      sentDateStr = sentDate ? new Date(sentDate).toLocaleString().replace(', ', ' at ') : '';
+    }
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
@@ -471,7 +460,7 @@ export class MessageRenderer {
           <span data-test="print-from">From: ${fromHtml}</span>
         </div>
         <div class="float-right">
-          <span date-test="print-date">${sentDateStr}</span>
+          <span data-test="print-date">${sentDateStr}</span>
         </div>
       </div>
       <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(fullMsg, 'to') ?? '')}</span><br/>
