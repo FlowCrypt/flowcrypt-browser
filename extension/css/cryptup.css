@@ -1218,7 +1218,7 @@ body#settings > div#footer a {
 
 body#settings > div#content.dialog {
   width: 600px;
-  padding: 40px 20px;
+  padding: 20px;
   background: white;
   z-index: 2;
   margin-top: 0;
@@ -2710,7 +2710,8 @@ table#compose tr#password_or_pubkey_container .password_input_container .line.pa
 }
 
 table#compose tr#password_or_pubkey_container td {
-  height: 66px;
+  max-height: 66px;
+  height: 0;
   padding: 5px 14px;
   animation: fadeInUp 1s;
   border-top: 1px solid #cfcfcf;
@@ -2773,6 +2774,11 @@ table#compose tr#password_or_pubkey_container #expiration_note_settings_link,
 table#compose tr#password_or_pubkey_container #expiration_note_settings_link:hover,
 table#compose tr#password_or_pubkey_container #expiration_note_settings_link:visited {
   color: white;
+}
+
+table#compose tr#password_or_pubkey_container .warning_no_pubkey_on_attester {
+  display: none;
+  color: #d88f00;
 }
 
 table#compose span.start,
