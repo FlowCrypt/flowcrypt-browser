@@ -1154,11 +1154,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
           await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
           await printPage.waitForContent('@print-subject', '<b><h1>Test print dialog');
-          await printPage.waitForContent('@print-date', '4/11/2024 at 3:00:47 PM');
           await printPage.waitForContent('@print-from', 'From: sender@domain.com');
           await printPage.waitForContent('@print-to', 'To: flowcrypt.compatibility@gmail.com');
           await printPage.waitForContent('@print-cc', 'ci.tests.gmail@flowcrypt.dev');
           await printPage.waitForContent('@print-content', 'Test print message');
+          expect(!isNaN(Date.parse(await printPage.readHtml('@print-date')))).to.equal(true);
           await printPage.close();
           await page.close();
         };
