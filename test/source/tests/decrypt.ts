@@ -1151,7 +1151,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           await page.waitAll('iframe');
           const pgpBlock = await page.getFrame(['pgp_block.htm']);
           await pgpBlock.waitForSelTestState('ready');
+          const expectedPrintDateString = new Date(1712818847000).toLocaleString();
           const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
+          await printPage.waitForContent('@print-date', expectedPrintDateString);
           await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
           await printPage.waitForContent('@print-subject', '<b><h1>Test print dialog');
           await printPage.waitForContent('@print-from', 'From: sender@domain.com');
