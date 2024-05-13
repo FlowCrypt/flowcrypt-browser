@@ -8,6 +8,6 @@ if (window.trustedTypes && window.trustedTypes.createPolicy) {
       createScript: string => string,
     });
   } catch (error) {
-    console.error('Error creating Trusted Types policy:', error);
+    console.debug('Error creating Trusted Types policy:', error);
   }
 }

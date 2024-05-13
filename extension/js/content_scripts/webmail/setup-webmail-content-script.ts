@@ -432,10 +432,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   const entrypoint = async () => {
     try {
       const acctEmail = await waitForAcctEmail();
-      console.log(`Entry Point: Account Email got successfully.`);
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
-      console.log(`Entry Point: Show notification and account setup successfully.`);
       Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
       const relayManager = new RelayManager();
@@ -448,9 +446,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      console.log(`Entry Point: Pulling from ekm sucessfully.`);
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
-      console.log(`Entry Point start successfully.`);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);
