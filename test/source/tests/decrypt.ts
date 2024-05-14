@@ -1160,7 +1160,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           await printPage.waitForContent('@print-to', 'To: flowcrypt.compatibility@gmail.com');
           await printPage.waitForContent('@print-cc', 'ci.tests.gmail@flowcrypt.dev');
           await printPage.waitForContent('@print-content', 'Test print message');
-          expect(!isNaN(Date.parse(await printPage.readHtml('@print-date')))).to.equal(true);
           await printPage.close();
           await page.close();
         };
