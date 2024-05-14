@@ -1579,7 +1579,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'get.updating.key.step1@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
+      'get.updating.key.step3@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
       testWithBrowser(async (t, browser) => {
         const acct = 'get.updating.key.step3@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
         t.context.mockApi!.configProvider = getConfigurationProviderForKeysUpdateTest(t, acct);
