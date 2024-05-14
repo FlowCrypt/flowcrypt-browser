@@ -414,7 +414,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       warningMsg =
         expirationText +
-        `To receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and you have entered your Flowcrypt passphrase. Then reload Gmail.<br/>` +
+        `To receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and have entered your FlowCrypt passphrase. Then reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
       let expirationText: string;
