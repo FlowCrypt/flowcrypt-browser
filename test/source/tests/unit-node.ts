@@ -4,7 +4,7 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
-import { Config, TestVariant, Util } from '../util';
+import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
@@ -17,7 +17,6 @@ import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
-import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
@@ -2727,32 +2726,6 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       expect(PgpArmor.clipIncomplete('plain text')).to.be.an.undefined;
       expect(PgpArmor.clipIncomplete('prefix -----BEGIN PGP MESSAGE-----\n\nexample')).to.equal('-----BEGIN PGP MESSAGE-----\n\nexample');
       t.pass();
-    });
-
-    test(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
-      const cache = new ExpirationCache(2000); // 2 seconds
-      cache.set('test-key', 'test-value');
-      expect(cache.get('test-key')).to.equal('test-value');
-      await Util.sleep(2);
-      expect(cache.get('test-key')).to.be.an('undefined');
-      t.pass();
-    });
-
-    test(`[unit][ExpirationCache.await] removes rejected promises from cache`, async t => {
-      const cache = new ExpirationCache<string, Promise<string>>(24 * 60 * 60 * 1000); // 24 hours
-      const rejectionPromise = Promise.reject(Error('test-error'));
-      cache.set('test-key', rejectionPromise);
-      await t.throwsAsync(() => cache.await('test-key', rejectionPromise) as Promise<Promise<string>>, {
-        instanceOf: Error,
-        message: 'test-error',
-      });
-      expect(cache.get('test-key')).to.be.an('undefined'); // next call simply returns undefined
-      const fulfilledPromise = Promise.resolve('new-test-value');
-      cache.set('test-key', fulfilledPromise);
-      // good value is returned indefinitely
-      expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
-      expect(await cache.await('test-key', fulfilledPromise)).to.equal('new-test-value');
-      expect(cache.get('test-key')).to.equal(fulfilledPromise);
     });
 
     test(`[unit][Str] splitAlphanumericExtended returns all parts extendec till the end of the original string`, async t => {

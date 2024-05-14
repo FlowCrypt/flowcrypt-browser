@@ -17,7 +17,7 @@ import { KeyInfoWithIdentityAndOptionalPp, Key, KeyUtil } from './core/crypto/ke
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 import { ClientConfiguration } from './client-configuration.js';
 import { Xss } from './platform/xss.js';
-import { storageLocalGetAll } from './browser/chrome.js';
+import { storageGetAll } from './browser/chrome.js';
 import { AccountIndex, AcctStore, SendAsAlias } from './platform/store/acct-store.js';
 import { GlobalStore } from './platform/store/global-store.js';
 import { AbstractStore } from './platform/store/abstract-store.js';
@@ -25,7 +25,6 @@ import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
-import { BrowserMsg } from './browser/browser-msg.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
@@ -149,7 +148,7 @@ export class Settings {
     await GlobalStore.acctEmailsAdd(newAcctEmail);
     const storageIndexesToKeepOld: string[] = [];
     const storageIndexesToKeepNew: string[] = [];
-    const storage = await storageLocalGetAll();
+    const storage = await storageGetAll('local');
     for (const acctKey of Object.keys(storage)) {
       if (acctKey.startsWith(oldAcctEmailIndexPrefix)) {
         const key = acctKey.substr(oldAcctEmailIndexPrefix.length);
@@ -436,7 +435,7 @@ export class Settings {
       await Ui.modal.info(`Reload after logging in.`);
       return window.location.reload();
     }
-    const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
+    const authRes = await GoogleOAuth.newAuthPopup({ acctEmail });
     if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
       then();
     } else {

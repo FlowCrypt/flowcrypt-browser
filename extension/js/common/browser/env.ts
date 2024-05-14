@@ -28,11 +28,24 @@ export class Env {
   }
 
   public static isContentScript() {
-    return Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
+    if (Env.isExtension()) {
+      try {
+        // Attempt to get the URL of an extension resource. This will succeed if we're in an extension context.
+        const extensionUrl = chrome.runtime.getURL('');
+        // Check if the current page URL is different from the extension's base URL (i.e., it's not an extension page)
+        return window.location.href.indexOf(extensionUrl) !== 0;
+      } catch (e) {
+        // In case of any errors (which shouldn't happen in a proper extension context), assume it's not a content script
+        return false;
+      }
+    }
+    // chrome.runtime is not available, so it's not running within an extension
+    return false;
   }
 
+  // Check if the current context is a Service Worker
   public static isBackgroundPage() {
-    return Boolean(window.location && window.location.href.includes('background_page.htm'));
+    return typeof window === 'undefined' && typeof document === 'undefined';
   }
 
   public static isExtension() {

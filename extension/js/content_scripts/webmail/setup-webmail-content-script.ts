@@ -517,7 +517,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
     if (win.vacant()) {
       await entrypoint();
-    } else if (Catch.browser().name === 'firefox') {
+    } else if (Catch.isFirefox()) {
       notifyMurdered();
     }
   }
