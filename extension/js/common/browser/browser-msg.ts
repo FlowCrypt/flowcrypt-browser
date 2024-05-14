@@ -10,14 +10,14 @@ import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
 import { BrowserMsgCommonHandlers } from './browser-msg-common-handlers.js';
-import { Browser } from './browser.js';
 import { Env } from './env.js';
 import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
 import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
+import { Ui } from './ui.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-
+export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
 export interface ChildFrame {
   readonly parentTabId: string;
 }
@@ -26,17 +26,17 @@ export namespace Bm {
   export type Dest = string;
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = unknown;
-  export type RawResponse = { result: unknown; objUrls: { [name: string]: string }; exception?: Bm.ErrAsJson };
+  export type RawResponse = { result: unknown; exception?: Bm.ErrAsJson };
   export type Raw = {
     name: string;
-    data: { bm: AnyRequest | object; objUrls: Dict<string> };
+    data: { bm: AnyRequest | object };
     to: Dest | null;
     uid: string;
     stack: string;
   };
   export type RawWithWindowExtensions = Raw & {
     to: Dest;
-    data: { bm: AnyRequest & { messageSender?: Dest }; objUrls: Dict<string> };
+    data: { bm: AnyRequest & { messageSender?: Dest } };
     responseName?: string;
     propagateToParent?: boolean;
   };
@@ -77,10 +77,13 @@ export namespace Bm {
     expiration: number | undefined;
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
-  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
+  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[]; screenDimensions: ScreenDimensions };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
+  export type ExpirationCacheGet = { key: string; prefix: string; expirationTicks: number };
+  export type ExpirationCacheSet<V> = { key: string; prefix: string; value: V | undefined; expirationTicks: number; expiration?: number };
+  export type ExpirationCacheDeleteExpired = { prefix: string; expirationTicks: number };
   export type ShowAttachmentPreview = { iframeUrl: string };
   export type ShowConfirmation = { text: string; isHTML: boolean; messageSender: Dest; requestUid: string; footer?: string };
   export type ReRenderRecipient = { email: string };
@@ -93,22 +96,37 @@ export namespace Bm {
       acctEmail: string | undefined;
       sameWorld: boolean | undefined;
     };
-    export type InMemoryStoreGet = string | null;
+    export type InMemoryStoreGet = string | undefined;
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
+    export type ExpirationCacheGet<V> = Promise<V | undefined>;
+    export type ExpirationCacheSet = Promise<void>;
+    export type ExpirationCacheDeleteExpired = Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | ReconnectAcctAuthPopup | InMemoryStoreGet | InMemoryStoreSet | AjaxGmailAttachmentGetChunk | ConfirmationResult;
+    export type Any =
+      | GetActiveTabInfo
+      | ReconnectAcctAuthPopup
+      | InMemoryStoreGet
+      | InMemoryStoreSet
+      | ExpirationCacheGet<unknown>
+      | ExpirationCacheSet
+      | ExpirationCacheDeleteExpired
+      | AjaxGmailAttachmentGetChunk
+      | ConfirmationResult;
   }
 
   export type AnyRequest =
     | PassphraseEntry
     | OpenPage
+    | ExpirationCacheGet
+    | ExpirationCacheSet<unknown>
+    | ExpirationCacheDeleteExpired
     | OpenGoogleAuthDialog
     | Redirect
     | Reload
@@ -163,6 +181,7 @@ export namespace Bm {
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
+type IntervalHandler = () => void | Promise<void>;
 type Handlers = Dict<Handler>;
 
 export class BgNotReadyErr extends Error {}
@@ -187,6 +206,12 @@ export class BrowserMsg {
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
           BrowserMsg.sendAwait(undefined, 'ajaxGmailAttachmentGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttachmentGetChunk>,
+        expirationCacheGet: <V>(bm: Bm.ExpirationCacheGet) =>
+          BrowserMsg.sendAwait(undefined, 'expirationCacheGet', bm, true) as Promise<Bm.Res.ExpirationCacheGet<V>>,
+        expirationCacheSet: <V>(bm: Bm.ExpirationCacheSet<V>) =>
+          BrowserMsg.sendAwait(undefined, 'expirationCacheSet', bm, true) as Promise<Bm.Res.ExpirationCacheSet>,
+        expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
+          BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm),
@@ -228,6 +253,7 @@ export class BrowserMsg {
   private static readonly processed = new Set<string>(); // or ExpirationCache?
   /* eslint-disable @typescript-eslint/naming-convention */
   private static HANDLERS_REGISTERED_BACKGROUND: Handlers = {};
+  private static INTERVAL_HANDLERS: Dict<IntervalHandler> = {};
   private static HANDLERS_REGISTERED_FRAME: Handlers = {
     set_css: BrowserMsgCommonHandlers.setCss,
     add_class: BrowserMsgCommonHandlers.addClass,
@@ -251,18 +277,32 @@ export class BrowserMsg {
       div.style.backgroundColor = '#a44';
       div.style.padding = '4px 6px';
       const a = document.createElement('a');
-      a.href = window.location.href.split('#')[0];
+      a.href = location.href.split('#')[0];
       a.textContent = 'RELOAD';
       a.style.color = 'white';
       a.style.fontWeight = 'bold';
       a.style.marginLeft = '12px';
       div.appendChild(a);
     }
-    window.document.body.appendChild(div);
+    document.body.appendChild(div);
   }
 
   public static generateTabId(contentScript?: boolean) {
     return `${contentScript ? 'cs' : 'ex'}.${Str.sloppyRandom(10)}`;
+  }
+
+  public static async retryOnBgNotReadyErr<T>(operation: () => Promise<T>, maxAttempts = 10, delayMs = 300): Promise<T> {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        return await operation();
+      } catch (e) {
+        if (!(e instanceof BgNotReadyErr) || attempt === maxAttempts - 1) {
+          throw e;
+        }
+        await Ui.delay(delayMs);
+      }
+    }
+    throw new BgNotReadyErr('Unexpected error after maximum retries');
   }
 
   public static addListener(name: string, handler: Handler) {
@@ -283,6 +323,15 @@ export class BrowserMsg {
 
   public static bgAddListener(name: string, handler: Handler) {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
+  }
+
+  public static createIntervalAlarm(action: string, periodInMinutes: number) {
+    const alarmName = `${action}_interval_${Date.now()}`;
+    void chrome.alarms.create(alarmName, { periodInMinutes });
+  }
+
+  public static intervalAddListener(name: string, handler: IntervalHandler) {
+    BrowserMsg.INTERVAL_HANDLERS[name] = handler;
   }
 
   public static bgListen() {
@@ -306,9 +355,7 @@ export class BrowserMsg {
         if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
-          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-            .then(bm => BrowserMsg.sendRawResponse(handler(bm), respondIfPageStillOpen))
-            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), respondIfPageStillOpen));
+          BrowserMsg.sendRawResponse(handler(msg.data.bm), respondIfPageStillOpen);
           return true; // will respond
         } else {
           // broadcast message that backend does not have a handler for - ignored
@@ -321,9 +368,21 @@ export class BrowserMsg {
     });
   }
 
+  public static alarmListen() {
+    const alarmListener = (alarm: { name: string }) => {
+      const alarmName = alarm.name;
+      const actionName = alarmName.split('_interval')[0];
+      if (BrowserMsg.INTERVAL_HANDLERS[actionName]) {
+        Catch.try(BrowserMsg.INTERVAL_HANDLERS[actionName])();
+      }
+    };
+
+    chrome.alarms.onAlarm.addListener(alarmListener);
+  }
+
   protected static listenForWindowMessages(dest: Bm.Dest) {
     const extensionOrigin = Env.getExtensionOrigin();
-    window.addEventListener('message', async e => {
+    addEventListener('message', async e => {
       if (e.origin !== 'https://mail.google.com' && e.origin !== extensionOrigin) return;
       const encryptedMsg = e.data as SymEncryptedMessage;
       if (BrowserMsg.processed.has(encryptedMsg.uid)) return;
@@ -333,7 +392,7 @@ export class BrowserMsg {
         handled = BrowserMsg.handleMsg(msg, (rawResponse: Bm.RawResponse) => {
           if (msg.responseName && typeof msg.data.bm.messageSender !== 'undefined') {
             // send response as a new request
-            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>, rawResponse.objUrls).catch(Catch.reportErr);
+            BrowserMsg.sendRaw(msg.data.bm.messageSender, msg.responseName, rawResponse.result as Dict<unknown>).catch(Catch.reportErr);
           }
         });
       }
@@ -346,7 +405,7 @@ export class BrowserMsg {
 
   private static sendToParentWindow(parentReference: ChildFrame, name: string, bm: Dict<unknown> & { messageSender?: Bm.Dest }, responseName?: string) {
     const raw: Bm.RawWithWindowExtensions = {
-      data: { bm, objUrls: {} },
+      data: { bm },
       name,
       stack: '',
       to: parentReference.parentTabId,
@@ -378,9 +437,7 @@ export class BrowserMsg {
         BrowserMsg.processed.add(msg.uid);
         if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
-          BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
-            .then(bm => BrowserMsg.sendRawResponse(handler(bm), rawRespond))
-            .catch(e => BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond));
+          BrowserMsg.sendRawResponse(handler(msg.data.bm), rawRespond);
           return true;
         }
       } else {
@@ -412,20 +469,13 @@ export class BrowserMsg {
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
       return await handler(bm);
     }
-    return await BrowserMsg.sendRaw(
-      destString,
-      name,
-      bm,
-      // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
-      BrowserMsg.replaceBufWithObjUrlInplace(bm),
-      awaitRes
-    );
+    return await BrowserMsg.sendRaw(destString, name, bm, awaitRes);
   }
 
-  private static sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, objUrls: Dict<string>, awaitRes = false): Promise<Bm.Response> {
+  private static sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     const msg: Bm.Raw = {
       name,
-      data: { bm, objUrls },
+      data: { bm },
       to: destString || null, // eslint-disable-line no-null/no-null
       uid: SymmetricMessageEncryption.generateIV(),
       stack: Catch.stackTrace(),
@@ -438,7 +488,7 @@ export class BrowserMsg {
         // todo: can objUrls be deleted by another recipient?
         const encryptedMsg = await SymmetricMessageEncryption.encrypt(validMsg);
         BrowserMsg.sendToChildren(encryptedMsg);
-        window.postMessage(encryptedMsg, '*');
+        postMessage(encryptedMsg, '*');
         BrowserMsg.sendUpParentLine(encryptedMsg);
       })();
     }
@@ -473,7 +523,7 @@ export class BrowserMsg {
         } else if (!r.result || typeof r.result !== 'object') {
           resolve(r.result as Bm.Response);
         } else {
-          BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
+          resolve(r.result);
         }
       };
       try {
@@ -505,41 +555,8 @@ export class BrowserMsg {
     let w: Window = window;
     while (w.parent && w.parent !== w) {
       w = w.parent;
-      window.parent.postMessage(encryptedWithPropagationFlag, '*');
+      parent.postMessage(encryptedWithPropagationFlag, '*');
     }
-  }
-  /**
-   * Browser messages cannot send a lot of data per message. This will replace Buf objects (which can be large) with an ObjectURL
-   * Be careful when editting - the type system won't help you here and you'll likely make mistakes
-   * The requestOrResponse object will get directly updated in this function
-   */
-  private static replaceBufWithObjUrlInplace(requestOrResponse: unknown): Dict<string> {
-    const objUrls: Dict<string> = {};
-    // eslint-disable-next-line no-null/no-null
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) {
-      for (const possibleBufName of Object.keys(requestOrResponse)) {
-        const possibleBufs = (requestOrResponse as Record<string, unknown>)[possibleBufName];
-        if (possibleBufs instanceof Uint8Array) {
-          objUrls[possibleBufName] = Browser.objUrlCreate(possibleBufs);
-          (requestOrResponse as Record<string, unknown>)[possibleBufName] = undefined;
-        }
-      }
-    }
-    return objUrls;
-  }
-
-  /**
-   * This method does the opposite of replaceBufWithObjUrlInplace so we end up with original message (or response) containing possibly a large Buf
-   * Be careful when editting - the type system won't help you here and you'll likely make mistakes
-   */
-  private static async replaceObjUrlWithBuf<T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> {
-    // eslint-disable-next-line no-null/no-null
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) {
-      for (const consumableObjUrlName of Object.keys(objUrls)) {
-        (requestOrResponse as Record<string, Buf>)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
-      }
-    }
-    return requestOrResponse;
   }
 
   private static errToJson(e: unknown): Bm.ErrAsJson {
@@ -571,14 +588,13 @@ export class BrowserMsg {
     try {
       handlerPromise
         .then(result => {
-          const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
-          rawRespond({ result, exception: undefined, objUrls });
+          rawRespond({ result, exception: undefined });
         })
         .catch(e => {
-          rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
+          rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e) });
         });
     } catch (e) {
-      rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
+      rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e) });
     }
   }
 }

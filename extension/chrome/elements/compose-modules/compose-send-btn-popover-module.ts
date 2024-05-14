@@ -30,7 +30,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     this.choices.richtext = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richtext' && !this.view.debug && Catch.browser().name !== 'firefox') {
+      if (popoverOpt === 'richtext' && !this.view.debug && !Catch.isFirefox()) {
         continue; // richtext not deployed to Chrome yet, for now only allow firefox (and also in automated tests which set debug===true)
       }
       const item = popoverItems[popoverOpt];

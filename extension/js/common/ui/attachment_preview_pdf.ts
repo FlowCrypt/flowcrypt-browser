@@ -122,7 +122,7 @@ export class AttachmentPreviewPdf {
     container.find('#pdf-preview-fit-to-width').on('click', async () => {
       if (!this.fitToWidthZoomLevelDetected) {
         let containerWidth = container.width() as number;
-        if (Catch.browser().name === 'firefox') {
+        if (Catch.isFirefox()) {
           containerWidth -= this.getScrollbarWidth();
         }
         this.fitToWidthZoomLevel = containerWidth / (container.find('.attachment-preview-pdf-page').width() as number);
