@@ -7,7 +7,7 @@ import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../.
 import { ApiErr } from '../../shared/api-error.js';
 import { Ajax, Api } from '../../shared/api.js';
 
-import { Bm, GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
+import { Bm, GoogleAuthWindowResult$result, ScreenDimensions } from '../../../browser/browser-msg.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 import { OAuth2 } from '../../../oauth2/oauth2.js';
 import { Catch } from '../../../platform/catch.js';
@@ -18,6 +18,7 @@ import { OAuth } from '../generic/oauth.js';
 import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { Assert, AssertError } from '../../../assert.js';
+import { Ui } from '../../../browser/ui.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 type GoogleAuthTokensResponse = {
@@ -148,7 +149,17 @@ export class GoogleOAuth extends OAuth {
     }
   }
 
-  public static async newAuthPopup({ acctEmail, scopes, save }: { acctEmail?: string; scopes?: string[]; save?: boolean }): Promise<AuthRes> {
+  public static async newAuthPopup({
+    acctEmail,
+    scopes,
+    save,
+    screenDimensions,
+  }: {
+    acctEmail?: string;
+    scopes?: string[];
+    save?: boolean;
+    screenDimensions?: ScreenDimensions;
+  }): Promise<AuthRes> {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -161,7 +172,12 @@ export class GoogleOAuth extends OAuth {
     }
     const authRequest = GoogleOAuth.newAuthRequest(acctEmail, scopes);
     const authUrl = GoogleOAuth.apiGoogleAuthCodeUrl(authRequest);
-    const authWindowResult = await OAuth2.webAuthFlow(authUrl);
+    // Added below logic because in service worker, it's not possible to access window object.
+    // Therefore need to retrieve screenDimensions when calling service worker and pass it to OAuth2
+    if (!screenDimensions) {
+      screenDimensions = Ui.getScreenDimensions();
+    }
+    const authWindowResult = await OAuth2.webAuthFlow(authUrl, screenDimensions);
     const authRes = await GoogleOAuth.getAuthRes({
       acctEmail,
       save,
