@@ -875,7 +875,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await Util.sleep(1);
         // Check if notification presents
         warningMsg =
-          'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
+          'Your local keys expire in 18 days.\nTo receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and you have entered your Flowcrypt passphrase. Then reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Check if warning message still presents when EKM returns error
         t.context.mockApi!.configProvider.config.ekm!.returnError = new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
