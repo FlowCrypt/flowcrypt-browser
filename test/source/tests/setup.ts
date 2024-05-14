@@ -1520,9 +1520,12 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const { passphrase, extraAuthHeaders } = await setupAndGetAuthHeaderForKeyUpdateTest(settingsPage, acct);
         // 5. EKM returns a newer version of the existing key, canceling passphrase prompt, no update
         const set5 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await BrowserRecipe.finishSession(gmailPage);
+        await gmailPage.close();
         const someOlderVersion = await updateAndArmorKey(set5[0], acct);
         t.context.mockApi!.configProvider.config.ekm!.keys = [await updateAndArmorKey(set5[0], acct)];
-        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
         await gmailPage.waitAll('@dialog-passphrase');
         await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
         await PageRecipe.noToastAppears(gmailPage);
