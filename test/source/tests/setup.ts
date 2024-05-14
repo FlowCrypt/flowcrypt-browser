@@ -859,7 +859,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const gmailPage = await openMockGmailPage(t, browser, acctEmail);
         // Check if notification presents
         let warningMsg =
-          'Your local keys are expired.\nTo receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
+          'Your local keys are expired.\nTo receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and you have entered your Flowcrypt passphrase. Then reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Generate expired key(positive expiration) and check if it shows correct note
         const key = await opgp.generateKey({
