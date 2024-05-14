@@ -152,7 +152,10 @@ export class Str {
     return text.length <= length ? text : text.substring(0, length) + '...';
   };
 
-  public static isEmailValid = (email: string) => {
+  public static isEmailValid = (email: string | undefined) => {
+    if (!email) {
+      return false;
+    }
     if (email.indexOf(' ') !== -1) {
       return false;
     }

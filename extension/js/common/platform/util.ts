@@ -12,7 +12,7 @@ import { Buf } from '../core/buf.js';
 
 export const secureRandomBytes = (length: number): Uint8Array => {
   const secureRandomArray = new Uint8Array(length);
-  window.crypto.getRandomValues(secureRandomArray);
+  crypto.getRandomValues(secureRandomArray);
   return secureRandomArray;
 };
 

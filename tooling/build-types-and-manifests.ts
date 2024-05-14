@@ -27,13 +27,24 @@ addManifest('chrome-consumer', manifest => {
 
 addManifest('firefox-consumer', manifest => {
   manifest.version = version;
-  manifest.applications = {
+  // We decide to use manifest v2 for firefox and below codes are to make v3 manifest to v2
+  // Read more here: https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2029591323
+  manifest.manifest_version = 2;
+  manifest.web_accessible_resources = manifest.web_accessible_resources[0].resources;
+  manifest.content_security_policy = manifest.content_security_policy.extension_pages;
+  manifest.permissions = [...manifest.permissions, ...manifest.host_permissions];
+  delete manifest.host_permissions;
+  manifest.browser_action = manifest.action;
+  delete manifest.action;
+  manifest.browser_specific_settings = {
     gecko: {
       id: 'firefox@cryptup.io',
       update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
       strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
+  manifest.background.scripts = ['/js/service_worker/background.js'];
+  delete manifest.background.service_worker;
   manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
 });
@@ -43,9 +54,8 @@ addManifest('chrome-enterprise', manifest => {
   manifest.name = 'FlowCrypt for Enterprise';
   manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
   // careful - changing this will likely cause all extensions to be disabled in their user's browsers
-  manifest.permissions = [
-    'storage',
-    'tabs',
+  manifest.permissions = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
+  manifest.host_permissions = [
     'https://*.google.com/*',
     // customer enterprise environments use people,gmail,oauth2 subdomains of googleapis.com
     // instead of the generic www.googleapis.com subdomain as used by consumer extension
@@ -57,7 +67,6 @@ addManifest('chrome-enterprise', manifest => {
     //        disables installed extensions / asks user to re-enable
     'https://*.googleapis.com/*',
     'https://flowcrypt.com/*',
-    'unlimitedStorage',
   ];
   for (const csDef of manifest.content_scripts) {
     csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
@@ -133,7 +142,10 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
-    code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
+    code
+      .replace(/https:\/\/mail\.google\.com/g, mockGmailPage)
+      .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
+      .replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
   );
 };
 

@@ -319,6 +319,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (expectWarnModal) {
       await settingsPage.waitAndRespondToModal('warning', 'confirm', expectWarnModal);
     }
+    await Util.sleep(3);
     if (expectErrView) {
       // this err is rendered in `view.ts` - `View` base class
       await settingsPage.waitAll(['@container-err-title', '@container-err-text', '@action-retry-by-reloading']);

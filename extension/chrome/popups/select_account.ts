@@ -41,7 +41,7 @@ View.run(
         })
       );
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      $('html, body').css('height', $('.content').height()! + (Catch.browser().name === 'firefox' ? 40 : 0)); // .content is in template
+      $('html, body').css('height', $('.content').height()! + (Catch.isFirefox() ? 40 : 0)); // .content is in template
     };
 
     public setHandlers = () => {

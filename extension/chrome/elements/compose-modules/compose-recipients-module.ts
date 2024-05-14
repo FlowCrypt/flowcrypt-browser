@@ -476,7 +476,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private inputsDragEnterHandler = (target: HTMLElement) => {
-    if (Catch.browser().name === 'firefox') {
+    if (Catch.isFirefox()) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.insertCursorBefore(target.previousElementSibling!, true);
     } else {
@@ -485,7 +485,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private inputsDragLeaveHandler = (target: HTMLElement) => {
-    if (Catch.browser().name === 'firefox') {
+    if (Catch.isFirefox()) {
       this.removeCursor(target.previousElementSibling as HTMLElement);
     } else {
       target.blur();
@@ -493,7 +493,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private inputsDropHandler = (target: HTMLElement) => {
-    if (Catch.browser().name === 'firefox') {
+    if (Catch.isFirefox()) {
       this.removeCursor(target.previousElementSibling as HTMLElement);
     }
     if (this.dragged) {

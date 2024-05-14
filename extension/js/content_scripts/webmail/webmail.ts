@@ -17,6 +17,13 @@ import { ClientConfiguration } from '../../common/client-configuration.js';
 import { RelayManager } from '../../common/relay-manager.js';
 import { MessageRenderer } from '../../common/message-renderer.js';
 import { Gmail } from '../../common/api/email-provider/gmail/gmail.js';
+import { Time } from '../../common/browser/time.js';
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    gbar_: any;
+  }
+}
 
 Catch.try(async () => {
   const gmailWebmailStartup = async () => {
@@ -29,19 +36,41 @@ Catch.try(async () => {
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
-        const acctEmailLoadingMatch = $('#loading div.msg')
-          .text()
-          .match(/[a-z0-9._\-]+@[^…< ]+/gi);
+        const emailRegex = /[a-z0-9._\-]+@[^…< ]+/gi;
+        const acctEmailLoadingMatch = $('#loading div.msg').text().match(emailRegex);
         if (acctEmailLoadingMatch) {
           // try parse from loading div
           return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
-        const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
+        const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text()?.trim()?.toLowerCase();
         if (Str.isEmailValid(emailFromAccountDropdown)) {
           return emailFromAccountDropdown;
         }
+        const titleMatch = document.title.match(emailRegex);
+        if (titleMatch) {
+          return titleMatch[0].trim().toLowerCase();
+        }
+        const emailFromAccountModal = $('div.gb_Dc > div').last()?.text()?.trim()?.toLowerCase();
+        if (Str.isEmailValid(emailFromAccountModal)) {
+          return emailFromAccountModal;
+        }
+        // eslint-disable-next-line no-underscore-dangle
+        const emailFromConfigVariable = window.gbar_?.CONFIG?.[0]?.[4]?.ka?.[5];
+        if (Str.isEmailValid(emailFromConfigVariable)) {
+          return String(emailFromConfigVariable);
+        }
+        const emailFromUserNameAndEmail = $('.gb_2e .gb_Fc :last-child').text();
+        if (Str.isEmailValid(emailFromUserNameAndEmail)) {
+          return emailFromUserNameAndEmail;
+        }
       }
       return undefined;
+    };
+
+    const injectFCVarScript = () => {
+      const scriptElement = document.createElement('script');
+      scriptElement.src = chrome.runtime.getURL('/js/common/core/feature-config-injector.js');
+      (document.head || document.documentElement).appendChild(scriptElement);
     };
 
     const getInsightsFromHostVariables = () => {
@@ -51,19 +80,7 @@ Catch.try(async () => {
         email: undefined,
         gmailVariant: undefined,
       };
-      $('body').append(
-        [
-          // xss-direct - not sanitized because adding a <script> in intentional here
-          '<script>',
-          '  (function() {',
-          '    const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
-          '    let e = document.getElementById("FC_VAR_PASS");',
-          '    if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
-          '    e.innerText=payload;',
-          '  })();',
-          '</script>',
-        ].join('')
-      ); // executed synchronously - we can read the vars below
+
       try {
         const extracted = (JSON.parse($('body > div#FC_VAR_PASS').text()) as unknown[]).map(String);
         if (extracted[0] === 'true') {
@@ -140,6 +157,8 @@ Catch.try(async () => {
       });
     };
 
+    injectFCVarScript();
+    await Time.sleep(100); // Wait until injected dom is added
     const hostPageInfo = getInsightsFromHostVariables();
     await contentScriptSetupIfVacant({
       name: 'gmail',

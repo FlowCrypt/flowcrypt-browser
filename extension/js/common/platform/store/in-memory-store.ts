@@ -1,8 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { AbstractStore } from './abstract-store.js';
-import { BrowserMsg } from '../../browser/browser-msg.js';
 import { Time } from '../../browser/time.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
 
 /**
  * Temporary In-Memory store for sensitive values, expiring after clientConfiguration.in_memory_pass_phrase_session_length (or default 4 hours)
@@ -10,11 +10,11 @@ import { Time } from '../../browser/time.js';
  */
 export class InMemoryStore extends AbstractStore {
   public static async set(acctEmail: string, key: string, value?: string, expiration?: number) {
-    return await BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration });
+    await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.inMemoryStoreSet({ acctEmail, key, value, expiration }));
   }
 
   public static async get(acctEmail: string, key: string): Promise<string | undefined> {
-    return (await BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key })) ?? undefined;
+    return await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.inMemoryStoreGet({ acctEmail, key }));
   }
 
   public static async getUntilAvailable(acctEmail: string, key: string, retryCount = 20): Promise<string | undefined> {
