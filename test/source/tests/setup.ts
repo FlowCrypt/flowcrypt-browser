@@ -1534,9 +1534,11 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.close();
         // 6. EKM returns a newer version of the existing key, entering the passphrase, update toast
         gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await Util.sleep(2);
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+          await Util.sleep(2);
           await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
           await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
           await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
