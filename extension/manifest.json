@@ -1,9 +1,9 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "FlowCrypt: Encrypt Gmail with PGP",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "version": "[will be replaced during build]",
-  "browser_action": {
+  "action": {
     "default_icon": {
       "16": "/img/logo/flowcrypt-logo-16-16.png",
       "19": "/img/logo/flowcrypt-logo-19-19.png",
@@ -25,9 +25,8 @@
     "64": "/img/logo/flowcrypt-logo-64-64.png",
     "128": "/img/logo/flowcrypt-logo-128-128.png"
   },
-  "permissions": [
-    "storage",
-    "tabs",
+  "permissions": ["alarms", "storage", "tabs", "scripting", "unlimitedStorage"],
+  "host_permissions": [
     "https://flowcrypt.com/*",
     "https://*.google.com/*",
     "https://outlook.live.com/*",
@@ -35,14 +34,14 @@
     "https://outlook.office.com/*",
     "https://graph.microsoft.com/*",
     "https://login.microsoftonline.com/*",
-    "https://www.googleapis.com/*",
-    "unlimitedStorage"
+    "https://www.googleapis.com/*"
   ],
   "content_scripts": [
     {
       "matches": ["https://mail.google.com/*"],
       "css": ["/css/webmail.css", "/css/sweetalert2.css"],
       "js": [
+        "/lib/trusted-types.js",
         "/lib/purify.js",
         "/lib/jquery.min.js",
         "/lib/openpgp.js",
@@ -67,32 +66,38 @@
     }
   ],
   "background": {
-    "page": "/js/background_page/background_page.htm"
+    "service_worker": "/js/service_worker/background.js",
+    "type": "module"
   },
   "options_ui": {
     "page": "/chrome/settings/index.htm",
     "open_in_tab": true
   },
   "web_accessible_resources": [
-    "/css/webmail.css",
-    "/img/svgs/reply-icon.svg",
-    "/img/svgs/spinner-white-small.svg",
-    "/img/svgs/spinner-green-small.svg",
-    "/img/svgs/unlock.svg",
-    "/img/logo/flowcrypt-logo-19-19.png",
-    "/chrome/elements/compose.htm",
-    "/chrome/elements/pgp_block.htm",
-    "/chrome/elements/setup_dialog.htm",
-    "/chrome/elements/attachment.htm",
-    "/chrome/elements/attachment_preview.htm",
-    "/chrome/elements/passphrase.htm",
-    "/chrome/elements/add_pubkey.htm",
-    "/chrome/elements/pgp_pubkey.htm",
-    "/chrome/elements/backup.htm",
-    "/chrome/elements/verification.htm",
-    "/chrome/elements/shared/footer.htm",
-    "/chrome/elements/oauth2.htm"
+    {
+      "resources": [
+        "/css/webmail.css",
+        "/img/svgs/reply-icon.svg",
+        "/img/svgs/spinner-white-small.svg",
+        "/img/svgs/spinner-green-small.svg",
+        "/img/svgs/unlock.svg",
+        "/img/logo/flowcrypt-logo-19-19.png",
+        "/chrome/elements/compose.htm",
+        "/chrome/elements/pgp_block.htm",
+        "/chrome/elements/attachment.htm",
+        "/chrome/elements/attachment_preview.htm",
+        "/chrome/elements/passphrase.htm",
+        "/chrome/elements/add_pubkey.htm",
+        "/chrome/elements/pgp_pubkey.htm",
+        "/chrome/elements/backup.htm",
+        "/chrome/elements/oauth2.htm",
+        "/js/common/core/feature-config-injector.js"
+      ],
+      "matches": ["https://mail.google.com/*", "https://accounts.google.com/*", "https://www.google.com/*"]
+    }
   ],
   "minimum_chrome_version": "96",
-  "content_security_policy": "upgrade-insecure-requests; script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://* data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; require-trusted-types-for 'script';"
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://* data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self';"
+  }
 }

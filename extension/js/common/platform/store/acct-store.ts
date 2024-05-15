@@ -4,7 +4,7 @@ import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
+import { storageGet, storageRemove, storageSet } from '../../browser/chrome.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { Dict } from '../../core/common.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
@@ -86,13 +86,13 @@ export type AcctStoreDict = {
  */
 export class AcctStore extends AbstractStore {
   public static async get(acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> {
-    const storageObj = (await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
+    const storageObj = (await storageGet('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
     const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
   }
 
   public static async getAccounts(acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> {
-    const storageObj = (await storageLocalGet(AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
+    const storageObj = (await storageGet('local', AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
     const resultsByAcct: Dict<AcctStoreDict> = {};
     for (const account of acctEmails) {
       resultsByAcct[account] = AcctStore.buildSingleAccountStoreFromRawResults(account, storageObj);
@@ -112,15 +112,15 @@ export class AcctStore extends AbstractStore {
       }
     }
     if (Object.keys(indexedUpdateFields).length) {
-      await storageLocalSet(indexedUpdateFields);
+      await storageSet('local', indexedUpdateFields);
     }
     if (indexedRemoveFields.length) {
-      await storageLocalRemove(indexedRemoveFields);
+      await storageRemove('local', indexedRemoveFields);
     }
   }
 
   public static async remove(acctEmail: string, keys: AccountIndex[]) {
-    await storageLocalRemove(AcctStore.singleScopeRawIndexArr(acctEmail, keys));
+    await storageRemove('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys));
   }
 
   public static async getScopes(acctEmail: string): Promise<Scopes> {

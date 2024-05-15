@@ -5,7 +5,6 @@
 
 'use strict';
 
-import { Api } from '../api/shared/api.js';
 import { Attachment } from '../core/attachment.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
@@ -13,13 +12,7 @@ import { GlobalStore } from '../platform/store/global-store.js';
 
 export class Browser {
   public static objUrlCreate = (content: Uint8Array | string) => {
-    return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
-  };
-
-  public static objUrlConsume = async (url: string) => {
-    const buf = await Api.download(url);
-    window.URL.revokeObjectURL(url);
-    return buf;
+    return URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
   };
 
   public static saveToDownloads = (attachment: Attachment) => {
@@ -37,7 +30,7 @@ export class Browser {
       ev.initMouseEvent('click', true, true, window);
       a.dispatchEvent(ev);
     }
-    if (Catch.browser().name === 'firefox') {
+    if (Catch.isFirefox()) {
       try {
         a.remove();
       } catch (err) {

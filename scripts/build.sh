@@ -12,7 +12,7 @@ synchronize_files() {
   local OUTDIR="$1"
 
   # Copying files with the given extensions
-  find . -type f \( -name '*.js' -o -name '*.htm' -o -name '*.css' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.txt' \) \
+  find . -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.htm' -o -name '*.css' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.txt' \) \
       -exec rsync -R {} "../$OUTDIR" \;
 }
 
@@ -40,6 +40,7 @@ copy_dependencies() {
   cp node_modules/dompurify/dist/purify.js.map $OUTPUT_DIRECTORY/lib/purify.js.map
   cp node_modules/jquery/dist/jquery.min.js $OUTPUT_DIRECTORY/lib/jquery.min.js
   cp node_modules/openpgp/dist/openpgp.js $OUTPUT_DIRECTORY/lib/openpgp.js
+  cp node_modules/openpgp/dist/openpgp.min.mjs $OUTPUT_DIRECTORY/lib/openpgp.min.mjs
   cp node_modules/linkifyjs/dist/linkify.min.js $OUTPUT_DIRECTORY/lib/linkify.min.js
   cp node_modules/linkify-html/dist/linkify-html.min.js $OUTPUT_DIRECTORY/lib/linkify-html.min.js
   cp node_modules/sweetalert2/dist/sweetalert2.js $OUTPUT_DIRECTORY/lib/sweetalert2.js
@@ -121,13 +122,12 @@ main() {
   ISUINT8ARRAY_REGEX2="s/\(([^\(\)\x20]+)\x20instanceof\x20Uint8Array\)/\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\)/g"
   # this patch handles pattern like \x20n instanceof Uint8Array;
   ISUINT8ARRAY_REGEX3="s/return\x20([^\(\)\x20]+)\x20instanceof\x20Uint8Array;/return\x20\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\);/g"
-
   apply_regex_replace $STREAMS_REGEX $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $OPENPGP_FILE
   apply_regex_replace $ISUINT8ARRAY_REGEX2 $OPENPGP_FILE
   apply_regex_replace $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
-
+  
   # bundle web-stream-tools as Stream var for the content script
   ( cd conf && npx webpack ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done

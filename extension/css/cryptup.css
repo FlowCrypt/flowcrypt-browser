@@ -1218,7 +1218,7 @@ body#settings > div#footer a {
 
 body#settings > div#content.dialog {
   width: 600px;
-  padding: 40px 20px;
+  padding: 20px;
   background: white;
   z-index: 2;
   margin-top: 0;

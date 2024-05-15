@@ -80,25 +80,18 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
-const expectedConsumerPermissions = [
-  'storage',
-  'tabs',
-  'https://*.google.com/*',
-  'https://www.googleapis.com/*',
-  'https://flowcrypt.com/*',
-  'unlimitedStorage',
-];
-const expectedEnterprisePermissions = [
-  'storage',
-  'tabs',
-  'https://*.google.com/*',
-  'https://*.googleapis.com/*',
-  'https://flowcrypt.com/*',
-  'unlimitedStorage',
-];
-for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer', 'thunderbird-consumer']) {
+const expectedPermissions = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
+const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
+const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
+for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
-  const expectedPermissions = buildType.includes('consumer') ? expectedConsumerPermissions : expectedEnterprisePermissions;
+  const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
+  for (const expectedHostPermission of expectedHostPermissions) {
+    if (!manifest.host_permissions.includes(expectedHostPermission)) {
+      console.error(`Missing host permission '${expectedHostPermission}' in ${buildType}/manifest.json`);
+      errsFound++;
+    }
+  }
   for (const expectedPermission of expectedPermissions) {
     if (!manifest.permissions.includes(expectedPermission)) {
       if (!(expectedPermission === 'unlimitedStorage' && (buildType === 'firefox-consumer' || buildType === 'thunderbird-consumer'))) {

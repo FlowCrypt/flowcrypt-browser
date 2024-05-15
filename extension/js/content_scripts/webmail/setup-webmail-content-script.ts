@@ -414,7 +414,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       warningMsg =
         expirationText +
-        `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
+        `To receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and have entered your FlowCrypt passphrase. Then reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
       let expirationText: string;
@@ -517,7 +517,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
     if (win.vacant()) {
       await entrypoint();
-    } else if (Catch.browser().name === 'firefox') {
+    } else if (Catch.isFirefox()) {
       notifyMurdered();
     }
   }
