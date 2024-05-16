@@ -4,6 +4,7 @@
 name: OSSAR
 
 on:
+  push:
   pull_request:
 
 jobs:
@@ -23,9 +24,12 @@ jobs:
 
     # If this run was triggered by a pull request event, then checkout
     # the head of the pull request instead of the merge commit.
-    - run: git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
-
+    - run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          git checkout ${{ github.sha }}
+        else
+          git checkout HEAD^2
+        fi
     # Ensure a compatible version of dotnet is installed.
     # The [Microsoft Security Code Analysis CLI](https://aka.ms/mscadocs) is built with dotnet v3.1.201.
     # A version greater than or equal to v3.1.201 of dotnet must be installed on the agent in order to run this action.
