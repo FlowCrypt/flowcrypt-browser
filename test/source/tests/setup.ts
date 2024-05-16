@@ -15,7 +15,7 @@ import { testConstants } from './tooling/consts';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
-import { AvaContext, minutes } from './tooling';
+import { AvaContext } from './tooling';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { expiredPubkey, hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
@@ -43,6 +43,39 @@ const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acc
   return { Authorization: `Bearer ${accessToken}` };
 };
 
+const updateAndArmorKey = async (prv: Key, acct: string) => {
+  return KeyUtil.armor(await KeyUtil.reformatKey(prv, undefined, [{ name: 'Full Name', email: acct }], 6000));
+};
+
+const getConfigurationProviderForKeysUpdateTest = (t: AvaContext, acct: string) => {
+  return new ConfigurationProvider({
+    attester: {
+      pubkeyLookup: {},
+    },
+    ekm: {
+      keys: [testConstants.updatingPrv],
+      putKeysExpectation: {
+        [acct]: {
+          expirationExists: false,
+        },
+      },
+    },
+    fes: {
+      clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.context.urls!.port!),
+    },
+  });
+};
+
+const setupAndGetAuthHeaderForKeyUpdateTest = async (settingsPage: ControllablePage, acct: string) => {
+  const passphrase = 'long enough to suit requirements';
+  await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
+    enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
+  });
+  const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
+  return { passphrase, extraAuthHeaders };
+};
 const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, hasPermission = true) => {
   const authorizationHeader = hasPermission
     ? await getAuthorizationHeader(t, browser, acctEmail)
@@ -1437,193 +1470,193 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     };
 
     test(
-      'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
-      testWithBrowser(
-        async (t, browser) => {
-          const acct = 'get.updating.key@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
-          t.context.mockApi!.configProvider = new ConfigurationProvider({
-            attester: {
-              pubkeyLookup: {},
-            },
-            ekm: {
-              keys: [testConstants.updatingPrv],
-              putKeysExpectation: {
-                [acct]: {
-                  expirationExists: false,
-                },
-              },
-            },
-            fes: {
-              clientConfiguration: getKeyManagerChoosePassphraseForbidStoringRules(t.context.urls!.port!),
-            },
-          });
-          const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-          const passphrase = 'long enough to suit requirements';
-          await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-            enterPp: { passphrase, checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true } },
-          });
-          const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acct);
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          const extraAuthHeaders = { Authorization: `Bearer ${accessToken}` };
-          const updateAndArmorKey = async (prv: Key) => {
-            return KeyUtil.armor(await KeyUtil.reformatKey(prv, undefined, [{ name: 'Full Name', email: acct }], 6000));
-          };
-          const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-          // 1. EKM returns the same key, no update, no toast
-          let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.noToastAppears(gmailPage);
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set2 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-          expect(set2[0].lastModified).to.equal(set1[0].lastModified); // no update
-          await gmailPage.close();
-          // 2. EKM returns a newer version of the existing key
-          const someOlderVersion = await updateAndArmorKey(set2[0]);
-          t.context.mockApi!.configProvider.config.ekm!.keys = [someOlderVersion];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-          const set3 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+      'get.updating.key.step1@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'get.updating.key.step1@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
+        t.context.mockApi!.configProvider = getConfigurationProviderForKeysUpdateTest(t, acct);
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const { passphrase, extraAuthHeaders } = await setupAndGetAuthHeaderForKeyUpdateTest(settingsPage, acct);
+        const set1 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        // 1. EKM returns the same key, no update, no toast
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set2 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        expect(set2[0].lastModified).to.equal(set1[0].lastModified); // no update
+        await gmailPage.close();
+        // 2. EKM returns a newer version of the existing key
+        const someOlderVersion = await updateAndArmorKey(set2[0], acct);
+        t.context.mockApi!.configProvider.config.ekm!.keys = [someOlderVersion];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+        const set3 = await retrieveAndCheckKeys(settingsPage, acct, 1);
 
-          expect(set3[0].lastModified).to.be.greaterThan(set2[0].lastModified!); // an update happened
-          await gmailPage.close();
-          // 3. EKM returns the same version of the existing key, no toast, no update
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.noToastAppears(gmailPage);
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set4 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-          expect(set4[0].lastModified).to.equal(set3[0].lastModified); // no update
-          // 4. Forget the passphrase, EKM the same version of the existing key, no prompt
-          await BrowserRecipe.finishSession(gmailPage);
-          await gmailPage.close();
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.noToastAppears(gmailPage);
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set5 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
-          expect(set5[0].lastModified).to.equal(set4[0].lastModified); // no update
-          await gmailPage.close();
-          // 5. EKM returns a newer version of the existing key, canceling passphrase prompt, no update
-          t.context.mockApi!.configProvider.config.ekm!.keys = [await updateAndArmorKey(set5[0])];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await gmailPage.waitAll('@dialog-passphrase');
-          await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
-          await PageRecipe.noToastAppears(gmailPage);
-          const set6 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
-          expect(set6[0].lastModified).to.equal(set5[0].lastModified); // no update
-          await gmailPage.close();
-          // 6. EKM returns a newer version of the existing key, entering the passphrase, update toast
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await gmailPage.waitAll('@dialog-passphrase');
-          {
-            const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-            await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
-            await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
-            await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
-          }
-          await gmailPage.waitTillGone('@dialog-passphrase');
-          await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-          const set7 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        expect(set3[0].lastModified).to.be.greaterThan(set2[0].lastModified!); // an update happened
+        await gmailPage.close();
+        // 3. EKM returns the same version of the existing key, no toast, no update
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set4 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        expect(set4[0].lastModified).to.equal(set3[0].lastModified); // no update
+        // 4. Forget the passphrase, EKM the same version of the existing key, no prompt
+        await BrowserRecipe.finishSession(gmailPage);
+        await gmailPage.close();
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set5 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
+        expect(set5[0].lastModified).to.equal(set4[0].lastModified); // no update
+        await gmailPage.close();
+      })
+    );
 
-          expect(set7[0].lastModified!).to.be.greaterThan(set6[0].lastModified!); // an update happened
-          await gmailPage.close();
-          // 7. EKM returns an older version of the existing key, no toast, no update
-          t.context.mockApi!.configProvider.config.ekm!.keys = [someOlderVersion];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.noToastAppears(gmailPage);
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set8 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-          expect(set8[0].lastModified).to.equal(set7[0].lastModified); // no update
-          await gmailPage.close();
-          // 8. EKM returns an older version of the existing key, and a new key, toast, new key gets added encrypted with the same passphrase
-          t.context.mockApi!.configProvider.config.ekm!.keys = [someOlderVersion, testConstants.existingPrv];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2);
-          const mainKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
-          expect(mainKey9.length).to.equal(1);
-          const secondaryKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]);
-          expect(secondaryKey9.length).to.equal(1);
-          expect(mainKey9[0].lastModified).to.equal(set8[0].lastModified); // no update
-          await gmailPage.close();
-          // 9. EKM returns a newer version of one key, fully omitting the other one, a toast, an update and removal
-          t.context.mockApi!.configProvider.config.ekm!.keys = [await updateAndArmorKey(mainKey9[0])];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set10 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-          const mainKey10 = KeyUtil.filterKeysByIdentity(set10, [mainKey9[0]]);
-          expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(secondaryKey9[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
-          expect(mainKey10.length).to.equal(1);
+    test(
+      'get.updating.key.step2@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'get.updating.key.step2@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
+        t.context.mockApi!.configProvider = getConfigurationProviderForKeysUpdateTest(t, acct);
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const { passphrase, extraAuthHeaders } = await setupAndGetAuthHeaderForKeyUpdateTest(settingsPage, acct);
+        // 5. EKM returns a newer version of the existing key, canceling passphrase prompt, no update
+        const set5 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await BrowserRecipe.finishSession(gmailPage);
+        await gmailPage.close();
+        const someOlderVersion = await updateAndArmorKey(set5[0], acct);
+        t.context.mockApi!.configProvider.config.ekm!.keys = [await updateAndArmorKey(set5[0], acct)];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await gmailPage.waitAll('@dialog-passphrase');
+        await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
+        await PageRecipe.noToastAppears(gmailPage);
+        const set6 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
+        expect(set6[0].lastModified).to.equal(set5[0].lastModified); // no update
+        await gmailPage.close();
+        // 6. EKM returns a newer version of the existing key, entering the passphrase, update toast
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await Util.sleep(2);
+        await gmailPage.waitAll('@dialog-passphrase');
+        {
+          const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+          await Util.sleep(2);
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+          await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
+          await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+        }
+        await gmailPage.waitTillGone('@dialog-passphrase');
+        await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+        const set7 = await retrieveAndCheckKeys(settingsPage, acct, 1);
 
-          expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
-          // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
-          await BrowserRecipe.finishSession(gmailPage);
-          await gmailPage.close();
-          t.context.mockApi!.configProvider.config.ekm!.keys = [testConstants.unprotectedPrvKey];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await gmailPage.waitAll('@dialog-passphrase');
-          {
-            const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-            await passphraseDialog.waitAndType('@input-pass-phrase', 'g00D_pa$$worD-But_Different');
-            await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
-            // todo: how to wait properly
-            await passphraseDialog.waitForContent('@input-pass-phrase', /^$/);
-            expect(await passphraseDialog.attr('@input-pass-phrase', 'placeholder')).to.eq('Please try again');
-          }
-          await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
-          await PageRecipe.noToastAppears(gmailPage);
-          const set11 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
-          expect(set11.map(entry => entry.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536']);
-          await gmailPage.close();
-          // 11. EKM returns a new third key, we enter a passphrase matching an existing key, update happens, the old key is removed
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await gmailPage.waitAll('@dialog-passphrase');
-          {
-            const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-            await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
-            await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
-            await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
-          }
-          await gmailPage.waitTillGone('@dialog-passphrase');
-          await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
-          const set12 = await retrieveAndCheckKeys(settingsPage, acct, 1);
-          expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set11[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
-          expect(set12.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
-          const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
-          expect(mainKey12.length).to.equal(1);
-          // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
-          await BrowserRecipe.finishSession(gmailPage);
-          await gmailPage.close();
-          t.context.mockApi!.configProvider.config.ekm!.keys = [
-            await updateAndArmorKey(set2[0]),
-            testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2),
-          ];
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Could not update keys from EKM due to error: Some keys could not be parsed');
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set13 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
-          expect(set13.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
-          const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
-          expect(mainKey13.length).to.equal(1);
-          expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
-          await gmailPage.close();
-          // 13. EKM down, no toast, no passphrase dialog, no updates
-          t.context.mockApi!.configProvider.config.ekm!.returnError = new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
-          gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
-          await PageRecipe.noToastAppears(gmailPage);
-          await gmailPage.notPresent('@dialog-passphrase');
-          const set14 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
-          expect(set14.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
-          const mainKey14 = KeyUtil.filterKeysByIdentity(
-            set14.map(ki => ki),
-            [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]
-          );
-          expect(mainKey14.length).to.equal(1);
-          expect(mainKey14[0].lastModified).to.equal(mainKey13[0].lastModified); // no update
-          await gmailPage.close();
-        },
-        undefined,
-        minutes(12) // Increased timeout from the default 4 minutes to 12 due to extensive test duration
-      )
+        expect(set7[0].lastModified!).to.be.greaterThan(set6[0].lastModified!); // an update happened
+        await gmailPage.close();
+        // 7. EKM returns an older version of the existing key, no toast, no update
+        t.context.mockApi!.configProvider.config.ekm!.keys = [someOlderVersion];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set8 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        expect(set8[0].lastModified).to.equal(set7[0].lastModified); // no update
+        await gmailPage.close();
+        // 8. EKM returns an older version of the existing key, and a new key, toast, new key gets added encrypted with the same passphrase
+        t.context.mockApi!.configProvider.config.ekm!.keys = [someOlderVersion, testConstants.existingPrv];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set9 = await retrieveAndCheckKeys(settingsPage, acct, 2);
+        const mainKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: '392FB1E9FF4184659AB6A246835C0141B9ECF536' }]);
+        expect(mainKey9.length).to.equal(1);
+        const secondaryKey9 = KeyUtil.filterKeysByIdentity(set9, [{ family: 'openpgp', id: 'FAFB7D675AC74E87F84D169F00B0115807969D75' }]);
+        expect(secondaryKey9.length).to.equal(1);
+        expect(mainKey9[0].lastModified).to.equal(set8[0].lastModified); // no update
+        await gmailPage.close();
+        // 9. EKM returns a newer version of one key, fully omitting the other one, a toast, an update and removal
+        t.context.mockApi!.configProvider.config.ekm!.keys = [await updateAndArmorKey(mainKey9[0], acct)];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set10 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        const mainKey10 = KeyUtil.filterKeysByIdentity(set10, [mainKey9[0]]);
+        expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(secondaryKey9[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
+        expect(mainKey10.length).to.equal(1);
+
+        expect(mainKey10[0].lastModified!).to.be.greaterThan(mainKey9[0].lastModified!); // updated this key
+      })
+    );
+
+    test(
+      'get.updating.key.step3@key-manager-choose-passphrase-forbid-storing.flowcrypt.test - automatic update of key found on key manager',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'get.updating.key.step3@key-manager-choose-passphrase-forbid-storing.flowcrypt.test';
+        t.context.mockApi!.configProvider = getConfigurationProviderForKeysUpdateTest(t, acct);
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const { passphrase, extraAuthHeaders } = await setupAndGetAuthHeaderForKeyUpdateTest(settingsPage, acct);
+        // 10. Forget the passphrase, EKM returns a third key, we enter a passphrase that doesn't match any of the existing keys, no update
+        let gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await BrowserRecipe.finishSession(gmailPage);
+        await gmailPage.close();
+        t.context.mockApi!.configProvider.config.ekm!.keys = [testConstants.unprotectedPrvKey];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await gmailPage.waitAll('@dialog-passphrase');
+        {
+          const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+          await passphraseDialog.waitAndType('@input-pass-phrase', 'g00D_pa$$worD-But_Different');
+          await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+          // todo: how to wait properly
+          await passphraseDialog.waitForContent('@input-pass-phrase', /^$/);
+          expect(await passphraseDialog.attr('@input-pass-phrase', 'placeholder')).to.eq('Please try again');
+        }
+        await ComposePageRecipe.cancelPassphraseDialog(gmailPage, 'keyboard');
+        await PageRecipe.noToastAppears(gmailPage);
+        const set11 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
+        expect(set11.map(entry => entry.id)).to.eql(['392FB1E9FF4184659AB6A246835C0141B9ECF536']);
+        await gmailPage.close();
+        // 11. EKM returns a new third key, we enter a passphrase matching an existing key, update happens, the old key is removed
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await gmailPage.waitAll('@dialog-passphrase');
+        {
+          const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+          await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
+          await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
+        }
+        await gmailPage.waitTillGone('@dialog-passphrase');
+        await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
+        const set12 = await retrieveAndCheckKeys(settingsPage, acct, 1);
+        expect(await getPassphrase(settingsPage, acct, KeyUtil.getPrimaryLongid(set11[0]))).to.be.an.undefined; // the passphrase for the old key was deleted
+        expect(set12.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
+        const mainKey12 = KeyUtil.filterKeysByIdentity(set12, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
+        expect(mainKey12.length).to.equal(1);
+        // 12. Forget the passphrase, EKM sends a broken key, no passphrase dialog, no updates
+        await BrowserRecipe.finishSession(gmailPage);
+        await gmailPage.close();
+        t.context.mockApi!.configProvider.config.ekm!.keys = [
+          await updateAndArmorKey(set11[0], acct),
+          testConstants.unprotectedPrvKey.substring(0, testConstants.unprotectedPrvKey.length / 2),
+        ];
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Could not update keys from EKM due to error: Some keys could not be parsed');
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set13 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
+        expect(set13.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
+        const mainKey13 = KeyUtil.filterKeysByIdentity(set13, [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]);
+        expect(mainKey13.length).to.equal(1);
+        expect(mainKey13[0].lastModified).to.equal(mainKey12[0].lastModified); // no update
+        await gmailPage.close();
+        // 13. EKM down, no toast, no passphrase dialog, no updates
+        t.context.mockApi!.configProvider.config.ekm!.returnError = new HttpClientErr('RequestTimeout', Status.BAD_REQUEST);
+        gmailPage = await browser.newMockGmailPage(t, extraAuthHeaders);
+        await PageRecipe.noToastAppears(gmailPage);
+        await gmailPage.notPresent('@dialog-passphrase');
+        const set14 = await retrieveAndCheckKeys(settingsPage, acct, 1, passphrase);
+        expect(set14.map(entry => entry.id)).to.eql(['277D1ADA213881F4ABE0415395E783DC0289E2E2']);
+        const mainKey14 = KeyUtil.filterKeysByIdentity(
+          set14.map(ki => ki),
+          [{ family: 'openpgp', id: '277D1ADA213881F4ABE0415395E783DC0289E2E2' }]
+        );
+        expect(mainKey14.length).to.equal(1);
+        expect(mainKey14[0].lastModified).to.equal(mainKey13[0].lastModified); // no update
+        await gmailPage.close();
+      })
     );
 
     test(
