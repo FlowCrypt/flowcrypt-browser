@@ -27,7 +27,7 @@ jobs:
     - run: git checkout HEAD^2
       if: ${{ github.event_name == 'pull_request' }}
 
-    - run: git checkout {{ github.sha }}
+    - run: git checkout ${{ github.sha }}
       if: ${{ github.event_name == 'push' }}
     # Ensure a compatible version of dotnet is installed.
     # The [Microsoft Security Code Analysis CLI](https://aka.ms/mscadocs) is built with dotnet v3.1.201.
