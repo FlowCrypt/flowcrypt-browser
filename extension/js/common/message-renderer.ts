@@ -457,7 +457,10 @@ export class MessageRenderer {
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
-    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
+    let sentDateStr = $('div.gK span[title]').attr('title');
+    if (!sentDateStr || isNaN(Date.parse(sentDateStr))) {
+      sentDateStr = sentDate ? new Date(sentDate).toLocaleString() : '';
+    }
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
@@ -483,7 +486,7 @@ export class MessageRenderer {
           <span data-test="print-from">From: ${fromHtml}</span>
         </div>
         <div class="float-right">
-          <span>${sentDateStr}</span>
+          <span data-test="print-date">${sentDateStr}</span>
         </div>
       </div>
       <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(fullMsg, 'to') ?? '')}</span><br/>
