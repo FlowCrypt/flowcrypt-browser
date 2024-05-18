@@ -312,13 +312,8 @@ export class Catch {
 
   private static async doSendErrorToSharedTenantFes(errorReport: ErrorReport) {
     try {
-      let acctEmail = Url.parse(['acctEmail']).acctEmail;
-      if (acctEmail) {
-        acctEmail = String(acctEmail);
-      } else {
-        const acctEmails = await GlobalStore.acctEmailsGet();
-        acctEmail = acctEmails?.length ? acctEmails[0] : undefined;
-      }
+      const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
+      const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
       if (!acctEmail) {
         console.error('Not reporting error because user is not logged in');
         return;
