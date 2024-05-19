@@ -3271,7 +3271,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const acct = 'revoked@key-manager-autoimport-no-prv-create.flowcrypt.test';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
-          expectWarnModal: 'Public key not usable - not sumbitting to Attester',
+          expectWarnModal: 'Public key not usable - not submitting to Attester',
         });
       })
     );
