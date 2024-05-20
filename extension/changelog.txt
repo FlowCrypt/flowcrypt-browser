@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.5.5 on May 20, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/478?closed=1" target="_blank">Manifest V3</a>
+
 version 8.5.4 on March 7, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/476?closed=1" target="_blank">Improved compatibility with firewalls</a>
 
 version 8.5.3 on February 7, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/468?closed=1" target="_blank">Improvements for encrypted content detection and PGP/MIME messages parsing</a>
