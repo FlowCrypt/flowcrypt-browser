@@ -888,7 +888,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
         });
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not sumbitting to Attester' });
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage, { expectWarnModal: 'Public key not usable - not submitting to Attester' });
         const gmailPage = await openMockGmailPage(t, browser, acctEmail);
         // Check if notification presents
         let warningMsg =

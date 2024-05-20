@@ -62,7 +62,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           clickOn: 'confirm',
         });
         await SettingsPageRecipe.waitForModalAndRespond(settingsPage, 'warning', {
-          contentToCheck: 'Public key not usable - not sumbitting to Attester',
+          contentToCheck: 'Public key not usable - not submitting to Attester',
           clickOn: 'confirm',
         });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
