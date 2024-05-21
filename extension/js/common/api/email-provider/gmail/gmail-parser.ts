@@ -165,7 +165,9 @@ export class GmailParser {
       const parts = payload.parts!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       // are we dealing with a PGP/MIME encrypted message?
       const pgpEncrypted = Boolean(
-        parts.length === 2 && contentType?.value?.startsWith('multipart/encrypted;') && contentType.value.includes('protocol="application/pgp-encrypted"')
+        parts.length === 2 &&
+          contentType?.value?.startsWith('multipart/encrypted') &&
+          (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0]?.mimeType?.includes('application/pgp-encrypted'))
       );
       for (const [i, part] of parts.entries()) {
         GmailParser.findAttachments(part, internalMsgId, internalResults, {
