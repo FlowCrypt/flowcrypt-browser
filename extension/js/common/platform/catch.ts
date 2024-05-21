@@ -4,6 +4,7 @@
 
 import { Url } from '../core/common.js';
 import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
+import { GlobalStore } from './store/global-store.js';
 import { InMemoryStore } from './store/in-memory-store.js';
 
 export class UnreportableError extends Error {}
@@ -285,8 +286,8 @@ export class Catch {
   private static formatExceptionForReport(thrown: unknown, line?: number, col?: number): ErrorReport {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
-      line = parsedLine;
-      col = parsedCol;
+      line = parsedLine > 0 ? parsedLine : 1;
+      col = parsedCol > 0 ? parsedCol : 1;
     }
     if (thrown instanceof Error) {
       // reporting stack may differ from the stack of the actual error, both may be interesting
@@ -301,8 +302,8 @@ export class Catch {
       name: exception.name.substring(0, 50),
       message: exception.message.substring(0, 200),
       url: location.href.split('?')[0],
-      line: line || 0,
-      col: col || 0,
+      line: line || 1,
+      col: col || 1,
       trace: exception.stack || '',
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
@@ -313,8 +314,8 @@ export class Catch {
 
   private static async doSendErrorToSharedTenantFes(errorReport: ErrorReport) {
     try {
-      const uncheckedUrlParams = Url.parse(['acctEmail']);
-      const acctEmail = String(uncheckedUrlParams.acctEmail);
+      const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
+      const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
       if (!acctEmail) {
         console.error('Not reporting error because user is not logged in');
         return;
@@ -378,7 +379,7 @@ export class Catch {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return { line: Number(matched![1]), col: Number(matched![2]) };
     } catch (lineErr) {
-      return { line: 0, col: 0 };
+      return { line: 1, col: 1 };
     }
   }
 
