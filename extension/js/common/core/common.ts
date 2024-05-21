@@ -517,3 +517,45 @@ export const checkValidURL = (url: string): boolean => {
   const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@\-\/]))?/;
   return pattern.test(url);
 };
+
+// Type definition for a function that returns a promise
+type PromiseFunction<T> = () => Promise<T>;
+
+// promiseAllWithLimit as a const holding an arrow function
+export const promiseAllWithLimit = <T>(promiseFunctions: PromiseFunction<T>[], limit: number): Promise<T[]> => {
+  return new Promise((resolve, reject) => {
+    let resolvedCount = 0;
+    let count = 0;
+    const results: T[] = new Array(promiseFunctions.length);
+    const len = promiseFunctions.length;
+
+    // Declare `next` as a const arrow function
+    const next = (promiseFunc: PromiseFunction<T>, index: number) => {
+      promiseFunc()
+        .then(result => {
+          results[index] = result;
+          resolvedCount++;
+          if (promiseFunctions.length) {
+            const nextPromiseFunc = promiseFunctions.shift();
+            if (nextPromiseFunc) {
+              next(nextPromiseFunc, count);
+              count++;
+            }
+          } else if (resolvedCount === len) {
+            resolve(results);
+          }
+        })
+        .catch(error => {
+          reject(error);
+        });
+    };
+
+    while (count < limit && promiseFunctions.length) {
+      const nextPromiseFunc = promiseFunctions.shift();
+      if (nextPromiseFunc) {
+        next(nextPromiseFunc, count);
+        count++;
+      }
+    }
+  });
+};

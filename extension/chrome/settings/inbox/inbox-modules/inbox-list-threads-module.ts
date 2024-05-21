@@ -7,7 +7,7 @@ import { Catch } from '../../../../js/common/platform/catch.js';
 import { GmailParser } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { InboxView } from '../inbox.js';
 import { Lang } from '../../../../js/common/lang.js';
-import { Str } from '../../../../js/common/core/common.js';
+import { Str, promiseAllWithLimit } from '../../../../js/common/core/common.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
@@ -18,7 +18,10 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     try {
       const { threads } = await this.view.gmail.threadList(labelId);
       if (threads?.length) {
-        await Promise.all(threads.map(t => this.renderInboxItem(t.id)));
+        await promiseAllWithLimit(
+          threads.map(t => () => this.renderInboxItem(t.id)),
+          3
+        );
       } else {
         Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${Xss.escape(labelId)} yet. ${Ui.retryLink()}</p>`);
       }
@@ -39,7 +42,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     }
   };
 
-  private renderInboxItem = async (threadId: string) => {
+  private renderInboxItem = async (threadId: string): Promise<void> => {
     this.inboxThreadItemAdd(threadId);
     const threadItem = $('.threads #' + this.threadListItemId(threadId));
     try {
