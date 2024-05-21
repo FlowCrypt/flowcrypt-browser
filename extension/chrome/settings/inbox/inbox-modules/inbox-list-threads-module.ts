@@ -19,8 +19,8 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       const { threads } = await this.view.gmail.threadList(labelId);
       if (threads?.length) {
         await promiseAllWithLimit(
-          threads.map(t => () => this.renderInboxItem(t.id)),
-          3
+          10,
+          threads.map(t => () => this.renderInboxItem(t.id))
         );
       } else {
         Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${Xss.escape(labelId)} yet. ${Ui.retryLink()}</p>`);

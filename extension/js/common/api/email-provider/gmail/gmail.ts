@@ -137,8 +137,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
 
   public msgsGet = async (msgIds: string[], format: GmailResponseFormat): Promise<GmailRes.GmailMsg[]> => {
     return await promiseAllWithLimit(
-      msgIds.map(id => () => this.msgGet(id, format)),
-      10
+      10,
+      msgIds.map(id => () => this.msgGet(id, format))
     );
   };
 

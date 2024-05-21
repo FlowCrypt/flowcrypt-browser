@@ -518,44 +518,41 @@ export const checkValidURL = (url: string): boolean => {
   return pattern.test(url);
 };
 
-// Type definition for a function that returns a promise
-type PromiseFunction<T> = () => Promise<T>;
-
-// promiseAllWithLimit as a const holding an arrow function
-export const promiseAllWithLimit = <T>(promiseFunctions: PromiseFunction<T>[], limit: number): Promise<T[]> => {
+/**
+ * Executes multiple promises concurrently with a limit to the number of promises running simultaneously.
+ * Resolves when all promises are resolved or rejects when any promise is rejected.
+ *
+ * @param concurrency - The maximum number of promises to run at the same time.
+ * @param tasks - An array of functions that return promises.
+ * @returns A Promise that resolves to an array of the resolved values of the input promises.
+ */
+export const promiseAllWithLimit = <V>(concurrency: number, tasks: (() => Promise<V>)[]): Promise<V[]> => {
   return new Promise((resolve, reject) => {
-    let resolvedCount = 0;
-    let count = 0;
-    const results: T[] = new Array(promiseFunctions.length);
-    const len = promiseFunctions.length;
+    let activeCount = 0;
+    const results: V[] = [];
+    const promises: Promise<void>[] = [];
 
-    // Declare `next` as a const arrow function
-    const next = (promiseFunc: PromiseFunction<T>, index: number) => {
-      promiseFunc()
-        .then(result => {
-          results[index] = result;
-          resolvedCount++;
-          if (promiseFunctions.length) {
-            const nextPromiseFunc = promiseFunctions.shift();
-            if (nextPromiseFunc) {
-              next(nextPromiseFunc, count);
-              count++;
-            }
-          } else if (resolvedCount === len) {
-            resolve(results);
-          }
-        })
-        .catch(error => {
-          reject(error);
-        });
+    const launchNextTask = () => {
+      while (activeCount < tasks.length && promises.length < concurrency) {
+        const taskIndex = activeCount++;
+        const taskPromise = tasks[taskIndex]();
+
+        const handlePromise = taskPromise
+          .then(result => {
+            results[taskIndex] = result;
+            launchNextTask();
+          })
+          .catch(reject);
+
+        promises.push(handlePromise);
+      }
+      if (promises.length === tasks.length) {
+        Promise.all(promises)
+          .then(() => resolve(results))
+          .catch(reject);
+      }
     };
 
-    while (count < limit && promiseFunctions.length) {
-      const nextPromiseFunc = promiseFunctions.shift();
-      if (nextPromiseFunc) {
-        next(nextPromiseFunc, count);
-        count++;
-      }
-    }
+    launchNextTask();
   });
 };
