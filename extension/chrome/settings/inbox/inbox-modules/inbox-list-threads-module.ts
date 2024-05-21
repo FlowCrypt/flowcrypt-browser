@@ -20,7 +20,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       if (threads?.length) {
         await promiseAllWithLimit(
           10,
-          threads.map(t => this.renderInboxItem(t.id))
+          threads.map(t => () => this.renderInboxItem(t.id))
         );
       } else {
         Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${Xss.escape(labelId)} yet. ${Ui.retryLink()}</p>`);
