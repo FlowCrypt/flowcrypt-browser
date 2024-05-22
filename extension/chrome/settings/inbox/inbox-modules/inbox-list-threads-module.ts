@@ -19,7 +19,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
       const { threads } = await this.view.gmail.threadList(labelId);
       if (threads?.length) {
         await promiseAllWithLimit(
-          10,
+          30,
           threads.map(t => () => this.renderInboxItem(t.id))
         );
       } else {
