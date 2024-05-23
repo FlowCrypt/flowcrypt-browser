@@ -11,6 +11,7 @@ import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
 import { Env } from '../../browser/env.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
+import { GoogleOAuth } from '../authentication/google/google-oauth.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; frameId: string };
@@ -412,7 +413,23 @@ export class Api {
       const result = await Api.ajaxWithJquery(req, resFmt, formattedData);
       return result as FetchResult<T, RT>;
     } else {
-      return await Api.ajax(req, resFmt);
+      try {
+        return await Api.ajax(req, resFmt);
+      } catch (firstAttemptErr) {
+        const idToken = headers?.authorization?.split('Bearer ')?.[1];
+        if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
+          // force refresh token
+          const { email } = GoogleOAuth.parseIdToken(idToken);
+          if (email) {
+            const updatedReq = {
+              ...req,
+              headers: { authorization: await GoogleOAuth.googleApiAuthHeader(email, true) },
+            };
+            return await Api.ajax(updatedReq, resFmt);
+          }
+        }
+        throw firstAttemptErr;
+      }
     }
   }
 
