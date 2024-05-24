@@ -4,7 +4,7 @@
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
-import { Dict, Str, Value } from '../../../core/common.js';
+import { Dict, Str, Value, promiseAllWithLimit } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GMAIL_GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
@@ -136,7 +136,10 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public msgsGet = async (msgIds: string[], format: GmailResponseFormat): Promise<GmailRes.GmailMsg[]> => {
-    return await Promise.all(msgIds.map(id => this.msgGet(id, format)));
+    return await promiseAllWithLimit(
+      30,
+      msgIds.map(id => () => this.msgGet(id, format))
+    );
   };
 
   public labelsGet = async (): Promise<GmailRes.GmailLabels> => {
