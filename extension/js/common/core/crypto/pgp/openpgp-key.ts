@@ -268,6 +268,7 @@ export class OpenPGPKey {
       const message = await opgp.createMessage({ text });
       return await opgp.sign({ message, format: 'armored', signingKeys: [signingPrv], detached });
     }
+    text = text ? text : '\n';
     const message = await opgp.createCleartextMessage({ text });
     return await opgp.sign({ message, signingKeys: [signingPrv] });
   }
