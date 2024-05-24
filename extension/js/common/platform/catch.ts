@@ -4,6 +4,7 @@
 
 import { Url } from '../core/common.js';
 import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
+import { GlobalStore } from './store/global-store.js';
 import { InMemoryStore } from './store/in-memory-store.js';
 
 export class UnreportableError extends Error {}
@@ -24,7 +25,7 @@ export type ErrorReport = {
 
 export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
-  private static ORIG_ONERROR = window.onerror;
+  private static ORIG_ONERROR = onerror;
   private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
     // happens in gmail window when reloaded extension + now reloading gmail
@@ -119,7 +120,7 @@ export class Catch {
    */
   public static reportErr(e: unknown): boolean {
     const { line, col } = Catch.getErrorLineAndCol(e);
-    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
+    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), location.href, line, col, e, true);
   }
 
   /**
@@ -167,9 +168,13 @@ export class Catch {
     }
   }
 
-  public static environment(url = window.location.href): string {
+  public static isFirefox(): boolean {
+    return Catch.browser().name === 'firefox';
+  }
+
+  public static environment(url = location.href): string {
     const browserName = Catch.browser().name;
-    const origin = new URL(window.location.href).origin;
+    const origin = new URL(location.href).origin;
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
       env = 'ex:prod';
@@ -205,7 +210,7 @@ export class Catch {
       Catch.test();
     } catch (e) {
       // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
   }
@@ -243,7 +248,7 @@ export class Catch {
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
       const msg = e instanceof Error ? e.message : String(e);
-      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, window.location.href, line, col, e, true);
+      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, location.href, line, col, e, true);
     }
   }
 
@@ -279,8 +284,8 @@ export class Catch {
   private static formatExceptionForReport(thrown: unknown, line?: number, col?: number): ErrorReport {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
-      line = parsedLine;
-      col = parsedCol;
+      line = parsedLine > 0 ? parsedLine : 1;
+      col = parsedCol > 0 ? parsedCol : 1;
     }
     if (thrown instanceof Error) {
       // reporting stack may differ from the stack of the actual error, both may be interesting
@@ -294,9 +299,9 @@ export class Catch {
     return {
       name: exception.name.substring(0, 50),
       message: exception.message.substring(0, 200),
-      url: window.location.href.split('?')[0],
-      line: line || 0,
-      col: col || 0,
+      url: location.href.split('?')[0],
+      line: line || 1,
+      col: col || 1,
       trace: exception.stack || '',
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
@@ -307,8 +312,8 @@ export class Catch {
 
   private static async doSendErrorToSharedTenantFes(errorReport: ErrorReport) {
     try {
-      const uncheckedUrlParams = Url.parse(['acctEmail']);
-      const acctEmail = String(uncheckedUrlParams.acctEmail);
+      const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
+      const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
       if (!acctEmail) {
         console.error('Not reporting error because user is not logged in');
         return;
@@ -372,7 +377,7 @@ export class Catch {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return { line: Number(matched![1]), col: Number(matched![2]) };
     } catch (lineErr) {
-      return { line: 0, col: 0 };
+      return { line: 1, col: 1 };
     }
   }
 
@@ -402,5 +407,5 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-window.onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
-window.onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;
+onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
+onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

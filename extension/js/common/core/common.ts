@@ -152,7 +152,10 @@ export class Str {
     return text.length <= length ? text : text.substring(0, length) + '...';
   };
 
-  public static isEmailValid = (email: string) => {
+  public static isEmailValid = (email: string | undefined) => {
+    if (!email) {
+      return false;
+    }
     if (email.indexOf(' ') !== -1) {
       return false;
     }
@@ -513,4 +516,21 @@ export const stringTuple = <T extends string[]>(...data: T): T => {
 export const checkValidURL = (url: string): boolean => {
   const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@\-\/]))?/;
   return pattern.test(url);
+};
+
+/**
+ * Executes multiple promises concurrently with a limit to the number of promises running simultaneously.
+ * Resolves when all promises are resolved or rejects when any promise is rejected.
+ *
+ * @param concurrency - The maximum number of promises to run at the same time.
+ * @param tasks - An array of functions that return promises.
+ * @returns A Promise that resolves to an array of the resolved values of the input promises.
+ */
+export const promiseAllWithLimit = async <V>(concurrency: number, tasks: (() => Promise<V>)[]): Promise<V[]> => {
+  let results: V[] = [];
+  while (tasks.length) {
+    const currentTasks = tasks.splice(0, concurrency).map(task => task());
+    results = results.concat(await Promise.all(currentTasks));
+  }
+  return results;
 };

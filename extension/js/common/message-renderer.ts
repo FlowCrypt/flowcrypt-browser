@@ -43,7 +43,7 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly processedMessages = new ExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly processedMessages = new ExpirationCache<Promise<ProcessedMessage>>('processed_message', 24 * 60 * 60 * 1000); // 24 hours
 
   private constructor(
     private readonly acctEmail: string,
@@ -292,7 +292,17 @@ export class MessageRenderer {
         if (this.debug) {
           console.debug('processAttachment() try -> awaiting chunk + awaiting type');
         }
-        const data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
+        let data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
+        // For some reason, it sometimes doesn't return Buf and instead returns object
+        // Need to convert it to Buf
+        // todo: this is a temporary fix, should be removed
+        // https://github.com/FlowCrypt/flowcrypt-browser/pull/5607#discussion_r1540198173
+        if (!(data instanceof Buf)) {
+          const att = Object.entries(data).map(entry => {
+            return entry[1] as number;
+          });
+          data = new Buf(att);
+        }
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // todo: publicKey attachment can't be too big, so we could do preparePubkey() call (checking file length) right here
@@ -386,19 +396,35 @@ export class MessageRenderer {
   };
 
   public deleteExpired = (): void => {
-    this.processedMessages.deleteExpired();
+    void this.processedMessages.deleteExpired();
     this.downloader.deleteExpired();
   };
 
   public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
-    let processed = this.processedMessages.get(msgId);
-    if (!processed) {
-      processed = (async () => {
-        return this.processFull(await this.downloader.msgGetFull(msgId));
-      })();
-      this.processedMessages.set(msgId, processed);
+    // Couldn't use caching mechanism in firefox
+    // https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2054128442
+    if (Catch.isFirefox()) {
+      return await this.processFull(await this.downloader.msgGetFull(msgId));
     }
-    return this.processedMessages.await(msgId, processed);
+    // Couldn't use async await for chunkDownloads.get
+    // because if we call `await chunkDownloads.get`
+    // then return type becomes Buf|undfined instead of Promise<Buf>|undfined
+    return new Promise((resolve, reject) => {
+      this.processedMessages
+        .get(msgId)
+        .then(async processed => {
+          if (!processed || Object.keys(processed).length < 1) {
+            processed = (async () => {
+              return this.processFull(await this.downloader.msgGetFull(msgId));
+            })();
+          }
+          await this.processedMessages.set(msgId, processed);
+          resolve(await this.processedMessages.await(msgId, processed));
+        })
+        .catch(e => {
+          reject(e);
+        });
+    });
   };
 
   private processFull = async (fullMsg: GmailRes.GmailMsg): Promise<ProcessedMessage> => {
@@ -411,11 +437,11 @@ export class MessageRenderer {
       const treatAs = a.treatAs(attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
-        this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        await this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else if (treatAs === 'publicKey') {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
-        this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        await this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
@@ -431,7 +457,10 @@ export class MessageRenderer {
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
-    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
+    let sentDateStr = $('div.gK span[title]').attr('title');
+    if (!sentDateStr || isNaN(Date.parse(sentDateStr))) {
+      sentDateStr = sentDate ? new Date(sentDate).toLocaleString() : '';
+    }
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
@@ -457,7 +486,7 @@ export class MessageRenderer {
           <span data-test="print-from">From: ${fromHtml}</span>
         </div>
         <div class="float-right">
-          <span>${sentDateStr}</span>
+          <span data-test="print-date">${sentDateStr}</span>
         </div>
       </div>
       <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(fullMsg, 'to') ?? '')}</span><br/>

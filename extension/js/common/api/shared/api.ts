@@ -329,7 +329,10 @@ export class Api {
 
   public static async isInternetAccessible() {
     try {
-      await Api.download('https://google.com');
+      await fetch('https://google.com', {
+        method: 'GET',
+        mode: 'no-cors',
+      });
       return true;
     } catch (e) {
       if (ApiErr.isNetErr(e)) {

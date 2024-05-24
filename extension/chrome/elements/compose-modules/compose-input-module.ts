@@ -54,7 +54,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public removeRichTextFormatting = () => {
-    this.initSquire(false, true);
+    if (this.view.inputModule.isRichText()) {
+      this.initSquire(false, true);
+    }
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -110,6 +112,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire = new window.Squire(el, { addLinks });
     this.initShortcuts();
     this.handlePaste();
+    this.handleDragImages();
     this.handlePasteImages();
     this.resizeReplyBox();
     this.scrollIntoView();
@@ -136,32 +139,48 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     });
   };
 
-  private handlePasteImages = () => {
+  private loadImageFromFile = (file: File, callback: (result: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = () => callback(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  private insertImageIntoSquire = (imageData: string, name: string) => {
+    try {
+      this.squire.insertImage(imageData, { name, title: name });
+      this.view.draftModule.draftSave().catch(Catch.reportErr);
+    } catch (e) {
+      Catch.reportErr(e);
+    }
+  };
+
+  private handleDragImages = () => {
     this.squire.addEventListener('drop', (ev: DragEvent) => {
-      try {
-        if (!this.isRichText()) {
-          return;
-        }
-        if (!ev.dataTransfer?.files.length) {
-          return;
-        }
-        const file = ev.dataTransfer.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            this.squire.insertImage(reader.result?.toString() ?? '', { name: file.name, title: file.name });
-            this.view.draftModule.draftSave().catch(Catch.reportErr);
-          } catch (e) {
-            Catch.reportErr(e);
-          }
-        };
-        reader.readAsDataURL(file);
-      } catch (e) {
-        Catch.reportErr(e);
+      if (!this.isRichText() || !ev.dataTransfer?.files.length) {
+        return;
       }
+      const file = ev.dataTransfer.files[0];
+      this.loadImageFromFile(file, imageData => {
+        this.insertImageIntoSquire(imageData, file.name);
+      });
     });
     this.squire.addEventListener('dragover', (e: DragEvent) => {
       e.preventDefault(); // this is needed for 'drop' event to fire
+    });
+  };
+
+  private handlePasteImages = () => {
+    this.squire.addEventListener('pasteImage', (ev: Event & { detail: { clipboardData: DataTransfer } }) => {
+      if (!this.isRichText()) return;
+      const items = Array.from(ev.detail.clipboardData?.items ?? []);
+      const imageItem = items.find(item => /image/.test(item.type));
+
+      const imageFile = imageItem?.getAsFile();
+      if (imageItem && imageFile) {
+        this.loadImageFromFile(imageFile, imageData => {
+          this.insertImageIntoSquire(imageData, 'Pasted Image');
+        });
+      }
     });
   };
 

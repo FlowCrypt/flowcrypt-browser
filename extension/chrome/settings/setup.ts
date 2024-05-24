@@ -397,7 +397,7 @@ export class SetupView extends View {
       return;
     }
     if (!armoredPubkey) {
-      await Ui.modal.warning('Public key not usable - not sumbitting to Attester');
+      await Ui.modal.warning('Public key not usable - not submitting to Attester');
       return;
     }
     const pub = await KeyUtil.parse(armoredPubkey);
