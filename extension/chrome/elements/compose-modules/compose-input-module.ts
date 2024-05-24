@@ -54,7 +54,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public removeRichTextFormatting = () => {
-    this.initSquire(false, true);
+    if (this.view.inputModule.isRichText()) {
+      this.initSquire(false, true);
+    }
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
