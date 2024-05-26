@@ -46,6 +46,9 @@ jobs:
           --output-file eslint-results.sarif
         continue-on-error: true
 
+      - name: Debug
+        run: cat eslint-results.sarif
+
       - name: Upload analysis results to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
