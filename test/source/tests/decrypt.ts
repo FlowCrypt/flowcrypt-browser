@@ -2051,6 +2051,25 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'decrypt - multipart/encrypted with "application/pgp-encrypted" correctly rendered regardless of filename',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '18f5b8fe65b3c1cf'; // with two noname file attachments which has correctly follows PGP-encrypted message structure mime types.
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          threadId,
+          {
+            content: ['this is a test email'],
+            encryption: 'encrypted',
+            signature: 'signed',
+          },
+          authHdr
+        );
+      })
+    );
+
+    test(
       `verify - sha1 shows error`,
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
