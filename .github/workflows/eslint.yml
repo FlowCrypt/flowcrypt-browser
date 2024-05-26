@@ -39,6 +39,7 @@ jobs:
         run: |
           npm install eslint@8.57.0
           npm install utf8
+          npm install jschardet
         # npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
