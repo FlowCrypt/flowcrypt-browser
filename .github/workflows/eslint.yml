@@ -38,6 +38,7 @@ jobs:
       - name: Install ESLint
         run: |
           npm install eslint@8.57.0
+          npm install utf8
         # npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
@@ -45,6 +46,7 @@ jobs:
           npx eslint --ext ts extension test tooling --format ./eslint-sarif-formatter.js > eslint-results.sarif
           npx eslint -h
           command npx eslint -h
+          e
           # --output-file eslint-results.sarif
         continue-on-error: true
 
