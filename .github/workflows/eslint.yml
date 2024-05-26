@@ -19,7 +19,7 @@ jobs:
     name: Run eslint scanning
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       security-events: write
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     steps:
@@ -40,22 +40,10 @@ jobs:
           npm install eslint@8.57.0
           npm install utf8
           npm install jschardet
-        # npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
         run: |
-          npx eslint --ext ts extension test tooling --format ./eslint-sarif-formatter.js > eslint-results.sarif
-          npx eslint -h
-          command npx eslint -h
-          e
-          # --output-file eslint-results.sarif
-        continue-on-error: true
-
-      - name: Debug
-        run: |
-          ls
-          echo "====";
-          cat eslint-results.sarif
+          npx eslint --ext ts extension test tooling --format ./eslint-sarif-formatter.js --output-file eslint-results.sarif
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
