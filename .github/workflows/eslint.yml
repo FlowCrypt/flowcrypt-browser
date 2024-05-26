@@ -41,8 +41,10 @@ jobs:
         # npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
-        run: npx eslint --ext ts extension test tooling
-          --format ./eslint-sarif-formatter.js >> eslint-results.sarif
+        run: |
+          npx eslint --ext ts extension test tooling --format ./eslint-sarif-formatter.js > eslint-results.sarif
+          npx eslint -h
+          command npx eslint -h
           # --output-file eslint-results.sarif
         continue-on-error: true
 
