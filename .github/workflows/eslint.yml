@@ -42,8 +42,8 @@ jobs:
 
       - name: Run ESLint
         run: npx eslint --ext ts extension test tooling
-          --format ./eslint-sarif-formatter.js
-          --output-file eslint-results.sarif
+          --format ./eslint-sarif-formatter.js > eslint-results.sarif
+          # --output-file eslint-results.sarif
         continue-on-error: true
 
       - name: Debug
