@@ -195,24 +195,20 @@ module.exports = function (results, data) {
 
             if (containsSuppressedMessages && !ignoreSuppressed) {
               const uniqueSuppressions = new Set();
-
-              sarifRepresentation.suppressions = message.suppressions
-                ? message.suppressions.reduce((acc, suppression) => {
-                    const suppressionKey = `${suppression.kind}:${suppression.justification}`;
-
-                    if (!uniqueSuppressions.has(suppressionKey)) {
-                      uniqueSuppressions.add(suppressionKey);
-
-                      acc.push({
-                        kind: suppression.kind === 'directive' ? 'inSource' : 'external',
-
-                        justification: suppression.justification,
-                      });
-                    }
-
-                    return acc;
-                  }, [])
-                : [];
+              const suppressionsList = [];
+              if (message.suppressions) {
+                for (const suppression of message.suppressions) {
+                  const suppressionKey = `${suppression.kind}:${suppression.justification}`;
+                  if (!uniqueSuppressions.has(suppressionKey)) {
+                    uniqueSuppressions.add(suppressionKey);
+                    suppressionsList.push({
+                      kind: suppression.kind === 'directive' ? 'inSource' : 'external',
+                      justification: suppression.justification,
+                    });
+                  }
+                }
+              }
+              sarifRepresentation.suppressions = suppressionsList;
             }
           } else {
             // ESLint produces a message with no ruleId when it encounters an internal
