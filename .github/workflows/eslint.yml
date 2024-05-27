@@ -38,12 +38,11 @@ jobs:
 
       - name: Install ESLint
         run: |
-          npm install eslint@8.57.0
-          npm install utf8
-          npm install jschardet
+          npm install
+          npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
-        run: npx eslint --ext ts extension test tooling --format ./eslint-sarif-formatter.js --output-file eslint-results.sarif
+        run: npx eslint --ext ts extension test tooling --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
