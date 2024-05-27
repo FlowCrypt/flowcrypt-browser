@@ -1546,7 +1546,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-        await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+        await composePage.waitAndClick('@action-show-cc');
         await composePage.type('@input-to', 'contact');
         if (testVariant === 'CONSUMER-MOCK') {
           // consumer does not get Contacts scope automatically (may scare users when they install)
@@ -1560,7 +1560,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
         // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-        await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+        await composePage.waitAndClick('@action-show-cc');
         await composePage.type('@input-to', 'contact');
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
         await composePage.notPresent('@action-auth-with-contacts-scope');
