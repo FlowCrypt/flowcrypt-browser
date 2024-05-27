@@ -197,7 +197,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   private convertLineBreakToBr = (text: string, shouldQuote: boolean) => {
     return text
       .split('\n')
-      .map(line => `<br>${shouldQuote ? '&gt; ' : ''}${line}`.trim())
+      .map(line => `${shouldQuote ? '&gt; ' : ''}${line}<br>`.trim())
       .join('');
   };
 
@@ -213,9 +213,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
     const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
     if (method === 'reply') {
-      const header = `<div ${dirAttr} style="display: inline-block">On ${dateStr}, ${from ?? ''} wrote:</div>`;
+      const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
       const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
-      return `<blockquote ${dirAttr}}>${sanitizedQuote}</blockquote>`;
+      return `<blockquote ${dirAttr}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
         `<div ${dirAttr}>` +
