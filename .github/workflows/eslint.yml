@@ -37,7 +37,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
 
       - name: Setup node.js 20
-      - uses: actions/setup-node@v4
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
