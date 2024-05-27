@@ -38,14 +38,11 @@ jobs:
 
       - name: Install ESLint
         run: |
-          npm install
+          npm install --ignore-scripts
           npm install @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
-        run: npx eslint .
-          --ext ts extension test tooling 
-          --format @microsoft/eslint-formatter-sarif 
-          --output-file eslint-results.sarif
+        run: SARIF_ESLINT_IGNORE_SUPPRESSED=true npm run test_eslint_ci
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
