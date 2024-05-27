@@ -37,13 +37,10 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
 
       - name: Install ESLint
-        run: |
-          npm install eslint@8.57.0
-          npm install utf8
-          npm install jschardet
+        run: npm ci --ignore-scripts
 
       - name: Run ESLint
-        run: npx eslint --ext ts extension test tooling --format ./eslint-sarif-formatter.js --output-file eslint-results.sarif
+        run: SARIF_ESLINT_IGNORE_SUPPRESSED=true npm run test_eslint_ci
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
