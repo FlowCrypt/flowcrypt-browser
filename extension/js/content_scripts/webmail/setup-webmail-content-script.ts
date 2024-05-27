@@ -431,6 +431,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const entrypoint = async () => {
     try {
+      // Do not try to show decrypted content for original message content view
+      if (location.href.includes('/popout') || location.href.includes('view=om')) {
+        console.info('Showing original message');
+        return;
+      }
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
