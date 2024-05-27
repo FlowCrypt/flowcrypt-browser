@@ -1,5 +1,5 @@
 extension/types
 extension/js/common/core/types
-test/source/core/types
+test/source/core
 build/
 extension/lib
