@@ -5,10 +5,8 @@
 import { Assert } from '../../js/common/assert.js';
 import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
-import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { PDFDocumentProxy } from '../../types/pdf.js';
 import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -16,14 +14,16 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { Url } from '../../js/common/core/common.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { AttachmentWarnings } from './shared/attachment_warnings.js';
+import * as pdfjsLib from 'pdfjs';
+import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(`lib/pdf.worker.min.mjs`);
 type AttachmentType = 'img' | 'txt' | 'pdf';
-
-declare const pdfjsLib: { getDocument: Function }; // eslint-disable-line @typescript-eslint/ban-types
 
 View.run(
   class AttachmentPreviewView extends AttachmentDownloadView {
     protected readonly initiatorFrameId?: string;
+
     private attachmentPreviewContainer = $('#attachment-preview-container');
 
     public constructor() {
@@ -61,10 +61,9 @@ View.run(
             } else if (attachmentType === 'pdf') {
               // PDF
               // .slice() is used to copy attachment data https://github.com/FlowCrypt/flowcrypt-browser/issues/5408
-              pdfjsLib.getDocument({ data: result.slice() }).promise.then(async (pdf: PDFDocumentProxy) => {
-                const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
-                await previewPdf.render();
-              });
+              const pdf = await pdfjsLib.getDocument({ data: result.slice() }).promise;
+              const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
+              await previewPdf.render();
             }
           } else {
             // no preview available, download button
