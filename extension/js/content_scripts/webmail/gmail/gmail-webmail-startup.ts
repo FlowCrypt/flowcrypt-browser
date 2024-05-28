@@ -11,8 +11,8 @@ import { Notifications } from '../../../common/notifications';
 import { Catch } from '../../../common/platform/catch';
 import { RelayManager } from '../../../common/relay-manager';
 import { XssSafeFactory } from '../../../common/xss-safe-factory';
-import { WebmailVariantObject, contentScriptSetupIfVacant } from '../setup-webmail-content-script';
-import { WebmailElementReplacer } from '../webmail-element-replacer';
+import { WebmailVariantObject, contentScriptSetupIfVacant } from '../generic/setup-webmail-content-script';
+import { WebmailElementReplacer } from '../generic/webmail-element-replacer';
 import { GmailElementReplacer } from './gmail-element-replacer';
 
 export class GmailWebmailStartup {

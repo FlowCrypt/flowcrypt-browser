@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { ContentScriptWindow } from '../../common/browser/browser-window';
+import { ContentScriptWindow } from '../../../common/browser/browser-window';
 import { notifyMurdered } from './setup-webmail-content-script';
 
 export type IntervalFunction = { interval: number; handler: () => void };

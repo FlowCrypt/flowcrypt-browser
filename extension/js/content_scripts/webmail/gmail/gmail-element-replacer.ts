@@ -27,7 +27,7 @@ import { JQueryEl } from '../../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../../common/core/mime.js';
 import { MsgBlock } from '../../../common/core/msg-block.js';
 import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
-import { WebmailElementReplacer, IntervalFunction } from '../webmail-element-replacer.js';
+import { WebmailElementReplacer, IntervalFunction } from '../generic/webmail-element-replacer.js';
 
 export class GmailElementReplacer extends WebmailElementReplacer {
   private debug = false;
