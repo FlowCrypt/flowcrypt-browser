@@ -25,6 +25,7 @@ import { GlobalStore } from '../../common/platform/store/global-store.js';
 import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
 import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
 import { RelayManager } from '../../common/relay-manager.js';
+import { WebmailElementReplacer } from './webmail-element-replacer.js';
 
 export type WebmailVariantObject = {
   newDataLayer: undefined | boolean;
@@ -32,7 +33,7 @@ export type WebmailVariantObject = {
   email: undefined | string;
   gmailVariant: WebmailVariantString;
 };
-export type IntervalFunction = { interval: number; handler: () => void };
+
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
@@ -49,13 +50,6 @@ type WebmailSpecificInfo = {
     relayManager: RelayManager
   ) => Promise<void>;
 };
-export interface WebmailElementReplacer {
-  getIntervalFunctions: () => IntervalFunction[];
-  setReplyBoxEditable: () => Promise<void>;
-  reinsertReplyBox: (replyMsgId: string) => void;
-  scrollToReplyBox: (replyMsgId: string) => void;
-  scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
-}
 
 const win = window as unknown as ContentScriptWindow;
 
@@ -273,23 +267,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         }
       }
     }
-  };
-
-  const notifyMurdered = () => {
-    const notifEl = document.getElementsByClassName('webmail_notifications')[0];
-    const div = document.createElement('div');
-    div.innerText = 'FlowCrypt has updated, please reload the tab. ';
-    div.classList.add('webmail_notification');
-    const a = document.createElement('a');
-    a.href = '#';
-    a.onclick = function () {
-      const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
-      parent?.remove();
-    };
-    a.textContent = 'close';
-    div.appendChild(a);
-    notifEl.textContent = '';
-    notifEl.appendChild(div);
   };
 
   const showPassphraseDialog = async (factory: XssSafeFactory, { longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
@@ -526,4 +503,21 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       notifyMurdered();
     }
   }
+};
+
+export const notifyMurdered = () => {
+  const notifEl = document.getElementsByClassName('webmail_notifications')[0];
+  const div = document.createElement('div');
+  div.innerText = 'FlowCrypt has updated, please reload the tab. ';
+  div.classList.add('webmail_notification');
+  const a = document.createElement('a');
+  a.href = '#';
+  a.onclick = function () {
+    const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
+    parent?.remove();
+  };
+  a.textContent = 'close';
+  div.appendChild(a);
+  notifEl.textContent = '';
+  notifEl.appendChild(div);
 };

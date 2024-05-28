@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Gmail } from '../../../common/api/email-provider/gmail/gmail';
-import { ContentScriptWindow } from '../../../common/browser/browser-window';
 import { Env } from '../../../common/browser/env';
 import { Time } from '../../../common/browser/time';
 import { ClientConfiguration } from '../../../common/client-configuration';
@@ -13,11 +12,11 @@ import { Catch } from '../../../common/platform/catch';
 import { RelayManager } from '../../../common/relay-manager';
 import { XssSafeFactory } from '../../../common/xss-safe-factory';
 import { WebmailVariantObject, contentScriptSetupIfVacant } from '../setup-webmail-content-script';
+import { WebmailElementReplacer } from '../webmail-element-replacer';
 import { GmailElementReplacer } from './gmail-element-replacer';
 
 export class GmailWebmailStartup {
-  private replacePgpElsInterval: number;
-  private replacer: GmailElementReplacer;
+  private replacer: WebmailElementReplacer;
 
   public asyncConstructor = async () => {
     this.injectFCVarScript();
@@ -47,20 +46,7 @@ export class GmailWebmailStartup {
     const messageRenderer = await MessageRenderer.newInstance(acctEmail, new Gmail(acctEmail), relayManager, factory);
     this.replacer = new GmailElementReplacer(factory, clientConfiguration, acctEmail, messageRenderer, injector, notifications, relayManager);
     await notifications.showInitial(acctEmail);
-    const intervaliFunctions = this.replacer.getIntervalFunctions();
-    for (const intervalFunction of intervaliFunctions) {
-      intervalFunction.handler();
-      this.replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (typeof (window as any).$ === 'function') {
-          intervalFunction.handler();
-        } else {
-          // firefox will unload jquery when extension is restarted or updated
-          clearInterval(this.replacePgpElsInterval);
-          notifyMurdered();
-        }
-      }, intervalFunction.interval);
-    }
+    this.replacer.runIntervalFunctionsPeriodically();
   };
 
   private getUserAccountEmail = (hostPageInfo: WebmailVariantObject): undefined | string => {

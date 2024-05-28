@@ -4,7 +4,6 @@
 
 import { Dict, Str } from '../../../common/core/common.js';
 import { FactoryReplyParams, XssSafeFactory } from '../../../common/xss-safe-factory.js';
-import { IntervalFunction, WebmailElementReplacer } from '../setup-webmail-content-script.js';
 import { ApiErr } from '../../../common/api/shared/api-error.js';
 import { Attachment } from '../../../common/core/attachment.js';
 import { BrowserMsg } from '../../../common/browser/browser-msg.js';
@@ -28,8 +27,9 @@ import { JQueryEl } from '../../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../../common/core/mime.js';
 import { MsgBlock } from '../../../common/core/msg-block.js';
 import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
+import { WebmailElementReplacer, IntervalFunction } from '../webmail-element-replacer.js';
 
-export class GmailElementReplacer implements WebmailElementReplacer {
+export class GmailElementReplacer extends WebmailElementReplacer {
   private debug = false;
 
   private recipientHasPgpCache: Dict<boolean> = {};
@@ -74,6 +74,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     private readonly notifications: Notifications,
     private readonly relayManager: RelayManager
   ) {
+    super();
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.pubLookup = new PubLookup(clientConfiguration);
   }
