@@ -46,7 +46,6 @@ type WebmailSpecificInfo = {
     inject: Injector,
     notifications: Notifications,
     factory: XssSafeFactory,
-    notifyMurdered: () => void,
     relayManager: RelayManager
   ) => Promise<void>;
 };
@@ -428,7 +427,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
+      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);

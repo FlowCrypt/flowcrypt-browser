@@ -38,7 +38,6 @@ export class GmailWebmailStartup {
     injector: Injector,
     notifications: Notifications,
     factory: XssSafeFactory,
-    notifyMurdered: () => void,
     relayManager: RelayManager
   ) => {
     this.hijackGmailHotkeys();
