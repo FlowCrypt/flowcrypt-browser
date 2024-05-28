@@ -16,6 +16,5 @@ declare global {
 
 Catch.try(async () => {
   // when we support more webmails, there will be if/else here to figure out which one to run
-  // in which case each *WebmailStartup function should go into its own file
   await new GmailWebmailStartup().asyncConstructor();
 })();
