@@ -2,32 +2,32 @@
 
 'use strict';
 
-import { Dict, Str } from '../../common/core/common.js';
-import { FactoryReplyParams, XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
-import { ApiErr } from '../../common/api/shared/api-error.js';
-import { Attachment } from '../../common/core/attachment.js';
-import { BrowserMsg } from '../../common/browser/browser-msg.js';
-import { Catch } from '../../common/platform/catch.js';
-import { GlobalStore, LocalDraft } from '../../common/platform/store/global-store.js';
-import { Injector } from '../../common/inject.js';
-import { PubLookup } from '../../common/api/pub-lookup.js';
-import { Notifications } from '../../common/notifications.js';
-import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
-import { Ui } from '../../common/browser/ui.js';
-import { WebmailCommon } from '../../common/webmail.js';
-import { Xss } from '../../common/platform/xss.js';
-import { ClientConfiguration } from '../../common/client-configuration.js';
+import { Dict, Str } from '../../../common/core/common.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../../common/xss-safe-factory.js';
+import { IntervalFunction, WebmailElementReplacer } from '../setup-webmail-content-script.js';
+import { ApiErr } from '../../../common/api/shared/api-error.js';
+import { Attachment } from '../../../common/core/attachment.js';
+import { BrowserMsg } from '../../../common/browser/browser-msg.js';
+import { Catch } from '../../../common/platform/catch.js';
+import { GlobalStore, LocalDraft } from '../../../common/platform/store/global-store.js';
+import { Injector } from '../../../common/inject.js';
+import { PubLookup } from '../../../common/api/pub-lookup.js';
+import { Notifications } from '../../../common/notifications.js';
+import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor.js';
+import { Ui } from '../../../common/browser/ui.js';
+import { WebmailCommon } from '../../../common/webmail.js';
+import { Xss } from '../../../common/platform/xss.js';
+import { ClientConfiguration } from '../../../common/client-configuration.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
-import { ContactStore } from '../../common/platform/store/contact-store.js';
-import { MessageRenderer } from '../../common/message-renderer.js';
-import { RelayManager } from '../../common/relay-manager.js';
-import { MessageInfo } from '../../common/render-message.js';
+import { ContactStore } from '../../../common/platform/store/contact-store.js';
+import { MessageRenderer } from '../../../common/message-renderer.js';
+import { RelayManager } from '../../../common/relay-manager.js';
+import { MessageInfo } from '../../../common/render-message.js';
 import { GmailLoaderContext } from './gmail-loader-context.js';
-import { JQueryEl } from '../../common/loader-context-interface.js';
-import { MessageBody, Mime } from '../../common/core/mime.js';
-import { MsgBlock } from '../../common/core/msg-block.js';
-import { ReplyOption } from '../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
+import { JQueryEl } from '../../../common/loader-context-interface.js';
+import { MessageBody, Mime } from '../../../common/core/mime.js';
+import { MsgBlock } from '../../../common/core/msg-block.js';
+import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private debug = false;
