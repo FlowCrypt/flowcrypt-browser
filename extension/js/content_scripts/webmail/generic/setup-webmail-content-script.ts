@@ -504,6 +504,14 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   }
 };
 
+/**
+ * This happens when Firefox (or possibly Thunderbird) just updated FlowCrypt.
+ *
+ * Previous (meaning this currently running) instance of FlowCrypt will no longer
+ *   have access to its various classes or global variables, and is left in a
+ *   semi-functioning state. The best we can do is to ask the user to reload
+ *   the tab, which will load the newly updated version of the extension cleanly.
+ */
 export const notifyMurdered = () => {
   const notifEl = document.getElementsByClassName('webmail_notifications')[0];
   const div = document.createElement('div');
