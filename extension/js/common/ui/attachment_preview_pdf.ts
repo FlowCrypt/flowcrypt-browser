@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from '../platform/catch.js';
-import { PDFDocumentProxy } from '../../../types/pdf.js';
+import { PDFDocumentProxy } from 'pdfjs';
 
 export class AttachmentPreviewPdf {
   private attachmentPreviewContainer: JQuery<HTMLElement>;
