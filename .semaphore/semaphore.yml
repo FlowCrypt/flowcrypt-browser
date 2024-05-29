@@ -1,5 +1,5 @@
 version: v1.0
-name: Flowcrypt Node Core Tests
+name: FlowCrypt Extension Tests
 agent:
   machine:
     type: e2-standard-4

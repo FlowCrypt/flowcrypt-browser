@@ -41,7 +41,9 @@ const consts = {
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
+  DEBUG_ARTIFACTS_DIR: realpathSync(`${__dirname}/..`) + '/debugArtifacts',
 };
+
 /* eslint-enable @typescript-eslint/naming-convention */
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
@@ -200,33 +202,33 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-test.afterEach.always('send debug info if any', async t => {
+test.afterEach.always('finalize', async t => {
   console.info(`${t.passed ? 'passed' : 'FAILED'} test, ${t.title}`);
   const failRnd = Util.lousyRandom();
-  const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
-  const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
+  const debugHtmlAttachments = getDebugHtmlAtts(t.title, t.context as TestContext);
   if (debugHtmlAttachments.length) {
-    console.info(`FAIL ID ${testId}`);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    console.info(`There are ${debugHtmlAttachments.length} debug files.`);
-    const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
     try {
-      mkdirSync(debugArtifactDir);
+      mkdirSync(consts.DEBUG_ARTIFACTS_DIR);
     } catch (error) {
       if (error.code !== 'EEXIST') throw error;
     }
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
       const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
-      const filePath = `${debugArtifactDir}/${fileName}`;
+      const filePath = `${consts.DEBUG_ARTIFACTS_DIR}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
       writeFileSync(filePath, debugHtmlAttachments[i]);
+      try {
+        await asyncExec(`artifact push job ${filePath}`);
+      } catch (e) {
+        // probably local environment without semaphore CLI tooling
+      }
     }
-    console.info('All debug files written.');
   } else if (!t.passed) {
-    console.info(`no fails to debug`);
+    console.info(`No debug artifacts created for this failure`);
   }
   t.pass();
 });
