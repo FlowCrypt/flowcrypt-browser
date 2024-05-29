@@ -152,7 +152,7 @@ export class Api<REQ, RES> {
           const address = this.server.address();
           const port = typeof address === 'object' && address ? address.port : undefined;
           const msg = `${this.apiName} listening on ${port}`;
-          console.log(msg);
+          console.debug(msg);
           resolve();
         });
         this.server.on('error', e => {
