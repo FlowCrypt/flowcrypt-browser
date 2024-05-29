@@ -41,7 +41,6 @@ const consts = {
   POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
-  DEBUG_ARTIFACTS_DIR: realpathSync(`${__dirname}/..`) + '/debugArtifacts',
 };
 
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -210,15 +209,16 @@ test.afterEach.always('finalize', async t => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+    const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
     try {
-      mkdirSync(consts.DEBUG_ARTIFACTS_DIR);
+      mkdirSync(debugArtifactDir);
     } catch (error) {
       if (error.code !== 'EEXIST') throw error;
     }
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
       const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
-      const filePath = `${consts.DEBUG_ARTIFACTS_DIR}/${fileName}`;
+      const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
       writeFileSync(filePath, debugHtmlAttachments[i]);
       try {
