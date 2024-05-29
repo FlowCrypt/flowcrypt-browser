@@ -11,7 +11,6 @@ import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
 import { Env } from '../../browser/env.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { GoogleOAuth } from '../authentication/google/google-oauth.js';
 
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type ProgressDestFrame = { operationId: string; expectedTransferSize: number; frameId: string };
@@ -418,12 +417,13 @@ export class Api {
       } catch (firstAttemptErr) {
         const idToken = headers?.authorization?.split('Bearer ')?.[1];
         if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
-          // force refresh token
-          const { email } = GoogleOAuth.parseIdToken(idToken);
-          if (email) {
+          // Needed authorization from the service worker side to avoid circular dependency injection errors
+          // that occur when importing GoogleAuth directly.
+          const authorization = await BrowserMsg.send.bg.await.getGoogleApiAuthorization({ idToken });
+          if (authorization) {
             const updatedReq = {
               ...req,
-              headers: { authorization: await GoogleOAuth.googleApiAuthHeader(email, true) },
+              headers: { authorization },
             };
             return await Api.ajax(updatedReq, resFmt);
           }
