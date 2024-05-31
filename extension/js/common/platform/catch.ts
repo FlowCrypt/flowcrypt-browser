@@ -82,7 +82,6 @@ export class Catch {
     originalErr: unknown,
     isManuallyCalled: boolean
   ): boolean {
-    url = url.replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/');
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
     if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return false;
