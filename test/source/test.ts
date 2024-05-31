@@ -42,6 +42,7 @@ const consts = {
   PROMISE_TIMEOUT_OVERALL: undefined as unknown as Promise<never>, // will be set right below
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
+
 /* eslint-enable @typescript-eslint/naming-convention */
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
@@ -209,17 +210,14 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
   }
 });
 
-test.afterEach.always('send debug info if any', async t => {
+test.afterEach.always('finalize', async t => {
   console.info(`${t.passed ? 'passed' : 'FAILED'} test, ${t.title}`);
   const failRnd = Util.lousyRandom();
-  const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
-  const debugHtmlAttachments = getDebugHtmlAtts(testId, t.context as TestContext);
+  const debugHtmlAttachments = getDebugHtmlAtts(t.title, t.context as TestContext);
   if (debugHtmlAttachments.length) {
-    console.info(`FAIL ID ${testId}`);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-    console.info(`There are ${debugHtmlAttachments.length} debug files.`);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
     try {
       mkdirSync(debugArtifactDir);
@@ -232,10 +230,14 @@ test.afterEach.always('send debug info if any', async t => {
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
       writeFileSync(filePath, debugHtmlAttachments[i]);
+      try {
+        await asyncExec(`artifact push job ${filePath}`);
+      } catch (e) {
+        // probably local environment without semaphore CLI tooling
+      }
     }
-    console.info('All debug files written.');
   } else if (!t.passed) {
-    console.info(`no fails to debug`);
+    console.info(`No debug artifacts created for this failure`);
   }
   t.pass();
 });
