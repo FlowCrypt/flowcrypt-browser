@@ -282,21 +282,11 @@ export class Catch {
   }
 
   private static groupSimilarReports(value: string): string {
-    let newValue = value;
-    newValue = newValue.replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/');
-    newValue = newValue.replace(
-      /https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/threads\/[^\/]+\//,
-      'https://www.googleapis.com/gmail/v1/users/me/threads/THREAD_ID/'
-    );
-    newValue = newValue.replace(
-      /https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/messages\/[^\/]+\//,
-      'https://www.googleapis.com/gmail/v1/users/me/messages/MESSAGE_ID/'
-    );
-    newValue = newValue.replace(
-      /https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/drafts\/[^\/]+\//,
-      'https://www.googleapis.com/gmail/v1/users/me/drafts/DRAFT_ID/'
-    );
-    return newValue;
+    return value
+      .replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/threads\/[^\/]+\//, 'https://www.googleapis.com/gmail/v1/users/me/threads/THREAD_ID/')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/messages\/[^\/]+\//, 'https://www.googleapis.com/gmail/v1/users/me/messages/MESSAGE_ID/')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/drafts\/[^\/]+\//, 'https://www.googleapis.com/gmail/v1/users/me/drafts/DRAFT_ID/');
   }
 
   private static formatExceptionForReport(thrown: unknown, line?: number, col?: number): ErrorReport {
