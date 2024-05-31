@@ -82,6 +82,7 @@ export class Catch {
     originalErr: unknown,
     isManuallyCalled: boolean
   ): boolean {
+    url = url.replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/');
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
     if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
       return false;
@@ -281,6 +282,24 @@ export class Catch {
     }
   }
 
+  private static groupSimilarReports(value: string): string {
+    let newValue = value;
+    newValue = newValue.replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/');
+    newValue = newValue.replace(
+      /https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/threads\/[^\/]+\//,
+      'https://www.googleapis.com/gmail/v1/users/me/threads/THREAD_ID/'
+    );
+    newValue = newValue.replace(
+      /https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/messages\/[^\/]+\//,
+      'https://www.googleapis.com/gmail/v1/users/me/messages/MESSAGE_ID/'
+    );
+    newValue = newValue.replace(
+      /https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/drafts\/[^\/]+\//,
+      'https://www.googleapis.com/gmail/v1/users/me/drafts/DRAFT_ID/'
+    );
+    return newValue;
+  }
+
   private static formatExceptionForReport(thrown: unknown, line?: number, col?: number): ErrorReport {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
@@ -298,11 +317,11 @@ export class Catch {
     const exception = Catch.formExceptionFromThrown(thrown);
     return {
       name: exception.name.substring(0, 50),
-      message: exception.message.substring(0, 200),
-      url: location.href.split('?')[0],
+      message: Catch.groupSimilarReports(exception.message.substring(0, 200)),
+      url: Catch.groupSimilarReports(location.href.split('?')[0]),
       line: line || 1,
       col: col || 1,
-      trace: exception.stack || '',
+      trace: Catch.groupSimilarReports(exception.stack || ''),
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
       product: 'web-ext',
