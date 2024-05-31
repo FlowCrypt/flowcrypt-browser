@@ -30,7 +30,6 @@ export default [
       parser: typescriptEslint.parser,
       sourceType: 'module',
       ecmaVersion: 'latest',
-      sourceType: 'module',
       globals: {
         ...globals.browser,
         ...globals.node,
