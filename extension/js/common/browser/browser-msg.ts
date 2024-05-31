@@ -77,6 +77,7 @@ export namespace Bm {
     expiration: number | undefined;
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
+  export type GetGoogleApiAuthorization = { idToken: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[]; screenDimensions: ScreenDimensions };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
@@ -99,6 +100,7 @@ export namespace Bm {
     export type InMemoryStoreGet = string | undefined;
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
+    export type GetGoogleApiAuthorization = string | undefined;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
@@ -113,6 +115,7 @@ export namespace Bm {
       | GetActiveTabInfo
       | ReconnectAcctAuthPopup
       | InMemoryStoreGet
+      | GetGoogleApiAuthorization
       | InMemoryStoreSet
       | ExpirationCacheGet<unknown>
       | ExpirationCacheSet
@@ -124,6 +127,7 @@ export namespace Bm {
   export type AnyRequest =
     | PassphraseEntry
     | OpenPage
+    | GetGoogleApiAuthorization
     | ExpirationCacheGet
     | ExpirationCacheSet<unknown>
     | ExpirationCacheDeleteExpired
@@ -202,6 +206,8 @@ export class BrowserMsg {
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
+        getGoogleApiAuthorization: (bm: Bm.GetGoogleApiAuthorization) =>
+          BrowserMsg.sendAwait(undefined, 'getGoogleApiAuthorization', bm, true) as Promise<Bm.Res.GetGoogleApiAuthorization>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
