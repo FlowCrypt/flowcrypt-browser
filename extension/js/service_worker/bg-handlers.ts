@@ -9,6 +9,7 @@ import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { Api } from '../common/api/shared/api.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
+import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -51,6 +52,15 @@ export class BgHandlers {
   public static expirationCacheDeleteExpiredHandler = async (r: Bm.ExpirationCacheDeleteExpired): Promise<Bm.Res.ExpirationCacheDeleteExpired> => {
     const expirationCache = new ExpirationCache(r.prefix, r.expirationTicks);
     await expirationCache.deleteExpired();
+  };
+
+  public static getGoogleApiAuthorization = async (r: Bm.GetGoogleApiAuthorization): Promise<Bm.Res.GetGoogleApiAuthorization> => {
+    // force refresh token
+    const { email } = GoogleOAuth.parseIdToken(r.idToken);
+    if (email) {
+      return await GoogleOAuth.googleApiAuthHeader(email, true);
+    }
+    return undefined;
   };
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
