@@ -12,7 +12,7 @@
     "@types/chrome": "0.0.268",
     "@types/dompurify": "3.0.5",
     "@types/jquery": "3.5.30",
-    "@types/mailparser": "3.4.4",
+    "@types/mailparser": "3.4.4",: bump @typescript-eslint/parser from 7.10.0 to 7.11.0 (#5752))
     "ava": "5.3.1",
     "chai": "4.4.1",
     "chai-as-promised": "7.1.2",
