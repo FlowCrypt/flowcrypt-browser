@@ -412,7 +412,24 @@ export class Api {
       const result = await Api.ajaxWithJquery(req, resFmt, formattedData);
       return result as FetchResult<T, RT>;
     } else {
-      return await Api.ajax(req, resFmt);
+      try {
+        return await Api.ajax(req, resFmt);
+      } catch (firstAttemptErr) {
+        const idToken = headers?.authorization?.split('Bearer ')?.[1];
+        if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
+          // Needed authorization from the service worker side to avoid circular dependency injection errors
+          // that occur when importing GoogleAuth directly.
+          const authorization = await BrowserMsg.send.bg.await.getGoogleApiAuthorization({ idToken });
+          if (authorization) {
+            const updatedReq = {
+              ...req,
+              headers: { authorization },
+            };
+            return await Api.ajax(updatedReq, resFmt);
+          }
+        }
+        throw firstAttemptErr;
+      }
     }
   }
 
