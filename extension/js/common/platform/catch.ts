@@ -83,7 +83,7 @@ export class Catch {
     isManuallyCalled: boolean
   ): boolean {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
-    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
+    if (Catch.IGNORE_ERR_MSG.some(err => exception.message.includes(err)) || (errMsg && Catch.IGNORE_ERR_MSG.some(err => errMsg.includes(err)))) {
       return false;
     }
     console.error(originalErr);
@@ -283,6 +283,14 @@ export class Catch {
     }
   }
 
+  private static groupSimilarReports(value: string): string {
+    return value
+      .replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/threads\/[^\/]+/, 'https://www.googleapis.com/gmail/v1/users/me/threads/THREAD_ID')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/messages\/[^\/]+/, 'https://www.googleapis.com/gmail/v1/users/me/messages/MESSAGE_ID')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/drafts\/[^\/]+/, 'https://www.googleapis.com/gmail/v1/users/me/drafts/DRAFT_ID');
+  }
+
   private static formatExceptionForReport(thrown: unknown, line?: number, col?: number): ErrorReport {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
@@ -300,11 +308,11 @@ export class Catch {
     const exception = Catch.formExceptionFromThrown(thrown);
     return {
       name: exception.name.substring(0, 50),
-      message: exception.message.substring(0, 200),
-      url: location.href.split('?')[0],
+      message: Catch.groupSimilarReports(exception.message.substring(0, 200)),
+      url: Catch.groupSimilarReports(location.href.split('?')[0]),
       line: line || 1,
       col: col || 1,
-      trace: exception.stack || '',
+      trace: Catch.groupSimilarReports(exception.stack || ''),
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
       product: 'web-ext',

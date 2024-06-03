@@ -13,7 +13,6 @@ import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
-import { GoogleOAuth } from '../authentication/google/google-oauth.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { Xss } from '../../platform/xss.js';
 
@@ -193,27 +192,6 @@ export class ExternalService extends Api {
           method: 'POST',
         }
       : undefined;
-    try {
-      return await ExternalService.apiCall(this.url, path, values, progress, await this.authHdr(), 'json');
-    } catch (firstAttemptErr) {
-      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
-        // force refresh token
-        const { email } = GoogleOAuth.parseIdToken(idToken);
-        if (email) {
-          return await ExternalService.apiCall(
-            this.url,
-            path,
-            values,
-            progress,
-            {
-              authorization: await GoogleOAuth.googleApiAuthHeader(email, true),
-            },
-            'json'
-          );
-        }
-      }
-      throw firstAttemptErr;
-    }
+    return await ExternalService.apiCall(this.url, path, values, progress, await this.authHdr(), 'json');
   };
 }
