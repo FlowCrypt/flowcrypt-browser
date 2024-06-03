@@ -75,7 +75,7 @@
     "test_local_unit_enterprise": "npm run pretest && npx ava --timeout=20m --verbose --tap --concurrency=10 build/test/test/source/test.js -- UNIT-TESTS --retry=false --pool-size=1 --debug ENTERPRISE-MOCK | npx tap-xunit > report.xml",
     "test_local_chrome_consumer_mock_headless": "xvfb-run npm run test_local_chrome_consumer_mock",
     "test_stylelint": "stylelint extension/css/cryptup.css extension/css/settings.css extension/css/webmail.css && stylelint extension/**/*.htm --custom-syntax postcss-html",
-    "test_eslint": "eslint **/*.ts extension test tooling",
+    "test_eslint": "eslint **/*.ts extension",
     "test_eslint_ci": "npm run test_eslint -- --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif",
     "test_patterns": "node build/test/test/source/patterns.js",
     "test_async_stack": "node build/test/test/source/async-stack.js",

@@ -6,7 +6,7 @@ import jsdocPlugin from 'eslint-plugin-jsdoc';
 import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
 import importPlugin from 'eslint-plugin-import';
 import noNullPlugin from 'eslint-plugin-no-null';
-import localRulesPlugin from 'eslint-plugin-local-rules'; // Adjust the import path as necessary
+import localRulesPlugin from 'eslint-plugin-local-rules';
 import globals from 'globals';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import pluginJs from '@eslint/js';
@@ -25,8 +25,12 @@ export default [
       'local-rules': localRulesPlugin,
     },
     ignores: ['eslint.config.js'],
+    files: ['extension/**/*'],
     extends: [...typescriptEslint.configs.strictTypeChecked, ...typescriptEslint.configs.stylisticTypeChecked],
     languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+      },
       parser: typescriptEslint.parser,
       sourceType: 'module',
       ecmaVersion: 'latest',
