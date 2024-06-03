@@ -3,28 +3,29 @@
 'use strict';
 
 import Swal from 'sweetalert2';
-import { AccountServer } from '../../common/api/account-server.js';
-import { KeyManager } from '../../common/api/key-server/key-manager.js';
-import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
-import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
-import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
-import { ContentScriptWindow } from '../../common/browser/browser-window.js';
-import { Env, WebMailName } from '../../common/browser/env.js';
-import { Time } from '../../common/browser/time.js';
-import { CommonHandlers, Ui } from '../../common/browser/ui.js';
-import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
-import { Str, Url } from '../../common/core/common.js';
-import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
-import { getLocalKeyExpiration, processAndStoreKeysFromEkmLocally } from '../../common/helpers.js';
-import { Injector } from '../../common/inject.js';
-import { Lang } from '../../common/lang.js';
-import { Notifications } from '../../common/notifications.js';
-import { Catch } from '../../common/platform/catch.js';
-import { AcctStore } from '../../common/platform/store/acct-store.js';
-import { GlobalStore } from '../../common/platform/store/global-store.js';
-import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
-import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { RelayManager } from '../../common/relay-manager.js';
+import { AccountServer } from '../../../common/api/account-server.js';
+import { KeyManager } from '../../../common/api/key-server/key-manager.js';
+import { ApiErr, BackendAuthErr } from '../../../common/api/shared/api-error.js';
+import { BrowserMsgCommonHandlers } from '../../../common/browser/browser-msg-common-handlers.js';
+import { Bm, BrowserMsg, TabIdRequiredError } from '../../../common/browser/browser-msg.js';
+import { ContentScriptWindow } from '../../../common/browser/browser-window.js';
+import { Env, WebMailName } from '../../../common/browser/env.js';
+import { Time } from '../../../common/browser/time.js';
+import { CommonHandlers, Ui } from '../../../common/browser/ui.js';
+import { ClientConfiguration, ClientConfigurationError } from '../../../common/client-configuration.js';
+import { Str, Url } from '../../../common/core/common.js';
+import { InMemoryStoreKeys, VERSION } from '../../../common/core/const.js';
+import { getLocalKeyExpiration, processAndStoreKeysFromEkmLocally } from '../../../common/helpers.js';
+import { Injector } from '../../../common/inject.js';
+import { Lang } from '../../../common/lang.js';
+import { Notifications } from '../../../common/notifications.js';
+import { Catch } from '../../../common/platform/catch.js';
+import { AcctStore } from '../../../common/platform/store/acct-store.js';
+import { GlobalStore } from '../../../common/platform/store/global-store.js';
+import { InMemoryStore } from '../../../common/platform/store/in-memory-store.js';
+import { WebmailVariantString, XssSafeFactory } from '../../../common/xss-safe-factory.js';
+import { RelayManager } from '../../../common/relay-manager.js';
+import { WebmailElementReplacer } from './webmail-element-replacer.js';
 
 export type WebmailVariantObject = {
   newDataLayer: undefined | boolean;
@@ -32,7 +33,7 @@ export type WebmailVariantObject = {
   email: undefined | string;
   gmailVariant: WebmailVariantString;
 };
-export type IntervalFunction = { interval: number; handler: () => void };
+
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
@@ -45,17 +46,9 @@ type WebmailSpecificInfo = {
     inject: Injector,
     notifications: Notifications,
     factory: XssSafeFactory,
-    notifyMurdered: () => void,
     relayManager: RelayManager
   ) => Promise<void>;
 };
-export interface WebmailElementReplacer {
-  getIntervalFunctions: () => IntervalFunction[];
-  setReplyBoxEditable: () => Promise<void>;
-  reinsertReplyBox: (replyMsgId: string) => void;
-  scrollToReplyBox: (replyMsgId: string) => void;
-  scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
-}
 
 const win = window as unknown as ContentScriptWindow;
 
@@ -275,23 +268,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     }
   };
 
-  const notifyMurdered = () => {
-    const notifEl = document.getElementsByClassName('webmail_notifications')[0];
-    const div = document.createElement('div');
-    div.innerText = 'FlowCrypt has updated, please reload the tab. ';
-    div.classList.add('webmail_notification');
-    const a = document.createElement('a');
-    a.href = '#';
-    a.onclick = function () {
-      const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
-      parent?.remove();
-    };
-    a.textContent = 'close';
-    div.appendChild(a);
-    notifEl.textContent = '';
-    notifEl.appendChild(div);
-  };
-
   const showPassphraseDialog = async (factory: XssSafeFactory, { longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
     await factory.showPassphraseDialog(longids, type, initiatorFrameId);
   };
@@ -451,7 +427,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
+      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);
@@ -526,4 +502,29 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       notifyMurdered();
     }
   }
+};
+
+/**
+ * This happens when Firefox (or possibly Thunderbird) just updated FlowCrypt.
+ *
+ * Previous (meaning this currently running) instance of FlowCrypt will no longer
+ *   have access to its various classes or global variables, and is left in a
+ *   semi-functioning state. The best we can do is to ask the user to reload
+ *   the tab, which will load the newly updated version of the extension cleanly.
+ */
+export const notifyMurdered = () => {
+  const notifEl = document.getElementsByClassName('webmail_notifications')[0];
+  const div = document.createElement('div');
+  div.innerText = 'FlowCrypt has updated, please reload the tab. ';
+  div.classList.add('webmail_notification');
+  const a = document.createElement('a');
+  a.href = '#';
+  a.onclick = function () {
+    const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
+    parent?.remove();
+  };
+  a.textContent = 'close';
+  div.appendChild(a);
+  notifEl.textContent = '';
+  notifEl.appendChild(div);
 };

@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Attachment } from '../../common/core/attachment.js';
-import { JQueryEl, LoaderContextInterface } from '../../common/loader-context-interface.js';
-import { XssSafeFactory } from '../../common/xss-safe-factory.js';
+import { Attachment } from '../../../common/core/attachment.js';
+import { JQueryEl, LoaderContextInterface } from '../../../common/loader-context-interface.js';
+import { XssSafeFactory } from '../../../common/xss-safe-factory.js';
 
 export class GmailLoaderContext implements LoaderContextInterface {
   public constructor(

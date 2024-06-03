@@ -21,6 +21,7 @@
       "jquery": ["lib/jquery.min.js", "COMMENT"],
       "sweetalert2": ["lib/sweetalert2.js", "COMMENT"],
       "openpgp": ["lib/openpgp.min.mjs", "../node_modules/openpgp/openpgp.d.js"],
+      "pdfjs": ["lib/pdf.min.mjs", "types/pdf.js.d.ts"],
       "squire-rte": ["../node_modules/squire-rte/dist/types/Squire.d.ts"],
       "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts", "lib/streams/streams.js"],
       "dompurify": ["types/purify.d.ts", "lib/purify.js", "COMMENT"],
