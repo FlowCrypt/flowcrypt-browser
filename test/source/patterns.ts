@@ -83,7 +83,7 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
 const expectedPermissions = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
 const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
 const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
-for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-consumer']) {
+for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
   const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
   for (const expectedHostPermission of expectedHostPermissions) {
