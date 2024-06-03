@@ -83,7 +83,7 @@ export class Catch {
     isManuallyCalled: boolean
   ): boolean {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
-    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
+    if (Catch.IGNORE_ERR_MSG.some(err => exception.message.includes(err)) || (errMsg && Catch.IGNORE_ERR_MSG.some(err => errMsg.includes(err)))) {
       return false;
     }
     console.error(originalErr);
