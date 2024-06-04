@@ -431,8 +431,9 @@ export class Settings {
 
   public static async loginWithPopupShowModalOnErr(acctEmail: string, then: () => void = () => undefined) {
     if (window !== window.top && !chrome.windows) {
+      const preferedLinkOpener = Catch.browser().name === 'thunderbird' ? BgUtils : Browser;
       // Firefox, chrome.windows isn't available in iframes
-      await BgUtils.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
+      await preferedLinkOpener.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
       return window.location.reload();
     }
