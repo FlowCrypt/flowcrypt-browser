@@ -11,6 +11,9 @@ import globals from 'globals';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import pluginJs from '@eslint/js';
 export default [
+  {
+    ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**'],
+  },
   pluginJs.configs.recommended,
   eslintConfigPrettier,
   ...typescriptEslint.config({
