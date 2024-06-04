@@ -53,13 +53,19 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
 
-const dynamicImport = new Function('specifier', 'return import(specifier)');
+const registerCompletionHandler = () => {
+  const dynamicImport = new Function('specifier', 'return import(specifier)');
 
-dynamicImport('ava').then((module: { registerCompletionHandler: (handler: () => void) => void }) => {
-  const { registerCompletionHandler } = module;
-  registerCompletionHandler(() => {
-    process.exit();
+  dynamicImport('ava').then((module: { registerCompletionHandler: (handler: () => void) => void }) => {
+    const { registerCompletionHandler } = module;
+    registerCompletionHandler(() => {
+      process.exit();
+    });
   });
+};
+
+test.before(() => {
+  registerCompletionHandler();
 });
 
 test.beforeEach('set timeout', async t => {
