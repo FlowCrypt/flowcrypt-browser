@@ -28,6 +28,7 @@ import { Api } from './api/shared/api.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
+import { BgUtils } from '../service_worker/bgutils.js';
 
 declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-types
 
@@ -431,7 +432,7 @@ export class Settings {
   public static async loginWithPopupShowModalOnErr(acctEmail: string, then: () => void = () => undefined) {
     if (window !== window.top && !chrome.windows) {
       // Firefox, chrome.windows isn't available in iframes
-      Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
+      await BgUtils.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
       return window.location.reload();
     }
