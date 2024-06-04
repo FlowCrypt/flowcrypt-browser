@@ -64,6 +64,7 @@ addManifest('thunderbird-consumer', manifest => {
   manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
   manifest.name = 'FlowCrypt Encryption for Thunderbird';
   manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
+  manifest.permissions = [...manifest.permissions, ...manifest.host_permissions];
   manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
   manifest.compose_action = {
     default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
