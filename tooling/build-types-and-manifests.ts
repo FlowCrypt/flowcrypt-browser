@@ -15,8 +15,8 @@ const DIR = './build';
 const version: string = JSON.parse(readFileSync('./package.json').toString()).version;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addManifest = (toBuildType: string, transform: (manifest: { [k: string]: any }) => void) => {
-  const manifest = JSON.parse(readFileSync(`${DIR}/generic-extension-wip/manifest.json`).toString());
+const addManifest = (toBuildType: string, transform: (manifest: { [k: string]: any }) => void, fromBuildType = 'generic-extension-wip') => {
+  const manifest = JSON.parse(readFileSync(`${DIR}/${fromBuildType}/manifest.json`).toString());
   transform(manifest);
   writeFileSync(`${DIR}/${toBuildType}/manifest.json`, JSON.stringify(manifest, undefined, 2));
 };
@@ -48,6 +48,29 @@ addManifest('firefox-consumer', manifest => {
   manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
 });
+
+addManifest(
+  'thunderbird-consumer',
+  manifest => {
+    manifest.browser_specific_settings.strict_min_version = '102.0';
+    manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
+    manifest.name = 'FlowCrypt Encryption for Thunderbird';
+    manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
+    manifest.compose_action = {
+      default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
+      default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
+      // default_popup will be updated later
+      default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+    };
+    manifest.message_display_action = {
+      default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
+      default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
+      // default_popup will be updated later
+      default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+    };
+  },
+  'firefox-consumer'
+);
 
 addManifest('chrome-enterprise', manifest => {
   manifest.version = version;
