@@ -197,7 +197,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   private convertLineBreakToBr = (text: string, shouldQuote: boolean) => {
     return text
       .split('\n')
-      .map(line => `${shouldQuote ? '&gt; ' : ''}${line}<br>`.trim())
+      .map(line => `<br>${shouldQuote ? '&gt; ' : ''}${line}`.trim())
       .join('');
   };
 
