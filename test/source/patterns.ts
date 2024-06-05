@@ -94,7 +94,7 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
   }
   for (const expectedPermission of expectedPermissions) {
     if (!manifest.permissions.includes(expectedPermission)) {
-      if (!(expectedPermission === 'unlimitedStorage' && buildType === 'firefox-consumer')) {
+      if (!(expectedPermission === 'unlimitedStorage' && (buildType === 'firefox-consumer' || buildType === 'thunderbird-consumer'))) {
         console.error(`Missing permission '${expectedPermission}' in ${buildType}/manifest.json`);
         errsFound++;
       }

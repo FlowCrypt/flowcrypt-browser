@@ -6,6 +6,7 @@
 
 import { Catch } from '../../common/platform/catch.js';
 import { GmailWebmailStartup } from './gmail/gmail-webmail-startup.js';
+import { ThunderbirdWebmailStartup } from './thunderbird/thunderbird-webmail-startup.js';
 
 declare global {
   interface Window {
@@ -16,5 +17,10 @@ declare global {
 
 Catch.try(async () => {
   // when we support more webmails, there will be if/else here to figure out which one to run
-  await new GmailWebmailStartup().asyncConstructor();
+  const browserName = Catch.browser().name;
+  if (browserName === 'thunderbird') {
+    await new ThunderbirdWebmailStartup().asyncConstructor();
+  } else {
+    await new GmailWebmailStartup().asyncConstructor();
+  }
 })();

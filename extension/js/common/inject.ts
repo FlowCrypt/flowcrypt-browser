@@ -14,6 +14,7 @@ import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 type Host = {
   gmail: string;
+  thunderbird: string;
   outlook: string;
   settings: string;
 };
@@ -26,11 +27,13 @@ export class Injector {
   private container: { [key: string]: Host } = {
     composeBtnSel: {
       gmail: 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
+      thunderbird: '', // todo in another issue
       outlook: 'div._fce_b',
       settings: '#does_not_have',
     },
     finishSesionBtnSel: {
       gmail: 'body',
+      thunderbird: '', // todo in another issue
       outlook: '#does_not_have',
       settings: '#settings > div.header',
     },
