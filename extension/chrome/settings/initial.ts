@@ -8,7 +8,10 @@ import { View } from '../../js/common/view.js';
 View.run(
   class InitialView extends View {
     public render = async () => {
-      const browserName = Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76 ? 'chrome' : 'firefox';
+      const browserName = Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76 ? 'chrome' : Catch.browser().name;
+      if (browserName === 'thunderbird') {
+        $('#img-setup-arrow').hide();
+      }
       const stepsEl = document.getElementById(`${browserName}-steps`);
       if (stepsEl) {
         stepsEl.style.display = 'block';
