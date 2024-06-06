@@ -83,7 +83,7 @@ export class Catch {
     isManuallyCalled: boolean
   ): boolean {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
-    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
+    if (Catch.IGNORE_ERR_MSG.some(err => exception.message.includes(err)) || (errMsg && Catch.IGNORE_ERR_MSG.some(err => errMsg.includes(err)))) {
       return false;
     }
     console.error(originalErr);
@@ -149,12 +149,14 @@ export class Catch {
   }
 
   public static browser(): {
-    name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
+    name: 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
     v: number | undefined;
   } {
     // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
+    } else if (/Thunderbird[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return { name: 'thunderbird', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
       return { name: 'ie', v: Number(RegExp.$1) };
     } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
