@@ -12,7 +12,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import pluginJs from '@eslint/js';
 export default [
   {
-    ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**'],
+    ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**', 'eslint.config.js'],
   },
   pluginJs.configs.recommended,
   eslintConfigPrettier,
@@ -27,8 +27,7 @@ export default [
       'no-null': noNullPlugin,
       'local-rules': localRulesPlugin,
     },
-    ignores: ['eslint.config.js'],
-    files: ['extension/**/*'],
+    files: ['extension/**/*.ts'],
     extends: [...typescriptEslint.configs.strictTypeChecked, ...typescriptEslint.configs.stylisticTypeChecked],
     languageOptions: {
       parserOptions: {
@@ -174,6 +173,22 @@ export default [
         },
       ],
       'local-rules/standard-loops': 'error',
+    },
+  }),
+  ...typescriptEslint.config({
+    files: ['tooling/**/*'],
+    languageOptions: {
+      parserOptions: {
+        project: './conf/tsconfig.tooling.json',
+      },
+    },
+  }),
+  ...typescriptEslint.config({
+    files: ['test/**/*'],
+    languageOptions: {
+      parserOptions: {
+        project: './conf/tsconfig.test.eslint.json',
+      },
     },
   }),
 ];
