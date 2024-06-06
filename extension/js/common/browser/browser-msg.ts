@@ -1,5 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../../../../node_modules/@types/thunderbird-webext-browser/index.d.ts" />
+
 'use strict';
 
 import { AuthRes } from '../api/authentication/google/google-oauth.js';
