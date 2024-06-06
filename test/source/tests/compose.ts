@@ -657,6 +657,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           composePage,
           [
             'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+            '',
             '> This is some message',
             '>',
             '> and below is the quote',
@@ -684,7 +685,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@encrypted-reply', { delay: 1 });
         await clickTripleDotAndExpectQuoteToLoad(
           composePage,
-          ['On 2018-06-15 at 09:46, info@nvimp.com wrote:', '> cropping all except for the image below'].join('\n')
+          ['On 2018-06-15 at 09:46, info@nvimp.com wrote:', '', '> cropping all except for the image below'].join('\n')
         );
       })
     );
@@ -706,6 +707,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           composePage,
           [
             'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
+            '',
             '> Used to fail on Android app',
             '>',
             '> ---------- Forwarded message ---------',
@@ -732,6 +734,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           composePage,
           [
             'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
+            '',
             '>',
             '> The following text is bold: this is bold',
             '>',
@@ -763,6 +766,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             replyFrame,
             [
               'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+              '',
               '> This is some message',
               '>',
               '> and below is the quote',
@@ -792,7 +796,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           expect(inputBody!.trim()).to.be.empty;
           await clickTripleDotAndExpectQuoteToLoad(
             replyFrame,
-            ['On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:', '>', '> (Skipping previous message quote)'].join('\n')
+            ['On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:', '', '>', '> (Skipping previous message quote)'].join('\n')
           );
         })
       );
