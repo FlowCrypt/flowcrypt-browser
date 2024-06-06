@@ -62,12 +62,22 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
-  public openComposeWin = (draftId?: string): boolean => {
+  public openComposeWin = (draftId?: string, fullscreen = false): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
       const composeWin = $(this.factory.embeddedCompose(draftId));
       composeWin.attr('data-order', alreadyOpenedCount + 1);
       this.S.cached('body').append(composeWin); // xss-safe-factory
+      if (fullscreen) {
+        const composeFrameId = this.S.cached('secure_compose_window').attr('data-frame-id') || '';
+        $(`#${composeFrameId}`).on('load', () => {
+          const composeIframe = document.getElementById(composeFrameId) as HTMLIFrameElement;
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const composeIframeDoc = composeIframe!.contentWindow!.document;
+          $(composeIframeDoc.body).addClass('full_window');
+        });
+        this.S.cached('secure_compose_window').addClass('active full_window');
+      }
       return true;
     } else {
       Ui.toast('Only 3 FlowCrypt windows can be opened at a time', false, 3, 'top', 'error');
