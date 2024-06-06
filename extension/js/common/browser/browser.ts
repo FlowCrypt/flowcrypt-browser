@@ -53,16 +53,23 @@ export class Browser {
     return array;
   };
 
-  public static openSettingsPage = async (path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+  public static openSettingsPage = async (
+    path = 'index.htm',
+    acctEmail?: string,
+    page = '',
+    rawPageUrlParams?: Dict<UrlParam>,
+    addNewAcct = false,
+    currentPageParams?: Dict<UrlParam>
+  ) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams, ...currentPageParams }));
     } else if (addNewAcct) {
       await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
     } else {
       const acctEmails = await GlobalStore.acctEmailsGet();
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams, ...currentPageParams }));
     }
   };
 
