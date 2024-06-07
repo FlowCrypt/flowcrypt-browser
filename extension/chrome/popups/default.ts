@@ -58,6 +58,9 @@ View.run(
     };
 
     private renderChooseEmailOrSettingsPopup = (activeAcctEmail?: string) => {
+      if (Browser.isThunderbirdMail()) {
+        $('.action_open_encrypted_inbox').text('Secure Compose');
+      }
       $('#email_or_settings').css('display', 'block');
       $('.action_open_settings').on(
         'click',
