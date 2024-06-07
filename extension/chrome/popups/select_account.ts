@@ -56,7 +56,7 @@ View.run(
     };
 
     private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
-      const useFullScreenSecureCompose = Catch.browser().name === 'thunderbird' ? true : false;
+      const useFullScreenSecureCompose = Browser.isThunderbirdMail() ? true : false;
       if (this.action === 'inbox') {
         await Browser.openSettingsPage('inbox/inbox.htm', $(clickedElement).attr('email'), undefined, undefined, false, { useFullScreenSecureCompose });
       } else {

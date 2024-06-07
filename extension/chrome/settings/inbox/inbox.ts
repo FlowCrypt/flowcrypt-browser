@@ -74,7 +74,7 @@ export class InboxView extends View {
     ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
     this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
-    if (Catch.browser().name === 'thunderbird') {
+    if (Browser.isThunderbirdMail()) {
       $('#container-gmail-banner').hide();
       if (this.useFullScreenSecureCompose) {
         this.injector.openComposeWin(undefined, true);

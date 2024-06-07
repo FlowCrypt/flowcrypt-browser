@@ -16,6 +16,10 @@ export class Browser {
     return URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
   };
 
+  public static isThunderbirdMail = () => {
+    return Catch.browser().name === 'thunderbird';
+  };
+
   public static saveToDownloads = (attachment: Attachment) => {
     const blob = new Blob([attachment.getData()], { type: attachment.type });
     const a = window.document.createElement('a');
@@ -74,7 +78,7 @@ export class Browser {
   };
 
   public static openExtensionTab = async (url: string) => {
-    if (Catch.browser().name === 'thunderbird') {
+    if (Browser.isThunderbirdMail()) {
       await BgUtils.openExtensionTab(url);
     } else {
       const tab = window.open(url, 'flowcrypt');
