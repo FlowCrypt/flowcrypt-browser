@@ -23,31 +23,29 @@ console.info('background.js service worker starting');
   const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60 * 1000); // 4 hours
   BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
 
-  chrome.runtime.onInstalled.addListener(async () => {
-    try {
-      await migrateGlobal();
-      await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
-      storage = await GlobalStore.get(['settings_seen']);
-    } catch (e) {
-      await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
-      return;
-    }
-    if (!storage.settings_seen) {
-      await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      await GlobalStore.set({ settings_seen: true });
-    }
-    try {
-      db = await ContactStore.dbOpen(); // takes 4-10 ms first time
-      await updateOpgpRevocations(db);
-      await updateX509FingerprintsAndLongids(db);
-      await updateSearchables(db);
-      await moveContactsToEmailsAndPubkeys(db);
-    } catch (e) {
-      await BgUtils.handleStoreErr(e);
-      return;
-    }
-  });
+  try {
+    await migrateGlobal();
+    await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
+    storage = await GlobalStore.get(['settings_seen']);
+  } catch (e) {
+    await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
+    return;
+  }
+  if (!storage.settings_seen) {
+    await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    await GlobalStore.set({ settings_seen: true });
+  }
+  try {
+    db = await ContactStore.dbOpen(); // takes 4-10 ms first time
+    await updateOpgpRevocations(db);
+    await updateX509FingerprintsAndLongids(db);
+    await updateSearchables(db);
+    await moveContactsToEmailsAndPubkeys(db);
+  } catch (e) {
+    await BgUtils.handleStoreErr(e);
+    return;
+  }
 
   // storage related handlers
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
