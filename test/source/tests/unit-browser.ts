@@ -89,6 +89,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             t.log(`Expected unit test to return "pass" but got: "${r}"`);
             throw Error(String(r).split('\n')[0]);
           }
+          await hostPage.close();
         })
       );
     };
