@@ -53,7 +53,7 @@ addManifest(
   'thunderbird-consumer',
   manifest => {
     manifest.browser_specific_settings.strict_min_version = '102.0';
-    manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
+    manifest.browser_action.default_title = 'FlowCrypt';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
     manifest.compose_action = {
