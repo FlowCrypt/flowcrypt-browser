@@ -28,3 +28,5 @@ updates:
         versions: ["2.0.3"]
       - dependency-name: "puppeteer"
         versions: ["21.1.1"] # some ui tests with FileChooser fail in this version
+      - dependency-name: "web-ext"
+        versions: ["8.x"] # some ui tests with FileChooser fail in this version
