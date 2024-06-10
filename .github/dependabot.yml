@@ -14,6 +14,10 @@ updates:
       interval: "weekly"
       day: "sunday"
       time: "22:00"
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
     ignore:
       # ignore all bootstrap major updates
       - dependency-name: "bootstrap"
@@ -24,7 +28,17 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "openpgp"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "squire-rte"
-        versions: ["2.0.3"]
       - dependency-name: "puppeteer"
-        versions: ["21.1.1"] # some ui tests with FileChooser fail in this version
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "web-ext"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@openpgp/web-stream-tools"
+        versions: [">= 0.0.14"]
+      - dependency-name: "ava"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "chai"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "chai-as-promised"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
