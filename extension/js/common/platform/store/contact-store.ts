@@ -453,8 +453,14 @@ export class ContactStore extends AbstractStore {
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
-      openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
-      openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
+      openDbReq.onblocked = () => {
+        console.log('DB BLOCKED ' + openDbReq.error);
+        reject(ContactStore.errCategorize(openDbReq.error));
+      };
+      openDbReq.onerror = () => {
+        console.log('DB ERROR ' + openDbReq.error);
+        reject(ContactStore.errCategorize(openDbReq.error));
+      };
     });
   }
 
