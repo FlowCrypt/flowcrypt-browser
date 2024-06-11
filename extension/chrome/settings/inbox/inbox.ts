@@ -36,7 +36,9 @@ export class InboxView extends View {
   public readonly threadId: string | undefined;
   public readonly showOriginal: boolean;
   public readonly debug: boolean;
-  public readonly useFullScreenSecureCompose: boolean;
+  public pageUrlParams: {
+    useFullScreenSecureCompose: string;
+  };
   public readonly S: SelCache;
   public readonly gmail: Gmail;
 
@@ -50,13 +52,13 @@ export class InboxView extends View {
 
   public constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug', 'useFullScreenSecureCompose']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug', 'pageUrlParams']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
-    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.pageUrlParams = JSON.parse(Assert.urlParamRequire.string(uncheckedUrlParams, 'pageUrlParams'));
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
@@ -76,7 +78,7 @@ export class InboxView extends View {
     this.inboxNotificationModule.render();
     if (Browser.isThunderbirdMail()) {
       $('#container-gmail-banner').hide();
-      if (this.useFullScreenSecureCompose) {
+      if (this.pageUrlParams.useFullScreenSecureCompose) {
         this.injector.openComposeWin(undefined, true);
       }
     }
