@@ -67,4 +67,7 @@ console.info('background.js service worker starting');
   BrowserMsg.alarmListen();
   await BgHandlers.updateUninstallUrl({});
   injectFcIntoWebmail();
+
+  // Thunderbird event handlers
+  BrowserMsg.thunderbirdComposeButtonHandler();
 })().catch(Catch.reportErr);

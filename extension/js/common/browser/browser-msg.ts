@@ -8,7 +8,7 @@
 import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
+import { Dict, Str, Url, UrlParams } from '../core/common.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
@@ -18,6 +18,8 @@ import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
 import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 import { Ui } from './ui.js';
+import { GlobalStore } from '../platform/store/global-store.js';
+import { BgUtils } from '../../service_worker/bgutils.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -374,6 +376,27 @@ export class BrowserMsg {
         BrowserMsg.sendRawResponse(Promise.reject(exception), respondIfPageStillOpen);
         return true; // will respond
       }
+    });
+  }
+
+  public static thunderbirdComposeButtonHandler() {
+    browser.composeAction.onClicked.addListener(async tab => {
+      const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
+      if (accountEmails) {
+        const accounts = JSON.parse(accountEmails);
+        if (accounts.length > 1) {
+          await browser.composeAction.setPopup({ popup: '/chrome/popups/default.htm' });
+          await browser.composeAction.openPopup();
+        } else {
+          // todo: use browser.compose.getComposeDetails to retrieve email recipients and pass it to the secure compose
+          await BgUtils.openExtensionTab(
+            Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify({ useFullScreenSecureCompose: true }) })
+          );
+        }
+      } else {
+        await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
+      }
+      await browser.tabs.remove(Number(tab.id));
     });
   }
 

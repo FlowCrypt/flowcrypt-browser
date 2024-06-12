@@ -55,18 +55,11 @@ addManifest(
     manifest.browser_specific_settings.strict_min_version = '102.0';
     manifest.browser_action.default_title = 'FlowCrypt';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
-    manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
+    manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';
+    manifest.permissions = [...manifest.permissions, 'compose'];
     manifest.compose_action = {
       default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
-      // default_popup will be updated later
-      default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
-    };
-    manifest.message_display_action = {
-      default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
-      default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
-      // default_popup will be updated later
-      default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
     };
   },
   'firefox-consumer'
