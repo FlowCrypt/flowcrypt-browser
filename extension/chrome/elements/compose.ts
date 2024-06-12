@@ -192,6 +192,7 @@ export class ComposeView extends View {
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
     await this.acctServer.initialize();
+    await this.preParseEmailRecipientsIfNeeded();
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
@@ -260,6 +261,15 @@ export class ComposeView extends View {
   };
 
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
+
+  private preParseEmailRecipientsIfNeeded = async () => {
+    const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
+    for (const inputContainer of preParsedRecipient) {
+      if (String($(inputContainer).find('input').val()).trim().length > 0) {
+        await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
+      }
+    }
+  };
 }
 
 View.run(ComposeView);

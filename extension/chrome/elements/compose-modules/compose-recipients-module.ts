@@ -144,10 +144,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   public validateEmails = (uncheckedEmails: string[]): { valid: EmailParts[]; invalid: string[] } => {
     const valid: EmailParts[] = [];
     const invalid: string[] = [];
+    const uniqueEmails = new Set<string>();
     for (const email of uncheckedEmails) {
+      if (uniqueEmails.has(email)) {
+        continue;
+      }
       const parsed = Str.parseEmail(email);
       if (parsed.email) {
         valid.push({ email: parsed.email, name: parsed.name });
+        uniqueEmails.add(email);
       } else {
         invalid.push(email);
       }

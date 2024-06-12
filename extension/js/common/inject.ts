@@ -89,7 +89,6 @@ export class Injector {
                 body.find('#input-container-cc input').val(cc.join(','));
                 body.find('#input-container-bcc input').val(bcc.join(','));
                 body.find('#input_subject').val(composeMsgDetails.subject || '');
-                // todo - find a way to execute parseRenderRecipients here
               }
             }
           }
