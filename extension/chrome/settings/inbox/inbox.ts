@@ -39,6 +39,14 @@ export class InboxView extends View {
   public pageUrlParams:
     | {
         useFullScreenSecureCompose?: boolean;
+        composeMsgDetails?: {
+          subject?: string;
+          recipients?: {
+            to?: string[];
+            cc?: string[];
+            bcc?: string[];
+          };
+        };
       }
     | undefined;
   public readonly S: SelCache;
@@ -78,11 +86,9 @@ export class InboxView extends View {
     ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
     this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
+    this.preRenderSecureComposeInFullScreen();
     if (Browser.isThunderbirdMail()) {
       $('#container-gmail-banner').hide();
-      if (this.pageUrlParams && this.pageUrlParams.useFullScreenSecureCompose) {
-        this.injector.openComposeWin(undefined, true);
-      }
     }
     try {
       await Settings.populateAccountsMenu('inbox.htm');
@@ -142,6 +148,13 @@ export class InboxView extends View {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
     Xss.sanitizeRender('h1', `${title}`);
+  };
+
+  private preRenderSecureComposeInFullScreen = () => {
+    if (this.pageUrlParams?.useFullScreenSecureCompose) {
+      const composeMsgDetails = this.pageUrlParams.composeMsgDetails || {};
+      this.injector.openComposeWin(undefined, true, composeMsgDetails);
+    }
   };
 
   private addBrowserMsgListeners = () => {

@@ -381,6 +381,7 @@ export class BrowserMsg {
 
   public static thunderbirdComposeButtonHandler() {
     browser.composeAction.onClicked.addListener(async tab => {
+      const tabId = Number(tab.id);
       const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
       if (accountEmails) {
         const accounts = JSON.parse(accountEmails);
@@ -388,15 +389,27 @@ export class BrowserMsg {
           await browser.composeAction.setPopup({ popup: '/chrome/popups/default.htm' });
           await browser.composeAction.openPopup();
         } else {
-          // todo: use browser.compose.getComposeDetails to retrieve email recipients and pass it to the secure compose
+          // todo: pass quoted email when replying using secure compose
+          const composeDetails = await browser.compose.getComposeDetails(tabId);
+          const inboxPageParams = {
+            useFullScreenSecureCompose: true,
+            composeMsgDetails: {
+              subject: composeDetails.subject,
+              recipients: {
+                to: composeDetails.to,
+                cc: composeDetails.cc,
+                bcc: composeDetails.bcc,
+              },
+            },
+          };
           await BgUtils.openExtensionTab(
-            Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify({ useFullScreenSecureCompose: true }) })
+            Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify(inboxPageParams) })
           );
         }
       } else {
         await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
       }
-      await browser.tabs.remove(Number(tab.id));
+      await browser.tabs.remove(tabId);
     });
   }
 

@@ -62,7 +62,11 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
-  public openComposeWin = (draftId?: string, fullscreen = false): boolean => {
+  public openComposeWin = (
+    draftId?: string,
+    fullscreen = false,
+    composeMsgDetails?: { subject?: string; recipients?: { to?: string[]; cc?: string[]; bcc?: string[] } } | undefined
+  ): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
       const composeWin = $(this.factory.embeddedCompose(draftId));
@@ -72,9 +76,23 @@ export class Injector {
         const composeFrameId = this.S.cached('secure_compose_window').attr('data-frame-id') || '';
         $(`#${composeFrameId}`).on('load', () => {
           const composeIframe = document.getElementById(composeFrameId) as HTMLIFrameElement;
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const composeIframeDoc = composeIframe!.contentWindow!.document;
-          $(composeIframeDoc.body).addClass('full_window');
+          const composeIframeDoc = composeIframe?.contentDocument;
+          if (composeIframeDoc) {
+            $(composeIframeDoc.body).addClass('full_window');
+            if (composeMsgDetails?.recipients) {
+              const { to = [], cc = [], bcc = [] } = composeMsgDetails.recipients;
+              if (to.length || cc.length || bcc.length) {
+                const body = $(composeIframeDoc.body);
+                body.find('#input_addresses_container').removeClass('invisible');
+                body.find('#recipients_placeholder').hide();
+                body.find('#input_to').val(to.join(','));
+                body.find('#input-container-cc input').val(cc.join(','));
+                body.find('#input-container-bcc input').val(bcc.join(','));
+                body.find('#input_subject').val(composeMsgDetails.subject || '');
+                // todo - find a way to execute parseRenderRecipients here
+              }
+            }
+          }
         });
         this.S.cached('secure_compose_window').addClass('active full_window');
       }
