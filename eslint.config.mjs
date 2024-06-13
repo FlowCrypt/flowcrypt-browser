@@ -176,7 +176,7 @@ export default [
     },
   }),
   ...typescriptEslint.config({
-    files: ['tooling/**/*'],
+    files: ['tooling/**/*.ts'],
     languageOptions: {
       parserOptions: {
         project: './conf/tsconfig.tooling.json',
@@ -184,11 +184,15 @@ export default [
     },
   }),
   ...typescriptEslint.config({
-    files: ['test/**/*'],
+    files: ['test/**/*.ts'],
     languageOptions: {
       parserOptions: {
         project: './conf/tsconfig.test.eslint.json',
       },
+    },
+    rules: {
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
     },
   }),
 ];
