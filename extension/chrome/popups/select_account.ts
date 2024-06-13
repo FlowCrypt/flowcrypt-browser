@@ -15,11 +15,13 @@ import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 View.run(
   class SelectAcctPopupView extends View {
     private readonly action: 'inbox' | 'settings';
+    private readonly tabId: number;
 
     public constructor() {
       super();
-      const uncheckedUrlParams = Url.parse(['action']);
+      const uncheckedUrlParams = Url.parse(['action', 'tabId']);
       this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
+      this.tabId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'tabId'));
     }
 
     public render = async () => {
@@ -63,7 +65,11 @@ View.run(
         await Browser.openSettingsPage('index.htm', $(clickedElement).attr('email'));
       }
       await Time.sleep(100);
-      window.close();
+      if (this.tabId) {
+        await browser.tabs.remove(this.tabId);
+      } else {
+        window.close();
+      }
     };
 
     private actionRedirectToAddAcctPageHandler = async () => {

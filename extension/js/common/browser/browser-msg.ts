@@ -386,7 +386,7 @@ export class BrowserMsg {
       if (accountEmails) {
         const accounts = JSON.parse(accountEmails);
         if (accounts.length > 1) {
-          await browser.composeAction.setPopup({ popup: '/chrome/popups/default.htm' });
+          await browser.composeAction.setPopup({ popup: Url.create('/chrome/popups/default.htm', { tabId }) });
           await browser.composeAction.openPopup();
         } else {
           // todo: pass quoted email when replying using secure compose
@@ -405,11 +405,11 @@ export class BrowserMsg {
           await BgUtils.openExtensionTab(
             Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify(inboxPageParams) })
           );
+          await browser.tabs.remove(tabId);
         }
       } else {
         await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
       }
-      await browser.tabs.remove(tabId);
     });
   }
 

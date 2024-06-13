@@ -9,15 +9,29 @@ import { Time } from '../../js/common/browser/time.js';
 import { View } from '../../js/common/view.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
+import { Url } from '../../js/common/core/common.js';
+import { Assert } from '../../js/common/assert.js';
 
 View.run(
   class DefaultPopupView extends View {
+    private readonly tabId?: number;
+
     public constructor() {
       super();
+      const uncheckedUrlParams = Url.parse(['tabId']);
+      this.tabId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'tabId'));
     }
 
     public render = async () => {
       const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
+      if (Browser.isThunderbirdMail()) {
+        const windowInfo = await browser.windows.getCurrent();
+        if (windowInfo.type === 'messageCompose') {
+          $('.action_open_settings').hide();
+          $('.action_open_encrypted_inbox').parent().css('margin-right', '0');
+          $('.action_open_encrypted_inbox').text('Secure Compose');
+        }
+      }
       if (activeTab?.acctEmail) {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         const { setup_done } = await AcctStore.get(activeTab.acctEmail, ['setup_done']);
@@ -65,7 +79,7 @@ View.run(
           if (activeAcctEmail) {
             await this.redirectToInitSetup(activeAcctEmail);
           } else {
-            window.location.href = 'select_account.htm?action=settings';
+            window.location.href = Url.create('select_account.htm', { action: 'settings' });
           }
         })
       );
@@ -77,7 +91,7 @@ View.run(
             await Time.sleep(100);
             window.close();
           } else {
-            window.location.href = 'select_account.htm?action=inbox';
+            window.location.href = Url.create('select_account.htm', { action: 'inbox', tabId: this.tabId });
           }
         })
       );
