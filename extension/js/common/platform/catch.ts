@@ -193,7 +193,7 @@ export class Catch {
     } else if (origin === 'https://flowcrypt.com') {
       env = 'web:prod';
     } else if (origin === 'https://mail.google.com') {
-      env = 'ex:script:gmail';
+      env = 'ex:s:gmail';
     }
     return browserName + ':' + env;
   }
