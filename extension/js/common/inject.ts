@@ -65,7 +65,7 @@ export class Injector {
   public openComposeWin = (
     draftId?: string,
     fullscreen = false,
-    composeMsgDetails?: { subject?: string; recipients?: { to?: string[]; cc?: string[]; bcc?: string[] } } | undefined
+    messageDetails?: { subject: string; recipients?: { to?: string[]; cc?: string[]; bcc?: string[] } } | undefined
   ): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
@@ -79,16 +79,18 @@ export class Injector {
           const composeIframeDoc = composeIframe?.contentDocument;
           if (composeIframeDoc) {
             $(composeIframeDoc.body).addClass('full_window');
-            if (composeMsgDetails?.recipients) {
-              const { to = [], cc = [], bcc = [] } = composeMsgDetails.recipients;
-              if (to.length || cc.length || bcc.length) {
-                const body = $(composeIframeDoc.body);
-                body.find('#input_addresses_container').removeClass('invisible');
-                body.find('#recipients_placeholder').hide();
-                body.find('#input_to').val(to.join(','));
-                body.find('#input-container-cc input').val(cc.join(','));
-                body.find('#input-container-bcc input').val(bcc.join(','));
-                body.find('#input_subject').val(composeMsgDetails.subject || '');
+            const body = $(composeIframeDoc.body);
+            if (messageDetails) {
+              body.find('#input_subject').val(messageDetails.subject);
+              if (messageDetails.recipients) {
+                const { to = [], cc = [], bcc = [] } = messageDetails.recipients;
+                if (to.length || cc.length || bcc.length) {
+                  body.find('#input_addresses_container').removeClass('invisible');
+                  body.find('#recipients_placeholder').hide();
+                  body.find('#input_to').val(to.join(','));
+                  body.find('#input-container-cc input').val(cc.join(','));
+                  body.find('#input-container-bcc input').val(bcc.join(','));
+                }
               }
             }
           }

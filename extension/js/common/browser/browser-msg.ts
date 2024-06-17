@@ -379,26 +379,36 @@ export class BrowserMsg {
     });
   }
 
-  public static thunderbirdComposeButtonHandler() {
-    browser.composeAction.onClicked.addListener(async tab => {
-      const tabId = Number(tab.id);
+  public static thunderbirdSecureComposeHandler() {
+    type MessageDetails = {
+      subject: string;
+      to?: string;
+      cc?: string[];
+      bcc?: string[];
+      bccList?: string[];
+      ccList?: string[];
+    };
+
+    const handleClickEvent = async (tabId: number, action = 'compose' || 'message_display') => {
       const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
+      const actionType = action === 'compose' ? browser.composeAction : browser.messageDisplayAction;
+      const browserApiMethod = action === 'compose' ? browser.compose.getComposeDetails : browser.messageDisplay.getDisplayedMessage;
       if (accountEmails) {
         const accounts = JSON.parse(accountEmails);
         if (accounts.length > 1) {
-          await browser.composeAction.setPopup({ popup: Url.create('/chrome/popups/default.htm', { tabId }) });
-          await browser.composeAction.openPopup();
+          await actionType.setPopup({ popup: Url.create('/chrome/popups/default.htm', { tabId }) });
+          await actionType.openPopup();
         } else {
           // todo: pass quoted email when replying using secure compose
-          const composeDetails = await browser.compose.getComposeDetails(tabId);
+          const messageDetails = (await browserApiMethod(tabId)) as MessageDetails;
           const inboxPageParams = {
             useFullScreenSecureCompose: true,
-            composeMsgDetails: {
-              subject: composeDetails.subject,
+            messageDetails: {
+              subject: messageDetails.subject,
               recipients: {
-                to: composeDetails.to,
-                cc: composeDetails.cc,
-                bcc: composeDetails.bcc,
+                to: messageDetails?.to || '',
+                cc: messageDetails?.cc || messageDetails.ccList,
+                bcc: messageDetails?.bcc || messageDetails.bccList,
               },
             },
           };
@@ -410,6 +420,12 @@ export class BrowserMsg {
       } else {
         await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
       }
+    };
+    browser.composeAction.onClicked.addListener(async tab => {
+      await handleClickEvent(Number(tab.id), 'compose');
+    });
+    browser.messageDisplayAction.onClicked.addListener(async tab => {
+      await handleClickEvent(Number(tab.id), 'message_display');
     });
   }
 

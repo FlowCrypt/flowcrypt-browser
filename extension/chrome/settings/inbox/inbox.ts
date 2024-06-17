@@ -39,8 +39,8 @@ export class InboxView extends View {
   public pageUrlParams:
     | {
         useFullScreenSecureCompose?: boolean;
-        composeMsgDetails?: {
-          subject?: string;
+        messageDetails?: {
+          subject: string;
           recipients?: {
             to?: string[];
             cc?: string[];
@@ -152,8 +152,7 @@ export class InboxView extends View {
 
   private preRenderSecureComposeInFullScreen = () => {
     if (this.pageUrlParams?.useFullScreenSecureCompose) {
-      const composeMsgDetails = this.pageUrlParams.composeMsgDetails || {};
-      this.injector.openComposeWin(undefined, true, composeMsgDetails);
+      this.injector.openComposeWin(undefined, true, this.pageUrlParams.messageDetails);
     }
   };
 
