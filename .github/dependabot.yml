@@ -25,7 +25,7 @@ updates:
       # TODO: upgrade iso-8859-2 when ava will have ESM support: https://github.com/orgs/avajs/projects/2
       # https://github.com/FlowCrypt/flowcrypt-browser/pull/3961#issuecomment-921335748
       - dependency-name: "iso-8859-2"
-        update-types: ["version-update:semver-major"]
+        versions: [ ">=1.0.1" ]
       - dependency-name: "openpgp"
         update-types: ["version-update:semver-major"]
       - dependency-name: "puppeteer"
