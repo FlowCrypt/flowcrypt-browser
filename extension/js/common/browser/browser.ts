@@ -16,10 +16,6 @@ export class Browser {
     return URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
   };
 
-  public static isThunderbirdMail = () => {
-    return Catch.browser().name === 'thunderbird';
-  };
-
   public static saveToDownloads = (attachment: Attachment) => {
     const blob = new Blob([attachment.getData()], { type: attachment.type });
     const a = window.document.createElement('a');
@@ -57,28 +53,21 @@ export class Browser {
     return array;
   };
 
-  public static openSettingsPage = async (
-    path = 'index.htm',
-    acctEmail?: string,
-    page = '',
-    rawPageUrlParams?: Dict<UrlParam>,
-    addNewAcct = false,
-    currentPageParams?: Dict<UrlParam>
-  ) => {
+  public static openSettingsPage = async (path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams, ...currentPageParams }));
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
       await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
     } else {
       const acctEmails = await GlobalStore.acctEmailsGet();
-      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams, ...currentPageParams }));
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
   };
 
   public static openExtensionTab = async (url: string) => {
-    if (Browser.isThunderbirdMail()) {
+    if (Catch.isThunderbirdMail()) {
       await BgUtils.openExtensionTab(url);
     } else {
       const tab = window.open(url, 'flowcrypt');

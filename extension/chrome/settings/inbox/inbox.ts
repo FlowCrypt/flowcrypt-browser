@@ -87,7 +87,7 @@ export class InboxView extends View {
     this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
     this.preRenderSecureComposeInFullScreen();
-    if (Browser.isThunderbirdMail()) {
+    if (Catch.isThunderbirdMail()) {
       $('#container-gmail-banner').hide();
     }
     try {

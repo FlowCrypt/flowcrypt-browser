@@ -24,7 +24,7 @@ View.run(
 
     public render = async () => {
       const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
-      if (Browser.isThunderbirdMail()) {
+      if (Catch.isThunderbirdMail()) {
         const windowInfo = await browser.windows.getCurrent();
         if (windowInfo.type === 'messageCompose') {
           $('.action_open_settings').hide();
