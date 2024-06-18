@@ -224,9 +224,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `Date: ${dateStr}<br>` +
         `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
         `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
-        this.messageToReplyOrForward.headers.cc?.length
-          ? `Cc: ${this.messageToReplyOrForward.headers.cc?.join(', ')}`
-          : '' + `</div>`;
+        (this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc?.join(', ')}` : '') +
+        `</div>`;
       return `${header}<br><br>${escapedText}`;
     }
   };

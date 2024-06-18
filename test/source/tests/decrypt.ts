@@ -223,7 +223,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
 
-        const key = Config.key('flowcrypt.compatibility.1pp1')!;
+        const key = Config.key('flowcrypt.compatibility.1pp1');
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
