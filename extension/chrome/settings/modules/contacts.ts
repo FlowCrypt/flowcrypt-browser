@@ -78,7 +78,7 @@ View.run(
         lineActionsHtml +=
           `&nbsp;&nbsp;<br><br><b class="bad" data-test="custom-key-server-description">` +
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
+          `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration.getCustomSksPubkeyServer()!)}</b>`;
       } else {
         lineActionsHtml +=
           '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/enterprise/configuration/keyserver-integration.html" target="_blank">Use custom keyserver</a>&nbsp;&nbsp;';
@@ -120,7 +120,7 @@ View.run(
 
     private actionExportAllKeysHandler = async () => {
       const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true }))
-        .map(a => a!.trim()) // eslint-disable-line @typescript-eslint/no-non-null-assertion
+        .map(a => a.trim()) // eslint-disable-line @typescript-eslint/no-non-null-assertion
         .join('\n');
       const exportFile = new Attachment({
         name: 'public-keys-export.asc',
@@ -140,7 +140,7 @@ View.run(
       const email = $(emailRow).attr('email')!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       const contact = await ContactStore.getOneWithAllPubkeys(undefined, email);
       const e = Xss.escape(email);
-      if (contact && contact.sortedPubkeys.length) {
+      if (contact?.sortedPubkeys.length) {
         let tableContents = '';
         for (const pubkey of contact.sortedPubkeys) {
           const keyid = Xss.escape(pubkey.pubkey.id);

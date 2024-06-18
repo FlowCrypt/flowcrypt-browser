@@ -114,7 +114,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         // or to the top of the element if the element's height is bigger than the convoRoot
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         convoRootScrollable.get(0)!.scrollTop =
-          replyMsg.position()!.top + $(replyMsg).height()! - Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
+          replyMsg.position().top + $(replyMsg).height()! - Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) {
@@ -352,7 +352,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       $('#switch_to_encrypted_reply').trigger('click');
       return;
     }
-    const messageContainer = $(btn.closest('.h7') as HTMLElement);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const messageContainer = $(btn.closest('.h7')!);
     if (messageContainer.is(':last-child')) {
       if (this.isEncrypted()) {
         await this.setReplyBoxEditable();
@@ -388,7 +389,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       }
       if (draftId) {
         // close original draft window
-        const closeGmailComposeWindow = (target: JQuery<HTMLElement>) => {
+        const closeGmailComposeWindow = (target: JQuery) => {
           const mouseUpEvent = document.createEvent('Event');
           mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
           target.closest('.nH.Hd').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
@@ -449,7 +450,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private processNewPgpAttachments = async (pgpAttachments: JQuery<HTMLElement>, attachmentsContainer: JQuery<HTMLElement>) => {
+  private processNewPgpAttachments = async (pgpAttachments: JQuery, attachmentsContainer: JQuery) => {
     if (this.debug) {
       console.debug('processNewPgpAttachments()');
     }
@@ -617,7 +618,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return $(anyInnerElement).closest('div.if, div.aHU, td.Bu').first();
   };
 
-  private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
+  private insertEncryptedReplyBox = (messageContainer: JQuery<Element>) => {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
     const replyParams: FactoryReplyParams = { replyMsgId: msgId, removeAfterClose: true };
@@ -792,7 +793,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
               if (typeof cache === 'undefined') {
                 try {
                   const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
-                  if (contactWithPubKeys && contactWithPubKeys.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0) {
+                  if (contactWithPubKeys?.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0) {
                     this.recipientHasPgpCache[email] = true;
                   } else if ((await this.pubLookup.lookupEmail(email)).pubkeys.length) {
                     this.recipientHasPgpCache[email] = true;
@@ -811,7 +812,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
                   everyoneUsesEncryption = false;
                   break;
                 }
-              } else if (cache === false) {
+              } else if (!cache) {
                 everyoneUsesEncryption = false;
                 break;
               }

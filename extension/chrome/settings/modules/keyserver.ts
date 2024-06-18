@@ -98,7 +98,7 @@ View.run(
         return await Ui.modal.error('Disallowed by your organisation rules');
       }
       Xss.sanitizeRender(target, Ui.spinner('white'));
-      const mostUsefulPrv = await KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
+      const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
       if (!mostUsefulPrv) {
         await Ui.modal.warning('This account has no usable key set up (may be expired or revoked). Check Additional Settings -> My Keys');
         return;

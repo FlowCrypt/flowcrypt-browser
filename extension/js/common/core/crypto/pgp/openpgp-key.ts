@@ -351,7 +351,7 @@ export class OpenPGPKey {
     );
     result.set(`Primary key creation?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(key.getCreationTime())));
     result.set(`Primary key expiration?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getExpirationTime())));
-    result.set(`Primary key getBitSize?`, await KeyUtil.formatResultAsync(async () => await key.getAlgorithmInfo().bits));
+    result.set(`Primary key getBitSize?`, await KeyUtil.formatResultAsync(async () => key.getAlgorithmInfo().bits));
     const encryptResult = await OpenPGPKey.testEncryptDecrypt(key);
     await Promise.all(encryptResult.map(msg => result.set(`Encrypt/Decrypt test: ${msg}`, '')));
     if (key.isPrivate()) {
@@ -362,7 +362,7 @@ export class OpenPGPKey {
       const skn = `SK ${subKeyIndex} >`;
       result.set(`${skn} LongId`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.bytesToLongid(subKey.getKeyID().bytes)));
       result.set(`${skn} Created`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(subKey.keyPacket.created)));
-      result.set(`${skn} Algo`, await KeyUtil.formatResultAsync(async () => `${subKey.getAlgorithmInfo().algorithm}`));
+      result.set(`${skn} Algo`, await KeyUtil.formatResultAsync(async () => subKey.getAlgorithmInfo().algorithm));
       const flags = (await OpenPGPKey.getSubKeySigningFlags(key, subKey)) | (await OpenPGPKey.getSubKeyEncryptionFlags(key, subKey));
       result.set(`${skn} Usage flags`, KeyUtil.formatResult(OpenPGPKey.keyFlagsToString(flags)));
       result.set(
@@ -425,12 +425,12 @@ export class OpenPGPKey {
 
   public static isFullyDecrypted(key: OpenPGP.PrivateKey): boolean {
     const nonDummyPrvPackets = OpenPGPKey.getPrvPackets(key);
-    return nonDummyPrvPackets.every(p => p.isDecrypted() === true);
+    return nonDummyPrvPackets.every(p => p.isDecrypted());
   }
 
   public static isFullyEncrypted(key: OpenPGP.PrivateKey): boolean {
     const nonDummyPrvPackets = OpenPGPKey.getPrvPackets(key);
-    return nonDummyPrvPackets.every(p => p.isDecrypted() === false);
+    return nonDummyPrvPackets.every(p => !p.isDecrypted());
   }
 
   /**
@@ -482,7 +482,7 @@ export class OpenPGPKey {
     if (!OpenPGPKey.isPacketPrivate(keyPacket)) {
       throw new Error('Cannot check packet encryption status of secret key in a Public Key');
     }
-    return keyPacket.isDecrypted() === true;
+    return keyPacket.isDecrypted();
   }
 
   public static async verify(msg: OpenpgpMsgOrCleartext, pubs: PubkeyInfo[]): Promise<VerifyRes> {
@@ -631,8 +631,7 @@ export class OpenPGPKey {
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
     const bindingSignature = await OpenPGPKey.getLatestValidSignature(subKey.bindingSignatures, primaryKey, opgp.enums.signature.subkeyBinding, dataToVerify);
     if (
-      bindingSignature &&
-      bindingSignature.embeddedSignature &&
+      bindingSignature?.embeddedSignature &&
       (await OpenPGPKey.getLatestValidSignature([bindingSignature.embeddedSignature], subKey.keyPacket, opgp.enums.signature.keyBinding, dataToVerify))
     ) {
       return OpenPGPKey.getValidSigningKeyPacketFlags(subKey, bindingSignature);
@@ -864,8 +863,7 @@ export class OpenPGPKey {
     return (
       !('privateParams' in packet) ||
       (packet.algorithm &&
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        !(packet as any).isEncrypted && // isDecrypted() returns false when isEncrypted is null
+        !(packet as unknown as { isEncrypted: string }).isEncrypted && // isDecrypted() returns false when isEncrypted is null
         (!packet.privateParams || OpenPGPKey.paramCountByAlgo[packet.algorithm].priv > Object.keys(packet.privateParams).length))
     );
   }
@@ -952,7 +950,7 @@ export class OpenPGPKey {
     const chosenPrvPackets = prv
       .getKeys(optionalKeyid)
       .map(k => k.keyPacket)
-      .filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
+      .filter(OpenPGPKey.isPacketPrivate);
     if (!chosenPrvPackets.length) {
       throw new Error(
         `No private key packets selected of ${
@@ -991,7 +989,7 @@ export class OpenPGPKey {
     const prvPackets = k
       .getKeys()
       .map(k => k.keyPacket)
-      .filter(OpenPGPKey.isPacketPrivate) as PrvPacket[];
+      .filter(OpenPGPKey.isPacketPrivate);
     if (!prvPackets.length) {
       throw new Error('This key has no private packets. Is it a Private Key?');
     }

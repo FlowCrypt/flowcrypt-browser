@@ -13,7 +13,7 @@ export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 export class Env {
   public static runtimeId(orig = false) {
     if (chrome?.runtime?.id) {
-      if (orig === true) {
+      if (orig) {
         return chrome.runtime.id;
       } else {
         return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
@@ -33,7 +33,7 @@ export class Env {
         // Attempt to get the URL of an extension resource. This will succeed if we're in an extension context.
         const extensionUrl = chrome.runtime.getURL('');
         // Check if the current page URL is different from the extension's base URL (i.e., it's not an extension page)
-        return window.location.href.indexOf(extensionUrl) !== 0;
+        return !window.location.href.startsWith(extensionUrl);
       } catch (e) {
         // In case of any errors (which shouldn't happen in a proper extension context), assume it's not a content script
         return false;
@@ -58,6 +58,7 @@ export class Env {
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188 };
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   public static async webmails(): Promise<WebMailName[]> {
     return ['gmail']; // async because storage may be involved in the future
   }

@@ -94,8 +94,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
       const inReplyToMessage = thread.messages?.find(message => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
-        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(header => header.name === 'Message-Id' || header.name === 'Message-ID')
-          ?.value;
+        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(
+          header => header.name === 'Message-Id' || header.name === 'Message-ID'
+        )?.value;
       }
       this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
     }
@@ -361,7 +362,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private addComposeTableHandlers = async () => {
-    this.view.S.cached('body').keydown(this.view.setHandler((el, ev) => this.onBodyKeydownHandler(el, ev)));
+    this.view.S.cached('body').keydown(
+      this.view.setHandler((el, ev) => {
+        this.onBodyKeydownHandler(el, ev);
+      })
+    );
     this.view.S.cached('input_to').bind(
       'paste',
       this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev))
@@ -369,7 +374,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.inputModule.squire.addEventListener('input', () => this.view.S.cached('send_btn_note').text(''));
     this.view.S.cached('input_addresses_container_inner').on(
       'click',
-      this.view.setHandler(() => this.onRecipientsClickHandler(), this.view.errModule.handle(`focus recipients`))
+      this.view.setHandler(() => {
+        this.onRecipientsClickHandler();
+      }, this.view.errModule.handle(`focus recipients`))
     );
     this.view.S.cached('input_addresses_container_inner')
       .children()
@@ -377,7 +384,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_subject')
       .bind(
         'input',
-        this.view.setHandler((el: HTMLInputElement) => this.subjectRTLHandler(el))
+        this.view.setHandler((el: HTMLInputElement) => {
+          this.subjectRTLHandler(el);
+        })
       )
       .trigger('input');
   };
@@ -439,6 +448,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
     Ui.escape(() => !this.view.isReplyBox && $('.close_compose_window').trigger('click'))(e);
     const focusableEls = this.getFocusableEls();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const focusIndex = focusableEls.indexOf(e.target);
     if (focusIndex !== -1) {
       // Focus trap (Tab, Shift+Tab)
@@ -485,6 +495,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private renderReplySuccessMimeAttachments = (attachmentsFilenames: string[]) => {
     const attachments = $('<div id="attachments"></div>');
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
     for (const index in attachmentsFilenames) {
       if (attachmentsFilenames.hasOwnProperty(index)) {
         const filename = Xss.escape(attachmentsFilenames[index]);

@@ -82,12 +82,12 @@ export class MessageRenderer {
     const processImageElements = (node: Element | null) => {
       // Ensure the node exists and has a 'src' attribute
       if (!node || !('src' in node)) return;
-      const imageSrc = node.getAttribute('src') as string;
+      const imageSrc = node.getAttribute('src');
       if (!imageSrc) return;
       const matches = imageSrc.match(CID_PATTERN);
 
       // Check if the src attribute contains a CID
-      if (matches && matches[1]) {
+      if (matches?.[1]) {
         const contentId = matches[1];
         const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
 
@@ -156,7 +156,7 @@ export class MessageRenderer {
     if (verifyRes?.error) {
       renderModule.renderSignatureStatus(`error verifying signature: ${verifyRes.error}`);
       renderModule.setFrameColor('red');
-    } else if (!verifyRes || !verifyRes.signerLongids.length) {
+    } else if (!verifyRes?.signerLongids.length) {
       renderModule.renderSignatureStatus('not signed');
     } else if (verifyRes.match) {
       renderModule.renderSignatureStatus('signed');
@@ -421,8 +421,8 @@ export class MessageRenderer {
           await this.processedMessages.set(msgId, processed);
           resolve(await this.processedMessages.await(msgId, processed));
         })
-        .catch(e => {
-          reject(e);
+        .catch((e: unknown) => {
+          reject(e as Error);
         });
     });
   };

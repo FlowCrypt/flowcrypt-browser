@@ -87,7 +87,7 @@ export type AcctStoreDict = {
 export class AcctStore extends AbstractStore {
   public static async get(acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> {
     const storageObj = (await storageGet('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
-    const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
+    const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj);
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
   }
 

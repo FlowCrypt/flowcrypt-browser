@@ -4,7 +4,7 @@
 
 import { Attachment } from './core/attachment.js';
 
-export type JQueryEl = JQuery<HTMLElement>;
+export type JQueryEl = JQuery;
 
 export interface LoaderContextInterface {
   renderPlainAttachment(a: Attachment, attachmentEl?: JQueryEl, error?: string): void;

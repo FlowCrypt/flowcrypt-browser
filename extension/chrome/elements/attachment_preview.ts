@@ -72,7 +72,7 @@ View.run(
             $('#attachment-preview-download').appendTo('.attachment-preview-unavailable');
           }
           $('body').on('click', e => {
-            if (e.target === document.body || $('body').children().toArray().indexOf(e.target) !== -1) {
+            if (e.target === document.body || $('body').children().toArray().includes(e.target)) {
               BrowserMsg.send.closeDialog(this);
             }
           });
@@ -113,11 +113,12 @@ View.run(
       if ((result as DecryptSuccess).content) {
         return result.content;
       } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
-        return BrowserMsg.send.passphraseDialog(this.parentTabId, {
+        BrowserMsg.send.passphraseDialog(this.parentTabId, {
           type: 'attachment',
           longids: (result as DecryptError).longids.needPassphrase,
           initiatorFrameId: this.initiatorFrameId,
         });
+        return;
       }
       throw new DecryptionError(result as DecryptError);
     };

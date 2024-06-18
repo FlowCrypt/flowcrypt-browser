@@ -25,6 +25,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
       },
     });
     this.view.S.cached('body').on('click', '#attachment_list li', async e => {
+      // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style
       const fileId = $(e.currentTarget).attr('qq-file-id') as string;
       const attachment = await this.attachment.collectAttachment(fileId);
       Browser.saveToDownloads(attachment);

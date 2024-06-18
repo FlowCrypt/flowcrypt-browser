@@ -202,7 +202,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   };
 
   private generateHtmlPreviousMsgQuote = (method: 'reply' | 'forward') => {
-    if (!this.messageToReplyOrForward || !this.messageToReplyOrForward.text || !this.messageToReplyOrForward.headers.date) {
+    if (!this.messageToReplyOrForward?.text || !this.messageToReplyOrForward.headers.date) {
       return;
     }
     const text = this.messageToReplyOrForward.text;
@@ -224,8 +224,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `Date: ${dateStr}<br>` +
         `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
         `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
-        `${this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc.join(', ')}` : ''}` +
-        `</div>`;
+        this.messageToReplyOrForward.headers.cc?.length
+          ? `Cc: ${this.messageToReplyOrForward.headers.cc?.join(', ')}`
+          : '' + `</div>`;
       return `${header}<br><br>${escapedText}`;
     }
   };

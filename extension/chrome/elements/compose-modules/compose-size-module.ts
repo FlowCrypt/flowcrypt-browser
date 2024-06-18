@@ -125,7 +125,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }
   };
 
-  public resizeInput = (inputs?: JQuery<HTMLElement>) => {
+  public resizeInput = (inputs?: JQuery) => {
     if (!inputs) {
       inputs = this.view.S.cached('recipients_inputs'); // Resize All Inputs
     }

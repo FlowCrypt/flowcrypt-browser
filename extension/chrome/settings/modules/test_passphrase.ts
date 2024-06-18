@@ -66,7 +66,7 @@ View.run(
       if (!this.mostUsefulPrv) {
         return;
       }
-      if ((await KeyUtil.decrypt(this.mostUsefulPrv.key, String($('#password').val()))) === true) {
+      if (await KeyUtil.decrypt(this.mostUsefulPrv.key, String($('#password').val()))) {
         await this.bruteForceProtection.passphraseCheckSucceed();
         Xss.sanitizeRender(
           '#content',

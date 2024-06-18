@@ -49,7 +49,7 @@ export class ComposeMyPubkeyModule extends ViewModule<ComposeView> {
       // if we have cashed this fingerprint, setAttachPreference(false) rightaway and return
       const cached = this.wkdFingerprints[senderEmail];
       for (const parsedPrv of parsedStoredPrvs.filter(prv => prv.key.usableForEncryption || prv.key.usableForSigning)) {
-        if (cached && cached.includes(parsedPrv.key.id)) {
+        if (cached?.includes(parsedPrv.key.id)) {
           this.setAttachPreference(false); // at least one of our valid keys is on WKD: no need to attach
           return;
         }

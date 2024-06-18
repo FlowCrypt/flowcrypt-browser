@@ -1,9 +1,15 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-
 import * as path from 'path';
 
 import { readFileSync, readdirSync, statSync } from 'fs';
 
+interface Manifest {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  host_permissions: string[];
+  permissions: string[];
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  content_scripts: { matches: string[]; css: string[]; js: string[] }[];
+}
 /**
  * This test looks for petterns in the source code, as well as in the built product to look for issues.
  */
@@ -84,7 +90,7 @@ const expectedPermissions = ['alarms', 'scripting', 'storage', 'tabs', 'unlimite
 const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
 const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
-  const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
+  const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString()) as Manifest;
   const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
   for (const expectedHostPermission of expectedHostPermissions) {
     if (!manifest.host_permissions.includes(expectedHostPermission)) {
@@ -100,8 +106,8 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
       }
     }
   }
-  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) => cs.matches.includes('https://mail.google.com/*'));
-  if (!gmailCs || !gmailCs.css.length || !gmailCs.js.length) {
+  const gmailCs = manifest.content_scripts.find(cs => cs.matches.includes('https://mail.google.com/*'));
+  if (!gmailCs?.css.length || !gmailCs.js.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
     errsFound++;
   }

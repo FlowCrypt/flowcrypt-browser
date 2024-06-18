@@ -59,7 +59,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
     }
   }
 
-  private static ensureHasParentNode = (el: JQuery<HTMLElement>) => {
+  private static ensureHasParentNode = (el: JQuery) => {
     if (!el.parent().length) {
       const dummyParent = $('<div>');
       dummyParent.append(el); // xss-direct

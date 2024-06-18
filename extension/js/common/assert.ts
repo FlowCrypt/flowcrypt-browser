@@ -103,7 +103,7 @@ export class Assert {
   }
 
   public static abortAndRenderErrOnUrlParamValMismatch<T>(values: Dict<T>, name: string, expectedVals: T[]): T {
-    if (expectedVals.indexOf(values[name]) === -1) {
+    if (!expectedVals.includes(values[name])) {
       const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
         but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
