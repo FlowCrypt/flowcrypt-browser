@@ -24,6 +24,7 @@ import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { RelayManager } from '../../../js/common/relay-manager.js';
 import { MessageRenderer } from '../../../js/common/message-renderer.js';
+import { ThunderbirdMessageDetails } from '../../elements/compose-modules/compose-types.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -39,14 +40,7 @@ export class InboxView extends View {
   public pageUrlParams:
     | {
         useFullScreenSecureCompose?: boolean;
-        messageDetails?: {
-          subject: string;
-          recipients?: {
-            to?: string[];
-            cc?: string[];
-            bcc?: string[];
-          };
-        };
+        messageDetails?: ThunderbirdMessageDetails;
       }
     | undefined;
   public readonly S: SelCache;

@@ -11,6 +11,7 @@ import { Dict } from './core/common.js';
 import { Env, WebMailName, WebMailVersion } from './browser/env.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
+import { ThunderbirdMessageDetails } from '../../chrome/elements/compose-modules/compose-types.js';
 
 type Host = {
   gmail: string;
@@ -62,11 +63,7 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
-  public openComposeWin = (
-    draftId?: string,
-    fullscreen = false,
-    messageDetails?: { subject: string; recipients?: { to?: string[]; cc?: string[]; bcc?: string[] } } | undefined
-  ): boolean => {
+  public openComposeWin = (draftId?: string, fullscreen = false, messageDetails?: ThunderbirdMessageDetails | undefined): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
       const composeWin = $(this.factory.embeddedCompose(draftId));
@@ -82,8 +79,8 @@ export class Injector {
             const body = $(composeIframeDoc.body);
             if (messageDetails) {
               body.find('#input_subject').val(messageDetails.subject);
-              if (messageDetails.recipients) {
-                const { to = [], cc = [], bcc = [] } = messageDetails.recipients;
+              if (messageDetails) {
+                const { to = [], cc = [], bcc = [] } = messageDetails;
                 if (to.length || cc.length || bcc.length) {
                   body.find('#input_addresses_container').removeClass('invisible');
                   body.find('#recipients_placeholder').hide();

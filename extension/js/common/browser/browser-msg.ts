@@ -20,6 +20,7 @@ import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 import { Ui } from './ui.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
+import { ThunderbirdMessageDetails } from '../../../chrome/elements/compose-modules/compose-types.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -380,15 +381,10 @@ export class BrowserMsg {
   }
 
   public static thunderbirdSecureComposeHandler() {
-    type MessageDetails = {
-      subject: string;
-      to?: string;
-      cc?: string[];
-      bcc?: string[];
+    interface MessageDetails extends ThunderbirdMessageDetails {
       bccList?: string[];
       ccList?: string[];
-    };
-
+    }
     const handleClickEvent = async (tabId: number, action = 'compose' || 'message_display') => {
       const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
       const actionType = action === 'compose' ? browser.composeAction : browser.messageDisplayAction;
@@ -405,11 +401,9 @@ export class BrowserMsg {
             useFullScreenSecureCompose: true,
             messageDetails: {
               subject: messageDetails.subject,
-              recipients: {
-                to: messageDetails?.to || '',
-                cc: messageDetails?.cc || messageDetails.ccList,
-                bcc: messageDetails?.bcc || messageDetails.bccList,
-              },
+              to: messageDetails?.to || '',
+              cc: messageDetails?.cc || messageDetails?.ccList,
+              bcc: messageDetails?.bcc || messageDetails?.bccList,
             },
           };
           await BgUtils.openExtensionTab(

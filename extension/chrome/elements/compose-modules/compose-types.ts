@@ -45,6 +45,13 @@ export type MessageToReplyOrForwardHeaders = {
   cc?: string[];
 };
 
+export interface ThunderbirdMessageDetails {
+  subject: string;
+  to?: string[];
+  cc?: string[];
+  bcc?: string[];
+}
+
 export type MessageToReplyOrForward = {
   headers: MessageToReplyOrForwardHeaders;
   isOnlySigned?: boolean;
