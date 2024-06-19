@@ -63,37 +63,12 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
-  public openComposeWin = (draftId?: string, fullscreen = false, messageDetails?: ThunderbirdMessageDetails | undefined): boolean => {
+  public openComposeWin = (draftId?: string, openInFullScreen?: boolean, messageDetails?: ThunderbirdMessageDetails | undefined): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
-      const composeWin = $(this.factory.embeddedCompose(draftId));
+      const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, { ...messageDetails }));
       composeWin.attr('data-order', alreadyOpenedCount + 1);
       this.S.cached('body').append(composeWin); // xss-safe-factory
-      if (fullscreen) {
-        const composeFrameId = this.S.cached('secure_compose_window').attr('data-frame-id') || '';
-        $(`#${composeFrameId}`).on('load', () => {
-          const composeIframe = document.getElementById(composeFrameId) as HTMLIFrameElement;
-          const composeIframeDoc = composeIframe?.contentDocument;
-          if (composeIframeDoc) {
-            $(composeIframeDoc.body).addClass('full_window');
-            const body = $(composeIframeDoc.body);
-            if (messageDetails) {
-              body.find('#input_subject').val(messageDetails.subject);
-              if (messageDetails) {
-                const { to = [], cc = [], bcc = [] } = messageDetails;
-                if (to.length || cc.length || bcc.length) {
-                  body.find('#input_addresses_container').removeClass('invisible');
-                  body.find('#recipients_placeholder').hide();
-                  body.find('#input_to').val(to.join(','));
-                  body.find('#input-container-cc input').val(cc.join(','));
-                  body.find('#input-container-bcc input').val(bcc.join(','));
-                }
-              }
-            }
-          }
-        });
-        this.S.cached('secure_compose_window').addClass('active full_window');
-      }
       return true;
     } else {
       Ui.toast('Only 3 FlowCrypt windows can be opened at a time', false, 3, 'top', 'error');

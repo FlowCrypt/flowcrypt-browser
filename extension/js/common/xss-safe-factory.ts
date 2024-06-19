@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Dict, Str, Url, UrlParams } from './core/common.js';
+import { Dict, Str, Url, UrlParam, UrlParams } from './core/common.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { BrowserMsg } from './browser/browser-msg.js';
@@ -96,8 +96,13 @@ export class XssSafeFactory {
     return this.extUrl(`img/${relPath}`);
   };
 
-  public srcComposeMsg = (draftId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
+  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, messageDetails?: Dict<UrlParam>) => {
+    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), {
+      frameId: this.newId(),
+      draftId,
+      useFullScreenSecureCompose,
+      externalMessageDetails: JSON.stringify(messageDetails),
+    });
   };
 
   public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, initiatorFrameId?: string) => {
@@ -194,10 +199,10 @@ export class XssSafeFactory {
     await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   };
 
-  public embeddedCompose = (draftId?: string) => {
-    const srcComposeMsg = this.srcComposeMsg(draftId);
+  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, messageDetails?: Dict<UrlParam>) => {
+    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, messageDetails);
     return Ui.e('div', {
-      class: 'secure_compose_window',
+      class: openInFullScreen ? 'secure_compose_window active full_window' : 'secure_compose_window',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
       'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
       'data-test': 'container-new-message',

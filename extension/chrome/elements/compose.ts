@@ -32,6 +32,7 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
+import { ThunderbirdMessageDetails } from './compose-modules/compose-types.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -41,9 +42,11 @@ export class ComposeView extends View {
   public readonly removeAfterClose: boolean;
   public readonly disableDraftSaving: boolean;
   public readonly debug: boolean;
+  public readonly useFullScreenSecureCompose: boolean;
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public readonly externalMessageDetails: string;
   public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
@@ -119,6 +122,8 @@ export class ComposeView extends View {
     recipients: 'span.recipients',
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
+    input_container_cc: '#input-container-cc input',
+    input_container_bcc: '#input-container-bcc input',
     recipient_left_label: '.recipient-left-label',
     input_container_from: '#input-container-from',
     input_addresses_container_inner: '#input_addresses_container > div:first',
@@ -148,6 +153,8 @@ export class ComposeView extends View {
       'removeAfterClose',
       'replyPubkeyMismatch',
       'replyOption',
+      'useFullScreenSecureCompose',
+      'externalMessageDetails',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -161,6 +168,8 @@ export class ComposeView extends View {
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.externalMessageDetails = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'externalMessageDetails') || '';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
@@ -263,6 +272,21 @@ export class ComposeView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
   private preParseEmailRecipientsIfNeeded = async () => {
+    if (this.useFullScreenSecureCompose) {
+      $('body').addClass('full_window');
+    }
+    if (this.externalMessageDetails) {
+      const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
+      this.S.cached('input_subject').val(messageDetails.subject);
+      const { to = [], cc = [], bcc = [] } = messageDetails;
+      if (to.length || cc.length || bcc.length) {
+        this.S.cached('input_addresses_container_outer').removeClass('invisible');
+        this.S.cached('recipients_placeholder').hide();
+        this.S.cached('input_to').val(to.join(','));
+        this.S.cached('input_container_cc').val(cc.join(','));
+        this.S.cached('input_container_bcc').val(cc.join(','));
+      }
+    }
     const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
     for (const inputContainer of preParsedRecipient) {
       if (String($(inputContainer).find('input').val()).trim().length > 0) {
