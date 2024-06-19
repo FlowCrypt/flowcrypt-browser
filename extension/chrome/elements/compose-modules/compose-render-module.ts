@@ -27,6 +27,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private previousReplyOption: ReplyOption | undefined;
 
   public initComposeBox = async () => {
+    if (this.view.useFullScreenSecureCompose) {
+      $('body').addClass('full_window');
+    }
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
     }
@@ -94,8 +97,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
       const inReplyToMessage = thread.messages?.find(message => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
-        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(header => header.name === 'Message-Id' || header.name === 'Message-ID')
-          ?.value;
+        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(
+          header => header.name === 'Message-Id' || header.name === 'Message-ID'
+        )?.value;
       }
       this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
     }

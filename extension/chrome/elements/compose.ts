@@ -201,7 +201,6 @@ export class ComposeView extends View {
     this.myPubkeyModule = new ComposeMyPubkeyModule(this);
     this.storageModule = new ComposeStorageModule(this);
     await this.acctServer.initialize();
-    await this.preParseEmailRecipientsIfNeeded();
     if (!this.isReplyBox) {
       await Assert.abortAndRenderErrOnUnprotectedKey(this.acctEmail);
     }
@@ -211,6 +210,7 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
+    await this.preParseEmailRecipientsIfNeeded();
     if (this.replyOption && this.isReplyBox) {
       await this.renderModule.activateReplyOption(this.replyOption, true);
     }
@@ -272,9 +272,6 @@ export class ComposeView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
   private preParseEmailRecipientsIfNeeded = async () => {
-    if (this.useFullScreenSecureCompose) {
-      $('body').addClass('full_window');
-    }
     if (this.externalMessageDetails) {
       const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
       this.S.cached('input_subject').val(messageDetails.subject);
