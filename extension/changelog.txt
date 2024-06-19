@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.5.7 on June 13, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/480?closed=1" target="_blank">Exception reports improvements</a>
+
 version 8.5.6 on June 3, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/479?closed=1" target="_blank">Manifest V3 fixes</a>
 
 version 8.5.5 on May 20, 2024: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/478?closed=1" target="_blank">Manifest V3</a>
