@@ -38,11 +38,6 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public constructor(composer: ComposeView) {
     super(composer);
-    // Only start draft timer when draft id is not set.
-    // When draft id is set, draft timer will start only when draft is decrypted successfully
-    if (!this.view.disableDraftSaving && !this.view.draftId) {
-      this.startDraftTimer();
-    }
   }
 
   public setHandlers = () => {
@@ -125,6 +120,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   public draftSave = async (forceSave = false): Promise<void> => {
     if (this.disableSendingDrafts) {
       return;
+    }
+    // Only start draft timer when draft id is not set.
+    // When draft id is set, draft timer will start only when draft is decrypted successfully
+    if (!this.view.disableDraftSaving && !this.view.draftId) {
+      this.startDraftTimer();
     }
     if (this.hasBodyChanged(this.view.inputModule.squire.getHTML()) || this.hasSubjectChanged(String(this.view.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
