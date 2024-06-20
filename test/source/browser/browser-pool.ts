@@ -46,6 +46,8 @@ export class BrowserPool {
       headless: false,
       devtools: false,
       slowMo,
+      timeout: 10_000, // 10 seconds
+      protocolTimeout: 20_000, // 20 seconds
     });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
