@@ -58,7 +58,7 @@ export class RenderRelay implements RenderInterface {
 
   public start = () => {
     this.processor(this)
-      .catch(e => {
+      .catch((e: unknown) => {
         // normally no exceptions come to this point so let's report it
         Catch.reportErr(e);
         this.renderErr(Xss.escape(String(e)), undefined);

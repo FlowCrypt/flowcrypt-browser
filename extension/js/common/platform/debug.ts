@@ -31,11 +31,16 @@ export class Debug {
     const records: unknown[] = [];
     const tx = db.transaction(['messages'], 'readwrite');
     await new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve(undefined);
-      tx.onerror = () => reject(AbstractStore.errCategorize(tx.error));
+      tx.oncomplete = () => {
+        resolve(undefined);
+      };
+      tx.onerror = () => {
+        reject(AbstractStore.errCategorize(tx.error));
+      };
       const messages = tx.objectStore('messages');
       const search = messages.getAll(undefined);
       search.onsuccess = () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         records.push(...search.result);
         messages.clear();
       };
@@ -50,8 +55,12 @@ export class Debug {
     const db = await Debug.openDatabase();
     const tx = db.transaction(['messages'], 'readwrite');
     await new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve(undefined);
-      tx.onerror = () => reject(AbstractStore.errCategorize(tx.error));
+      tx.oncomplete = () => {
+        resolve(undefined);
+      };
+      tx.onerror = () => {
+        reject(AbstractStore.errCategorize(tx.error));
+      };
       const messages = tx.objectStore('messages');
       messages.add(message);
     });
@@ -66,9 +75,15 @@ export class Debug {
           db.createObjectStore('messages', { autoIncrement: true });
         }
       };
-      openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
-      openDbReq.onblocked = () => reject(AbstractStore.errCategorize(openDbReq.error));
-      openDbReq.onerror = () => reject(AbstractStore.errCategorize(openDbReq.error));
+      openDbReq.onsuccess = () => {
+        resolve(openDbReq.result);
+      };
+      openDbReq.onblocked = () => {
+        reject(AbstractStore.errCategorize(openDbReq.error));
+      };
+      openDbReq.onerror = () => {
+        reject(AbstractStore.errCategorize(openDbReq.error));
+      };
     });
     return db as IDBDatabase;
   };

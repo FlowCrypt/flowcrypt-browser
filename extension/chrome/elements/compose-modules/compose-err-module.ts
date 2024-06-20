@@ -21,7 +21,7 @@ export class ComposerUserError extends Error {}
 class ComposerNotReadyError extends ComposerUserError {}
 export class ComposerResetBtnTrigger extends Error {}
 
-export const PUBKEY_LOOKUP_RESULT_FAIL = 'fail' as const;
+export const PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
 
 export class ComposeErrModule extends ViewModule<ComposeView> {
   private debugId = Str.sloppyRandom();

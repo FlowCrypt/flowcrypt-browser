@@ -58,7 +58,7 @@ export class AccountServer extends Api {
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    return await this.externalService.messageGatewayUpdate(externalId, emailGatewayMessageId);
+    await this.externalService.messageGatewayUpdate(externalId, emailGatewayMessageId);
   };
 
   public messageToken = async (): Promise<{ replyToken: string }> => {

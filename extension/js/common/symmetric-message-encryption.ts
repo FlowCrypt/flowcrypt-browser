@@ -52,7 +52,7 @@ export class SymmetricMessageEncryption {
       SymmetricMessageEncryption.cryptoKey,
       msg.encryptedData
     );
-    const bm: Bm.RawWithWindowExtensions = JSON.parse(new Buf(decryptedBytes).toUtfStr());
+    const bm = JSON.parse(new Buf(decryptedBytes).toUtfStr()) as Bm.RawWithWindowExtensions;
     return bm;
   };
   private static fromBytes = async (encryptionKeyBuffer: ArrayBuffer) => {

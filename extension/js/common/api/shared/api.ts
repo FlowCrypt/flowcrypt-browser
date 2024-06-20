@@ -82,7 +82,7 @@ export class Api {
       if (typeof progress === 'function') {
         request.onprogress = evt => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
       }
-      const errHandler = (progressEvent: ProgressEvent<EventTarget>) => {
+      const errHandler = (progressEvent: ProgressEvent) => {
         if (!progressEvent.target) {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
         } else {
@@ -102,7 +102,7 @@ export class Api {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
       if (req.progress) {
-        req.progress = JSON.parse(JSON.stringify(req.progress));
+        req.progress = JSON.parse(JSON.stringify(req.progress)) as ProgressCbs;
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await BrowserMsg.send.bg.await.ajax({ req, resFmt });
@@ -314,6 +314,7 @@ export class Api {
           .then(data => {
             resolve(data as FetchResult<T, RT>);
           })
+          // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
           .catch(reject);
       });
     } catch (e) {

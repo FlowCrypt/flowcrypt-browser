@@ -52,7 +52,6 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
-
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
@@ -100,7 +99,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
       console.log(line);
     }
     mockApiLogs.push(line);
-  }).catch(e => {
+  }).catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   });
@@ -119,7 +118,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
 const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
   try {
     const page = await browser.newPage(t, t.context.urls?.extension('chrome/dev/ci_unit_test.htm'));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
     const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
       input: unknown;
       output: unknown;
@@ -213,7 +212,7 @@ test.afterEach.always('finalize', async t => {
     try {
       mkdirSync(debugArtifactDir);
     } catch (error) {
-      if (error.code !== 'EEXIST') throw error;
+      if ((error as { code: string }).code !== 'EEXIST') throw error;
     }
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       // const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;

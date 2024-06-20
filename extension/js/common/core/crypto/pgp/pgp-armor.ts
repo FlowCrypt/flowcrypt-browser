@@ -71,7 +71,7 @@ export class PgpArmor {
 
   public static clipIncomplete(text: string): string | undefined {
     const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/gm);
-    return match && match.length ? match[0] : undefined;
+    return match?.length ? match[0] : undefined;
   }
 
   public static clip(text: string): string | undefined {
@@ -79,7 +79,7 @@ export class PgpArmor {
       const match = text.match(
         /(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm
       );
-      return match && match.length ? match[0] : undefined;
+      return match?.length ? match[0] : undefined;
     }
     return undefined;
   }

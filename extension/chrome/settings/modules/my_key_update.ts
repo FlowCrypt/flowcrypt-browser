@@ -125,7 +125,7 @@ View.run(
         } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
           await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
+        } else if (!(await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase))) {
           await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
         } else {
           if (updatedKey.usableForEncryption) {
@@ -154,7 +154,8 @@ View.run(
           }
         }
       } catch (e) {
-        return await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
+        await this.keyErrors.handlePrivateKeyError(e, (e as { encrypted: Key }).encrypted, undefined);
+        return;
       }
     };
   }

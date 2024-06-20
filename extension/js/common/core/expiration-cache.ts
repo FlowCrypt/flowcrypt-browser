@@ -90,10 +90,11 @@ export class ExpirationCache<V> {
   // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
   public await = async (key: string, value: V): Promise<V> => {
     try {
+      // eslint-disable-next-line @typescript-eslint/await-thenable
       return await value;
     } catch (e) {
       if ((await this.get(key)) === value) await this.set(key); // remove faulty record
-      return Promise.reject(e);
+      return Promise.reject(e as Error);
     }
   };
 

@@ -28,7 +28,8 @@
     if (type === 'error') {
       throw new Error('this failed');
     } else if (type === 'object') {
-      throw { nonsense: 'yes' }; // eslint-disable-line no-throw-literal
+      // eslint-disable-next-line @typescript-eslint/only-throw-error, no-throw-literal,
+      throw { nonsense: 'yes' };
     }
   };
 
@@ -88,7 +89,7 @@
           return process.exit(1);
         }
         for (const statement of expectedStackStatements) {
-          if ((e.stack || '').indexOf(statement) === -1) {
+          if (!(e.stack || '').includes(statement)) {
             console.error(`Unexpected stack format for type ${type}:\n${e.stack}\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`);
             process.exit(1);
           }
@@ -129,7 +130,7 @@
       console.error(e);
       return process.exit(1);
     }
-  })().catch(e => {
+  })().catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   });

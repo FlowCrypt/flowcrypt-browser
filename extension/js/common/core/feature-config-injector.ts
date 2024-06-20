@@ -1,4 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 (() => {
   // Define the payload with explicit types
   const payload: string = JSON.stringify([

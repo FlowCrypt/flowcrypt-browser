@@ -90,8 +90,7 @@ export class Attester extends Api {
   };
 
   public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
+    const headers = idToken ? { authorization: `Bearer ${idToken}` } : undefined;
     return await this.jsonPost<{ sent: boolean }>('welcome-message', { email, pubkey }, headers);
   };
 

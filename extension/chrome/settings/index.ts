@@ -44,7 +44,7 @@ View.run(
     private clientConfiguration: ClientConfiguration | undefined;
     private acctServer: AccountServer | undefined;
 
-    private altAccounts: JQuery<HTMLElement>;
+    private altAccounts: JQuery;
 
     public constructor() {
       super();
@@ -52,8 +52,10 @@ View.run(
       this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
       this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
-        Ui.modal.error('An unexpected value was found for the page parameter').catch(err => console.log(err));
+      if (this.page && !/^(\/chrome|modules)/.test(this.page)) {
+        Ui.modal.error('An unexpected value was found for the page parameter').catch((err: unknown) => {
+          console.log(err);
+        });
         this.page = undefined;
       }
       this.page = this.page === 'undefined' ? undefined : this.page; // in case an "undefined" string slipped in
@@ -82,7 +84,7 @@ View.run(
       if (this.clientConfiguration && !this.clientConfiguration.canSubmitPubToAttester()) {
         $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
       }
-      if (this.clientConfiguration && this.clientConfiguration.usesKeyManager()) {
+      if (this.clientConfiguration?.usesKeyManager()) {
         $('.add_key').hide(); // users which a key manager should not be adding keys manually
       }
       $('#status-row #status_version').on(
@@ -121,11 +123,11 @@ View.run(
         window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
       });
       BrowserMsg.addListener('notification_show', async ({ notification, group }: Bm.NotificationShow) => {
-        this.notifications!.show(notification, {}, group);
+        this.notifications.show(notification, {}, group);
         let cleared = false;
         const clear = () => {
           if (!cleared) {
-            this.notifications!.clear(group);
+            this.notifications.clear(group);
             cleared = true;
           }
         };
@@ -137,7 +139,7 @@ View.run(
         await factory.showPassphraseDialog(longids, type, initiatorFrameId);
       });
       BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-        this.notifications!.showAuthPopupNeeded(acctEmail);
+        this.notifications.showAuthPopupNeeded(acctEmail);
       });
       BrowserMsg.addListener('close_dialog', async () => {
         Swal.close();
@@ -148,7 +150,7 @@ View.run(
         this.setHandler(async target => {
           const page = $(target).attr('page');
           if (page) {
-            await Settings.renderSubPage(this.acctEmail!, this.tabId, page, $(target).attr('addurltext') || '');
+            await Settings.renderSubPage(this.acctEmail, this.tabId, page, $(target).attr('addurltext') || '');
           } else {
             Catch.report(`Unknown target page in element: ${target.outerHTML}`);
           }
@@ -160,7 +162,7 @@ View.run(
           const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail!));
           const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'EVEN-IF-UNUSABLE');
           const escapedFp = Xss.escape(mostUsefulPrv!.key.id);
-          await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
         })
       );
       $('.action_show_encrypted_inbox').on(
@@ -172,11 +174,15 @@ View.run(
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       $('.action_add_account').on(
         'click',
-        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
+        this.setHandlerPrevent('double', async () => {
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId);
+        })
       );
       $('.action_google_auth').on(
         'click',
-        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail))
+        this.setHandlerPrevent('double', async () => {
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
+        })
       );
       // $('.action_microsoft_auth').on('click', this.setHandlerPrevent('double', function() {
       //   new_microsoft_account_authentication_prompt(account_email);
@@ -214,7 +220,11 @@ View.run(
           }, 500);
         })
       );
-      this.altAccounts.keydown(this.setHandler((el, ev) => this.accountsMenuKeydownHandler(ev)));
+      this.altAccounts.keydown(
+        this.setHandler((el, ev) => {
+          this.accountsMenuKeydownHandler(ev);
+        })
+      );
       this.altAccounts.find('a').on(
         'mouseenter',
         Ui.event.handle(target => {
@@ -225,19 +235,17 @@ View.run(
       );
       $('#status-row #status_google').on(
         'click',
-        this.setHandler(
-          async () =>
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', {
-              which: 'google_account',
-            })
-        )
+        this.setHandler(async () => {
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', {
+            which: 'google_account',
+          });
+        })
       );
       $('#status-row #status_local_store').on(
         'click',
         this.setHandler(async () => {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
         })
       );
       Ui.activateModalPageLinkTags();
@@ -318,7 +326,7 @@ View.run(
         }
       } else {
         const acctEmails = await GlobalStore.acctEmailsGet();
-        if (acctEmails && acctEmails[0]) {
+        if (acctEmails?.[0]) {
           window.location.href = Url.create('index.htm', { acctEmail: acctEmails[0] });
         } else {
           $('.show_if_setup_not_done').css('display', 'initial');
@@ -376,13 +384,17 @@ View.run(
               'click',
               this.setHandler(async () => {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+                await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => {
+                  window.location.reload();
+                });
               })
             );
             statusContainer.empty().append(authNeededLink); // xss-direct
             $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+            Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => {
+              window.location.reload();
+            });
           } else if (ApiErr.isNetErr(e)) {
             Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
               .find('a')
@@ -478,7 +490,7 @@ View.run(
 
     private addKeyRowsHtml = async (privateKeys: KeyInfoWithIdentity[]) => {
       let html = '';
-      const canRemoveKey = !this.clientConfiguration || !this.clientConfiguration.usesKeyManager();
+      const canRemoveKey = !this.clientConfiguration?.usesKeyManager();
       for (let i = 0; i < privateKeys.length; i++) {
         const ki = privateKeys[i];
         const prv = await KeyUtil.parse(ki.private);
@@ -502,7 +514,7 @@ View.run(
         this.setHandler(async target => {
           /* eslint-disable @typescript-eslint/no-non-null-assertion */
           // the UI below only gets rendered when account_email is available
-          await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+          await Settings.renderSubPage(this.acctEmail, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
         })
       );

@@ -1,4 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
 'use strict';
 
@@ -218,7 +219,7 @@ export class Mime {
                 mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
               } else if (nodeType === 'text/rfc822-headers') {
                 /* eslint-disable no-underscore-dangle */
-                if (node._parentNode && node._parentNode.headers.subject) {
+                if (node._parentNode?.headers.subject) {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
                 }
                 /* eslint-enable no-underscore-dangle */
@@ -231,7 +232,7 @@ export class Mime {
             mimeContent = Object.assign(mimeContent, headers);
             resolve(mimeContent);
           } catch (e) {
-            reject(e);
+            reject(e as Error);
           }
         };
         parser.write(mimeMsg);
@@ -342,7 +343,7 @@ export class Mime {
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
       typeof hdr === 'string' ? ([hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[]) : hdr.map(h => h.address);
-    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? hdr[0]?.address : String(hdr || '')) || '').email;
     for (const hdrName of headersNames) {
       const header = parsedMimeMsg.headers[hdrName];
       if (header) {
@@ -371,7 +372,7 @@ export class Mime {
         // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
         // however emailjs parser will replace it to <LF>, so we fix it here
         let rawSignedContent = node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
-        if (/--$/.test(rawSignedContent)) {
+        if (rawSignedContent.endsWith('--')) {
           // end of boundary without a mandatory newline
           rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
         }
@@ -409,29 +410,29 @@ export class Mime {
   }
 
   private static getNodeType(node: MimeParserNode, type: 'value' | 'initial' = 'value') {
-    if (node.headers['content-type'] && node.headers['content-type'][0]) {
+    if (node.headers['content-type']?.[0]) {
       return node.headers['content-type'][0][type];
     }
     return undefined;
   }
 
   private static getNodeContentId(node: MimeParserNode) {
-    if (node.headers['content-id'] && node.headers['content-id'][0]) {
+    if (node.headers['content-id']?.[0]) {
       return node.headers['content-id'][0].value;
     }
     return undefined;
   }
 
   private static getNodeFilename(node: MimeParserNode): string | undefined {
-    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
+    if (node.headers['content-disposition']?.[0]) {
       const header = node.headers['content-disposition'][0];
-      if (header.params && header.params.filename) {
+      if (header.params?.filename) {
         return String(header.params.filename);
       }
     }
-    if (node.headers['content-type'] && node.headers['content-type'][0]) {
+    if (node.headers['content-type']?.[0]) {
       const header = node.headers['content-type'][0];
-      if (header.params && header.params.name) {
+      if (header.params?.name) {
         return String(header.params.name);
       }
     }
@@ -440,7 +441,7 @@ export class Mime {
 
   private static isNodeInline(node: MimeParserNode): boolean {
     const cd = node.headers['content-disposition'];
-    return cd && cd[0] && cd[0].value === 'inline';
+    return cd?.[0] && cd[0].value === 'inline';
   }
 
   private static fromEqualSignNotationAsBuf(str: string): Buf {
@@ -460,8 +461,7 @@ export class Mime {
     // are we dealing with a PGP/MIME encrypted message?
     if (
       /* eslint-disable no-underscore-dangle */
-      node._parentNode &&
-      node._parentNode.contentType &&
+      node._parentNode?.contentType &&
       node._parentNode._childNodes &&
       node._parentNode.contentType.params?.protocol === 'application/pgp-encrypted' &&
       node._parentNode.contentType.value === 'multipart/encrypted'
@@ -482,7 +482,7 @@ export class Mime {
   private static getNodeContentAsUtfStr(node: MimeParserNode): string {
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return Iso88592.decode(node.rawContent!) as string;
+      return Iso88592.decode(node.rawContent!);
     }
     let resultBuf: Buf;
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {

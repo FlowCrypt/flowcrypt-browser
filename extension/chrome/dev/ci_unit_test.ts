@@ -52,6 +52,7 @@ const libs: unknown[] = [
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them
 for (const lib of libs) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   (window as any)[(lib as any).name] = lib;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

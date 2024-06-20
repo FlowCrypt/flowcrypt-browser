@@ -126,7 +126,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         recipients: pubkeyRecipients,
         // brackets are required for test emails like '@test:8001'
         replyTo: replyToForMessageSentToPubkeyRecipients.length
-          ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
+          ? Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)
           : undefined,
       };
       msgs.push(await this.sendableNonPwdMsg(pubkeyMsgData, pubkeys, signingKey?.key));

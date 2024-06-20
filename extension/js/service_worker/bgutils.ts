@@ -35,7 +35,7 @@ export class BgUtils {
       chrome.tabs.query({ currentWindow: true }, tabs => {
         const extensionUrl = chrome.runtime.getURL('/');
         for (const tab of tabs) {
-          if (tab.url && tab.url.includes(extensionUrl)) {
+          if (tab.url?.includes(extensionUrl)) {
             resolve(tab.id);
             return;
           }

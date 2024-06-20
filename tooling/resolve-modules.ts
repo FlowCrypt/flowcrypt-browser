@@ -14,10 +14,17 @@ for (let i = 0; i < process.argv.length; i++) {
   }
 }
 
-const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath || './tsconfig.json').toString());
+export interface TSConfig {
+  compilerOptions: { paths: Record<string, string[]>; outDir: string };
+  include: string[];
+  exclude: string[];
+  files: string[];
+}
+
+const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath || './tsconfig.json').toString()) as TSConfig;
 const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
-  if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
+  if (compilerOptions.paths[moduleName].includes('COMMENT')) {
     // COMMENT flag, remove such import statements from the code, because they will be imported with script tags for compatibility
     moduleMap[moduleName] = null; // eslint-disable-line no-null/no-null
   } else {
@@ -32,7 +39,7 @@ const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s][
 const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
 const resolveLineImports = (regex: RegExp, line: string, path: string) =>
-  line.replace(regex, (found, prefix, libname, suffix) => {
+  line.replace(regex, (found, prefix, libname: string, suffix) => {
     // eslint-disable-next-line no-null/no-null
     if (moduleMap[libname] === null) {
       return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;

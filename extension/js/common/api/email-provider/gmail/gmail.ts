@@ -182,14 +182,14 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           // {"length":123,"data":"kksdwei
           // {"length":123,"data":"kksdwei"
           // {"length":123,"data":"kksdwei"}
-          if (chunk[chunk.length - 1] !== '"' && chunk[chunk.length - 2] !== '"') {
+          if (!chunk.endsWith('"') && chunk[chunk.length - 2] !== '"') {
             chunk += '"}'; // json end
-          } else if (chunk[chunk.length - 1] !== '}') {
+          } else if (!chunk.endsWith('}')) {
             chunk += '}'; // json end
           }
           let parsedJsonDataField;
           try {
-            parsedJsonDataField = JSON.parse(chunk).data;
+            parsedJsonDataField = (JSON.parse(chunk) as { data: string }).data;
           } catch (e) {
             console.info(e);
             reject(new Error('Chunk response could not be parsed'));
@@ -239,6 +239,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           // Depending on your needs, you might throw an error or handle this scenario differently.
           throw new Error('Failed to meet the minimum byte requirement or condition.');
         })
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         .catch(reject);
     });
   };
@@ -393,7 +394,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       rawParsedResults.push(...(window as unknown as BrowserWindow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
-      if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {
+      if (rawParsedRes.address && !allRawEmails.includes(rawParsedRes.address)) {
         allRawEmails.push(rawParsedRes.address);
       }
     }
@@ -405,7 +406,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     );
     const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
-      if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
+      if (!allResults.map(c => c.email).includes(newValidRes.email)) {
         const foundIndex = uniqueNewValidResults.map(c => c.email).indexOf(newValidRes.email);
         if (foundIndex === -1) {
           uniqueNewValidResults.push(newValidRes);

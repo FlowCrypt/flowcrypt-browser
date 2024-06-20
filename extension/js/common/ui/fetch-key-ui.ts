@@ -8,7 +8,7 @@ import { Ui } from '../browser/ui.js';
 import { Api } from '../api/shared/api.js';
 
 export class FetchKeyUI {
-  public handleOnPaste = (elem: JQuery<HTMLElement>) => {
+  public handleOnPaste = (elem: JQuery) => {
     elem.on(
       'paste',
       Ui.event.handle(async (elem: HTMLInputElement, event) => {

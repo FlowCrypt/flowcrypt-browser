@@ -17,6 +17,7 @@ export class Time {
         } else if (result === false) {
           clearInterval(interval);
           if (error) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             error();
           }
         }
