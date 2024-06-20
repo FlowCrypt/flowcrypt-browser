@@ -281,10 +281,11 @@ export class ComposeView extends View {
       const footer = await this.footerModule.getFooterFromStorage(this.senderModule.getSender());
       const sanitizedFooter = footer ? this.footerModule.createFooterHtml(footer) : undefined;
       this.quoteModule.tripleDotSanitizedHtmlContent = {
-        quote: `<blockquote ${dirAttr}>${quotedPlainTextBody}</blockquote>`, // xss-safe-value
+        quote: `<blockquote ${dirAttr} class="height-0">${quotedPlainTextBody}</blockquote>`, // xss-safe-value
         footer: sanitizedFooter, // xss-sanitized
       };
       this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
+      this.S.cached('password_or_pubkey').height(1);
     }
     if (this.externalMessageDetails) {
       this.S.cached('input_subject').val(messageDetails.subject);
