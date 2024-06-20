@@ -272,22 +272,22 @@ export class ComposeView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
   private preParseEmailRecipientsIfNeeded = async () => {
-    const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
-    if (messageDetails.plainTextBody) {
-      // Thunderbird already returns a standard quoted plain text body
-      const quotedPlainTextBody = messageDetails.plainTextBody;
-      const rtl = messageDetails.plainTextBody.match(new RegExp('[' + Str.rtlChars + ']'));
-      const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
-      const footer = await this.footerModule.getFooterFromStorage(this.senderModule.getSender());
-      const sanitizedFooter = footer ? this.footerModule.createFooterHtml(footer) : undefined;
-      this.quoteModule.tripleDotSanitizedHtmlContent = {
-        quote: `<blockquote ${dirAttr} class="height-0">${quotedPlainTextBody}</blockquote>`, // xss-safe-value
-        footer: sanitizedFooter, // xss-sanitized
-      };
-      this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
-      this.S.cached('password_or_pubkey').height(1);
-    }
     if (this.externalMessageDetails) {
+      const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
+      if (messageDetails.plainTextBody) {
+        // Thunderbird already returns a standard quoted plain text body
+        const quotedPlainTextBody = messageDetails.plainTextBody;
+        const rtl = messageDetails.plainTextBody.match(new RegExp('[' + Str.rtlChars + ']'));
+        const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
+        const footer = await this.footerModule.getFooterFromStorage(this.senderModule.getSender());
+        const sanitizedFooter = footer ? this.footerModule.createFooterHtml(footer) : undefined;
+        this.quoteModule.tripleDotSanitizedHtmlContent = {
+          quote: `<blockquote ${dirAttr} class="height-0">${quotedPlainTextBody}</blockquote>`, // xss-safe-value
+          footer: sanitizedFooter, // xss-sanitized
+        };
+        this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
+        this.S.cached('password_or_pubkey').height(1);
+      }
       this.S.cached('input_subject').val(messageDetails.subject);
       const { to = [], cc = [], bcc = [] } = messageDetails;
       if (to.length || cc.length || bcc.length) {
@@ -297,11 +297,11 @@ export class ComposeView extends View {
         this.S.cached('input_container_cc').val(cc.join(','));
         this.S.cached('input_container_bcc').val(cc.join(','));
       }
-    }
-    const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
-    for (const inputContainer of preParsedRecipient) {
-      if (String($(inputContainer).find('input').val()).trim().length > 0) {
-        await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
+      const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
+      for (const inputContainer of preParsedRecipient) {
+        if (String($(inputContainer).find('input').val()).trim().length > 0) {
+          await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
+        }
       }
     }
   };
