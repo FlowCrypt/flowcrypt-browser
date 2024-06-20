@@ -44,7 +44,7 @@ export class SmimeKey {
   }
 
   public static parseDecryptBinary(buffer: Uint8Array, password: string): Key {
-    const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]) as string;
+    const bytes = String.fromCharCode.apply(undefined, new Uint8Array(buffer) as unknown as number[]);
     const asn1 = this.forge.asn1.fromDer(bytes);
     let certificate: forge.pki.Certificate | undefined;
     try {
@@ -168,7 +168,7 @@ export class SmimeKey {
       }
     }
     const encryptedPrivateKey = SmimeKey.getArmoredPrivateKey(key);
-    const privateKey = await this.forge.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // null on password mismatch
+    const privateKey = this.forge.pki.decryptRsaPrivateKey(encryptedPrivateKey, passphrase); // null on password mismatch
     if (!privateKey) {
       return false;
     }
@@ -250,7 +250,7 @@ export class SmimeKey {
     const subjectAltName = certificate.getExtension('subjectAltName') as {
       altNames: { type: number; value: string }[];
     };
-    if (subjectAltName && subjectAltName.altNames) {
+    if (subjectAltName?.altNames) {
       const emailsFromAltNames = subjectAltName.altNames
         .filter(entry => entry.type === 1)
         .map(entry => Str.parseEmail(entry.value).email)
@@ -332,6 +332,7 @@ export class SmimeKey {
               this.forge.asn1.Class.UNIVERSAL,
               attr.valueTagClass,
               false,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-enum-comparison
               valueTagClass === this.forge.asn1.Type.UTF8 ? this.forge.util.encodeUtf8(attr.value) : attr.value
             ),
           ]),
@@ -365,14 +366,14 @@ export class SmimeKey {
     const armored: string[] = [];
     if (privateKey) {
       let armoredPrivateKey = typeof privateKey === 'string' ? privateKey : this.forge.pki.privateKeyToPem(privateKey);
-      if (armoredPrivateKey[armoredPrivateKey.length - 1] !== '\n') {
+      if (!armoredPrivateKey.endsWith('\n')) {
         armoredPrivateKey += '\r\n';
       }
       armored.push(armoredPrivateKey);
       (key as unknown as { privateKeyArmored: string }).privateKeyArmored = armoredPrivateKey;
     }
     let armoredCertificate = typeof certificate === 'string' ? certificate : this.forge.pki.certificateToPem(certificate);
-    if (armoredCertificate[armoredCertificate.length - 1] !== '\n') {
+    if (!armoredCertificate.endsWith('\n')) {
       armoredCertificate += '\r\n';
     }
     armored.push(armoredCertificate);

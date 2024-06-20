@@ -50,7 +50,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       'click',
       this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft'))
     );
-    this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
+    this.view.recipientsModule.onRecipientAdded(async () => {
+      await this.draftSave(true);
+    });
   };
 
   /**
@@ -162,11 +164,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.view.S.cached('send_btn_note').text('Not saved (reconnect)');
-        } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
+        } else if (e instanceof Error && e.message.includes('Could not find valid key packet for encryption in key')) {
           this.view.S.cached('send_btn_note').text('Not saved (bad key)');
         } else if (
           this.view.draftId &&
-          (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))
+          (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.includes('Message not a draft')))
         ) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
@@ -313,7 +315,8 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
     const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.type));
     if (!rawBlock) {
-      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
+      await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
+      return;
     }
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
@@ -326,14 +329,16 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         await this.renderPPDialogAndWaitWhenPPEntered(decrypted.longids.needPassphrase);
         await this.decryptAndRenderDraft(encrypted);
       }
-      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
+      await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
+      return;
     }
     this.wasMsgLoadedFromDraft = true;
     this.view.S.cached('prompt').css({ display: 'none' });
     const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
     const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
     if (!sanitizedContent) {
-      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+      await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+      return;
     }
     if (isRichText) {
       this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
@@ -393,7 +398,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       .find('.action_close')
       .on(
         'click',
-        this.view.setHandler(() => this.view.renderModule.closeMsg())
+        this.view.setHandler(() => {
+          this.view.renderModule.closeMsg();
+        })
       );
     const setActiveWindow = this.view.setHandler(async () => {
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });

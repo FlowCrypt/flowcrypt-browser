@@ -9,6 +9,7 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "eslint.validate": ["javascript", "typescript"],
+    "eslint.useFlatConfig": true,
     "html.format.enable": false,
     "htmlhint.options": {
       "doctype-first": false

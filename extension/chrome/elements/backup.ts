@@ -61,7 +61,9 @@ View.run(
       if (!this.storedPrvWithMatchingLongid) {
         $('#action_import_key').on(
           'click',
-          this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm'))
+          this.setHandler(async () => {
+            await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm');
+          })
         );
       }
       $('.action_test_pass').on(
@@ -80,7 +82,7 @@ View.run(
     };
 
     private testPassphraseHandler = async () => {
-      if ((await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val()))) === true) {
+      if (await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val()))) {
         await Ui.modal.info('Success - your pass phrase matches this backup!');
       } else {
         await Ui.modal.warning(

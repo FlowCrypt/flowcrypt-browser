@@ -8,6 +8,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { KeyErrors } from '../../elements/shared/key_errors.js';
+import { Key } from '../../../js/common/core/crypto/key.js';
 
 export class SetupImportKeyModule {
   private keyErrors: KeyErrors | undefined;
@@ -58,7 +59,7 @@ export class SetupImportKeyModule {
         this.view.clientConfiguration,
         this.view
       );
-      await this.keyErrors.handlePrivateKeyError(e, e.encrypted, options);
+      await this.keyErrors.handlePrivateKeyError(e, (e as { encrypted: Key }).encrypted, options);
     }
   };
 }

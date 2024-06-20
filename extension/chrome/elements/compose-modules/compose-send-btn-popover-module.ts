@@ -54,7 +54,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   /**
    * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
    */
-  public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
+  public toggleItemTick = (elem: JQuery, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
     const currentlyTicked = this.isTicked(elem);
     let newToggleTicked = typeof machineForceStateTo !== 'undefined' ? machineForceStateTo : !currentlyTicked;
     if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
@@ -165,7 +165,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     return store.use_rich_text || false;
   };
 
-  private renderCrossOrTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) => {
+  private renderCrossOrTick = (elem: JQuery, popoverOpt: PopoverOpt, renderTick: boolean) => {
     if (renderTick) {
       elem.find('img.icon-tick,img.icon-cross').remove();
       elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
@@ -177,7 +177,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  private isTicked = (popoverItemElem: JQuery<HTMLElement>) => {
+  private isTicked = (popoverItemElem: JQuery) => {
     return !!popoverItemElem.find('img.icon-tick').length;
   };
 

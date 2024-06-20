@@ -22,10 +22,10 @@ export class OAuth2 {
       type: 'popup',
     });
 
-    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
+    if (!oauthWin?.tabs?.length || !oauthWin.id) {
       return { error: 'No oauth window returned after initiating it' };
     }
-    const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
+    const tabId = oauthWin?.tabs?.[0].id;
     return await new Promise(resolve => {
       // need to use chrome.runtime.onMessage because BrowserMsg.addListener doesn't work
       // In gmail page reconnect auth popup, it sends event to background page (BrowserMsg.send.bg.await.reconnectAcctAuthPopup)

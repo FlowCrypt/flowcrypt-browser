@@ -141,7 +141,7 @@ export class InboxView extends View {
   public displayBlock = (name: string, title: string) => {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
-    Xss.sanitizeRender('h1', `${title}`);
+    Xss.sanitizeRender('h1', title);
   };
 
   private preRenderSecureComposeInFullScreen = () => {

@@ -142,7 +142,7 @@ export class Injector {
     if (this.webmailName !== 'gmail') {
       return 'generic';
     }
-    if (this.webmailName === 'gmail' && $('.V6.CL.W9').length === 1 && ($('.V6.CL.W9').width() as number) <= 28) {
+    if (this.webmailName === 'gmail' && $('.V6.CL.W9').length === 1 && ($('.V6.CL.W9').width() ?? 0) <= 28) {
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/4349
       return 'gmail2022';

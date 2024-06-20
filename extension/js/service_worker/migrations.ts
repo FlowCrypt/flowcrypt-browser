@@ -91,7 +91,7 @@ const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrati
   const newPubkeyEntity = ContactStore.pubkeyObj(key, pubkey.lastCheck);
   data.pubkeysToDelete.push(pubkey.fingerprint);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint!);
+  const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint);
   ContactStore.setReqPipe(req, (emailEntities: Email[]) => {
     if (emailEntities.length) {
       data.pubkeysToSave.push(newPubkeyEntity);
@@ -136,7 +136,9 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
           tx.objectStore('emails').put(email);
         }
       } else {
-        processSmimeKey(cursor.value as Pubkey, tx, data, () => cursor.continue());
+        processSmimeKey(cursor.value as Pubkey, tx, data, () => {
+          cursor.continue();
+        });
       }
     });
   });
@@ -235,7 +237,8 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
   // transform
   const converted = await Promise.all(
     entries.map(async entry => {
-      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? entry.pubkey.rawArmored ?? entry.pubkey.raw : (entry.pubkey as string);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? entry.pubkey.rawArmored ?? entry.pubkey.raw : entry.pubkey!;
       // parse again to re-calculate expiration-related fields etc.
       const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
       return {

@@ -54,6 +54,6 @@ export const requireMimeBuilder = () => {
 };
 
 export const requireIso88592 = (): Codec => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
   return (globalThis as any).iso88592 as Codec;
 };

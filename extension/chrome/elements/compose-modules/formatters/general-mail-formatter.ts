@@ -48,11 +48,11 @@ export class GeneralMailFormatter {
         );
       }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey!.key);
+      const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey.key);
 
       return {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        senderKi: signingKey!.keyInfo,
+        senderKi: signingKey.keyInfo,
         msgs: [msg],
         renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments },
       };
@@ -98,7 +98,7 @@ export class GeneralMailFormatter {
       // More details about Email tags - https://support.google.com/manufacturers/answer/6184604
       // This is important to consider when an email address with a email tag is present on the
       // signingKey, as technically it is the same email.
-      const baseSenderEmail = senderEmail.indexOf('+') !== -1 ? senderEmail.replace(/(.+)(?=\+).*(?=@)/, '$1') : senderEmail;
+      const baseSenderEmail = senderEmail.includes('+') ? senderEmail.replace(/(.+)(?=\+).*(?=@)/, '$1') : senderEmail;
       return signingKey.emails.some(email => email.includes(baseSenderEmail));
     }
     return true;

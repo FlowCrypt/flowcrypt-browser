@@ -43,7 +43,7 @@ export class Browser {
     Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
   };
 
-  public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
+  public static arrFromDomNodeList = (obj: NodeList | JQuery): Node[] => {
     // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
     const array = [];
     for (let i = obj.length >>> 0; i--; ) {

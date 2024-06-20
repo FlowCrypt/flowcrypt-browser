@@ -53,7 +53,9 @@ View.run(
       this.fetchKeyUi.handleOnPaste($('.pubkey'));
       $('.action_settings').on(
         'click',
-        this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm'))
+        this.setHandler(async () => {
+          await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm');
+        })
       );
     };
 
@@ -81,7 +83,9 @@ View.run(
       );
       $('.action_close').on(
         'click',
-        this.setHandler(() => this.closeDialog())
+        this.setHandler(() => {
+          this.closeDialog();
+        })
       );
     };
 

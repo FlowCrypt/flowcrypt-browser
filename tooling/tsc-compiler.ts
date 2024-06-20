@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as ts from 'typescript';
 
 import { readFileSync } from 'fs';
+import { TSConfig } from './resolve-modules';
 
 let tsconfigAbsPath: string | undefined;
 for (let i = 0; i < process.argv.length; i++) {
@@ -20,17 +21,17 @@ const tsconfigAbsDir = path.dirname(tsconfigAbsPath);
 const getNameAndPos = (f: ts.SignatureDeclaration) => {
   const sf = f.getSourceFile();
   const { line, character } = sf.getLineAndCharacterOfPosition(f.pos);
-  let name = f.name && f.name.getText();
+  let name = f.name?.getText();
   if (!name && ts.isArrowFunction(f)) {
     if (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent)) {
       // get the variable or property name anon f is assigned to
       const firstIdentifier = f.parent.getChildren(sf).find(ts.isIdentifier);
-      if (firstIdentifier && firstIdentifier.getText()) {
+      if (firstIdentifier?.getText()) {
         name = firstIdentifier.getText();
       }
     } else if (ts.isPropertyAssignment(f.parent)) {
       // get property name anon f is assigned to
-      name = f.parent.name && f.parent.name.getText();
+      name = f.parent.name?.getText();
     }
   }
   if (!name) {
@@ -53,12 +54,12 @@ const preserveAsyncStackTracesTransformerFactory = () => {
   const visitor = (ctx: ts.TransformationContext) => {
     const recursiveVisitor: ts.Visitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
       if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node) || ts.isFunctionExpression(node)) {
-        if (node.modifiers && node.modifiers.filter(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword).length) {
+        if (node.modifiers?.filter(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword).length) {
           if (node.body) {
             const catchClause = ts.factory.createCatchClause('t', ts.factory.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
-            if ((node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
+            if ((node.body as ts.FunctionBody).statements?.length) {
               const origFuncContent = ts.factory.createBlock((node.body as ts.FunctionBody).statements, true);
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
               (node.body as any).statements = ts.factory.createNodeArray([ts.factory.createTryStatement(origFuncContent, catchClause, undefined)]);
             } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) {
               // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
@@ -86,7 +87,7 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
       const message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
       console.error(`${diag.file.fileName} (${line + 1},${character + 1}): ${message}`);
     } else {
-      console.error(`${ts.flattenDiagnosticMessageText(diag.messageText, '\n')}`);
+      console.error(ts.flattenDiagnosticMessageText(diag.messageText, '\n'));
     }
   }
   if (allDiagnostics.length) {
@@ -99,7 +100,7 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
  */
 const compile = (): void => {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath!).toString());
+  const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath).toString()) as TSConfig;
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);
   const compilerHost = ts.createCompilerHost(options);
@@ -107,7 +108,7 @@ const compile = (): void => {
   if (options.allowJs) {
     extensions.push('.js');
   }
-  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, extensions, exclude, include); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  const fileList = files?.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, extensions, exclude, include); // eslint-disable-line @typescript-eslint/no-non-null-assertion
   if (!fileList.length) {
     console.error(
       `fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join(

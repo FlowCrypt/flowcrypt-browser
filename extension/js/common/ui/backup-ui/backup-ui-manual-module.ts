@@ -228,7 +228,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
 
   private isPrivateKeyEncrypted = async (ki: KeyInfoWithIdentity) => {
     const prv = await KeyUtil.parse(ki.private);
-    if ((await KeyUtil.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED')) === true) {
+    if (await KeyUtil.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED')) {
       return false;
     }
     return prv.fullyEncrypted;

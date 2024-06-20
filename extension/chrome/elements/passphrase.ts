@@ -214,7 +214,7 @@ View.run(
         // if passphrase matches more keys, it will save the pass phrase for all keys
         const prv = await KeyUtil.parse(keyinfo.private);
         try {
-          if ((await KeyUtil.decrypt(prv, pass)) === true) {
+          if (await KeyUtil.decrypt(prv, pass)) {
             unlockCount++;
             await PassphraseStore.set(storageType, this.acctEmail, keyinfo, pass);
             if (this.longids.includes(keyinfo.longid)) {

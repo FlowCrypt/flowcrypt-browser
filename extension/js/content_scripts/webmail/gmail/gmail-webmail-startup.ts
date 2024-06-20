@@ -49,7 +49,7 @@ export class GmailWebmailStartup {
   };
 
   private getUserAccountEmail = (hostPageInfo: WebmailVariantObject): undefined | string => {
-    if (window.location.search.indexOf('&view=btop&') === -1) {
+    if (!window.location.search.includes('&view=btop&')) {
       // when view=btop present, FlowCrypt should not be activated
       if (hostPageInfo.email) {
         return hostPageInfo.email;
@@ -72,8 +72,9 @@ export class GmailWebmailStartup {
       if (Str.isEmailValid(emailFromAccountModal)) {
         return emailFromAccountModal;
       }
-      // eslint-disable-next-line no-underscore-dangle
+      // eslint-disable-next-line no-underscore-dangle, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const emailFromConfigVariable = window.gbar_?.CONFIG?.[0]?.[4]?.ka?.[5];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       if (Str.isEmailValid(emailFromConfigVariable)) {
         return String(emailFromConfigVariable);
       }

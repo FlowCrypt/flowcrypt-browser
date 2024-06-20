@@ -112,7 +112,7 @@ export enum DecryptErrTypes {
 
 export class MsgUtil {
   public static type: PgpMsgMethod.Type = ({ data }) => {
-    if (!data || !data.length) {
+    if (!data?.length) {
       return undefined;
     }
     const firstByte = data[0];
@@ -218,7 +218,7 @@ export class MsgUtil {
         return { success: true, content: new Buf(decrypted), isEncrypted, isCleartext };
       }
       // cleartext and PKCS#7 are gone by this line
-      const msg = prepared.message as OpenPGP.Message<OpenPGP.Data>;
+      const msg = prepared.message;
       const packets = msg.packets;
       const isSymEncrypted = packets.filter(p => p instanceof opgp.SymEncryptedSessionKeyPacket).length > 0;
       const isPubEncrypted = packets.filter(p => p instanceof opgp.PublicKeyEncryptedSessionKeyPacket).length > 0;
@@ -335,7 +335,7 @@ export class MsgUtil {
       // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
       // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
       // but that is a larger change that would require separate PR and testing
-      if ((await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids)) || (await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids)) === true) {
+      if ((await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids)) || (await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids))) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
@@ -369,7 +369,7 @@ export class MsgUtil {
         continue;
       }
       const parsed = await KeyUtil.parse(ki.private);
-      if (parsed.fullyDecrypted || (ki.passphrase && (await SmimeKey.decryptKey(parsed, ki.passphrase)) === true)) {
+      if (parsed.fullyDecrypted || (ki.passphrase && (await SmimeKey.decryptKey(parsed, ki.passphrase)))) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {

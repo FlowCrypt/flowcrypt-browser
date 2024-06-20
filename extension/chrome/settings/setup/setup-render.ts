@@ -23,7 +23,7 @@ export class SetupRenderModule {
     $('.email-address').text(this.view.acctEmail);
     $('#button-go-back').css('visibility', 'hidden');
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (this.view.storage!.email_provider === 'gmail') {
+    if (this.view.storage.email_provider === 'gmail') {
       // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
@@ -31,16 +31,17 @@ export class SetupRenderModule {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
-        return await Settings.promptToRetry(
+        await Settings.promptToRetry(
           e,
           Lang.setup.failedToLoadEmailAliases,
           () => this.renderInitial(),
           Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
         );
+        return;
       }
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (this.view.storage!.setup_done && this.view.action !== 'update_from_ekm') {
+    if (this.view.storage.setup_done && this.view.action !== 'update_from_ekm') {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
       } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
@@ -129,30 +130,32 @@ export class SetupRenderModule {
     try {
       keyserverRes = await this.view.pubLookup.lookupEmail(this.view.acctEmail);
     } catch (e) {
-      return await Settings.promptToRetry(
+      await Settings.promptToRetry(
         e,
         Lang.setup.failedToCheckIfAcctUsesEncryption,
         () => this.renderSetupDialog(),
         Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
       );
+      return;
     }
     if (keyserverRes.pubkeys.length) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      } else if (this.view.storage!.email_provider === 'gmail') {
+      } else if (this.view.storage.email_provider === 'gmail') {
         try {
           const backups = await this.view.gmail.fetchKeyBackups();
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
           this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
-          return await Settings.promptToRetry(
+          await Settings.promptToRetry(
             e,
             Lang.setup.failedToCheckAccountBackups,
             () => this.renderSetupDialog(),
             Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
           );
+          return;
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
           this.displayBlock('step_2_recovery');

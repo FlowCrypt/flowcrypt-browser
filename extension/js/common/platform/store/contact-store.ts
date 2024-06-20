@@ -452,9 +452,15 @@ export class ContactStore extends AbstractStore {
           });
         }
       };
-      openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
-      openDbReq.onblocked = () => reject(ContactStore.errCategorize(openDbReq.error));
-      openDbReq.onerror = () => reject(ContactStore.errCategorize(openDbReq.error));
+      openDbReq.onsuccess = () => {
+        resolve(openDbReq.result);
+      };
+      openDbReq.onblocked = () => {
+        reject(ContactStore.errCategorize(openDbReq.error));
+      };
+      openDbReq.onerror = () => {
+        reject(ContactStore.errCategorize(openDbReq.error));
+      };
     });
   }
 
@@ -516,7 +522,7 @@ export class ContactStore extends AbstractStore {
     if (emails.length === 1) {
       const email = emails[0];
       const contact = await ContactStore.getOneWithAllPubkeys(db, email);
-      const keys = (contact?.sortedPubkeys || [])
+      const keys = (contact?.sortedPubkeys ?? [])
         .filter(k => !k.revoked && (k.pubkey.usableForEncryption || k.pubkey.usableForEncryptionButExpired))
         .map(k => k.pubkey);
       for (const key of keys) {
@@ -537,7 +543,7 @@ export class ContactStore extends AbstractStore {
       .filter(Boolean)
       .map(email => email.fingerprints)
       .reduce((a, b) => a.concat(b));
-    return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey?.armoredKey).filter(Boolean);
+    return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey.armoredKey).filter(Boolean);
   }
 
   public static async getOneWithAllPubkeys(db: IDBDatabase | undefined, email: string): Promise<ContactInfoWithSortedPubkeys | undefined> {
@@ -553,7 +559,7 @@ export class ContactStore extends AbstractStore {
       const req = tx.objectStore('emails').get(email);
       ContactStore.setReqPipe(
         req,
-        (email: Email) => {
+        (email: Email | undefined) => {
           if (!email) {
             resolve(undefined);
             return;
@@ -564,11 +570,17 @@ export class ContactStore extends AbstractStore {
           }
           // fire requests to query pubkeys and revocations
           // when all of them finish, the transaction will complete
-          ContactStore.setTxHandlers(tx, () => resolve(email), reject);
+          ContactStore.setTxHandlers(
+            tx,
+            () => {
+              resolve(email);
+            },
+            reject
+          );
           // request all pubkeys by fingerprints
           for (const fp of email.fingerprints) {
             const req2 = tx.objectStore('pubkeys').get(fp);
-            ContactStore.setReqPipe(req2, (pubkey: Pubkey) => {
+            ContactStore.setReqPipe(req2, (pubkey: Pubkey | undefined) => {
               if (pubkey) {
                 pubkeys.push(pubkey);
               }
@@ -586,7 +598,7 @@ export class ContactStore extends AbstractStore {
     }
     return emailEntity
       ? {
-          info: { email: emailEntity.email, name: emailEntity.name || undefined },
+          info: { email: emailEntity.email, name: emailEntity.name ?? undefined },
           sortedPubkeys,
         }
       : undefined;
@@ -604,7 +616,7 @@ export class ContactStore extends AbstractStore {
       const req = tx.objectStore('pubkeys').get(internalFingerprint);
       ContactStore.setReqPipe(req, resolve, reject);
     });
-    return pubkeyEntity?.armoredKey;
+    return pubkeyEntity.armoredKey;
   }
 
   public static async unlinkPubkey(db: IDBDatabase | undefined, email: string, { id, family }: KeyIdentity): Promise<void> {
@@ -762,7 +774,7 @@ export class ContactStore extends AbstractStore {
       pubkeys.map(async pubkey => {
         const pk = await KeyUtil.parse(pubkey.armoredKey);
         const revoked = pk.revoked || revocations.some(r => ContactStore.equalFingerprints(pk.id, r.fingerprint));
-        return { lastCheck: pubkey.lastCheck || undefined, pubkey: pk, revoked };
+        return { lastCheck: pubkey.lastCheck ?? undefined, pubkey: pk, revoked };
       })
     );
     return KeyUtil.sortPubkeyInfos(pubkeyInfos);
@@ -800,7 +812,7 @@ export class ContactStore extends AbstractStore {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const internalFingerprint = ContactStore.getPubkeyId(update.pubkey!);
+      const internalFingerprint = ContactStore.getPubkeyId(update.pubkey);
       if (update.pubkey.family === 'openpgp' && !update.pubkey.revoked && revocations.some(r => r.fingerprint === internalFingerprint)) {
         // we have this fingerprint revoked but the supplied key isn't
         // so let's not save it
@@ -816,7 +828,7 @@ export class ContactStore extends AbstractStore {
       Catch.report(`Wrongly updating pubkeyLastCheck without specifying pubkey for ${email} - ignoring`);
     }
     const req = tx.objectStore('emails').get(email);
-    ContactStore.setReqPipe(req, (emailEntity: Email) => {
+    ContactStore.setReqPipe(req, (emailEntity: Email | undefined) => {
       let updatedEmailEntity: Email | undefined;
       if (!emailEntity) {
         updatedEmailEntity = { email, name: null, searchable: [], fingerprints: [], lastUse: null };
@@ -937,6 +949,7 @@ export class ContactStore extends AbstractStore {
           if (!cursor) {
             resolve(found);
           } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             found.push(cursor.value);
             if (query.limit && found.length >= query.limit) {
               resolve(found);
