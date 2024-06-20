@@ -2,6 +2,9 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
 
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../node_modules/@types/chrome/index.d.ts" />
+
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
  * These steps somewhat overlap, so the two scripts were joined into one below. However, work was not yet done to assimilate them.
@@ -12,11 +15,11 @@ import { execSync as exec } from 'child_process';
  */
 
 const DIR = './build';
-const version: string = JSON.parse(readFileSync('./package.json').toString()).version;
+const version: string = (JSON.parse(readFileSync('./package.json').toString()) as { version: string }).version;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addManifest = (toBuildType: string, transform: (manifest: { [k: string]: any }) => void, fromBuildType = 'generic-extension-wip') => {
-  const manifest = JSON.parse(readFileSync(`${DIR}/${fromBuildType}/manifest.json`).toString());
+const addManifest = (toBuildType: string, transform: (manifest: chrome.runtime.Manifest) => void, fromBuildType = 'generic-extension-wip') => {
+  const manifest = JSON.parse(readFileSync(`${DIR}/${fromBuildType}/manifest.json`).toString()) as chrome.runtime.ManifestV3;
   transform(manifest);
   writeFileSync(`${DIR}/${toBuildType}/manifest.json`, JSON.stringify(manifest, undefined, 2));
 };
@@ -30,11 +33,12 @@ addManifest('firefox-consumer', manifest => {
   // We decide to use manifest v2 for firefox and below codes are to make v3 manifest to v2
   // Read more here: https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2029591323
   manifest.manifest_version = 2;
-  manifest.web_accessible_resources = manifest.web_accessible_resources[0].resources;
-  manifest.content_security_policy = manifest.content_security_policy.extension_pages;
-  manifest.permissions = [...manifest.permissions, ...manifest.host_permissions];
+  const manifestV3 = manifest as chrome.runtime.ManifestV3;
+  manifest.web_accessible_resources = manifestV3.web_accessible_resources?.[0].resources;
+  manifest.content_security_policy = manifestV3.content_security_policy?.extension_pages;
+  manifest.permissions = [...(manifestV3.permissions ?? []), ...(manifestV3.host_permissions ?? [])];
   delete manifest.host_permissions;
-  manifest.browser_action = manifest.action;
+  manifest.browser_action = manifestV3.action;
   delete manifest.action;
   manifest.browser_specific_settings = {
     gecko: {
@@ -43,16 +47,23 @@ addManifest('firefox-consumer', manifest => {
       strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
-  manifest.background.scripts = ['/js/service_worker/background.js'];
-  delete manifest.background.service_worker;
-  manifest.permissions = manifest.permissions.filter((p: string) => p !== 'unlimitedStorage');
+  manifest.background = {
+    ...manifest.background,
+    scripts: ['/js/service_worker/background.js'],
+  };
+  // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
+  const { service_worker, ...newManifest } = manifest.background as chrome.runtime.ManifestV3;
+  manifest = newManifest;
+  manifest.permissions = manifest.permissions?.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
 });
 
 addManifest(
   'thunderbird-consumer',
   manifest => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     manifest.browser_specific_settings.strict_min_version = '102.0';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
@@ -91,10 +102,10 @@ addManifest('chrome-enterprise', manifest => {
     'https://*.googleapis.com/*',
     'https://flowcrypt.com/*',
   ];
-  for (const csDef of manifest.content_scripts) {
-    csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
+  for (const csDef of manifest.content_scripts ?? []) {
+    csDef.matches = csDef.matches?.filter(host => host === 'https://mail.google.com/*' || host === 'https://www.google.com/robots.txt*');
   }
-  manifest.content_scripts = manifest.content_scripts.filter((csDef: { matches: string[] }) => csDef.matches.length); // remove empty defs
+  manifest.content_scripts = (manifest.content_scripts ?? []).filter(csDef => csDef.matches?.length); // remove empty defs
   if (!manifest.content_scripts.length) {
     throw new Error('Content script defs ended up empty in enterprise manifest');
   }

@@ -3,14 +3,11 @@
 'use strict';
 
 import { readFileSync, writeFileSync } from 'fs';
+import { TSConfig } from './resolve-modules';
 
-const {
-  compilerOptions: { outDir: targetDirExtension },
-} = JSON.parse(readFileSync('./tsconfig.json').toString());
-const {
-  compilerOptions: { outDir: targetDirContentScripts },
-} = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
-const { version } = JSON.parse(readFileSync(`./package.json`).toString());
+const targetDirExtension = (JSON.parse(readFileSync('./tsconfig.json').toString()) as TSConfig).compilerOptions.outDir;
+const targetDirContentScripts = (JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString()) as TSConfig).compilerOptions.outDir;
+const { version } = JSON.parse(readFileSync(`./package.json`).toString()) as { version: string };
 
 // mock values for a consumer-mock or enterprise-mock test builds are regex-replaced later in `build-types-and-manifests.ts`
 const replaceables: { needle: RegExp; val: string }[] = [

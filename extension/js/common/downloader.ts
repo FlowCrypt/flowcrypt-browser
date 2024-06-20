@@ -55,8 +55,8 @@ export class Downloader {
           }
           resolve({ result: download });
         })
-        .catch(e => {
-          reject(e);
+        .catch((e: unknown) => {
+          reject(e as Error);
         });
     });
   };
@@ -87,8 +87,8 @@ export class Downloader {
           const msg = await this.rawMessages.await(msgId, msgDownload);
           resolve(msg.raw || '');
         })
-        .catch(e => {
-          reject(e);
+        .catch((e: unknown) => {
+          reject(e as Error);
         });
     });
   };
@@ -108,8 +108,8 @@ export class Downloader {
           const msg = await this.rawMessages.await(msgId, msgDownload);
           resolve(msg);
         })
-        .catch(e => {
-          reject(e);
+        .catch((e: unknown) => {
+          reject(e as Error);
         });
     });
   };

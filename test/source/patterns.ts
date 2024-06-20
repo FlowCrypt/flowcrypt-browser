@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-
 import * as path from 'path';
-
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="../../node_modules/@types/chrome/index.d.ts" />
 import { readFileSync, readdirSync, statSync } from 'fs';
 
 /**
@@ -80,11 +80,11 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
-const expectedPermissions = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
+const expectedPermissions: chrome.runtime.ManifestPermissions[] = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
 const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
 const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
-  const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
+  const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString()) as chrome.runtime.Manifest;
   const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
   for (const expectedHostPermission of expectedHostPermissions) {
     if (!manifest.host_permissions.includes(expectedHostPermission)) {
@@ -93,15 +93,15 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
     }
   }
   for (const expectedPermission of expectedPermissions) {
-    if (!manifest.permissions.includes(expectedPermission)) {
+    if (!manifest.permissions?.includes(expectedPermission)) {
       if (!(expectedPermission === 'unlimitedStorage' && (buildType === 'firefox-consumer' || buildType === 'thunderbird-consumer'))) {
         console.error(`Missing permission '${expectedPermission}' in ${buildType}/manifest.json`);
         errsFound++;
       }
     }
   }
-  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) => cs.matches.includes('https://mail.google.com/*'));
-  if (!gmailCs || !gmailCs.css.length || !gmailCs.js.length) {
+  const gmailCs = manifest.content_scripts?.find(cs => cs.matches?.includes('https://mail.google.com/*'));
+  if (!gmailCs?.css?.length || !gmailCs.js?.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
     errsFound++;
   }

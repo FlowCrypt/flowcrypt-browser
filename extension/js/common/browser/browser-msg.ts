@@ -198,8 +198,12 @@ export class BrowserMsg {
   public static send = {
     // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
-      settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
-      updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
+      settings: (bm: Bm.Settings) => {
+        BrowserMsg.sendCatch(undefined, 'settings', bm);
+      },
+      updateUninstallUrl: () => {
+        BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {});
+      },
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
           BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
@@ -220,41 +224,108 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
       },
     },
-    passphraseEntry: (bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm),
-    addEndSessionBtn: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'add_end_session_btn', {}),
-    openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => BrowserMsg.sendCatch(dest, 'open_page', bm),
-    setCss: (dest: Bm.Dest, bm: Bm.SetCss) => BrowserMsg.sendCatch(dest, 'set_css', bm),
-    addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'add_class', bm),
-    removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendCatch(dest, 'remove_class', bm),
-    closeDialog: (frame: ChildFrame) => BrowserMsg.sendToParentWindow(frame, 'close_dialog', {}),
-    authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => BrowserMsg.sendCatch(dest, 'auth_window_result', bm),
-    closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
-    setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'set_active_window', bm),
-    focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm),
-    closeComposeWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_compose_window', bm),
-    focusBody: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'focus_body', {}),
-    focusFrame: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'focus_frame', bm),
-    closeReplyMessage: (dest: Bm.Dest, bm: Bm.ComposeWindow) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),
-    scrollToReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_reply_box', bm),
-    scrollToCursorInReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToCursorInReplyBox) => BrowserMsg.sendCatch(dest, 'scroll_to_cursor_in_reply_box', bm),
-    reinsertReplyBox: (dest: Bm.Dest, bm: Bm.ReinsertReplyBox) => BrowserMsg.sendCatch(dest, 'reinsert_reply_box', bm),
-    passphraseDialog: (dest: Bm.Dest, bm: Bm.PassphraseDialog) => BrowserMsg.sendCatch(dest, 'passphrase_dialog', bm),
-    notificationShow: (dest: Bm.Dest, bm: Bm.NotificationShow) => BrowserMsg.sendCatch(dest, 'notification_show', bm),
-    notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) =>
-      BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm),
-    showConfirmation: (frame: ChildFrame, bm: Bm.ShowConfirmation) => BrowserMsg.sendToParentWindow(frame, 'confirmation_show', bm, 'confirmation_result'),
-    renderPublicKeys: (dest: Bm.Dest, bm: Bm.RenderPublicKeys) => BrowserMsg.sendCatch(dest, 'render_public_keys', bm),
-    replyPubkeyMismatch: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'reply_pubkey_mismatch', {}),
-    addPubkeyDialog: (dest: Bm.Dest, bm: Bm.AddPubkeyDialog) => BrowserMsg.sendCatch(dest, 'add_pubkey_dialog', bm),
-    reload: (dest: Bm.Dest, bm: Bm.Reload) => BrowserMsg.sendCatch(dest, 'reload', bm),
-    redirect: (dest: Bm.Dest, bm: Bm.Redirect) => BrowserMsg.sendCatch(dest, 'redirect', bm),
-    addToContacts: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'addToContacts', {}),
-    reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm),
-    showAttachmentPreview: (frame: ChildFrame, bm: Bm.ShowAttachmentPreview) => BrowserMsg.sendToParentWindow(frame, 'show_attachment_preview', bm),
-    ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => BrowserMsg.sendCatch(dest, 'ajax_progress', bm),
-    pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => BrowserMsg.sendCatch(dest, 'pgp_block_render', bm),
-    pgpBlockReady: (frame: ChildFrame, bm: Bm.PgpBlockReady) => BrowserMsg.sendToParentWindow(frame, 'pgp_block_ready', bm),
-    pgpBlockRetry: (frame: ChildFrame, bm: Bm.PgpBlockRetry) => BrowserMsg.sendToParentWindow(frame, 'pgp_block_retry', bm),
+    passphraseEntry: (bm: Bm.PassphraseEntry) => {
+      BrowserMsg.sendCatch('broadcast', 'passphrase_entry', bm);
+    },
+    addEndSessionBtn: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'add_end_session_btn', {});
+    },
+    openPage: (dest: Bm.Dest, bm: Bm.OpenPage) => {
+      BrowserMsg.sendCatch(dest, 'open_page', bm);
+    },
+    setCss: (dest: Bm.Dest, bm: Bm.SetCss) => {
+      BrowserMsg.sendCatch(dest, 'set_css', bm);
+    },
+    addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => {
+      BrowserMsg.sendCatch(dest, 'add_class', bm);
+    },
+    removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => {
+      BrowserMsg.sendCatch(dest, 'remove_class', bm);
+    },
+    closeDialog: (frame: ChildFrame) => {
+      BrowserMsg.sendToParentWindow(frame, 'close_dialog', {});
+    },
+    authWindowResult: (dest: Bm.Dest, bm: Bm.AuthWindowResult) => {
+      BrowserMsg.sendCatch(dest, 'auth_window_result', bm);
+    },
+    closePage: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'close_page', {});
+    },
+    setActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => {
+      BrowserMsg.sendCatch(dest, 'set_active_window', bm);
+    },
+    focusPreviousActiveWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => {
+      BrowserMsg.sendCatch(dest, 'focus_previous_active_window', bm);
+    },
+    closeComposeWindow: (dest: Bm.Dest, bm: Bm.ComposeWindow) => {
+      BrowserMsg.sendCatch(dest, 'close_compose_window', bm);
+    },
+    focusBody: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'focus_body', {});
+    },
+    focusFrame: (dest: Bm.Dest, bm: Bm.ComposeWindow) => {
+      BrowserMsg.sendCatch(dest, 'focus_frame', bm);
+    },
+    closeReplyMessage: (dest: Bm.Dest, bm: Bm.ComposeWindow) => {
+      BrowserMsg.sendCatch(dest, 'close_reply_message', bm);
+    },
+    scrollToReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToReplyBox) => {
+      BrowserMsg.sendCatch(dest, 'scroll_to_reply_box', bm);
+    },
+    scrollToCursorInReplyBox: (dest: Bm.Dest, bm: Bm.ScrollToCursorInReplyBox) => {
+      BrowserMsg.sendCatch(dest, 'scroll_to_cursor_in_reply_box', bm);
+    },
+    reinsertReplyBox: (dest: Bm.Dest, bm: Bm.ReinsertReplyBox) => {
+      BrowserMsg.sendCatch(dest, 'reinsert_reply_box', bm);
+    },
+    passphraseDialog: (dest: Bm.Dest, bm: Bm.PassphraseDialog) => {
+      BrowserMsg.sendCatch(dest, 'passphrase_dialog', bm);
+    },
+    notificationShow: (dest: Bm.Dest, bm: Bm.NotificationShow) => {
+      BrowserMsg.sendCatch(dest, 'notification_show', bm);
+    },
+    notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) => {
+      BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm);
+    },
+    showConfirmation: (frame: ChildFrame, bm: Bm.ShowConfirmation) => {
+      BrowserMsg.sendToParentWindow(frame, 'confirmation_show', bm, 'confirmation_result');
+    },
+    renderPublicKeys: (dest: Bm.Dest, bm: Bm.RenderPublicKeys) => {
+      BrowserMsg.sendCatch(dest, 'render_public_keys', bm);
+    },
+    replyPubkeyMismatch: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'reply_pubkey_mismatch', {});
+    },
+    addPubkeyDialog: (dest: Bm.Dest, bm: Bm.AddPubkeyDialog) => {
+      BrowserMsg.sendCatch(dest, 'add_pubkey_dialog', bm);
+    },
+    reload: (dest: Bm.Dest, bm: Bm.Reload) => {
+      BrowserMsg.sendCatch(dest, 'reload', bm);
+    },
+    redirect: (dest: Bm.Dest, bm: Bm.Redirect) => {
+      BrowserMsg.sendCatch(dest, 'redirect', bm);
+    },
+    addToContacts: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'addToContacts', {});
+    },
+    reRenderRecipient: (dest: Bm.Dest, bm: Bm.ReRenderRecipient) => {
+      BrowserMsg.sendCatch(dest, 'reRenderRecipient', bm);
+    },
+    showAttachmentPreview: (frame: ChildFrame, bm: Bm.ShowAttachmentPreview) => {
+      BrowserMsg.sendToParentWindow(frame, 'show_attachment_preview', bm);
+    },
+    ajaxProgress: (dest: Bm.Dest, bm: Bm.AjaxProgress) => {
+      BrowserMsg.sendCatch(dest, 'ajax_progress', bm);
+    },
+    pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => {
+      BrowserMsg.sendCatch(dest, 'pgp_block_render', bm);
+    },
+    pgpBlockReady: (frame: ChildFrame, bm: Bm.PgpBlockReady) => {
+      BrowserMsg.sendToParentWindow(frame, 'pgp_block_ready', bm);
+    },
+    pgpBlockRetry: (frame: ChildFrame, bm: Bm.PgpBlockRetry) => {
+      BrowserMsg.sendToParentWindow(frame, 'pgp_block_retry', bm);
+    },
   };
   private static readonly processed = new Set<string>(); // or ExpirationCache?
   /* eslint-disable @typescript-eslint/naming-convention */
@@ -367,6 +438,7 @@ export class BrowserMsg {
           return false; // no plans to respond
         }
       } catch (exception) {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         BrowserMsg.sendRawResponse(Promise.reject(exception), respondIfPageStillOpen);
         return true; // will respond
       }
@@ -417,7 +489,9 @@ export class BrowserMsg {
       uid: SymmetricMessageEncryption.generateIV(),
       responseName,
     };
-    Catch.try(async () => BrowserMsg.sendUpParentLine(await SymmetricMessageEncryption.encrypt(raw)))();
+    Catch.try(async () => {
+      BrowserMsg.sendUpParentLine(await SymmetricMessageEncryption.encrypt(raw));
+    })();
   }
 
   private static sendToChildren(encryptedMsg: SymEncryptedMessage) {
@@ -456,6 +530,7 @@ export class BrowserMsg {
         // the duplication is likely caused by our routing mechanism. Sometimes browser will deliver the message directly as well as through bg
       }
     } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       BrowserMsg.sendRawResponse(Promise.reject(e), rawRespond);
     }
     return false;
@@ -526,7 +601,7 @@ export class BrowserMsg {
         } else if (typeof r === 'object' && r.exception) {
           reject(BrowserMsg.jsonToErr(r.exception, msg));
         } else if (!r.result || typeof r.result !== 'object') {
-          resolve(r.result as Bm.Response);
+          resolve(r.result);
         } else {
           resolve(r.result);
         }
@@ -595,7 +670,7 @@ export class BrowserMsg {
         .then(result => {
           rawRespond({ result, exception: undefined });
         })
-        .catch(e => {
+        .catch((e: unknown) => {
           rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e) });
         });
     } catch (e) {

@@ -107,7 +107,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private initSquire = (addLinks: boolean, removeExistingLinks = false) => {
     const squireHtml = this.squire?.getHTML();
-    const el = this.view.S.cached('input_text').get(0) as HTMLElement;
+    const el = this.view.S.cached('input_text').get(0);
+    if (!el) {
+      throw new Error('Input element not found');
+    }
     this.squire?.destroy();
     this.squire = new window.Squire(el, { addLinks });
     this.initShortcuts();
@@ -129,7 +132,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
       div.appendChild(e.detail.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
-      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length as number)) {
+      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
         e.preventDefault();
         await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
         return;
@@ -173,7 +176,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire.addEventListener('pasteImage', (ev: Event & { detail: { clipboardData: DataTransfer } }) => {
       if (!this.isRichText()) return;
       const items = Array.from(ev.detail.clipboardData?.items ?? []);
-      const imageItem = items.find(item => /image/.test(item.type));
+      const imageItem = items.find(item => item.type.includes('image'));
 
       const imageFile = imageItem?.getAsFile();
       if (imageItem && imageFile) {
@@ -208,7 +211,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private initShortcuts = () => {
     try {
-      const isMac = /Mac OS X/.test(navigator.userAgent);
+      const isMac = navigator.userAgent.includes('Mac OS X');
       const ctrlKey = isMac ? 'Meta-' : 'Ctrl-';
       const mapKeyToFormat = (tag: string) => {
         return (self: Squire, event: Event) => {

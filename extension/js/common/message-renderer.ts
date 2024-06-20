@@ -28,7 +28,7 @@ import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
 import { Downloader } from './downloader.js';
-import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js';
+import { LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
@@ -82,12 +82,12 @@ export class MessageRenderer {
     const processImageElements = (node: Element | null) => {
       // Ensure the node exists and has a 'src' attribute
       if (!node || !('src' in node)) return;
-      const imageSrc = node.getAttribute('src') as string;
+      const imageSrc = node.getAttribute('src');
       if (!imageSrc) return;
       const matches = imageSrc.match(CID_PATTERN);
 
       // Check if the src attribute contains a CID
-      if (matches && matches[1]) {
+      if (matches?.[1]) {
         const contentId = matches[1];
         const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
 
@@ -156,7 +156,7 @@ export class MessageRenderer {
     if (verifyRes?.error) {
       renderModule.renderSignatureStatus(`error verifying signature: ${verifyRes.error}`);
       renderModule.setFrameColor('red');
-    } else if (!verifyRes || !verifyRes.signerLongids.length) {
+    } else if (!verifyRes?.signerLongids.length) {
       renderModule.renderSignatureStatus('not signed');
     } else if (verifyRes.match) {
       renderModule.renderSignatureStatus('signed');
@@ -279,7 +279,7 @@ export class MessageRenderer {
     body: MessageBody,
     attachments: Attachment[],
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQueryEl | undefined,
+    attachmentSel: JQuery | undefined,
     msgId: string, // for PGP/MIME signed messages
     messageInfo: MessageInfo,
     skipSignatureAttachment?: boolean
@@ -421,8 +421,8 @@ export class MessageRenderer {
           await this.processedMessages.set(msgId, processed);
           resolve(await this.processedMessages.await(msgId, processed));
         })
-        .catch(e => {
-          reject(e);
+        .catch((e: unknown) => {
+          reject(e as Error);
         });
     });
   };
@@ -837,7 +837,7 @@ export class MessageRenderer {
   private renderBackupFromFile = async (
     attachment: Attachment,
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQueryEl | undefined
+    attachmentSel: JQuery | undefined
   ): Promise<'shown' | 'hidden'> => {
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);

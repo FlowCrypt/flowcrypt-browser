@@ -21,10 +21,10 @@ export class BgHandlers {
       console.info(`db corrupted, skipping: ${request.f}`);
       return await new Promise(() => undefined); // never resolve, error was already shown
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const dbFunc = (ContactStore as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     if (request.f === 'obj') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -81,7 +81,7 @@ export class BgHandlers {
               {
                 target: { tabId: activeTabs[0].id },
                 func: () => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                   return { acctEmail: (window as any).account_email_global, sameWorld: (window as any).same_world_global };
                 },
               },

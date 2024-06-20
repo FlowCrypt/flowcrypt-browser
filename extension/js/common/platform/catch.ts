@@ -91,7 +91,7 @@ export class Catch {
       console.error(exception);
     }
     console.error(exception.message + '\n' + exception.stack);
-    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
+    if (!isManuallyCalled && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       Catch.ORIG_ONERROR.apply(undefined, args); // Call any previously assigned handler
@@ -100,7 +100,7 @@ export class Catch {
       console.error('Not reporting UnreportableError above');
       return false;
     }
-    if ((exception.stack || '').indexOf('PRIVATE') !== -1) {
+    if ((exception.stack || '').includes('PRIVATE')) {
       exception.stack = '~censored:PRIVATE';
     }
     const formatted = Catch.formatExceptionForReport(exception, line, col);
@@ -178,11 +178,11 @@ export class Catch {
     const browserName = Catch.browser().name;
     const origin = new URL(location.href).origin;
     let env = 'unknown';
-    if (url.indexOf('bnjglocicd') !== -1) {
+    if (url.includes('bnjglocicd')) {
       env = 'ex:prod';
-    } else if (url.indexOf('gjdhkacdgd') !== -1 || url.indexOf('gggocmadhd') !== -1) {
+    } else if (url.includes('gjdhkacdgd') || url.includes('gggocmadhd')) {
       env = 'ex:dev';
-    } else if (url.indexOf('mefaeofbcc') !== -1) {
+    } else if (url.includes('mefaeofbcc')) {
       env = 'ex:stable';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
       env = 'ex:fork';
@@ -202,7 +202,7 @@ export class Catch {
     if (type === 'error') {
       throw new Error('intentional error for debugging');
     } else {
-      // eslint-disable-next-line no-throw-literal
+      // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
       throw { what: 'intentional thrown object for debugging' };
     }
   }
@@ -225,16 +225,16 @@ export class Catch {
     for (const field of sensitiveFields) {
       url = Url.replaceUrlParam(url, field, '[SCRUBBED]');
     }
-    if (url.indexOf('refreshToken=') !== -1) {
+    if (url.includes('refreshToken=')) {
       return `${url.split('?')[0]}~censored:refreshToken`;
     }
-    if (url.indexOf('token=') !== -1) {
+    if (url.includes('token=')) {
       return `${url.split('?')[0]}~censored:token`;
     }
-    if (url.indexOf('code=') !== -1) {
+    if (url.includes('code=')) {
       return `${url.split('?')[0]}~censored:code`;
     }
-    if (url.indexOf('idToken=') !== -1) {
+    if (url.includes('idToken=')) {
       return `${url.split('?')[0]}~censored:idToken`;
     }
     return url;
@@ -342,7 +342,7 @@ export class Catch {
           Authorization: `Bearer ${idToken}`,
         },
         success: (response: { saved: boolean }) => {
-          if (response && typeof response === 'object' && response.saved === true) {
+          if (response && typeof response === 'object' && response.saved) {
             console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           } else {
             console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');

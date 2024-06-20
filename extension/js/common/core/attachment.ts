@@ -147,7 +147,7 @@ export class Attachment {
       (this.type === 'application/pgp-keys' && !this.isPrivateKey()) ||
       /^(0|0x)?([A-F0-9]{16}|[A-F0-9]{8}([A-F0-9]{8})?)\.asc(\.pgp)?$/i.test(this.name) || // Key ID (8 or 16 characters) with .asc extension (optional .pgp)
       (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}.*\.asc$/g.test(this.name)) || // name contains the word "public", any key id and ends with .asc
-      (/\.asc$/.test(this.name) && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
+      (this.name.endsWith('.asc') && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
     );
   };
 
@@ -226,7 +226,7 @@ export class Attachment {
       return 'privateKey';
     } else {
       // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
-      const isAmbiguousAscFile = /\.asc$/.test(this.name); // ambiguous .asc name
+      const isAmbiguousAscFile = this.name.endsWith('.asc'); // ambiguous .asc name
       const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
       if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isAttachmentAnImage()) {
         if (isAmbiguousNonameFile && this.type === 'application/octet-stream') {

@@ -100,7 +100,7 @@ View.run(
         return;
       }
       const prv = await KeyUtil.parse(this.mostUsefulPrv.keyInfo.private);
-      if ((await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val()))) === true) {
+      if (await KeyUtil.decrypt(prv, String($('#current_pass_phrase').val()))) {
         await this.bruteForceProtection.passphraseCheckSucceed();
         this.mostUsefulPrv.key = prv;
         this.displayBlock('step_1_enter_new');

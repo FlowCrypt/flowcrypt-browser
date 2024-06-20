@@ -365,6 +365,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e.message}`, false, 5);
       } else {
         Catch.reportErr(e);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const errType = e.constructor?.name || 'Error';
         Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`);
       }

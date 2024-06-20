@@ -43,7 +43,7 @@ export class PgpBlockViewQuoteModule {
       while (lines.length) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const lastLine = lines.pop()!; // lines.length above ensures there is a line
-        if (lastLine[0] === '>' || !lastLine.length) {
+        if (lastLine.startsWith('>') || !lastLine.length) {
           // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
           linesQuotedPart.unshift(lastLine);
         } else {

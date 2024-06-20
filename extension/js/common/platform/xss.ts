@@ -52,22 +52,22 @@ export class Xss {
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
-  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizeAppend = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizePrepend = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizeReplace = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };

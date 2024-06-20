@@ -156,7 +156,7 @@ export class Str {
     if (!email) {
       return false;
     }
-    if (email.indexOf(' ') !== -1) {
+    if (email.includes(' ')) {
       return false;
     }
     email = email.replace(/\:8001$/, ''); // for MOCK tests, todo: remove from production
@@ -347,7 +347,7 @@ export class Value {
       }
       return result;
     },
-    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as unknown[]).indexOf(value) !== -1),
+    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as unknown[]).includes(value)),
     intersection: <T>(array1: T[], array2: T[]): T[] => array1.filter(value => array2.includes(value)),
     hasIntersection: <T>(array1: T[], array2: T[]): boolean => array1.some(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
@@ -436,7 +436,7 @@ export class Url {
       return url;
     }
     let queryParams = urlParts[1];
-    queryParams = queryParams[queryParams.length - 1] === '#' ? queryParams.slice(0, -1) : queryParams;
+    queryParams = queryParams.endsWith('#') ? queryParams.slice(0, -1) : queryParams;
     const params = new URLSearchParams(queryParams);
     for (const p of paramsToDelete) {
       params.delete(p);

@@ -187,7 +187,7 @@ export class GmailParser {
           name: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).filename,
           type: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).mimeType,
           treatAs,
-          inline: (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
+          inline: (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '').toLowerCase().startsWith('inline'),
         })
       );
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -211,7 +211,7 @@ export class GmailParser {
         GmailParser.findBodies(part, internalResults);
       }
     }
-    if (isGmailMsgPayloadPart(gmailMsg) && gmailMsg.body && typeof gmailMsg.body.data !== 'undefined' && gmailMsg.body.size !== 0) {
+    if (isGmailMsgPayloadPart(gmailMsg) && typeof gmailMsg.body?.data !== 'undefined' && gmailMsg.body.size !== 0) {
       if (gmailMsg.mimeType) {
         internalResults[gmailMsg.mimeType] = gmailMsg.body.data;
       }
