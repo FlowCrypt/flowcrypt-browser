@@ -401,9 +401,10 @@ export class BrowserMsg {
             useFullScreenSecureCompose: true,
             messageDetails: {
               subject: messageDetails.subject,
-              to: messageDetails?.to || '',
+              to: messageDetails?.to,
               cc: messageDetails?.cc || messageDetails?.ccList,
               bcc: messageDetails?.bcc || messageDetails?.bccList,
+              plainTextBody: messageDetails?.plainTextBody || '',
             },
           };
           await BgUtils.openExtensionTab(

@@ -7,7 +7,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { PromiseCancellation, Url } from '../../js/common/core/common.js';
+import { PromiseCancellation, Str, Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
@@ -272,8 +272,21 @@ export class ComposeView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
   private preParseEmailRecipientsIfNeeded = async () => {
+    const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
+    if (messageDetails.plainTextBody) {
+      // Thunderbird already returns a standard quoted plain text body
+      const quotedPlainTextBody = messageDetails.plainTextBody;
+      const rtl = messageDetails.plainTextBody.match(new RegExp('[' + Str.rtlChars + ']'));
+      const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
+      const footer = await this.footerModule.getFooterFromStorage(this.senderModule.getSender());
+      const sanitizedFooter = footer ? this.footerModule.createFooterHtml(footer) : undefined;
+      this.quoteModule.tripleDotSanitizedHtmlContent = {
+        quote: `<blockquote ${dirAttr}>${quotedPlainTextBody}</blockquote>`, // xss-safe-value
+        footer: sanitizedFooter, // xss-sanitized
+      };
+      this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
+    }
     if (this.externalMessageDetails) {
-      const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
       this.S.cached('input_subject').val(messageDetails.subject);
       const { to = [], cc = [], bcc = [] } = messageDetails;
       if (to.length || cc.length || bcc.length) {
