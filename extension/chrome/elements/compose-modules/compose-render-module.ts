@@ -495,11 +495,10 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   private renderReplySuccessMimeAttachments = (attachmentsFilenames: string[]) => {
     const attachments = $('<div id="attachments"></div>');
-    // eslint-disable-next-line @typescript-eslint/no-for-in-array
-    for (const index in attachmentsFilenames) {
+    for (const [index, filename] of attachmentsFilenames.entries()) {
       if (attachmentsFilenames.hasOwnProperty(index)) {
-        const filename = Xss.escape(attachmentsFilenames[index]);
-        attachments.append(`<button class="attachment" index="${index}" title="${filename}"><b>${filename}</b></button>`); // xss-escaped
+        const escapedFilename = Xss.escape(filename);
+        attachments.append(`<button class="attachment" index="${index}" title="${escapedFilename}"><b>${escapedFilename}</b></button>`); // xss-escaped
       }
     }
     this.view.S.cached('replied_body').append(attachments); // xss-escaped

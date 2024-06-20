@@ -235,14 +235,11 @@ View.run(
       );
       $('#status-row #status_google').on(
         'click',
-        this.setHandler(async () =>
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          {
-            await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', {
-              which: 'google_account',
-            });
-          }
-        )
+        this.setHandler(async () => {
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', {
+            which: 'google_account',
+          });
+        })
       );
       $('#status-row #status_local_store').on(
         'click',

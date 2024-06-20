@@ -3,14 +3,14 @@
 'use strict';
 
 import { Attachment } from '../../../common/core/attachment.js';
-import { JQueryEl, LoaderContextInterface } from '../../../common/loader-context-interface.js';
+import { LoaderContextInterface } from '../../../common/loader-context-interface.js';
 import { XssSafeFactory } from '../../../common/xss-safe-factory.js';
 
 export class GmailLoaderContext implements LoaderContextInterface {
   public constructor(
     private readonly factory: XssSafeFactory,
-    public msgEl: JQueryEl,
-    private readonly attachmentsContainerInner?: JQueryEl
+    public msgEl: JQuery,
+    private readonly attachmentsContainerInner?: JQuery
   ) {}
 
   /* eslint-disable @typescript-eslint/naming-convention */
@@ -21,10 +21,10 @@ export class GmailLoaderContext implements LoaderContextInterface {
    */
   // prettier-ignore
   public static updateMsgBodyEl_DANGEROUSLY( // xss-dangerous-function
-    el: HTMLElement | JQueryEl,
+    el: HTMLElement | JQuery,
     method: 'set' | 'append' | 'after',
     newHtmlContent_MUST_BE_XSS_SAFE: string
-  ): JQueryEl {
+  ): JQuery {
     /* eslint-enable @typescript-eslint/naming-convention */
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
@@ -70,7 +70,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
     return '<div class="message_inner_body evaluated">' + htmlContent + '</div>';
   };
 
-  public renderPlainAttachment = (a: Attachment, attachmentSel?: JQueryEl, error?: string) => {
+  public renderPlainAttachment = (a: Attachment, attachmentSel?: JQuery, error?: string) => {
     // simply show existing attachment
     if (!attachmentSel) {
       // todo: do we need this clause?
@@ -105,7 +105,7 @@ export class GmailLoaderContext implements LoaderContextInterface {
     this.msgEl = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(this.msgEl, method, newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
   };
 
-  public hideAttachment = (attachmentEl: JQueryEl | undefined) => {
+  public hideAttachment = (attachmentEl: JQuery | undefined) => {
     if (attachmentEl) {
       attachmentEl.hide();
       if (!attachmentEl.length) {

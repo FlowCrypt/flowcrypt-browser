@@ -28,7 +28,7 @@ import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
 import { Downloader } from './downloader.js';
-import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js';
+import { LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
@@ -279,7 +279,7 @@ export class MessageRenderer {
     body: MessageBody,
     attachments: Attachment[],
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQueryEl | undefined,
+    attachmentSel: JQuery | undefined,
     msgId: string, // for PGP/MIME signed messages
     messageInfo: MessageInfo,
     skipSignatureAttachment?: boolean
@@ -837,7 +837,7 @@ export class MessageRenderer {
   private renderBackupFromFile = async (
     attachment: Attachment,
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQueryEl | undefined
+    attachmentSel: JQuery | undefined
   ): Promise<'shown' | 'hidden'> => {
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);

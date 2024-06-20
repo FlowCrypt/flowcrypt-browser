@@ -4,15 +4,13 @@
 
 import { Attachment } from './core/attachment.js';
 
-export type JQueryEl = JQuery;
-
 export interface LoaderContextInterface {
-  renderPlainAttachment(a: Attachment, attachmentEl?: JQueryEl, error?: string): void;
+  renderPlainAttachment(a: Attachment, attachmentEl?: JQuery, error?: string): void;
 
   // prependAttachments is used to render encrypted attachment prepending AttachmentContainerInner
   prependEncryptedAttachment(a: Attachment): void;
 
-  hideAttachment(attachmentSel?: JQueryEl): void;
+  hideAttachment(attachmentSel?: JQuery): void;
 
   /**
    * XSS WARNING

@@ -118,7 +118,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
 const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
   try {
     const page = await browser.newPage(t, t.context.urls?.extension('chrome/dev/ci_unit_test.htm'));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
     const items = (await page.target.evaluate(() => (window as any).Debug.readDatabase())) as {
       input: unknown;
       output: unknown;

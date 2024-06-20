@@ -15,7 +15,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { AttachmentWarnings } from '../shared/attachment_warnings.js';
 import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 
-declare const filesize: { filesize: (size: number) => number }; // eslint-disable-line @typescript-eslint/ban-types
+declare const filesize: { filesize: (size: number) => number };
 
 export class PgpBlockViewAttachmentsModule {
   public includedAttachments: Attachment[] = [];

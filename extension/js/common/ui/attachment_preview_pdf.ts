@@ -85,8 +85,11 @@ export class AttachmentPreviewPdf {
     this.attachmentPreviewContainer.append(controls); // xss-escaped
     // Page X of Y
     this.attachmentPreviewContainer.on('scroll', () => {
-      const pageHeight = this.attachmentPreviewContainer.find('canvas').outerHeight(true) ?? 0;
+      const pageHeight = this.attachmentPreviewContainer.find('canvas').outerHeight(true);
       const scrollTop = this.attachmentPreviewContainer.scrollTop() ?? 0;
+      if (!pageHeight) {
+        return;
+      }
       const currentPage = Math.round(scrollTop / pageHeight) + 1;
       this.attachmentPreviewContainer.find('#pdf-preview-current-page-number').text(currentPage);
     });

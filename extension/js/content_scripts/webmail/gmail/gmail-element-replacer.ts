@@ -23,7 +23,6 @@ import { MessageRenderer } from '../../../common/message-renderer.js';
 import { RelayManager } from '../../../common/relay-manager.js';
 import { MessageInfo } from '../../../common/render-message.js';
 import { GmailLoaderContext } from './gmail-loader-context.js';
-import { JQueryEl } from '../../../common/loader-context-interface.js';
 import { MessageBody, Mime } from '../../../common/core/mime.js';
 import { MsgBlock } from '../../../common/core/msg-block.js';
 import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
@@ -263,7 +262,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return blocksFromEmailContainer;
   };
 
-  private addFcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
+  private addFcConvoIcon = (containerSel: JQuery, iconHtml: string, iconSel: string, onClick: () => void) => {
     if ($(containerSel).find(iconSel).length) {
       return;
     }
@@ -491,7 +490,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private processAttachments = async (
     msgId: string,
     attachments: Attachment[],
-    attachmentsContainerInner: JQueryEl,
+    attachmentsContainerInner: JQuery,
     messageInfo: MessageInfo,
     body: MessageBody,
     skipGoogleDrive: boolean
@@ -554,7 +553,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private processGoogleDriveAttachments = async (msgId: string, msgEl: JQueryEl, attachmentsContainerInner: JQueryEl, messageInfo: MessageInfo) => {
+  private processGoogleDriveAttachments = async (msgId: string, msgEl: JQuery, attachmentsContainerInner: JQuery, messageInfo: MessageInfo) => {
     const notProcessedAttachmentsLoaders = attachmentsContainerInner.find('.attachment_loader');
     if (notProcessedAttachmentsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
@@ -581,7 +580,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
+  private filterAttachments = (potentialMatches: JQuery | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches)
       .filter('span.aZo:visible, span.a5r:visible')
       .find('span.aV3')
@@ -596,7 +595,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       .closest('span.aZo, span.a5r');
   };
 
-  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
+  private determineMsgId = (innerMsgEl: HTMLElement | JQuery) => {
     const parents = $(innerMsgEl).parents(this.sel.msgOuter);
     return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   };
@@ -605,12 +604,12 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   };
 
-  private getFrom = (msgEl: HTMLElement | JQueryEl) => {
+  private getFrom = (msgEl: HTMLElement | JQuery) => {
     const from = $(msgEl).closest('.gs').find('span.gD').attr('email')?.toLowerCase();
     return from ? Str.parseEmail(from) : undefined;
   };
 
-  private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
+  private getLastMsgReplyParams = (convoRootEl: JQuery): FactoryReplyParams => {
     return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   };
 
@@ -714,7 +713,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   // loaderEl is a loader reference in case we're processing an attachment
   // todo: we could also re-use a common method like this in Inbox
-  private handleException = (e: unknown, loaderEl?: JQueryEl) => {
+  private handleException = (e: unknown, loaderEl?: JQuery) => {
     if (ApiErr.isAuthErr(e)) {
       this.notifications.showAuthPopupNeeded(this.acctEmail);
       loaderEl?.text('Auth needed');
@@ -731,7 +730,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private showSwitchToEncryptedReplyWarningIfNeeded = (replyBox: JQueryEl) => {
+  private showSwitchToEncryptedReplyWarningIfNeeded = (replyBox: JQuery) => {
     const showSwitchToEncryptedReplyWarning = replyBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
 
     if (showSwitchToEncryptedReplyWarning) {
@@ -755,7 +754,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private parseReplyOption = (replyBox: JQueryEl) => {
+  private parseReplyOption = (replyBox: JQuery) => {
     const replyBoxTypeImgClass = replyBox.find(this.sel.replyOptionImg).find('img').attr('class');
     if (replyBoxTypeImgClass?.includes('mK')) {
       return 'a_reply_all';

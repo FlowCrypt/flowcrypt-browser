@@ -119,9 +119,7 @@ View.run(
     };
 
     private actionExportAllKeysHandler = async () => {
-      const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true }))
-        .map(a => a.trim()) // eslint-disable-line @typescript-eslint/no-non-null-assertion
-        .join('\n');
+      const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true })).map(a => a.trim()).join('\n');
       const exportFile = new Attachment({
         name: 'public-keys-export.asc',
         type: 'application/pgp-keys',

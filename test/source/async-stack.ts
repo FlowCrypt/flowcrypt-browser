@@ -28,8 +28,8 @@
     if (type === 'error') {
       throw new Error('this failed');
     } else if (type === 'object') {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw { nonsense: 'yes' }; // eslint-disable-line no-throw-literal
+      // eslint-disable-next-line @typescript-eslint/only-throw-error, no-throw-literal,
+      throw { nonsense: 'yes' };
     }
   };
 
