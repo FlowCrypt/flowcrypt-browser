@@ -152,8 +152,8 @@ export class BrowserRecipe {
     if (!t.context.mockApi!.configProvider) {
       t.context.mockApi!.configProvider = new ConfigurationProvider({});
     }
-    t.context.mockApi!.configProvider!.config.attester = {
-      ...(t.context.mockApi!.configProvider!.config.attester ?? {}),
+    t.context.mockApi!.configProvider.config.attester = {
+      ...(t.context.mockApi!.configProvider.config.attester ?? {}),
       pubkeyLookup: {
         [acctEmail]: {
           pubkey: KeyUtil.armor(pubKey),

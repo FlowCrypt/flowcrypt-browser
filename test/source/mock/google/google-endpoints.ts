@@ -211,7 +211,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         treatAsAlias: false,
         verificationStatus: 'accepted',
       };
-      if (config?.primarySignature && config.primarySignature[acct]) {
+      if (config?.primarySignature?.[acct]) {
         primarySendAs.signature = config.primarySignature[acct];
       }
       // If no aliases are defined in the config, return only the primary send-as object
@@ -318,7 +318,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       if (isPost(req)) {
         const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
         const body = parsedReq.body as DraftSaveModel;
-        if (body && body.message && body.message.raw && typeof body.message.raw === 'string') {
+        if (body?.message?.raw && typeof body.message.raw === 'string') {
           if (body.message.threadId && !(await GoogleData.withInitializedData(acct)).getThreads().find(t => t.id === body.message.threadId)) {
             throw new HttpClientErr('The thread you are replying to not found', 404);
           }
@@ -345,7 +345,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
         }
         throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
       } else if (isPut(req)) {
-        const raw = (parsedReq.body as { message?: { raw: string } })?.message?.raw as string;
+        const raw = (parsedReq.body as { message?: { raw: string } })?.message?.raw;
         if (!raw) {
           throw new Error('mock Draft PUT without raw data');
         }
@@ -388,7 +388,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
   const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')?.toString() : '';
   if (threadId) {
     const messages = (await GoogleData.withInitializedData(acct)).getMessagesByThread(threadId);
-    if (!messages || !messages.length) {
+    if (!messages?.length) {
       throw new HttpClientErr(`Error: The thread you are replying (${threadId}) to not found`, 404);
     }
     if (inReplyToMessageId) {

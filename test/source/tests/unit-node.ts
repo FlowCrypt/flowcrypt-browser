@@ -120,7 +120,7 @@ Something wrong with this key`),
       const revocationCertificate = await OpenPGPKey.getOrCreateRevocationCertificate(originalPrv);
       expect(revocationCertificate).to.be.not.empty;
       if (!revocationCertificate) {
-        throw Error;
+        throw new Error();
       }
       expect(revocationCertificate.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')).to.be.true;
       expect(revocationCertificate).to.include('Version: FlowCrypt Email Encryption');
@@ -1027,7 +1027,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.decryptMessage] mdc - missing - error', async t => {
       const encryptedData = decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded);
 
-      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
       const kisWithPp = [
         {
           ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
@@ -1051,11 +1051,11 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
 
-      const encryptedData = Buf.fromBase64Str(msg!.raw!)
+      const encryptedData = Buf.fromBase64Str(msg.raw!)
         .toUtfStr()
         .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
 
-      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
       const kisWithPp = [
         {
           ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
@@ -1093,7 +1093,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const encryptedData = Buf.fromBase64Str(msg!.raw!)
+      const encryptedData = Buf.fromBase64Str(msg.raw!)
         .toUtfStr()
         .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
       // actual key the message was signed with
@@ -1147,14 +1147,14 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Thunderbird html signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('17daefa0eb077da6')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
       const sigText = msgText
         .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '')
         .replace(/=3D/g, '=');
       const plaintext = msgText
         .match(/Content\-Type: multipart\/mixed; boundary="------------0i0uwO075ZQ0NjkA1rJACksf".*--------------0i0uwO075ZQ0NjkA1rJACksf--\r?\n/s)![0]
-        .replace(/\r?\n/g, '\r\n')!;
+        .replace(/\r?\n/g, '\r\n');
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '')
@@ -1167,14 +1167,14 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Thunderbird text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('17dad75e63e47f97')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
       const sigText = msgText
         .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '')
         .replace(/=3D/g, '=');
       const plaintext = msgText
         .match(/Content\-Type: multipart\/mixed; boundary="------------FQ7CfxuiGriwTfTfyc4i1ppF".*-------------FQ7CfxuiGriwTfTfyc4i1ppF--\r?\n/s)![0]
-        .replace(/\r?\n/g, '\r\n')!;
+        .replace(/\r?\n/g, '\r\n');
       const pubkey = plaintext
         .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
         .replace(/=\r\n/g, '')
@@ -1187,14 +1187,14 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Firefox rich text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
       const sigBase64 = msgText.match(/Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s)![1];
       const sigText = Buf.fromBase64Str(sigBase64).toUtfStr();
       const plaintext = msgText
         .match(
           /Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s
         )![0]
-        .replace(/\r?\n/g, '\r\n')!;
+        .replace(/\r?\n/g, '\r\n');
       const result = await MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788] });
       expect(result.match).to.be.true;
       t.pass();
@@ -1212,7 +1212,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 -----END PGP SIGNATURE-----`;
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg = data.getMessage('17dad75e63e47f97')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
       {
         const pubkey = msgText
           .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]

@@ -39,7 +39,7 @@ export const getMockKeyManagerEndpoints = (oauth: OauthMock, config: KeyManagerC
           if (config.putReturnError) {
             throw config.putReturnError;
           }
-          if (config.putKeysExpectation && config.putKeysExpectation[acctEmail]) {
+          if (config.putKeysExpectation?.[acctEmail]) {
             const expectation = config.putKeysExpectation[acctEmail];
             const { privateKey } = body as Dict<string>;
             const prv = await KeyUtil.parseMany(privateKey);
