@@ -24,14 +24,6 @@ View.run(
 
     public render = async () => {
       const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
-      if (Catch.isThunderbirdMail()) {
-        const windowInfo = await browser.windows.getCurrent();
-        if (windowInfo.type === 'messageCompose' || windowInfo.type === 'messageDisplay') {
-          $('.action_open_settings').hide();
-          $('.action_open_encrypted_inbox').parent().css('margin-right', '0');
-          $('.action_open_encrypted_inbox').text('Secure Compose');
-        }
-      }
       if (activeTab?.acctEmail) {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         const { setup_done } = await AcctStore.get(activeTab.acctEmail, ['setup_done']);
