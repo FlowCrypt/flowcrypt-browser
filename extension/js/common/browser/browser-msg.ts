@@ -461,23 +461,26 @@ export class BrowserMsg {
       const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
       const actionType = action === 'compose' ? browser.composeAction : browser.messageDisplayAction;
       const browserApiMethod = action === 'compose' ? browser.compose.getComposeDetails : browser.messageDisplay.getDisplayedMessage;
+      const messageDetails = (await browserApiMethod(tabId)) as MessageDetails;
+      const inboxPageParams = {
+        useFullScreenSecureCompose: true,
+        messageDetails: {
+          subject: messageDetails.subject,
+          to: messageDetails?.to,
+          cc: messageDetails?.cc || messageDetails?.ccList,
+          bcc: messageDetails?.bcc || messageDetails?.bccList,
+          plainTextBody: messageDetails?.plainTextBody || '',
+        },
+      };
       if (accountEmails) {
         const accounts = JSON.parse(accountEmails) as string[];
+        console.log(accounts);
         if (accounts.length > 1) {
-          await actionType.setPopup({ popup: Url.create('/chrome/popups/default.htm', { tabId }) });
+          await actionType.setPopup({
+            popup: Url.create('/chrome/popups/select_account.htm', { action: 'inbox', tabId, pageUrlParams: JSON.stringify(inboxPageParams) }),
+          });
           await actionType.openPopup();
         } else {
-          const messageDetails = (await browserApiMethod(tabId)) as MessageDetails;
-          const inboxPageParams = {
-            useFullScreenSecureCompose: true,
-            messageDetails: {
-              subject: messageDetails.subject,
-              to: messageDetails?.to,
-              cc: messageDetails?.cc || messageDetails?.ccList,
-              bcc: messageDetails?.bcc || messageDetails?.bccList,
-              plainTextBody: messageDetails?.plainTextBody || '',
-            },
-          };
           await BgUtils.openExtensionTab(
             Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify(inboxPageParams) })
           );

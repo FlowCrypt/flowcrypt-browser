@@ -279,11 +279,9 @@ export class ComposeView extends View {
         const quotedPlainTextBody = messageDetails.plainTextBody;
         const rtl = messageDetails.plainTextBody.match(new RegExp('[' + Str.rtlChars + ']'));
         const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
-        const footer = await this.footerModule.getFooterFromStorage(this.senderModule.getSender());
-        const sanitizedFooter = footer ? this.footerModule.createFooterHtml(footer) : undefined;
         this.quoteModule.tripleDotSanitizedHtmlContent = {
           quote: `<blockquote ${dirAttr} class="height-0">${quotedPlainTextBody}</blockquote>`, // xss-safe-value
-          footer: sanitizedFooter, // xss-sanitized
+          footer: undefined, // no footer needed already pre-rendered by addSignatureToInput
         };
         this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
         this.S.cached('password_or_pubkey').height(1);

@@ -11,17 +11,20 @@ import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
+import { ThunderbirdMessageDetails } from '../elements/compose-modules/compose-types.js';
 
 View.run(
   class SelectAcctPopupView extends View {
+    public readonly tabId: number;
+    public readonly pageUrlParams: string | undefined;
     private readonly action: 'inbox' | 'settings';
-    private readonly tabId: number;
 
     public constructor() {
       super();
-      const uncheckedUrlParams = Url.parse(['action', 'tabId']);
+      const uncheckedUrlParams = Url.parse(['action', 'tabId', 'pageUrlParams']);
       this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
       this.tabId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'tabId'));
+      this.pageUrlParams = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'pageUrlParams');
     }
 
     public render = async () => {
@@ -58,9 +61,12 @@ View.run(
     };
 
     private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
-      const useFullScreenSecureCompose = Catch.isThunderbirdMail();
+      let pageUrlParams;
+      if (this.pageUrlParams) {
+        pageUrlParams = JSON.parse(this.pageUrlParams) as ThunderbirdMessageDetails;
+      }
       if (this.action === 'inbox') {
-        await Browser.openSettingsPage('inbox/inbox.htm', $(clickedElement).attr('email'), undefined, { useFullScreenSecureCompose });
+        await Browser.openSettingsPage('inbox/inbox.htm', $(clickedElement).attr('email'), undefined, { ...pageUrlParams });
       } else {
         await Browser.openSettingsPage('index.htm', $(clickedElement).attr('email'));
       }
