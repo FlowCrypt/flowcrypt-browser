@@ -356,7 +356,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await composePage.waitAndClick('@action-send', { delay: 2 });
         await composePage.waitAndRespondToModal(
           'error',
           'confirm',
@@ -369,7 +369,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await composePage.waitAndClick('@action-send', { delay: 2 });
         await composePage.waitAndRespondToModal(
           'error',
           'confirm',
