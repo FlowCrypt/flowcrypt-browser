@@ -95,7 +95,7 @@ export class GmailMsg {
     if (toHeader) {
       this.payload.headers?.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
     }
-    if (fromHeader && fromHeader.value[0].address) {
+    if (fromHeader?.value[0].address) {
       this.payload.headers?.push({ name: 'From', value: fromHeader.value[0].address });
     }
     if (subjectHeader) {
@@ -181,7 +181,7 @@ export class GoogleData {
           if (json.acctEmail.split(':')[0] === acct.split(':')[0]) {
             Object.assign(acctData.attachments, json.attachments);
             json.full.raw = json.raw.raw;
-            if (json.full.labelIds && json.full.labelIds.includes('DRAFT')) {
+            if (json.full.labelIds?.includes('DRAFT')) {
               acctData.drafts.push(json.full);
             } else {
               acctData.messages.push(json.full);
@@ -224,7 +224,7 @@ export class GoogleData {
     if (msgId) {
       const payload = (await GoogleData.withInitializedData(acct)).getMessage(msgId)!.payload!;
       const fromHeader = payload.headers!.find(header => header.name === 'From')!;
-      const fromAddress = Xss.escape(fromHeader!.value);
+      const fromAddress = Xss.escape(fromHeader.value);
       let htmlData: string | undefined;
       let processedParts: GmailMsg$payload$part[] = [];
       if (payload.mimeType === 'text/plain') {
@@ -250,7 +250,7 @@ export class GoogleData {
     <div class="aYv" style="position: relative; height: 85px; text-align: center;"></div>
     <div class="aYy" style="background-color: #f5f5f5; border-top: 1px solid #e5e5e5; bottom: 0; left: 0; position: absolute; right: 0;">
     <div><div>
-              <span class="aV3">${Xss.escape(part.filename!)}</span>
+              <span class="aV3">${Xss.escape(part.filename)}</span>
               </div></div></div>
               </a></span>`
             )
@@ -296,19 +296,17 @@ export class GoogleData {
   };
 
   private static msgSubject = (m: GmailMsg): string => {
-    const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
-    return (subjectHeader && subjectHeader.value) || '';
+    const subjectHeader = m.payload?.headers?.find(h => h.name === 'Subject');
+    return subjectHeader?.value || '';
   };
 
   private static msgPeople = (m: GmailMsg): string => {
     return String(
-      m.payload &&
-        m.payload.headers &&
-        m.payload.headers
-          .filter(h => h.name === 'To' || h.name === 'From')
-          .map(h => h.value)
-          .filter(h => !!h)
-          .join(',')
+      m.payload?.headers
+        ?.filter(h => h.name === 'To' || h.name === 'From')
+        .map(h => h.value)
+        .filter(h => !!h)
+        .join(',')
     );
   };
 

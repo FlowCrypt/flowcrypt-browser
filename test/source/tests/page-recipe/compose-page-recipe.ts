@@ -122,7 +122,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
     for (const key of Object.keys(recipients)) {
       const sendingType = key as RecipientType;
-      const email = recipients[sendingType] as string | undefined;
+      const email = recipients[sendingType];
       if (email) {
         if (sendingType !== 'to') {
           // input-to is always visible
@@ -174,9 +174,8 @@ export class ComposePageRecipe extends PageRecipe {
     await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
-    // eslint-disable-next-line guard-for-in
-    for (const index in contactsList) {
-      expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
+    for (const [index, contact] of contactsList.entries()) {
+      expect(await PageRecipe.getElementPropertyJson(contact, 'textContent')).to.equal(emails[index]);
     }
   };
 

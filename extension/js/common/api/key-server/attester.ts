@@ -28,9 +28,8 @@ export class Attester extends Api {
     ]);
     const validResults = results.filter(result => result.status === 'fulfilled');
     for (const result of validResults) {
-      const fulfilResult = result as PromiseFulfilledResult<PubkeysSearchResult>;
-      if (fulfilResult.value.pubkeys.length) {
-        return fulfilResult.value;
+      if (result.value.pubkeys.length) {
+        return result.value;
       }
     }
     if (results[1].status === 'rejected') {

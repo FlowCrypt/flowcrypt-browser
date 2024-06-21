@@ -22,7 +22,7 @@ export const get203FAE7076005381 = async () => {
   }
 
   const msg = data.getMessage('17dad75e63e47f97')!;
-  const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+  const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
   return msgText
     .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
     .replace(/=\r\n/g, '')

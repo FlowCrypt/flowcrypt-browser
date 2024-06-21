@@ -93,7 +93,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
     await new SaveMessageInStorageStrategy().test(parseResult, id);
     if (mimeMsg.cc) {
       // this is a message to the pubkey recipient
-      expect((mimeMsg.cc as AddressObject).text!).to.include('flowcrypt.compatibility@gmail.com');
+      expect((mimeMsg.cc as AddressObject).text).to.include('flowcrypt.compatibility@gmail.com');
       expect(mimeMsg.text!).to.not.include('has sent you a password-encrypted email');
       expect(mimeMsg.text!).to.not.include('Follow this link to open it');
       const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
@@ -144,8 +144,8 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
       // no pubkey recipients in this test
       throw new HttpClientErr(`Error: cannot find pwd encrypted FES link in:\n\n${mimeMsg.text}`);
     }
-    expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
-    expect(mimeMsg.text!).to.include('Follow this link to open it');
+    expect(mimeMsg.text).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+    expect(mimeMsg.text).to.include('Follow this link to open it');
     await new SaveMessageInStorageStrategy().test(parseResult, id);
   };
 }
@@ -156,8 +156,8 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
     const expectedSenderEmail = `user3@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`"First Last" <${expectedSenderEmail}>`);
     if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
-      expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
-      expect(mimeMsg.text!).to.include('Follow this link to open it');
+      expect(mimeMsg.text).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
@@ -210,15 +210,15 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
     const expectedSenderEmail = `user2@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`"First Last" <${expectedSenderEmail}>`);
     if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-SENDER@DOMAIN.COM-ID`)) {
-      expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
-      expect(mimeMsg.text!).to.include('Follow this link to open it');
+      expect(mimeMsg.text).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('sender@domain.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
       expect(mimeMsg.headers.get('reply-to')).to.be.an.undefined;
     } else if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
-      expect(mimeMsg.text!).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
-      expect(mimeMsg.text!).to.include('Follow this link to open it');
+      expect(mimeMsg.text).to.include(`${expectedSenderEmail} has sent you a password-encrypted email`);
+      expect(mimeMsg.text).to.include('Follow this link to open it');
       expect((mimeMsg.to as AddressObject).text).to.equal('to@example.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
@@ -250,7 +250,7 @@ class MessageWithFooterTestStrategy implements ITestMsgStrategy {
     const mimeMsg = parseResult.mimeMsg;
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
     const decrypted = await MsgUtil.decryptMessage({
-      kisWithPp: keyInfo!,
+      kisWithPp: keyInfo,
       encryptedData: Buf.fromUtfStr(mimeMsg.text || ''),
       verificationPubs: [],
     });
@@ -342,7 +342,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     const keyInfo = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
 
     const decrypted = await MsgUtil.decryptMessage({
-      kisWithPp: keyInfo!,
+      kisWithPp: keyInfo,
       encryptedData: parseResult.mimeMsg.text!,
       verificationPubs: [],
     });
@@ -359,7 +359,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
   public test = async (parseResult: ParseMsgResult) => {
     const mimeMsg = parseResult.mimeMsg;
-    const hasAtLeastOneRecipient = (ao: AddressObject[]) => ao && ao.length && ao[0].value && ao[0].value.length && ao[0].value[0].address;
+    const hasAtLeastOneRecipient = (ao: AddressObject[]) => ao?.length && ao[0].value?.length && ao[0].value[0].address;
     if (!hasAtLeastOneRecipient(parsedMailAddressObjectAsArray(mimeMsg.to))) {
       throw new HttpClientErr(`Error: There is no 'To' header.`, 400);
     }
@@ -383,12 +383,12 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Encrypted Message');
 
-    expect(mimeMsg.attachments!.length).to.equal(1);
-    expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
-    expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
+    expect(mimeMsg.attachments.length).to.equal(1);
+    expect(mimeMsg.attachments[0].contentType).to.equal('application/pkcs7-mime');
+    expect(mimeMsg.attachments[0].filename).to.equal('smime.p7m');
     const withAttachments = mimeMsg.subject?.includes(' with attachment');
-    expect(mimeMsg.attachments![0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
-    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    expect(mimeMsg.attachments[0].size).to.be.greaterThan(withAttachments ? 20000 : 300);
+    const msg = new Buf(mimeMsg.attachments[0].content).toRawBytesStr();
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(ENVELOPED_DATA_OID);
     if (p7.type === ENVELOPED_DATA_OID) {
@@ -404,8 +404,8 @@ class SmimeEncryptedMessageStrategy implements ITestMsgStrategy {
         if (withAttachments) {
           const nestedMimeMsg = await Parse.parseMixed(decryptedMessage);
 
-          expect(nestedMimeMsg.attachments!.length).to.equal(3);
-          expect(nestedMimeMsg.attachments![0].content.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
+          expect(nestedMimeMsg.attachments.length).to.equal(3);
+          expect(nestedMimeMsg.attachments[0].content.toString()).to.equal(`small text file\nnot much here\nthis worked\n`);
         }
       }
     }
@@ -423,11 +423,11 @@ class SmimeSignedMessageStrategy implements ITestMsgStrategy {
     expect((mimeMsg.headers.get('content-disposition') as StructuredHeader).params.filename).to.equal('smime.p7m');
     expect(mimeMsg.headers.get('content-description')).to.equal('S/MIME Signed Message');
 
-    expect(mimeMsg.attachments!.length).to.equal(1);
-    expect(mimeMsg.attachments![0].contentType).to.equal('application/pkcs7-mime');
-    expect(mimeMsg.attachments![0].filename).to.equal('smime.p7m');
-    expect(mimeMsg.attachments![0].size).to.be.greaterThan(300);
-    const msg = new Buf(mimeMsg.attachments![0].content).toRawBytesStr();
+    expect(mimeMsg.attachments.length).to.equal(1);
+    expect(mimeMsg.attachments[0].contentType).to.equal('application/pkcs7-mime');
+    expect(mimeMsg.attachments[0].filename).to.equal('smime.p7m');
+    expect(mimeMsg.attachments[0].size).to.be.greaterThan(300);
+    const msg = new Buf(mimeMsg.attachments[0].content).toRawBytesStr();
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(msg));
     expect(p7.type).to.equal(SIGNED_DATA_OID);
   };
