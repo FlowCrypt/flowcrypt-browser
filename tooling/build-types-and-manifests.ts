@@ -75,6 +75,11 @@ addManifest(
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
     };
     (manifest.browser_specific_settings as browser._manifest.FirefoxSpecificProperties).strict_min_version = '102.0';
+    delete manifest.background;
+    manifest.background = {
+      type: 'module',
+      scripts: ['/js/service_worker/background.js'],
+    };
   },
   'firefox-consumer'
 );
