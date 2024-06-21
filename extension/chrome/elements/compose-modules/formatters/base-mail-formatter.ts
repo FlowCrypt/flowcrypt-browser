@@ -15,7 +15,10 @@ export class BaseMailFormatter {
   protected richtext: boolean;
   protected acctEmail: string;
 
-  public constructor(view: ComposeView, protected isDraft = false) {
+  public constructor(
+    view: ComposeView,
+    protected isDraft = false
+  ) {
     this.view = view;
     this.richtext = view.sendBtnModule.popover.choices.richtext;
     this.acctEmail = this.view.acctEmail;

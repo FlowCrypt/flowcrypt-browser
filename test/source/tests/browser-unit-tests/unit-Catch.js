@@ -62,10 +62,10 @@ BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`);
 
 BROWSER_UNIT_TEST_NAME(`Catcher does not include query string on report`);
 (async () => {
-  const formatted = Catch.formatExceptionForReport({'name': 'Error'});
+  const formatted = Catch.formatExceptionForReport({ name: 'Error' });
   const expectedUrl = 'chrome-extension://extension-id/chrome/dev/ci_unit_test.htm';
   if (formatted.url.indexOf('?') !== -1) {
-    const url = formatted.url.replace(/(\w{32})/,'extension-id');
+    const url = formatted.url.replace(/(\w{32})/, 'extension-id');
     throw new Error(`The reported URL where the error occurred should not include query strings. Expecting ${expectedUrl} but got ${url}.`);
   }
   return 'pass';

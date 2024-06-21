@@ -1,5 +1,5 @@
 // Importing necessary ESLint plugins
-import typescriptEslint from 'typescript-eslint';
+import tseslint from 'typescript-eslint';
 import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
 import headerPlugin from 'eslint-plugin-header';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
@@ -7,13 +7,12 @@ import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
 import importPlugin from 'eslint-plugin-import';
 import noNullPlugin from 'eslint-plugin-no-null';
 import localRulesPlugin from 'eslint-plugin-local-rules';
-import globals from 'globals';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import pluginJs from '@eslint/js';
 
 const commonConfig = {
   plugins: {
-    '@typescript-eslint': typescriptEslint.plugin,
+    '@typescript-eslint': tseslint.plugin,
     'no-only-tests': noOnlyTestsPlugin,
     header: headerPlugin,
     jsdoc: jsdocPlugin,
@@ -23,18 +22,7 @@ const commonConfig = {
     'local-rules': localRulesPlugin,
   },
   languageOptions: {
-    parser: typescriptEslint.parser,
-    sourceType: 'module',
-    ecmaVersion: 'latest',
-    globals: {
-      ...globals.browser,
-      ...globals.node,
-      ...globals.commonjs,
-      ...globals.es6,
-      $: false,
-      chrome: false,
-      OpenPGP: false,
-    },
+    parser: tseslint.parser,
   },
   rules: {
     '@typescript-eslint/consistent-indexed-object-style': 'off',
@@ -179,8 +167,8 @@ export default [
     ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**', 'eslint.config.js'],
   },
   pluginJs.configs.recommended,
-  ...typescriptEslint.configs.strictTypeChecked,
-  ...typescriptEslint.configs.stylisticTypeChecked,
+  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
   eslintConfigPrettier,
   {
     ...commonConfig,
@@ -220,7 +208,7 @@ export default [
       '@typescript-eslint/no-unsafe-member-access': 'off',
     },
   },
-  ...typescriptEslint.config({
+  ...tseslint.config({
     files: ['extension/js/content_scripts/webmail/**/*.ts'],
     languageOptions: {
       parserOptions: {
