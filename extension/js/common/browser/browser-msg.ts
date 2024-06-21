@@ -467,7 +467,6 @@ export class BrowserMsg {
           await actionType.setPopup({ popup: Url.create('/chrome/popups/default.htm', { tabId }) });
           await actionType.openPopup();
         } else {
-          // todo: pass quoted email when replying using secure compose
           const messageDetails = (await browserApiMethod(tabId)) as MessageDetails;
           const inboxPageParams = {
             useFullScreenSecureCompose: true,
