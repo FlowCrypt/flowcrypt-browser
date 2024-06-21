@@ -231,7 +231,11 @@ export class KeyImportUi {
     return normalized;
   };
 
-  public renderPassPhraseStrengthValidationInput = (input: JQuery, submitButton?: JQuery, type: 'passphrase' | 'pwd' = 'passphrase') => {
+  public renderPassPhraseStrengthValidationInput = (
+    input: JQuery,
+    submitButton?: JQuery,
+    type: 'passphrase' | 'pwd' = 'passphrase'
+  ) => {  
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       if (submitButton) {
