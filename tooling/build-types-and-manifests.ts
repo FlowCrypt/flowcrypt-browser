@@ -2,9 +2,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../node_modules/@types/chrome/index.d.ts" />
-
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
  * These steps somewhat overlap, so the two scripts were joined into one below. However, work was not yet done to assimilate them.

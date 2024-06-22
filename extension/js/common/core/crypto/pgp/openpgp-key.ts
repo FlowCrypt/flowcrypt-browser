@@ -125,7 +125,7 @@ export class OpenPGPKey {
   public static async decryptMessage(message: OpenPGP.Message<OpenPGP.Data>, privateKeys: Key[], passwords?: string[]) {
     const opgpKeys = await Promise.all(privateKeys.map(key => OpenPGPKey.extractExternalLibraryObjFromKey(key)));
     return await message.decrypt(
-      opgpKeys.filter(key => key.isPrivate()).map(key => key as OpenPGP.PrivateKey),
+      opgpKeys.filter(key => key.isPrivate()),
       passwords
     );
   }

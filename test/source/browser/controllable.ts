@@ -71,11 +71,11 @@ abstract class ControllableBase {
         await this.target.waitForSelector(selector, { timeout: timeout * 1000 });
         this.log(`wait_all:6:${selector}`);
       }
-      if (visible === false && (await this.isElementVisibleInternal(selector))) {
+      if (!visible && (await this.isElementVisibleInternal(selector))) {
         throw Error(`waiting failed: Element was expected to be hidden: ${selector}`);
       }
     }
-    if (visible === true) {
+    if (visible) {
       await Promise.all(selectors.map(selector => this.waitAnyInternal([selector], { timeout, visible })));
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
@@ -128,7 +128,7 @@ abstract class ControllableBase {
   public waitUntilFocused = async (selector: string) => {
     const start = Date.now();
     while (Date.now() - start < TIMEOUT_ELEMENT_APPEAR * 1000) {
-      const e = (await this.singleElement(selector)) as ElementHandle;
+      const e = await this.singleElement(selector);
       const activeElement = (await this.target.evaluateHandle(() => document.activeElement)) as ElementHandle;
       const activeElementHtml = await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML');
       const testedElementHtml = await PageRecipe.getElementPropertyJson(e, 'outerHTML');
@@ -174,7 +174,7 @@ abstract class ControllableBase {
     } else {
       const typeLastTenChars = await this.target.evaluate(
         (s, t) => {
-          const el = document.querySelector(s) as HTMLInputElement;
+          const el = document.querySelector<HTMLInputElement>(s)!;
           if (el.contentEditable === 'true') {
             el.innerText = t;
             el.selectionEnd = el.innerText.length;
@@ -201,7 +201,7 @@ abstract class ControllableBase {
   public attr = async (selector: string, attr: string): Promise<string | null> => {
     return await this.target.evaluate(
       (selector, attr) => {
-        const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
+        const el = document.querySelector(selector)!; // this will get evaluated in the browser
         return el.getAttribute(attr);
       },
       this.selector(selector),
@@ -212,8 +212,8 @@ abstract class ControllableBase {
   public value = async (selector: string): Promise<string> => {
     await this.waitAll(selector);
     return await this.target.evaluate(s => {
-      const e = document.querySelector(s) as HTMLSelectElement; // this will get evaluated in the browser
-      if (e.tagName === 'SELECT') {
+      const e = document.querySelector<HTMLInputElement | HTMLSelectElement>(s)!; // this will get evaluated in the browser
+      if (e.tagName === 'SELECT' && e instanceof HTMLSelectElement) {
         return e.options[e.selectedIndex].value;
       } else {
         return e.value;
@@ -222,22 +222,22 @@ abstract class ControllableBase {
   };
 
   public isDisabled = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).disabled, this.selector(selector));
+    return await this.target.evaluate(s => document.querySelector<HTMLInputElement>(s)!.disabled, this.selector(selector));
   };
 
   public isChecked = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).checked, this.selector(selector));
+    return await this.target.evaluate(s => document.querySelector<HTMLInputElement>(s)!.checked, this.selector(selector));
   };
 
   public hasClass = async (selector: string, className: string): Promise<boolean> => {
-    const classList = await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).classList, this.selector(selector));
+    const classList = await this.target.evaluate(s => document.querySelector(s)!.classList, this.selector(selector));
     return Object.values(classList).includes(className);
   };
 
   // Get the current computed outer height (including padding, border)
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate(s => {
-      const computedStyle = getComputedStyle(document.querySelector(s) as HTMLElement);
+      const computedStyle = getComputedStyle(document.querySelector(s)!);
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
@@ -250,7 +250,7 @@ abstract class ControllableBase {
     if (onlyVisible) {
       return (await this.readAll(translatedSelector)).find(el => el.visible)?.innerText;
     } else {
-      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, translatedSelector);
+      return await this.target.evaluate(s => document.querySelector<HTMLElement>(s)!.innerText, translatedSelector);
     }
   };
 
@@ -265,7 +265,7 @@ abstract class ControllableBase {
   };
 
   public readHtml = async (selector: string): Promise<string> => {
-    return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerHTML, this.selector(selector));
+    return await this.target.evaluate(s => document.querySelector(s)!.innerHTML, this.selector(selector));
   };
 
   public selectOption = async (selector: string, choice: string) => {
@@ -276,7 +276,7 @@ abstract class ControllableBase {
 
   public checkElementColor = async (selector: string, color: string) => {
     const elementColor = await this.target.evaluate(selector => {
-      const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
+      const el = document.querySelector<HTMLElement>(selector)!; // this will get evaluated in the browser
       return el.style.color;
     }, this.selector(selector));
     expect(elementColor).to.equal(color);
@@ -328,9 +328,10 @@ abstract class ControllableBase {
         await this.click(selector);
         this.log(`wait_and_click(i${i}):5:${selector}`);
         break;
-      } catch (e) {
+      } catch (e: unknown) {
         this.log(`wait_and_click(i${i}):6:err(${String(e)}):${selector}`);
         if (
+          e instanceof Error &&
           ['Node is either not visible or not an HTMLElement', 'Node is either not clickable or not an HTMLElement', 'Node is detached from document'].includes(
             e.message
           )
@@ -394,7 +395,7 @@ abstract class ControllableBase {
     const start = Date.now();
     const values: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
-      const value = await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).value, selector);
+      const value = await this.target.evaluate(s => document.querySelector<HTMLInputElement>(s)!.value, selector);
       if (typeof needle === 'string') {
         // str
         if (value.includes(needle)) {
@@ -416,8 +417,8 @@ abstract class ControllableBase {
 
   public checkIfImageIsDisplayedCorrectly = async (selector: string) => {
     const isImageDisplayedCorrectly = await this.target.evaluate(selector => {
-      const pgpBlock = document.querySelector('#pgp_block') as HTMLDivElement;
-      const img = document.querySelector(selector) as HTMLImageElement;
+      const pgpBlock = document.querySelector<HTMLElement>('#pgp_block')!;
+      const img = document.querySelector<HTMLImageElement>(selector)!;
       const imgWidth = img.offsetWidth;
       const pgpBlockWidth = pgpBlock.offsetWidth;
       return img.naturalWidth !== 0 && img.naturalHeight !== 0 && imgWidth <= pgpBlockWidth;
@@ -556,7 +557,7 @@ abstract class ControllableBase {
   };
 
   protected isXpath = (selector: string): boolean => {
-    return selector.match(/^\/\//) !== null; // eslint-disable-line no-null/no-null
+    return selector.startsWith('//'); // eslint-disable-line no-null/no-null
   };
 
   protected selector = (customSelLanguageQuery: string): string => {
@@ -632,7 +633,7 @@ abstract class ControllableBase {
           }
         }
       } catch (e) {
-        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+        if (e instanceof Error && !e.message.includes('Cannot find context with specified id undefined')) {
           throw e;
         }
       }
@@ -653,7 +654,7 @@ abstract class ControllableBase {
     for (const iframe of await this.target.$$('iframe')) {
       const src = await PageRecipe.getElementPropertyJson(iframe, 'src');
       const visible = !!(await iframe.boundingBox()); // elements without bounding box are not visible
-      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length && visible) {
+      if (urlMatchables.filter(m => src.includes(m)).length === urlMatchables.length && visible) {
         matchingLinks.push(src);
       }
     }
@@ -719,7 +720,7 @@ export class ControllablePage extends ControllableBase {
       const fail = r.failure();
       const url = r.url();
       const extensionUrl = t.context.urls?.extension('');
-      if ((extensionUrl && url.indexOf(extensionUrl) !== 0) || fail) {
+      if ((extensionUrl && !url.startsWith(extensionUrl)) || fail) {
         // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
@@ -767,16 +768,18 @@ export class ControllablePage extends ControllableBase {
       this.page.on('dialog', () => resolve(this.alerts[this.alerts.length - 1])); // we need it as a ControllableAlert so that we know if it was dismissed or not
       setTimeout(() => reject(new Error('new alert timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
     });
-    triggeringAction().catch(console.error);
+    triggeringAction().catch((e: unknown) => {
+      console.error(e);
+    });
     return await dialogPromise;
   };
 
   public waitForNavigationIfAny = async (triggeringAction: () => Promise<void>, seconds = 5) => {
     try {
       await Promise.all([this.page.waitForNavigation({ timeout: seconds * 1000 }), triggeringAction()]);
-    } catch (e) {
+    } catch (e: unknown) {
       // can be "Navigation Timeout Exceeded" or "Navigation timeout of 5000 ms exceeded"
-      if (new RegExp('^Navigation timeout .*xceeded$').test(e.message)) {
+      if (new RegExp('^Navigation timeout .*xceeded$').test((e as Error).message)) {
         return;
       }
       throw e;
@@ -786,12 +789,12 @@ export class ControllablePage extends ControllableBase {
   public goto = async (url: string) => {
     if (this.t.context.urls) {
       const extensionUrl = this.t.context.urls.extension('');
-      url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.context.urls.extension(url);
+      url = url.startsWith('https://') || url.startsWith(extensionUrl) ? url : this.t.context.urls.extension(url);
     }
 
     await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
-    this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
+    this.page.goto(url).catch((e: unknown) => this.t.log(`goto: ${(e as Error).message}: ${url}`));
     await Promise.race([
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
       this.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
@@ -815,7 +818,7 @@ export class ControllablePage extends ControllableBase {
 
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
-    return await Promise.race([this.page.screenshot({ encoding: 'base64' }) as Promise<string>, newTimeoutPromise('screenshot', 20)]);
+    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
   };
 
   public html = async (): Promise<string> => {
@@ -861,7 +864,7 @@ export class ControllablePage extends ControllableBase {
 
   // passing (keys = null) will return all entries
   public getFromLocalStorage = async (keys: string[] | null): Promise<Dict<unknown>> => {
-    const result = await (this.target as Page).evaluate(
+    const result = await this.target.evaluate(
       async keys =>
         await new Promise(resolve => {
           chrome.storage.local.get(keys, resolve);

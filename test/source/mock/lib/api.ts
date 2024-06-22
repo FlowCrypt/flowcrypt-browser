@@ -112,7 +112,7 @@ export class Api<REQ, RES> {
             process.exit(1);
           }
         })
-        .catch(e => {
+        .catch((e: unknown) => {
           if (e instanceof HttpAuthErr) {
             response.statusCode = Status.UNAUTHORIZED;
             response.setHeader('WWW-Authenticate', `Basic realm="${this.apiName}"`);
@@ -157,17 +157,17 @@ export class Api<REQ, RES> {
         });
         this.server.on('error', e => {
           console.error('failed to start mock server', e);
-          reject(e);
+          reject(e as Error);
         });
       } catch (e) {
         console.error('exception when starting mock server', e);
-        reject(e);
+        reject(e as Error);
       }
     });
   };
 
   public close = (): Promise<void> => {
-    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(err) : resolve())));
+    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(err as Error) : resolve())));
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -214,7 +214,7 @@ export class Api<REQ, RES> {
       return allHandlers[url];
     }
     // handler match where definition url ends with "/?" - incomplete path definition
-    for (const handlerPathDefinition of Object.keys(allHandlers).filter(def => /\/\?$/.test(def))) {
+    for (const handlerPathDefinition of Object.keys(allHandlers).filter(def => def.endsWith('/?'))) {
       if (req.url.startsWith(handlerPathDefinition.replace(/\?$/, ''))) {
         return allHandlers[handlerPathDefinition];
       }
@@ -276,7 +276,7 @@ export class Api<REQ, RES> {
         try {
           resolve(Buffer.concat(body));
         } catch (e) {
-          reject(e);
+          reject(e as Error);
         }
       });
     });

@@ -15,7 +15,7 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { testConstants } from './tooling/consts';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { KeyUtil } from '../core/crypto/key';
-import { ElementHandle, Frame, Page } from 'puppeteer';
+import { Frame } from 'puppeteer';
 import { expectRecipientElements } from './compose';
 import { GoogleData } from '../mock/google/google-data';
 import { ControllableFrame } from '../browser/controllable';
@@ -257,7 +257,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const longid = fingerprint.substring(fingerprint.length - 16);
         const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
 
-        const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
+        const key = await KeyUtil.parse(downloadedFiles[fileName].toString());
         expect(key.algo.bits).to.equal(3072);
         expect(key.algo.algorithm).to.equal('rsaEncryptSign');
         await myKeyFrame.close();
@@ -437,7 +437,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const key = Config.key('flowcryptcompatibility.from.address');
-        await SettingsPageRecipe.addKeyTest(t, browser, acct, key.armored!, key.passphrase!, { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+        await SettingsPageRecipe.addKeyTest(t, browser, acct, key.armored!, key.passphrase, { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', undefined, {
@@ -476,9 +476,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
-        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
 
-        await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
+        await fileInput.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
         await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 120 });
       })
     );
@@ -491,9 +491,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
-        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
 
-        await fileInput!.uploadFile('test/samples/large.jpg');
+        await fileInput.uploadFile('test/samples/large.jpg');
         await Util.sleep(2);
         await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
       })
@@ -507,9 +507,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
-        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
 
-        await fileInput!.uploadFile('test/samples/small.txt');
+        await fileInput.uploadFile('test/samples/small.txt');
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
         // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"
       })
@@ -776,7 +776,7 @@ AfYUJUhqjgSuBctnpj0=
         const frameName = 'pgp_block.htm';
         let frames: Frame[] = [];
         while (frames.length !== 50) {
-          frames = (inboxPage.target as Page).frames().filter(frame => frame.url().includes(frameName));
+          frames = inboxPage.target.frames().filter(frame => frame.url().includes(frameName));
         }
         await Promise.all(frames.map(frame => new ControllableFrame(frame, inboxPage).waitForSelTestState('ready', 60)));
         const stop = new Date();
