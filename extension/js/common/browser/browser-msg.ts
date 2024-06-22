@@ -470,11 +470,11 @@ export class BrowserMsg {
           cc: messageDetails?.cc || messageDetails?.ccList,
           bcc: messageDetails?.bcc || messageDetails?.bccList,
           plainTextBody: messageDetails?.plainTextBody || '',
+          headerMessageId: messageDetails?.headerMessageId || '',
         },
       };
       if (accountEmails) {
         const accounts = JSON.parse(accountEmails) as string[];
-        console.log(accounts);
         if (accounts.length > 1) {
           await actionType.setPopup({
             popup: Url.create('/chrome/popups/select_account.htm', { action: 'inbox', tabId, pageUrlParams: JSON.stringify(inboxPageParams) }),

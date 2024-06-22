@@ -65,6 +65,15 @@ export namespace GmailRes {
     nextPageToken: string;
     resultSizeEstimate: number;
   };
+  export type GmailThreadIdQuery =
+    | {
+        messages?: {
+          id: string;
+          threadId: string;
+        }[];
+        resultSizeEstimate: number;
+      }
+    | undefined;
   export type GmailDraftCreate = { id: string };
   export type GmailDraftDelete = {}; // eslint-disable-line @typescript-eslint/ban-types
   export type GmailDraftUpdate = {}; // eslint-disable-line @typescript-eslint/ban-types

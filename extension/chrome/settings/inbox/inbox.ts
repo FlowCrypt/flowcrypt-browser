@@ -37,7 +37,7 @@ export class InboxView extends View {
   public readonly threadId: string | undefined;
   public readonly showOriginal: boolean;
   public readonly debug: boolean;
-  public pageUrlParams:
+  public pageUrlParams?:
     | {
         useFullScreenSecureCompose?: boolean;
         messageDetails?: ThunderbirdMessageDetails;
