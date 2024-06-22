@@ -1,7 +1,7 @@
 # Security
 
-Overview: https://flowcrypt.com/docs/technical/security.html
+Overview: https://flowcrypt.com/docs/technical/security/overview.html
 
-Reporting vulnerabilities: https://flowcrypt.com/docs/technical/bug-bounty.html
+Reporting vulnerabilities: https://flowcrypt.com/docs/technical/security/bug-bounty.html
 
-Fixed vulnerabilities: https://flowcrypt.com/docs/technical/fixed-vulnerabilities.html
+Fixed vulnerabilities: https://flowcrypt.com/docs/technical/security/fixed-vulnerabilities.html

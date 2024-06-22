@@ -23,6 +23,9 @@ const commonConfig = {
   },
   languageOptions: {
     parser: tseslint.parser,
+    parserOptions: {
+      project: true,
+    },
   },
   rules: {
     '@typescript-eslint/consistent-indexed-object-style': 'off',

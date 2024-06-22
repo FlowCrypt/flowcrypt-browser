@@ -76,9 +76,7 @@ export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) =
 
 export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise<T>) => Promise<T>) => {
   // returns a function
-  const timeoutAllRetries = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES)
-  ) as Promise<never>;
+  const timeoutAllRetries = new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES));
   return <T>(actionPromise: Promise<T>) =>
     Promise.race([
       actionPromise, // the actual action being performed
