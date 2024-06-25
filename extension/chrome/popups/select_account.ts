@@ -6,23 +6,16 @@ import { Assert } from '../../js/common/assert.js';
 import { Browser } from '../../js/common/browser/browser.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Time } from '../../js/common/browser/time.js';
-import { Url, UrlParams } from '../../js/common/core/common.js';
+import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
-import { ThunderbirdMessageDetails } from '../elements/compose-modules/compose-types.js';
-import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 
 View.run(
   class SelectAcctPopupView extends View {
-    public readonly tabId: number;
-    public readonly pageUrlParams?:
-      | {
-          useFullScreenSecureCompose?: boolean;
-          messageDetails?: ThunderbirdMessageDetails;
-        }
-      | undefined;
+    private readonly tabId?: number;
+    private readonly pageUrlParams?: string;
     private readonly action: 'inbox' | 'settings';
 
     public constructor() {
@@ -30,7 +23,7 @@ View.run(
       const uncheckedUrlParams = Url.parse(['action', 'tabId', 'pageUrlParams']);
       this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
       this.tabId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'tabId'));
-      this.pageUrlParams = typeof uncheckedUrlParams.pageUrlParams === 'string' ? (JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams) : undefined;
+      this.pageUrlParams = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'pageUrlParams');
     }
 
     public render = async () => {
@@ -68,20 +61,8 @@ View.run(
 
     private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
       const acctEmail = $(clickedElement).attr('email') || '';
-      let threadId: string | undefined;
-      if (this.pageUrlParams?.messageDetails) {
-        const gmail = new Gmail(acctEmail);
-        const headerMessageId = this.pageUrlParams.messageDetails?.headerMessageId || '';
-        const gmailRes = await gmail.threadIdGet(headerMessageId);
-        const missingThreadIdMsg =
-          "The email you're attempting to reply to is not accessible for the chosen account. Please ensure that you select the appropriate account to continue.";
-        if (!gmailRes?.messages) {
-          return alert(missingThreadIdMsg);
-        }
-        threadId = gmailRes.messages[0].threadId;
-      }
       if (this.action === 'inbox') {
-        await Browser.openExtensionTab(Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, threadId }));
+        await Browser.openExtensionTab(Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, pageUrlParams: this.pageUrlParams }));
       } else {
         await Browser.openSettingsPage('index.htm', acctEmail);
       }

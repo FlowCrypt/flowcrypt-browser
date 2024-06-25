@@ -90,8 +90,12 @@ export class InboxView extends View {
         $('body').text('Not supported for ' + emailProvider);
       } else {
         await this.inboxMenuModule.render();
+        const headerMessageId = this.pageUrlParams?.messageDetails?.headerMessageId;
+        const parsedThreadId = await this.parseThreadIdFromMessageId(headerMessageId);
         if (this.threadId) {
           await this.inboxActiveThreadModule.render(this.threadId);
+        } else if (parsedThreadId) {
+          await this.inboxActiveThreadModule.render(parsedThreadId);
         } else {
           await this.inboxListThreadsModule.render(this.labelId);
         }
@@ -148,6 +152,18 @@ export class InboxView extends View {
     if (this.pageUrlParams?.useFullScreenSecureCompose) {
       this.injector.openComposeWin(undefined, true, this.pageUrlParams.messageDetails);
     }
+  };
+
+  private parseThreadIdFromMessageId = async (headerMessageId?: string) => {
+    let threadId;
+    if (headerMessageId) {
+      const gmail = new Gmail(this.acctEmail);
+      const gmailRes = await gmail.threadIdGet(headerMessageId);
+      if (gmailRes?.messages) {
+        threadId = gmailRes.messages[0].threadId;
+      }
+    }
+    return threadId;
   };
 
   private addBrowserMsgListeners = () => {
