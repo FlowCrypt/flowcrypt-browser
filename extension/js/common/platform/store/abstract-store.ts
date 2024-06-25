@@ -30,8 +30,6 @@ export abstract class AbstractStore {
   };
 
   public static errCategorize(err: unknown): Error {
-    console.log('ERR CATEGORIZE');
-    console.log(err);
     let message: string;
     if (err instanceof Error) {
       message = err.message;

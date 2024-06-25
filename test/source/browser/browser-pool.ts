@@ -46,8 +46,6 @@ export class BrowserPool {
       headless: false,
       devtools: false,
       slowMo,
-      timeout: 10_000, // 10 seconds
-      protocolTimeout: 20_000, // 20 seconds
     });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
@@ -148,8 +146,6 @@ export class BrowserPool {
   };
 
   private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: unknown): Promise<string> => {
-    console.log('GOT ERROR');
-    console.log(err);
     return `
     <div class="attempt">
       <div style="display:none;">

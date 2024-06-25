@@ -29,20 +29,20 @@ blocks:
           - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
           - npm run-script pretest
       jobs:
-        # - name: consumer mock - standard test group
-        #   commands:
-        #     - npm -v
-        #     - node -v
-        #     - npm run-script test_ci_chrome_consumer
+        - name: consumer mock - standard test group
+          commands:
+            - npm -v
+            - node -v
+            - npm run-script test_ci_chrome_consumer
         - name: consumer mock - flaky test group
           commands:
             - npm run-script test_ci_chrome_consumer_flaky
-        # - name: content script tests
-        #   commands:
-        #     - npm run-script test_ci_chrome_content_scripts
-        # - name: enterprise mock - standard test group
-        #   commands:
-        #     - npm run-script test_ci_chrome_enterprise
+        - name: content script tests
+          commands:
+            - npm run-script test_ci_chrome_content_scripts
+        - name: enterprise mock - standard test group
+          commands:
+            - npm run-script test_ci_chrome_enterprise
       epilogue:
         always:
           commands:
@@ -127,10 +127,10 @@ blocks:
           commands:
             - npm run-script test_local_unit_consumer
             - '[[ -f report.xml ]] && test-results publish report.xml'
-        # - name: enterprise mock - unit tests
-        #   commands:
-        #     - npm run-script test_local_unit_enterprise
-        #     - '[[ -f report.xml ]] && test-results publish report.xml'
+        - name: enterprise mock - unit tests
+          commands:
+            - npm run-script test_local_unit_enterprise
+            - '[[ -f report.xml ]] && test-results publish report.xml'
 
 after_pipeline:
   task:

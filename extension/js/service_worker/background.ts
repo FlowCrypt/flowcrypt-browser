@@ -46,7 +46,6 @@ console.info('background.js service worker starting');
     await BgUtils.handleStoreErr(e);
     return;
   }
-
   // storage related handlers
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
