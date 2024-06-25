@@ -462,8 +462,9 @@ export class BrowserMsg {
       const actionType = action === 'compose' ? browser.composeAction : browser.messageDisplayAction;
       const browserApiMethod = action === 'compose' ? browser.compose.getComposeDetails : browser.messageDisplay.getDisplayedMessage;
       const messageDetails = (await browserApiMethod(tabId)) as MessageDetails;
-      const inboxPageParams = {
-        useFullScreenSecureCompose: true,
+      const windowType = (await browser.windows.getCurrent()).type;
+      const urlPageParams = {
+        useFullScreenSecureCompose: windowType === 'messageCompose',
         messageDetails: {
           subject: messageDetails.subject,
           to: messageDetails?.to,
@@ -477,12 +478,12 @@ export class BrowserMsg {
         const accounts = JSON.parse(accountEmails) as string[];
         if (accounts.length > 1) {
           await actionType.setPopup({
-            popup: Url.create('/chrome/popups/select_account.htm', { action: 'inbox', tabId, pageUrlParams: JSON.stringify(inboxPageParams) }),
+            popup: Url.create('/chrome/popups/select_account.htm', { action: 'inbox', tabId, pageUrlParams: JSON.stringify(urlPageParams) }),
           });
           await actionType.openPopup();
         } else {
           await BgUtils.openExtensionTab(
-            Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify(inboxPageParams) })
+            Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify(urlPageParams) })
           );
           await browser.tabs.remove(tabId);
         }
