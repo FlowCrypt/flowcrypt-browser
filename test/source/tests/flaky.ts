@@ -369,11 +369,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
         await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 2 });
+        await composePage.waitAndClick('@action-send', { delay: 5 });
         await composePage.waitAndRespondToModal(
           'error',
           'confirm',
-          'Could not send message due to network error. Please check your internet connection and try again. '
+          'Could not send message due to network error. Please check your internet connection and try again.'
         );
         await composePage.close();
         expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
