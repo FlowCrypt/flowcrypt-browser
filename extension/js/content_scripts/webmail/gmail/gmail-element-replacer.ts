@@ -38,7 +38,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private currentlyReplacingAttachments = false;
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
-  private shouldShowEditableSecureReply = false;
   private replyOption: ReplyOption | undefined;
 
   private sel = {
@@ -671,7 +670,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             replyBox.addClass('reply_message_evaluated');
             continue;
           }
-          this.switchToEncryptedReply = false;
           if (this.removeNextReplyBoxBorders) {
             replyBox.addClass('remove_borders');
             this.removeNextReplyBoxBorders = false;
@@ -686,10 +684,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
-            this.shouldShowEditableSecureReply = !isReplyButtonView;
             const secureReplyBoxXssSafe = /* xss-safe-factory */ `
               <div class="remove_borders reply_message_iframe_container">
-                ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
+                ${this.factory.embeddedReply(replyParams, !isReplyButtonView || alreadyHasSecureReplyBox || this.switchToEncryptedReply)}
               </div>
             `;
             if (hasDraft || alreadyHasSecureReplyBox) {
@@ -708,6 +705,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
           }
         }
+        this.switchToEncryptedReply = false;
       }
     }
   };
