@@ -51,7 +51,6 @@ export interface ThunderbirdMessageDetails {
   cc?: string[];
   bcc?: string[];
   plainTextBody?: string;
-  headerMessageId?: string;
 }
 
 export type MessageToReplyOrForward = {

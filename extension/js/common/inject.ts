@@ -11,7 +11,6 @@ import { Dict } from './core/common.js';
 import { Env, WebMailName, WebMailVersion } from './browser/env.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { ThunderbirdMessageDetails } from '../../chrome/elements/compose-modules/compose-types.js';
 
 type Host = {
   gmail: string;
@@ -63,10 +62,10 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
-  public openComposeWin = (draftId?: string, openInFullScreen?: boolean, messageDetails?: ThunderbirdMessageDetails | undefined): boolean => {
+  public openComposeWin = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
-      const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, { ...messageDetails }));
+      const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, thunderbirdMsgId));
       composeWin.attr('data-order', alreadyOpenedCount + 1);
       this.S.cached('body').append(composeWin); // xss-safe-factory
       return true;

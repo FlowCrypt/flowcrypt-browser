@@ -46,7 +46,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
-  public readonly externalMessageDetails: string;
+  public readonly thunderbirdMsgId: number;
   public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
@@ -154,7 +154,7 @@ export class ComposeView extends View {
       'replyPubkeyMismatch',
       'replyOption',
       'useFullScreenSecureCompose',
-      'externalMessageDetails',
+      'thunderbirdMsgId',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -169,7 +169,7 @@ export class ComposeView extends View {
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
-    this.externalMessageDetails = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'externalMessageDetails') || '';
+    this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
@@ -272,11 +272,23 @@ export class ComposeView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
   private preParseEmailRecipientsIfNeeded = async () => {
-    if (this.externalMessageDetails) {
-      const messageDetails = JSON.parse(this.externalMessageDetails) as ThunderbirdMessageDetails;
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
+      const thunderbirdMimeMsg = await browser.messages.getFull(this.thunderbirdMsgId);
+      let plainTextBody;
+      if (thunderbirdMimeMsg?.parts?.[0]?.contentType === 'multipart/alternative') {
+        plainTextBody = thunderbirdMimeMsg?.parts?.[0]?.parts?.[0].body;
+      }
+      const messageDetails = {
+        to: thunderbirdMimeMsg.headers?.to,
+        cc: thunderbirdMimeMsg.headers?.cc,
+        bcc: thunderbirdMimeMsg.headers?.bcc,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        subject: thunderbirdMimeMsg.headers!.subject[0],
+        plainTextBody,
+      } as ThunderbirdMessageDetails;
       if (messageDetails.plainTextBody) {
-        // Thunderbird already returns a standard quoted plain text body
-        const quotedPlainTextBody = messageDetails.plainTextBody;
+        // todo: add date details since we are now parsing the MIME message
+        const quotedPlainTextBody = this.quoteModule.convertLineBreakToBr(messageDetails.plainTextBody, true);
         const rtl = messageDetails.plainTextBody.match(new RegExp('[' + Str.rtlChars + ']'));
         const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
         this.quoteModule.tripleDotSanitizedHtmlContent = {

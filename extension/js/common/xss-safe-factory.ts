@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Dict, Str, Url, UrlParam, UrlParams } from './core/common.js';
+import { Dict, Str, Url, UrlParams } from './core/common.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { BrowserMsg } from './browser/browser-msg.js';
@@ -96,12 +96,12 @@ export class XssSafeFactory {
     return this.extUrl(`img/${relPath}`);
   };
 
-  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, messageDetails?: Dict<UrlParam>) => {
+  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, thunderbirdMsgId?: number) => {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), {
       frameId: this.newId(),
       draftId,
       useFullScreenSecureCompose,
-      externalMessageDetails: JSON.stringify(messageDetails),
+      thunderbirdMsgId,
     });
   };
 
@@ -199,8 +199,8 @@ export class XssSafeFactory {
     await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   };
 
-  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, messageDetails?: Dict<UrlParam>) => {
-    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, messageDetails);
+  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number) => {
+    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, thunderbirdMsgId);
     return Ui.e('div', {
       class: openInFullScreen ? 'secure_compose_window active full_window' : 'secure_compose_window',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),

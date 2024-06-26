@@ -24,7 +24,6 @@ import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { RelayManager } from '../../../js/common/relay-manager.js';
 import { MessageRenderer } from '../../../js/common/message-renderer.js';
-import { ThunderbirdMessageDetails } from '../../elements/compose-modules/compose-types.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -37,12 +36,8 @@ export class InboxView extends View {
   public readonly threadId: string | undefined;
   public readonly showOriginal: boolean;
   public readonly debug: boolean;
-  public pageUrlParams?:
-    | {
-        useFullScreenSecureCompose?: boolean;
-        messageDetails?: ThunderbirdMessageDetails;
-      }
-    | undefined;
+  public readonly useFullScreenSecureCompose: boolean;
+  public readonly thunderbirdMsgId: number | undefined;
   public readonly S: SelCache;
   public readonly gmail: Gmail;
 
@@ -56,13 +51,14 @@ export class InboxView extends View {
 
   public constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug', 'pageUrlParams']);
+    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug', 'useFullScreenSecureCompose', 'thunderbirdMsgId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
-    this.pageUrlParams = typeof uncheckedUrlParams.pageUrlParams === 'string' ? (JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams) : undefined;
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
@@ -90,8 +86,7 @@ export class InboxView extends View {
         $('body').text('Not supported for ' + emailProvider);
       } else {
         await this.inboxMenuModule.render();
-        const headerMessageId = this.pageUrlParams?.messageDetails?.headerMessageId;
-        const parsedThreadId = await this.parseThreadIdFromMessageId(headerMessageId);
+        const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
         if (this.threadId) {
           await this.inboxActiveThreadModule.render(this.threadId);
         } else if (parsedThreadId) {
@@ -149,18 +144,25 @@ export class InboxView extends View {
   };
 
   private preRenderSecureComposeInFullScreen = () => {
-    if (this.pageUrlParams?.useFullScreenSecureCompose) {
-      this.injector.openComposeWin(undefined, true, this.pageUrlParams.messageDetails);
+    if (this.useFullScreenSecureCompose && this.thunderbirdMsgId) {
+      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId);
     }
   };
 
-  private parseThreadIdFromMessageId = async (headerMessageId?: string) => {
+  private parseThreadIdFromHeaderMessageId = async () => {
     let threadId;
-    if (headerMessageId) {
-      const gmail = new Gmail(this.acctEmail);
-      const gmailRes = await gmail.threadIdGet(headerMessageId);
-      if (gmailRes?.messages) {
-        threadId = gmailRes.messages[0].threadId;
+    const tbMsgId = Number(this.thunderbirdMsgId);
+    if (Catch.isThunderbirdMail() && tbMsgId && !this.useFullScreenSecureCompose) {
+      const thunderbirdFullMsg = await browser.messages.getFull(tbMsgId);
+      if (thunderbirdFullMsg.headers) {
+        const messageId = thunderbirdFullMsg.headers['message-id'][0];
+        if (messageId) {
+          const gmail = new Gmail(this.acctEmail);
+          const gmailRes = await gmail.threadIdGet(messageId);
+          if (gmailRes?.messages) {
+            threadId = gmailRes.messages[0].threadId;
+          }
+        }
       }
     }
     return threadId;

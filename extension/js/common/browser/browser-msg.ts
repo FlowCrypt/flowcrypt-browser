@@ -20,7 +20,6 @@ import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 import { Ui } from './ui.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
-import { ThunderbirdMessageDetails } from '../../../chrome/elements/compose-modules/compose-types.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -453,49 +452,32 @@ export class BrowserMsg {
   }
 
   public static thunderbirdSecureComposeHandler() {
-    interface MessageDetails extends ThunderbirdMessageDetails {
-      bccList?: string[];
-      ccList?: string[];
-    }
-    const handleClickEvent = async (tabId: number, action = 'compose' || 'message_display') => {
+    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number) => {
       const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
-      const actionType = action === 'compose' ? browser.composeAction : browser.messageDisplayAction;
-      const browserApiMethod = action === 'compose' ? browser.compose.getComposeDetails : browser.messageDisplay.getDisplayedMessage;
-      const messageDetails = (await browserApiMethod(tabId)) as MessageDetails;
-      const windowType = (await browser.windows.getCurrent()).type;
-      const urlPageParams = {
-        useFullScreenSecureCompose: windowType === 'messageCompose',
-        messageDetails: {
-          subject: messageDetails.subject,
-          to: messageDetails?.to,
-          cc: messageDetails?.cc || messageDetails?.ccList,
-          bcc: messageDetails?.bcc || messageDetails?.bccList,
-          plainTextBody: messageDetails?.plainTextBody || '',
-          headerMessageId: messageDetails?.headerMessageId || '',
-        },
-      };
+      const useFullScreenSecureCompose = (await browser.windows.getCurrent()).type === 'messageCompose';
       if (accountEmails) {
-        const accounts = JSON.parse(accountEmails) as string[];
-        if (accounts.length > 1) {
-          await actionType.setPopup({
-            popup: Url.create('/chrome/popups/select_account.htm', { action: 'inbox', tabId, pageUrlParams: JSON.stringify(urlPageParams) }),
-          });
-          await actionType.openPopup();
-        } else {
-          await BgUtils.openExtensionTab(
-            Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: accounts[0], pageUrlParams: JSON.stringify(urlPageParams) })
-          );
-          await browser.tabs.remove(tabId);
-        }
+        await BgUtils.openExtensionTab(Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId }));
+        await browser.tabs.remove(tabId);
       } else {
         await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
       }
     };
     browser.composeAction.onClicked.addListener(async tab => {
-      await handleClickEvent(Number(tab.id), 'compose');
+      const messageDetails = await browser.compose.getComposeDetails(Number(tab.id));
+      const msgId = Number(messageDetails.relatedMessageId);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const acctEmail = Str.parseEmail(messageDetails.from as string).email!;
+      await handleClickEvent(Number(tab.id), acctEmail, msgId);
     });
     browser.messageDisplayAction.onClicked.addListener(async tab => {
-      await handleClickEvent(Number(tab.id), 'message_display');
+      const tabId = Number(tab.id);
+      const messageDetails = await browser.messageDisplay.getDisplayedMessage(tabId);
+      if (messageDetails) {
+        const msgId = messageDetails.id;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const acctEmail = (await browser.accounts.get(messageDetails.folder!.accountId)).name;
+        await handleClickEvent(tabId, acctEmail, msgId);
+      }
     });
   }
 
