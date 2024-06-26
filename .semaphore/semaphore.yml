@@ -53,7 +53,7 @@ blocks:
               shopt -s nullglob
               for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
                 echo "Uploading debug file $file as job artifact..."
-                artifact push job "$file"
+                artifact push job "$file" --force
               done
 
   - name: Live UI Gmail tests
@@ -89,7 +89,7 @@ blocks:
               shopt -s nullglob
               for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
                 echo "Uploading debug file $file as job artifact..."
-                artifact push job "$file"
+                artifact push job "$file" --force
               done
 
   - name: Other tests

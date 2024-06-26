@@ -28,8 +28,6 @@ updates:
         versions: [ ">=1.0.1" ]
       - dependency-name: "openpgp"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "puppeteer"
-        update-types: ["version-update:semver-major"]
       - dependency-name: "web-ext"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@openpgp/web-stream-tools"

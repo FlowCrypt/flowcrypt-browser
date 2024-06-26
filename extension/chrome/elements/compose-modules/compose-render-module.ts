@@ -193,7 +193,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   public closeMsg = () => {
-    $('body').attr('data-test-state', 'closed'); // used by automated tests
+    document.querySelector('body')?.setAttribute('data-test-state', 'closed'); // used by automated tests
     if (this.view.isReplyBox) {
       BrowserMsg.send.closeReplyMessage(this.view.parentTabId, { frameId: this.view.frameId });
     } else {
@@ -472,7 +472,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         .filter(r => r.evaluating)
         .map(r => r.evaluating)
     );
-    $('body').attr('data-test-state', 'ready'); // set as ready so that automated tests can evaluate results
+    document.querySelector('body')?.setAttribute('data-test-state', 'ready'); // set as ready so that automated tests can evaluate results
   };
 
   private renderReplySuccessAttachments = (attachments: Attachment[], msgId: string, isEncrypted: boolean) => {
