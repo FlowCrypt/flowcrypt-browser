@@ -62,10 +62,10 @@ export class Injector {
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
   };
 
-  public openComposeWin = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number): boolean => {
+  public openComposeWin = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, composeMethod?: string): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
-      const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, thunderbirdMsgId));
+      const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, thunderbirdMsgId, composeMethod));
       composeWin.attr('data-order', alreadyOpenedCount + 1);
       this.S.cached('body').append(composeWin); // xss-safe-factory
       return true;

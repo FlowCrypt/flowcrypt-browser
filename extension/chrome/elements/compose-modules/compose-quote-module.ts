@@ -85,13 +85,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  public convertLineBreakToBr = (text: string, shouldQuote: boolean) => {
-    return text
-      .split('\n')
-      .map(line => `<br>${shouldQuote ? '&gt; ' : ''}${line}`.trim())
-      .join('');
-  };
-
   private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
       const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
@@ -208,6 +201,13 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     } else {
       return `\n(Failed to decrypt quote from previous message because: ${decryptRes.error.type}: ${decryptRes.error.message})\n`;
     }
+  };
+
+  private convertLineBreakToBr = (text: string, shouldQuote: boolean) => {
+    return text
+      .split('\n')
+      .map(line => `<br>${shouldQuote ? '&gt; ' : ''}${line}`.trim())
+      .join('');
   };
 
   private generateHtmlPreviousMsgQuote = (method: 'reply' | 'forward') => {

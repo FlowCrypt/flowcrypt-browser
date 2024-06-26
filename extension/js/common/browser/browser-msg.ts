@@ -452,11 +452,14 @@ export class BrowserMsg {
   }
 
   public static thunderbirdSecureComposeHandler() {
-    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number) => {
+    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: browser.compose._ComposeDetailsType) => {
       const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
       const useFullScreenSecureCompose = (await browser.windows.getCurrent()).type === 'messageCompose';
+      composeMethod = composeMethod === 'reply' || composeMethod === 'forward' ? composeMethod : undefined;
       if (accountEmails) {
-        await BgUtils.openExtensionTab(Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId }));
+        await BgUtils.openExtensionTab(
+          Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId, composeMethod })
+        );
         await browser.tabs.remove(tabId);
       } else {
         await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
@@ -464,10 +467,11 @@ export class BrowserMsg {
     };
     browser.composeAction.onClicked.addListener(async tab => {
       const messageDetails = await browser.compose.getComposeDetails(Number(tab.id));
+      const composeMethod = messageDetails.type;
       const msgId = Number(messageDetails.relatedMessageId);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const acctEmail = Str.parseEmail(messageDetails.from as string).email!;
-      await handleClickEvent(Number(tab.id), acctEmail, msgId);
+      await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
     });
     browser.messageDisplayAction.onClicked.addListener(async tab => {
       const tabId = Number(tab.id);

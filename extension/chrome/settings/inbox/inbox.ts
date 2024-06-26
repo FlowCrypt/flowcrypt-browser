@@ -38,6 +38,7 @@ export class InboxView extends View {
   public readonly debug: boolean;
   public readonly useFullScreenSecureCompose: boolean;
   public readonly thunderbirdMsgId: number | undefined;
+  public readonly composeMethod: 'reply' | 'forward' | undefined;
   public readonly S: SelCache;
   public readonly gmail: Gmail;
 
@@ -51,13 +52,23 @@ export class InboxView extends View {
 
   public constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug', 'useFullScreenSecureCompose', 'thunderbirdMsgId']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail',
+      'labelId',
+      'threadId',
+      'showOriginal',
+      'debug',
+      'useFullScreenSecureCompose',
+      'composeMethod',
+      'thunderbirdMsgId',
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
     this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.composeMethod = (Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeMethod') as 'reply') || 'forward';
     this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
@@ -145,7 +156,7 @@ export class InboxView extends View {
 
   private preRenderSecureComposeInFullScreen = () => {
     if (this.useFullScreenSecureCompose && this.thunderbirdMsgId) {
-      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId);
+      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId, this.composeMethod);
     }
   };
 

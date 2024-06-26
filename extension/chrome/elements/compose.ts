@@ -7,7 +7,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Ui } from '../../js/common/browser/ui.js';
-import { PromiseCancellation, Str, Url } from '../../js/common/core/common.js';
+import { PromiseCancellation, Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
@@ -32,7 +32,6 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
-import { ThunderbirdMessageDetails } from './compose-modules/compose-types.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -46,6 +45,7 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public readonly composeMethod: 'reply' | 'forward' | undefined;
   public readonly thunderbirdMsgId: number;
   public replyOption?: ReplyOption;
   public fesUrl?: string;
@@ -155,6 +155,7 @@ export class ComposeView extends View {
       'replyOption',
       'useFullScreenSecureCompose',
       'thunderbirdMsgId',
+      'composeMethod',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -170,6 +171,7 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
     this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
+    this.composeMethod = (Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeMethod') as 'reply') || 'forward';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
@@ -274,32 +276,38 @@ export class ComposeView extends View {
   private preParseEmailRecipientsIfNeeded = async () => {
     if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
       const thunderbirdMimeMsg = await browser.messages.getFull(this.thunderbirdMsgId);
+      const from = thunderbirdMimeMsg.headers?.from[0];
+      const to = thunderbirdMimeMsg.headers?.to || [];
+      const cc = thunderbirdMimeMsg.headers?.cc || [];
+      const bcc = thunderbirdMimeMsg.headers?.bcc || [];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const subject = thunderbirdMimeMsg.headers!.subject[0];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const date = thunderbirdMimeMsg.headers!.date[0];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const msgId = thunderbirdMimeMsg.headers?.['message-id'][0] || '';
       let plainTextBody;
       if (thunderbirdMimeMsg?.parts?.[0]?.contentType === 'multipart/alternative') {
         plainTextBody = thunderbirdMimeMsg?.parts?.[0]?.parts?.[0].body;
       }
-      const messageDetails = {
-        to: thunderbirdMimeMsg.headers?.to,
-        cc: thunderbirdMimeMsg.headers?.cc,
-        bcc: thunderbirdMimeMsg.headers?.bcc,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        subject: thunderbirdMimeMsg.headers!.subject[0],
-        plainTextBody,
-      } as ThunderbirdMessageDetails;
-      if (messageDetails.plainTextBody) {
-        // todo: add date details since we are now parsing the MIME message
-        const quotedPlainTextBody = this.quoteModule.convertLineBreakToBr(messageDetails.plainTextBody, true);
-        const rtl = messageDetails.plainTextBody.match(new RegExp('[' + Str.rtlChars + ']'));
-        const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
-        this.quoteModule.tripleDotSanitizedHtmlContent = {
-          quote: `<blockquote ${dirAttr} class="height-0">${quotedPlainTextBody}</blockquote>`, // xss-safe-value
-          footer: undefined, // no footer needed already pre-rendered by addSignatureToInput
+      if (plainTextBody && this.composeMethod) {
+        this.quoteModule.messageToReplyOrForward = {
+          text: plainTextBody,
+          headers: {
+            to,
+            from,
+            subject,
+            date,
+            references: msgId,
+            'message-id': msgId,
+          },
+          decryptedFiles: [], // todo : needs to update - https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         };
+        await this.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(msgId, this.composeMethod);
         this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
         this.S.cached('password_or_pubkey').height(1);
       }
-      this.S.cached('input_subject').val(messageDetails.subject);
-      const { to = [], cc = [], bcc = [] } = messageDetails;
+      this.S.cached('input_subject').val(subject);
       if (to.length || cc.length || bcc.length) {
         this.S.cached('input_addresses_container_outer').removeClass('invisible');
         this.S.cached('recipients_placeholder').hide();
