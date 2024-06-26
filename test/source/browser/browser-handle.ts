@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Browser, EvaluateFunc, Page, Target } from 'puppeteer';
+import { Browser, EvaluateFunc, Page, Target, TargetType } from 'puppeteer';
 import { Util } from '../util';
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
@@ -28,6 +28,15 @@ export class BrowserHandle {
     const page = await this.browser.newPage();
     if (extraHeaders !== undefined) {
       await page.setExtraHTTPHeaders(extraHeaders);
+      await page.setRequestInterception(true);
+      page.on('request', async request => {
+        const headers = request.headers();
+        if (request.url().startsWith('https://flowcrypt.s3.amazonaws.com')) {
+          // S3 returns 400 error when request contains Authorization header
+          headers.Authorization = '';
+        }
+        return await request.continue({ headers });
+      });
     }
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
@@ -137,9 +146,9 @@ export class BrowserHandle {
       setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
       let resolved = 0;
       const listener = async (target: Target) => {
-        if (target.type() === 'page') {
+        if (target.type() === TargetType.PAGE) {
           if (!resolved++) {
-            this.browser.removeListener('targetcreated', listener);
+            this.browser.off('targetcreated', listener);
             target.page().then(resolve, reject);
           }
         }

@@ -64,7 +64,7 @@ abstract class ControllableBase {
       this.log(`wait_all:2:${selector}`);
       if (this.isXpath(selector)) {
         this.log(`wait_all:3:${selector}`);
-        await this.target.waitForXPath(selector, { timeout: timeout * 1000 });
+        await this.target.waitForSelector(`xpath/.${selector}`, { timeout: timeout * 1000 });
         this.log(`wait_all:4:${selector}`);
       } else {
         this.log(`wait_all:5:${selector}`);
@@ -581,7 +581,7 @@ abstract class ControllableBase {
   protected firstElement = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector))[0] as ElementHandle;
+      return (await this.target.$$(`xpath/.${selector}`))[0];
     } else {
       return await this.target.$(selector);
     }
@@ -608,7 +608,7 @@ abstract class ControllableBase {
   protected elements = async (selector: string) => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector)) as ElementHandle[];
+      return await this.target.$$(`xpath/.${selector}`);
     } else {
       return await this.target.$$(selector);
     }
@@ -624,11 +624,11 @@ abstract class ControllableBase {
     while (timeout-- > 0) {
       try {
         for (const selector of processedSelectors) {
-          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          const elements = await (this.isXpath(selector) ? this.target.$$(`xpath/.${selector}`) : this.target.$$(selector));
           for (const element of elements) {
             if (!visible || (await Util.isVisible(element))) {
               // element is visible
-              return element as ElementHandle;
+              return element;
             }
           }
         }

@@ -335,7 +335,7 @@ export class MsgUtil {
       // todo - the `ki.passphrase || ''` used to be `ki.passphrase!` which could have actually allowed an undefined to be passed
       // as fixed currently it appears better, but it may be best to instead check `ki.passphrase && await MsgUtil.decryptKeyFor(...)`
       // but that is a larger change that would require separate PR and testing
-      if ((await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids)) || await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids)) {
+      if ((await MsgUtil.isKeyDecryptedFor(parsed, matchingKeyids)) || (await MsgUtil.decryptKeyFor(parsed, ki.passphrase || '', matchingKeyids))) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {
@@ -369,7 +369,7 @@ export class MsgUtil {
         continue;
       }
       const parsed = await KeyUtil.parse(ki.private);
-      if (parsed.fullyDecrypted || (ki.passphrase && await SmimeKey.decryptKey(parsed, ki.passphrase))) {
+      if (parsed.fullyDecrypted || (ki.passphrase && (await SmimeKey.decryptKey(parsed, ki.passphrase)))) {
         KeyCache.setDecrypted(parsed);
         keys.prvForDecryptDecrypted.push({ ki, decrypted: parsed });
       } else {

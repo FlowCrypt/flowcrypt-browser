@@ -26,7 +26,7 @@ export abstract class View {
   }
 
   private static setTestViewStateLoaded = () => {
-    $('body').attr('data-test-view-state', 'loaded');
+    document.querySelector('body')?.setAttribute('data-test-view-state', 'loaded');
   };
 
   private static reportAndRenderErr = (e: unknown) => {
