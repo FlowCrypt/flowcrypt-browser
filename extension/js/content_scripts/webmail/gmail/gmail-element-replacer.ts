@@ -506,7 +506,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachments.length;
-    for (const a of attachments) {
+    for (const a of attachments.reverse()) {
       const attachmentSel = this.filterAttachments(
         attachmentsContainerInner.children().not('.attachment_processed'),
         new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)
