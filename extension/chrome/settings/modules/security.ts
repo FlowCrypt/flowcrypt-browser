@@ -48,11 +48,15 @@ View.run(
     public setHandlers = () => {
       $('.action_change_passphrase').on(
         'click',
-        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm'))
+        this.setHandler(() => {
+          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
+        })
       );
       $('.action_test_passphrase').on(
         'click',
-        this.setHandler(() => Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm'))
+        this.setHandler(() => {
+          Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm');
+        })
       );
       $('#hide_message_password').change(this.setHandler(el => this.hideMsgPasswordHandler(el)));
       $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
@@ -84,7 +88,9 @@ View.run(
             }
           })
         );
-        $('.cancel_passphrase_requirement_change').on('click', () => window.location.reload());
+        $('.cancel_passphrase_requirement_change').on('click', () => {
+          window.location.reload();
+        });
         $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
       }
     };

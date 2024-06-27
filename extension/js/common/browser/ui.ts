@@ -9,7 +9,7 @@ import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'swee
 import { Xss } from '../platform/xss.js';
 import { Bm, BrowserMsg, ChildFrame, ScreenDimensions } from './browser-msg.js';
 
-type NamedSels = Dict<JQuery<HTMLElement>>;
+type NamedSels = Dict<JQuery>;
 
 type ProvidedEventHandler = (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>;
 
@@ -49,8 +49,8 @@ export class CommonHandlers {
 }
 
 export type SelCache = {
-  cached: (name: string) => JQuery<HTMLElement>;
-  now: (name: string) => JQuery<HTMLElement>;
+  cached: (name: string) => JQuery;
+  now: (name: string) => JQuery;
   sel: (name: string) => string;
 };
 export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
@@ -68,7 +68,7 @@ export class Ui {
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
   public static event = {
-    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> =>
+    clicked: (selector: string | JQuery): Promise<HTMLElement> =>
       new Promise(resolve =>
         $(selector as string).one('click', function () {
           resolve(this);
@@ -95,10 +95,10 @@ export class Ui {
     handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
       return function uiEventHandle(this: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) {
         try {
-          const r = cb.bind(originalThis)(this, event) as void | Promise<void>;
+          const r = cb.bind(originalThis)(this, event);
           if (typeof r === 'object' && typeof r.catch === 'function') {
             // eslint-disable-next-line no-underscore-dangle
-            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
+            r.catch((e: unknown) => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
           // eslint-disable-next-line no-underscore-dangle
@@ -107,11 +107,11 @@ export class Ui {
       };
     },
     _dispatchErr: (e: unknown, errHandlers?: BrowserEventErrHandler) => {
-      if (ApiErr.isNetErr(e) && errHandlers && errHandlers.network) {
+      if (ApiErr.isNetErr(e) && errHandlers?.network) {
         errHandlers.network().catch(Catch.reportErr);
-      } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
+      } else if (ApiErr.isAuthErr(e) && errHandlers?.auth) {
         errHandlers.auth().catch(Catch.reportErr);
-      } else if (errHandlers && errHandlers.other) {
+      } else if (errHandlers?.other) {
         errHandlers.other(e).catch(Catch.reportErr);
       } else {
         Catch.reportErr(e);
@@ -132,10 +132,10 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>;
+          const r = cb.bind(originalThis)(el, event, cbResetTimer);
           if (typeof r === 'object' && typeof r.catch === 'function') {
             // eslint-disable-next-line no-underscore-dangle
-            r.catch(e => Ui.event._dispatchErr(e, errHandler));
+            r.catch((e: unknown) => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
           // eslint-disable-next-line no-underscore-dangle
@@ -400,7 +400,7 @@ export class Ui {
 
   public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
-    const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
+    const url = typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
 
@@ -502,7 +502,7 @@ export class Ui {
   };
 
   public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
-    $('body').attr('data-test-state', state); // for automated tests
+    document.querySelector('body')?.setAttribute('data-test-state', state); // for automated tests
   };
 
   public static buildJquerySels = (sels: Dict<string>): SelCache => {
@@ -532,7 +532,7 @@ export class Ui {
     };
   };
 
-  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
+  public static scroll = (sel: string | JQuery, repeat: number[] = []) => {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();

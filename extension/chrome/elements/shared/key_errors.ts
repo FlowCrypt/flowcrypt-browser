@@ -24,18 +24,22 @@ export class KeyErrors {
 
   public handlePrivateKeyError = async (exception: unknown, origPrv: Key, setupOptions?: SetupOptions) => {
     if (exception instanceof UserAlert) {
-      return await Ui.modal.warning(exception.message, Ui.testCompatibilityLink);
+      await Ui.modal.warning(exception.message, Ui.testCompatibilityLink);
+      return;
     } else if (exception instanceof KeyCanBeFixed) {
-      return await this.renderCompatibilityFixBlockAndFinalizeSetup(origPrv, setupOptions);
+      await this.renderCompatibilityFixBlockAndFinalizeSetup(origPrv, setupOptions);
+      return;
     } else if (exception instanceof UnexpectedKeyTypeError) {
-      return await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${exception.message}`);
+      await Ui.modal.warning(`This does not appear to be a validly formatted key.\n\n${exception.message}`);
+      return;
     } else {
       Catch.reportErr(exception);
-      return await Ui.modal.error(
+      await Ui.modal.error(
         `An error happened when processing the key: ${String(exception)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
         false,
         Ui.testCompatibilityLink
       );
+      return;
     }
   };
 

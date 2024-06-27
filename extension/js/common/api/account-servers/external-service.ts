@@ -103,7 +103,7 @@ export class ExternalService extends Api {
     await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
   };
 
-  public helpFeedback = async (email: string, message: string): Promise<void> => {
+  public helpFeedback = async (email: string, message: string): Promise<unknown> => {
     return await this.request(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message } });
   };
 

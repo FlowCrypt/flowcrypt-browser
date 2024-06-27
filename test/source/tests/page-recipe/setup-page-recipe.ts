@@ -92,7 +92,7 @@ export class SetupPageRecipe extends PageRecipe {
     } else if (backup !== 'disabled') {
       throw new Error(`Unknown backup method: ${backup}`);
     }
-    if (backup !== 'disabled' && backupPrvKeyToMailbox !== true) {
+    if (backup !== 'disabled' && !backupPrvKeyToMailbox) {
       await settingsPage.waitAndClick('@action-backup-step3manual-continue');
       if (backup === 'file') {
         // explicit wait first with longer timeout - keygen can take a while, particularly with other tests in parallel

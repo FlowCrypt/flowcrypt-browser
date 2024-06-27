@@ -29,7 +29,7 @@ import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
 
-declare const zxcvbn: Function; // eslint-disable-line @typescript-eslint/ban-types
+declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
 
 export class Settings {
   public static evalPasswordStrength(passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') {
@@ -93,23 +93,23 @@ export class Settings {
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
-    return await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       chrome.storage.local.get(async storage => {
         try {
           for (const storageIndex of Object.keys(storage)) {
-            if (storageIndex.indexOf(filter) === 0) {
+            if (storageIndex.startsWith(filter)) {
               storageIndexesToRemove.push(storageIndex.replace(filter, '') as AccountIndex);
             }
           }
           await AcctStore.remove(acctEmail, storageIndexesToRemove);
           for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-            if (sessionStorageIndex.indexOf(filter) === 0) {
+            if (sessionStorageIndex.startsWith(filter)) {
               sessionStorage.removeItem(sessionStorageIndex);
             }
           }
           resolve();
         } catch (e) {
-          reject(e);
+          reject(e as Error);
         }
       });
     });
@@ -169,7 +169,7 @@ export class Settings {
     await AcctStore.set(newAcctEmail, oldAcctStorage); // save 'fallback' and 'keep' values
     await AcctStore.set(newAcctEmail, newAcctStorage); // save 'forget' and overwrite 'fallback'
     for (const sessionStorageIndex of Object.keys(sessionStorage)) {
-      if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
+      if (sessionStorageIndex.startsWith(oldAcctEmailIndexPrefix)) {
         const v = sessionStorage.getItem(sessionStorageIndex);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
@@ -194,7 +194,7 @@ export class Settings {
 
   public static async renderPrvCompatFixUiAndWaitTilSubmittedByUser(
     acctEmail: string,
-    containerStr: string | JQuery<HTMLElement>,
+    containerStr: string | JQuery,
     origPrv: Key,
     passphrase: string,
     backUrl: string
@@ -203,7 +203,7 @@ export class Settings {
     if (!uids.length) {
       uids.push(acctEmail);
     }
-    const container = $(containerStr as JQuery<HTMLElement>); // due to JQuery TS quirk
+    const container = $(containerStr as JQuery); // due to JQuery TS quirk
     Xss.sanitizeRender(
       container,
       [
@@ -229,9 +229,9 @@ export class Settings {
     container.find('select.input_fix_expire_years').change(
       Ui.event.handle(target => {
         if ($(target).val()) {
-          (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
+          container.find('.action_fix_compatibility').removeClass('gray').addClass('green');
         } else {
-          (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
+          container.find('.action_fix_compatibility').removeClass('green').addClass('gray');
         }
       })
     );
@@ -257,7 +257,7 @@ export class Settings {
             try {
               reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
             } catch (e) {
-              reject(e);
+              reject(e as Error);
               return;
             }
             if (!reformatted.fullyEncrypted) {
@@ -291,7 +291,8 @@ export class Settings {
     try {
       await action();
     } catch (e) {
-      return await Settings.promptToRetry(e, errTitle, action, contactSentence);
+      await Settings.promptToRetry(e, errTitle, action, contactSentence);
+      return;
     }
   }
 
@@ -311,7 +312,8 @@ export class Settings {
     const userErrMsg = `${userMsg}, ${errorMsg}`;
     while ((await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userErrMsg, ApiErr.detailsAsHtmlWithNewlines(lastErr), contactSentence)) === 'retry') {
       try {
-        return await retryCb();
+        await retryCb();
+        return;
       } catch (e2) {
         lastErr = e2;
         if (ApiErr.isSignificant(e2)) {
@@ -322,7 +324,7 @@ export class Settings {
     // pressing retry button causes to get stuck in while loop until success, at which point it returns, or until user closes tab
     // if it got down here, user has chosen 'skip'. This option is only available on 'OPTIONAL' type
     // if the error happens again, op will be skipped
-    return await retryCb();
+    await retryCb();
   }
 
   public static async forbidAndRefreshPageIfCannot(action: 'CREATE_KEYS' | 'BACKUP_KEYS', clientConfiguration: ClientConfiguration) {
@@ -431,9 +433,10 @@ export class Settings {
   public static async loginWithPopupShowModalOnErr(acctEmail: string, then: () => void = () => undefined) {
     if (window !== window.top && !chrome.windows) {
       // Firefox, chrome.windows isn't available in iframes
-      Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
+      await Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
-      return window.location.reload();
+      window.location.reload();
+      return;
     }
     const authRes = await GoogleOAuth.newAuthPopup({ acctEmail });
     if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
@@ -536,7 +539,7 @@ export class Settings {
 
   private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {
     for (const key of Object.keys(sendAs)) {
-      if (sendAs[key] && sendAs[key].isDefault) {
+      if (sendAs[key]?.isDefault) {
         return key;
       }
     }

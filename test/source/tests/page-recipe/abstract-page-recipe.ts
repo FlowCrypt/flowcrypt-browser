@@ -3,7 +3,7 @@
 import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
-import { ElementHandle, JSHandle } from 'puppeteer';
+import { ElementHandle } from 'puppeteer';
 import { Util } from '../../util';
 
 type ModalOpts = {
@@ -15,11 +15,11 @@ type ModalOpts = {
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export abstract class PageRecipe {
-  public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
-    return (await ((await elem.getProperty(property)) as JSHandle).jsonValue()) as string;
+  public static getElementPropertyJson = async (elem: ElementHandle, property: string) => {
+    return (await (await elem.getProperty(property)).jsonValue()) as string;
   };
 
-  public static getElementAttribute = async (elem: ElementHandle<Element>, attribute: string) => {
+  public static getElementAttribute = async (elem: ElementHandle, attribute: string) => {
     return await elem.evaluate((el, attribute) => el.getAttribute(attribute), attribute);
   };
 

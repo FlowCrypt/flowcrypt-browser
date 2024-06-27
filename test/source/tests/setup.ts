@@ -646,24 +646,26 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         // Wipe google tokens to test re-auth popup
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acctEmail);
-        const gmailPage = await openMockGmailPage(t, browser, acctEmail);
-        await gmailPage.waitAndClick('@action-secure-compose');
+        const gmailPage1 = await openMockGmailPage(t, browser, acctEmail);
+        await gmailPage1.waitAndClick('@action-secure-compose');
         // Check reconnect auth notification
-        await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
-        let oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
+        await gmailPage1.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
+        let oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage1.waitAndClick('@action-reconnect-account'));
         // mock api will return missing scopes
         await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'missing_permission');
         // Check missing permission notification
-        await gmailPage.waitForContent('@webmail-notification-setup', 'Connection successful. Please also add missing permissions');
-        oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-add-missing-permission'));
+        await gmailPage1.waitForContent('@webmail-notification-setup', 'Connection successful. Please also add missing permissions');
+        oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage1.waitAndClick('@action-add-missing-permission'));
         await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'approve');
         // after successful reauth, check if connection is successful
-        await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
+        await gmailPage1.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
+        await gmailPage1.close();
         // reload and test that it has no more notifications
-        await gmailPage.page.reload();
-        await gmailPage.waitAndClick('@action-secure-compose');
+        const gmailPage2 = await openMockGmailPage(t, browser, acctEmail);
+        await gmailPage2.waitAndClick('@action-secure-compose');
         await Util.sleep(2);
-        await gmailPage.notPresent(['@webmail-notification-setup']);
+        await gmailPage2.notPresent(['@webmail-notification-setup']);
+        await gmailPage2.close();
       })
     );
 
@@ -672,33 +674,36 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const gmailPage = await openMockGmailPage(t, browser, acct);
-        await gmailPage.waitAll(['@webmail-notification-setup', '@notification-successfully-setup-action-close']);
-        await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
-        await gmailPage.page.reload();
-        await gmailPage.notPresent(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
+        const gmailPage1 = await openMockGmailPage(t, browser, acct);
+        await gmailPage1.waitAll(['@webmail-notification-setup', '@notification-successfully-setup-action-close']);
+        await gmailPage1.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
+        await gmailPage1.page.reload();
+        await gmailPage1.notPresent(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
+        await gmailPage1.close();
         // below test that can re-auth after lost access (simulating situation when user changed password on google)
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
         const settingsPage = await browser.newExtensionSettingsPage(t, acct);
         await settingsPage.waitAndRespondToModal('confirm', 'cancel', 'FlowCrypt must be re-connected to your Google account.');
+        await settingsPage.close();
         // *** these tests below are very flaky in CI environment, Google will want to re-authenticate the user for whatever reason
         // // opening secure compose should trigger an api call which causes a reconnect notification
-        await gmailPage.page.bringToFront();
-        await gmailPage.page.reload();
-        await gmailPage.waitAndClick('@action-secure-compose');
-        await gmailPage.waitAll(['@webmail-notification-setup', '@action-reconnect-account']);
+        const gmailPage2 = await openMockGmailPage(t, browser, acct);
+        await gmailPage2.waitAndClick('@action-secure-compose');
+        await gmailPage2.waitAll(['@webmail-notification-setup', '@action-reconnect-account']);
         await Util.sleep(1);
-        await gmailPage.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
-        const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-account'));
+        await gmailPage2.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage2.waitAndClick('@action-reconnect-account'));
         await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
-        await gmailPage.waitAll(['@webmail-notification-setup']);
+        await gmailPage2.waitAll(['@webmail-notification-setup']);
         await Util.sleep(1);
-        await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
+        await gmailPage2.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
+        await gmailPage2.close();
         // reload and test that it has no more notifications
-        await gmailPage.page.reload();
-        await gmailPage.waitAndClick('@action-secure-compose');
+        const gmailPage3 = await openMockGmailPage(t, browser, acct);
+        await gmailPage3.waitAndClick('@action-secure-compose');
         await Util.sleep(1);
-        await gmailPage.notPresent(['@webmail-notification-setup']);
+        await gmailPage3.notPresent(['@webmail-notification-setup']);
+        await gmailPage3.close();
       })
     );
 

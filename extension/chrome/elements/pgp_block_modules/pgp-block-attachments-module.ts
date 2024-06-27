@@ -15,7 +15,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { AttachmentWarnings } from '../shared/attachment_warnings.js';
 import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 
-declare const filesize: { filesize: Function }; // eslint-disable-line @typescript-eslint/ban-types
+declare const filesize: { filesize: (size: number) => number };
 
 export class PgpBlockViewAttachmentsModule {
   public includedAttachments: Attachment[] = [];
@@ -118,7 +118,7 @@ export class PgpBlockViewAttachmentsModule {
     }
   };
 
-  private renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
+  private renderProgress = (element: JQuery, percent: number | undefined, received: number | undefined, size: number) => {
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {

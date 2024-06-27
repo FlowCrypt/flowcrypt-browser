@@ -1,14 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../node_modules/@types/chrome/index.d.ts" />
-
 'use strict';
 
 import { Attachment } from '../core/attachment.js';
 import { Catch } from '../platform/catch.js';
 import { Dict, Url, UrlParam } from '../core/common.js';
 import { GlobalStore } from '../platform/store/global-store.js';
+import { BgUtils } from '../../service_worker/bgutils.js';
 
 export class Browser {
   public static objUrlCreate = (content: Uint8Array | string) => {
@@ -42,7 +40,7 @@ export class Browser {
     Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
   };
 
-  public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
+  public static arrFromDomNodeList = (obj: NodeList | JQuery): Node[] => {
     // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
     const array = [];
     for (let i = obj.length >>> 0; i--; ) {
@@ -56,19 +54,23 @@ export class Browser {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
-      Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
+      await Browser.openExtensionTab(Url.create(basePath, { addNewAcct }));
     } else {
       const acctEmails = await GlobalStore.acctEmailsGet();
-      Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+      await Browser.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
   };
 
-  public static openExtensionTab = (url: string) => {
-    const tab = window.open(url, 'flowcrypt');
-    if (tab) {
-      tab.focus();
+  public static openExtensionTab = async (url: string) => {
+    if (Catch.browser().name === 'thunderbird') {
+      await BgUtils.openExtensionTab(url);
+    } else {
+      const tab = window.open(url, 'flowcrypt');
+      if (tab) {
+        tab.focus();
+      }
     }
   };
 }

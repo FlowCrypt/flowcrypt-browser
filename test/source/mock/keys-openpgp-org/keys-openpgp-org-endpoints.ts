@@ -13,7 +13,7 @@ export const getMockKeysOpenPGPOrgEndpoints = (keysOpenPGPOrgConfig: KeysOpenPGP
       if (!isGet(req)) {
         throw new HttpClientErr(`Not implemented: ${req.method}`);
       }
-      if (keysOpenPGPOrgConfig && keysOpenPGPOrgConfig[email]) {
+      if (keysOpenPGPOrgConfig?.[email]) {
         return keysOpenPGPOrgConfig[email];
       }
       throw new HttpClientErr('Pubkey not found', 404);

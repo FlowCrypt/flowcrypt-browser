@@ -28,9 +28,8 @@ export class Attester extends Api {
     ]);
     const validResults = results.filter(result => result.status === 'fulfilled');
     for (const result of validResults) {
-      const fulfilResult = result as PromiseFulfilledResult<PubkeysSearchResult>;
-      if (fulfilResult.value.pubkeys.length) {
-        return fulfilResult.value;
+      if (result.value.pubkeys.length) {
+        return result.value;
       }
     }
     if (results[1].status === 'rejected') {
@@ -90,8 +89,7 @@ export class Attester extends Api {
   };
 
   public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const headers = idToken ? { authorization: `Bearer ${idToken!}` } : undefined;
+    const headers = idToken ? { authorization: `Bearer ${idToken}` } : undefined;
     return await this.jsonPost<{ sent: boolean }>('welcome-message', { email, pubkey }, headers);
   };
 

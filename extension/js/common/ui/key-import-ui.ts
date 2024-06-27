@@ -136,7 +136,7 @@ export class KeyImportUi {
     $('.input_private_key').change(
       Ui.event.handle(async target => {
         const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
-        if (!prv || !prv.isPrivate()) {
+        if (!prv?.isPrivate()) {
           $('.line.unprotected_key_create_pass_phrase').hide();
           return;
         }
@@ -231,11 +231,7 @@ export class KeyImportUi {
     return normalized;
   };
 
-  public renderPassPhraseStrengthValidationInput = (
-    input: JQuery<HTMLElement>,
-    submitButton?: JQuery<HTMLElement>,
-    type: 'passphrase' | 'pwd' = 'passphrase'
-  ) => {
+  public renderPassPhraseStrengthValidationInput = (input: JQuery, submitButton?: JQuery, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       if (submitButton) {

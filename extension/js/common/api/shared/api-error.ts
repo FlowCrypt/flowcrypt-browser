@@ -92,7 +92,7 @@ export class AjaxErr extends ApiCallErr {
     let stack = `\n\nprovided ajax call stack:\n${req.stack}`;
     const { resMsg, resDetails, resCode } = AjaxErr.parseResErr(responseText);
     const status = resCode || (typeof xhr.status === 'number' ? xhr.status : -1);
-    if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
+    if (status === 400 || status === 403 || (status === 200 && responseText && !responseText.startsWith('{'))) {
       // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
       const redactedRes = AjaxErr.redactSensitiveData(responseText.substr(0, 1000));
       const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substr(0, 1000));
@@ -114,15 +114,15 @@ export class AjaxErr extends ApiCallErr {
     }
     try {
       // JSON[error][message,code,internal]
-      const resMsg = (parsedRes as { error: Error }).error.message as string; // catching all errs below
+      const resMsg = (parsedRes as { error: Error }).error.message; // catching all errs below
       if (typeof resMsg === 'string') {
         returnable.resMsg = Str.truncate(resMsg, 300);
       }
-      const resDetails = (parsedRes as { error: { internal: string } }).error.internal as string; // catching all errs below
+      const resDetails = (parsedRes as { error: { internal: string } }).error.internal; // catching all errs below
       if (typeof resDetails === 'string') {
         returnable.resDetails = Str.truncate(resDetails, 300);
       }
-      const resCode = (parsedRes as { error: { code: number } }).error.code as number; // catching all errs below
+      const resCode = (parsedRes as { error: { code: number } }).error.code; // catching all errs below
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
@@ -221,6 +221,7 @@ export class ApiErr {
     }
     if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string') {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const json = JSON.parse(e.responseText);
         if (json && (json as { error: string }).error === 'invalid_grant') {
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -236,10 +237,10 @@ export class ApiErr {
 
   public static isMailOrAcctDisabledOrPolicy = (e: unknown): boolean => {
     if (e instanceof AjaxErr && ApiErr.isBadReq(e) && typeof e.responseText === 'string') {
-      if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
+      if (e.responseText.includes('Mail service not enabled') || e.responseText.includes('Account has been deleted')) {
         return true;
       }
-      if (e.responseText.indexOf('This application is currently blocked') !== -1 || e.responseText.indexOf('account data is restricted by policies') !== -1) {
+      if (e.responseText.includes('This application is currently blocked') || e.responseText.includes('account data is restricted by policies')) {
         return true; // could correctly be a separate type, but it's quite rare
       }
     }
@@ -271,7 +272,7 @@ export class ApiErr {
     if (e instanceof AjaxErr && (e.statusText === 'timeout' || e.status === -1)) {
       return true;
     }
-    if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
+    if (e instanceof AjaxErr && e.status === 400 && typeof e.responseText === 'string' && e.responseText.includes('RequestTimeout')) {
       return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
     }
     return false;
@@ -299,7 +300,7 @@ export class ApiErr {
     return e instanceof AjaxErr && e.status === 400;
   };
   public static isInsufficientPermission = (e: unknown): e is AjaxErr => {
-    return e instanceof AjaxErr && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
+    return e instanceof AjaxErr && e.status === 403 && e.responseText.includes('insufficientPermissions');
   };
 
   public static isNotFound = (e: unknown): e is AjaxErr => {

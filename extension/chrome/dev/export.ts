@@ -50,7 +50,7 @@ Catch.try(async () => {
       const { messages, resultSizeEstimate, nextPageToken } = await gmail.msgList('is:inbox OR is:sent', false, nextCyclePageToken);
       print(`msgList: ${(messages || []).length} msgs, resultSizeEstimate:${resultSizeEstimate}, nextPageToken: ${nextPageToken}`);
       msgMetas.push(...(messages || []));
-      if (!messages || !messages.length || !nextPageToken) {
+      if (!messages?.length || !nextPageToken) {
         break;
       }
       nextCyclePageToken = nextPageToken;

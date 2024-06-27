@@ -14,6 +14,10 @@ updates:
       interval: "weekly"
       day: "sunday"
       time: "22:00"
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
     ignore:
       # ignore all bootstrap major updates
       - dependency-name: "bootstrap"
@@ -21,10 +25,18 @@ updates:
       # TODO: upgrade iso-8859-2 when ava will have ESM support: https://github.com/orgs/avajs/projects/2
       # https://github.com/FlowCrypt/flowcrypt-browser/pull/3961#issuecomment-921335748
       - dependency-name: "iso-8859-2"
-        update-types: ["version-update:semver-major"]
+        versions: [ ">=1.0.1" ]
       - dependency-name: "openpgp"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "squire-rte"
-        versions: ["2.0.3"]
-      - dependency-name: "puppeteer"
-        versions: ["21.1.1"] # some ui tests with FileChooser fail in this version
+      - dependency-name: "web-ext"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@openpgp/web-stream-tools"
+        versions: [">= 0.0.14"]
+      - dependency-name: "ava"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "chai"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "chai-as-promised"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
