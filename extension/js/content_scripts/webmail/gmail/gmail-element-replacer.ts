@@ -38,6 +38,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private currentlyReplacingAttachments = false;
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
+  private lastSwitchToEncryptedReply = false;
   private replyOption: ReplyOption | undefined;
 
   private sel = {
@@ -686,9 +687,15 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
             const secureReplyBoxXssSafe = /* xss-safe-factory */ `
               <div class="remove_borders reply_message_iframe_container">
-                ${this.factory.embeddedReply(replyParams, !isReplyButtonView || alreadyHasSecureReplyBox || this.switchToEncryptedReply)}
+                ${this.factory.embeddedReply(replyParams, !isReplyButtonView || alreadyHasSecureReplyBox || this.lastSwitchToEncryptedReply)}
               </div>
             `;
+            // Added `lastSwitchToEncryptedReply` logic to handle when a user switches from `plain reply` to `encrypted reply`
+            // by clicking the `Switch to encrypted reply` button.
+            // Initially, this action removes the `plain reply view` and replaces it with the `plain reply button view`,
+            // which previously led to an incorrect status in `switchToEncryptedReply`.
+            // https://github.com/FlowCrypt/flowcrypt-browser/pull/5778
+            this.lastSwitchToEncryptedReply = false;
             if (hasDraft || alreadyHasSecureReplyBox) {
               replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
               replyBox.hide();
@@ -697,6 +704,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
               this.replyOption = undefined;
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
+              this.lastSwitchToEncryptedReply = this.switchToEncryptedReply;
               if (deleteReplyEl) {
                 // Remove standard reply by clicking `delete` button
                 (deleteReplyEl as HTMLElement).click();
