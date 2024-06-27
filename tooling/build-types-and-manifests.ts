@@ -41,7 +41,7 @@ addManifest('firefox-consumer', manifest => {
     gecko: {
       id: 'firefox@cryptup.io',
       update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
-      strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
+      strict_min_version: '112.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
   manifest.background = {
@@ -59,7 +59,7 @@ addManifest(
   'thunderbird-consumer',
   manifest => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    manifest.browser_specific_settings.strict_min_version = '102.0';
+    manifest.browser_specific_settings.strict_min_version = '112.0';
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
