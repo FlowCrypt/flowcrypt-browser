@@ -41,7 +41,7 @@ addManifest('firefox-consumer', manifest => {
     gecko: {
       id: 'firefox@cryptup.io',
       update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
-      strict_min_version: '60.0', // eslint-disable-line @typescript-eslint/naming-convention
+      strict_min_version: '112.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
   manifest.background = {
