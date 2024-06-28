@@ -97,13 +97,15 @@ export class InboxView extends View {
         $('body').text('Not supported for ' + emailProvider);
       } else {
         await this.inboxMenuModule.render();
-        const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
         if (this.threadId) {
           await this.inboxActiveThreadModule.render(this.threadId);
-        } else if (parsedThreadId) {
-          await this.inboxActiveThreadModule.render(parsedThreadId);
         } else {
-          await this.inboxListThreadsModule.render(this.labelId);
+          const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
+          if (parsedThreadId) {
+            await this.inboxActiveThreadModule.render(parsedThreadId);
+          } else {
+            await this.inboxListThreadsModule.render(this.labelId);
+          }
         }
       }
     } catch (e) {
