@@ -164,11 +164,10 @@ export class InboxView extends View {
 
   private parseThreadIdFromHeaderMessageId = async () => {
     let threadId;
-    const tbMsgId = Number(this.thunderbirdMsgId);
-    if (Catch.isThunderbirdMail() && tbMsgId && !this.useFullScreenSecureCompose) {
-      const thunderbirdFullMsg = await browser.messages.getFull(tbMsgId);
-      if (thunderbirdFullMsg.headers) {
-        const messageId = thunderbirdFullMsg.headers['message-id'][0];
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId && !this.useFullScreenSecureCompose) {
+      const { headers } = await browser.messages.getFull(this.thunderbirdMsgId);
+      if (headers) {
+        const messageId = headers['message-id'][0];
         if (messageId) {
           const gmail = new Gmail(this.acctEmail);
           const gmailRes = await gmail.threadIdGet(messageId);
