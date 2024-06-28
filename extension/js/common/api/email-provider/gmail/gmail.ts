@@ -33,10 +33,6 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
   };
 
-  public threadIdGet = async (messageId: string): Promise<GmailRes.GmailThreadIdQuery> => {
-    return await Google.gmailCall<GmailRes.GmailThreadIdQuery>(this.acctEmail, 'messages', { method: 'GET', data: { q: `rfc822msgid:${messageId}` } });
-  };
-
   public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread> => {
     return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${threadId}`, { method: 'GET', data: { format } }, { download: progressCb });
   };

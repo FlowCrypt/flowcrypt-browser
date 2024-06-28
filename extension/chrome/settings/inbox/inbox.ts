@@ -169,8 +169,11 @@ export class InboxView extends View {
       if (headers) {
         const messageId = headers['message-id'][0];
         if (messageId) {
-          const gmailRes = await this.gmail.threadIdGet(messageId);
-          threadId = gmailRes.messages[0].threadId;
+          const query = `rfc822msgid:${messageId}`;
+          const gmailRes = await this.gmail.msgList(query);
+          if (gmailRes.messages) {
+            threadId = gmailRes.messages[0].threadId;
+          }
         }
       }
     }
