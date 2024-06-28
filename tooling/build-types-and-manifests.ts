@@ -44,8 +44,9 @@ addManifest('firefox-consumer', manifest => {
       strict_min_version: '112.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
+  delete manifest.background;
   manifest.background = {
-    ...manifest.background,
+    type: 'module',
     scripts: ['/js/service_worker/background.js'],
   };
   // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
