@@ -150,7 +150,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     relayManager: RelayManager,
     ppEvent: { entered?: boolean }
   ) => {
-    BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('set_active_window', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
         return; // already active
       }
@@ -158,7 +159,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
-    BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('close_compose_window', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, {
@@ -184,59 +186,74 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       $('body').trigger('focus');
     });
-    BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('focus_frame', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       $(`iframe#${frameId}`).trigger('focus');
     });
-    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('close_reply_message', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       $(`iframe#${frameId}`).remove();
     });
-    BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
+    BrowserMsg.addListener('reinsert_reply_box', async req => {
+      const { replyMsgId } = req as Bm.ReinsertReplyBox;
       webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
     BrowserMsg.addListener('close_dialog', async () => {
       Swal.close();
     });
-    BrowserMsg.addListener('scroll_to_reply_box', async ({ replyMsgId }: Bm.ScrollToReplyBox) => {
+    BrowserMsg.addListener('scroll_to_reply_box', async req => {
+      const { replyMsgId } = req as Bm.ScrollToReplyBox;
       webmailSpecific.getReplacer().scrollToReplyBox(replyMsgId);
     });
-    BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
+    BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async req => {
+      const { replyMsgId, cursorOffsetTop } = req as Bm.ScrollToCursorInReplyBox;
       webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
     });
-    BrowserMsg.addListener('passphrase_dialog', async (args: Bm.PassphraseDialog) => {
+    BrowserMsg.addListener('passphrase_dialog', async req => {
+      const args = req as Bm.PassphraseDialog;
       await showPassphraseDialog(factory, args);
     });
-    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+    BrowserMsg.addListener('passphrase_entry', async req => {
+      const { entered } = req as Bm.PassphraseEntry;
       ppEvent.entered = entered;
     });
     BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
-    BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
+    BrowserMsg.addListener('add_pubkey_dialog', async req => {
+      const { emails } = req as Bm.AddPubkeyDialog;
       await factory.showAddPubkeyDialog(emails);
     });
-    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
+    BrowserMsg.addListener('pgp_block_ready', async req => {
+      const { frameId, messageSender } = req as Bm.PgpBlockReady;
       relayManager.associate(frameId, messageSender);
     });
-    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+    BrowserMsg.addListener('pgp_block_retry', async req => {
+      const { frameId, messageSender } = req as Bm.PgpBlockRetry;
       relayManager.retry(frameId, messageSender);
     });
-    BrowserMsg.addListener('notification_show', async ({ notification, callbacks, group }: Bm.NotificationShow) => {
+    BrowserMsg.addListener('notification_show', async req => {
+      const { notification, callbacks, group } = req as Bm.NotificationShow;
       notifications.show(notification, callbacks, group);
       $('body').one(
         'click',
         Catch.try(() => notifications.clear(group))
       );
     });
-    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+    BrowserMsg.addListener('notification_show_auth_popup_needed', async req => {
+      const { acctEmail } = req as Bm.NotificationShowAuthPopupNeeded;
       notifications.showAuthPopupNeeded(acctEmail);
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
-    BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
+    BrowserMsg.addListener('show_attachment_preview', async req => {
+      const { iframeUrl } = req as Bm.ShowAttachmentPreview;
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
+    BrowserMsg.addListener('ajax_progress', async req => {
+      const progress = req as Bm.AjaxProgress;
       relayManager.renderProgress(progress);
     });
-    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+    BrowserMsg.addListener('render_public_keys', async req => {
+      const { traverseUp, afterFrameId, publicKeys } = req as Bm.RenderPublicKeys;
       const traverseUpLevels = traverseUp || 0;
       let appendAfter = $(`iframe#${afterFrameId}`);
       for (let i = 0; i < traverseUpLevels; i++) {
