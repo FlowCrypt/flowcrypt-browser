@@ -277,14 +277,11 @@ export class ComposeView extends View {
     if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
       const thunderbirdMimeMsg = await browser.messages.getFull(this.thunderbirdMsgId);
       const from = thunderbirdMimeMsg.headers?.from[0];
+      const date = thunderbirdMimeMsg.headers?.date[0];
       const to = thunderbirdMimeMsg.headers?.to || [];
       const cc = thunderbirdMimeMsg.headers?.cc || [];
       const bcc = thunderbirdMimeMsg.headers?.bcc || [];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const subject = thunderbirdMimeMsg.headers!.subject[0];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const date = thunderbirdMimeMsg.headers!.date[0];
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const subject = thunderbirdMimeMsg.headers?.subject[0] || '';
       const msgId = thunderbirdMimeMsg.headers?.['message-id'][0] || '';
       let plainTextBody;
       if (thunderbirdMimeMsg?.parts?.[0]?.contentType === 'multipart/alternative') {
