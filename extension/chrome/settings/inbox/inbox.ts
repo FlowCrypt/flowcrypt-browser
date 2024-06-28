@@ -169,8 +169,7 @@ export class InboxView extends View {
       if (headers) {
         const messageId = headers['message-id'][0];
         if (messageId) {
-          const gmail = new Gmail(this.acctEmail);
-          const gmailRes = await gmail.threadIdGet(messageId);
+          const gmailRes = await this.gmail.threadIdGet(messageId);
           threadId = gmailRes.messages[0].threadId;
         }
       }
