@@ -276,8 +276,6 @@ export class ComposeView extends View {
   private preParseEmailRecipientsIfNeeded = async () => {
     if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
       const { headers, parts } = await browser.messages.getFull(this.thunderbirdMsgId);
-      const from = headers?.from[0];
-      const date = headers?.date[0];
       const to = headers?.to || [];
       const cc = headers?.cc || [];
       const bcc = headers?.bcc || [];
@@ -292,9 +290,9 @@ export class ComposeView extends View {
           text: plainTextBody,
           headers: {
             to,
-            from,
             subject,
-            date,
+            from: headers?.from[0],
+            date: headers?.date[0],
             references: msgId,
             'message-id': msgId,
           },
