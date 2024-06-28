@@ -14,16 +14,12 @@ import { GlobalStore } from '../../js/common/platform/store/global-store.js';
 
 View.run(
   class SelectAcctPopupView extends View {
-    private readonly tabId?: number;
-    private readonly pageUrlParams?: string;
     private readonly action: 'inbox' | 'settings';
 
     public constructor() {
       super();
-      const uncheckedUrlParams = Url.parse(['action', 'tabId', 'pageUrlParams']);
+      const uncheckedUrlParams = Url.parse(['action']);
       this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
-      this.tabId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'tabId'));
-      this.pageUrlParams = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'pageUrlParams');
     }
 
     public render = async () => {
@@ -60,18 +56,13 @@ View.run(
     };
 
     private actionChooseAcctHandler = async (clickedElement: HTMLElement) => {
-      const acctEmail = $(clickedElement).attr('email') || '';
       if (this.action === 'inbox') {
-        await Browser.openExtensionTab(Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, pageUrlParams: this.pageUrlParams }));
+        await Browser.openSettingsPage('inbox/inbox.htm', $(clickedElement).attr('email'));
       } else {
-        await Browser.openSettingsPage('index.htm', acctEmail);
+        await Browser.openSettingsPage('index.htm', $(clickedElement).attr('email'));
       }
       await Time.sleep(100);
-      if (this.tabId) {
-        await browser.tabs.remove(this.tabId);
-      } else {
-        window.close();
-      }
+      window.close();
     };
 
     private actionRedirectToAddAcctPageHandler = async () => {
