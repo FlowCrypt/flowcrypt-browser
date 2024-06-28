@@ -275,17 +275,17 @@ export class ComposeView extends View {
 
   private preParseEmailRecipientsIfNeeded = async () => {
     if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
-      const thunderbirdMimeMsg = await browser.messages.getFull(this.thunderbirdMsgId);
-      const from = thunderbirdMimeMsg.headers?.from[0];
-      const date = thunderbirdMimeMsg.headers?.date[0];
-      const to = thunderbirdMimeMsg.headers?.to || [];
-      const cc = thunderbirdMimeMsg.headers?.cc || [];
-      const bcc = thunderbirdMimeMsg.headers?.bcc || [];
-      const subject = thunderbirdMimeMsg.headers?.subject[0] || '';
-      const msgId = thunderbirdMimeMsg.headers?.['message-id'][0] || '';
+      const { headers, parts } = await browser.messages.getFull(this.thunderbirdMsgId);
+      const from = headers?.from[0];
+      const date = headers?.date[0];
+      const to = headers?.to || [];
+      const cc = headers?.cc || [];
+      const bcc = headers?.bcc || [];
+      const subject = headers?.subject[0] || '';
+      const msgId = headers?.['message-id'][0] || '';
       let plainTextBody;
-      if (thunderbirdMimeMsg?.parts?.[0]?.contentType === 'multipart/alternative') {
-        plainTextBody = thunderbirdMimeMsg?.parts?.[0]?.parts?.[0].body;
+      if (parts?.[0]?.contentType === 'multipart/alternative') {
+        plainTextBody = parts?.[0]?.parts?.[0].body;
       }
       if (plainTextBody && this.composeMethod) {
         this.quoteModule.messageToReplyOrForward = {
