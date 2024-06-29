@@ -224,7 +224,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (method === 'reply') {
       const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
       const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
-      return `<blockquote ${dirAttr}>${sanitizedQuote}</blockquote>`;
+      const thunderbirdClass = Catch.isThunderbirdMail() ? 'class="height-0"' : '';
+      return `<blockquote ${thunderbirdClass} ${dirAttr}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
         `<div ${dirAttr}>` +
