@@ -453,10 +453,10 @@ export class BrowserMsg {
 
   public static thunderbirdSecureComposeHandler() {
     const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: browser.compose._ComposeDetailsType) => {
-      const accountEmails = (await GlobalStore.get(['account_emails'])).account_emails;
+      const accountEmails = await GlobalStore.acctEmailsGet();
       const useFullScreenSecureCompose = (await browser.windows.getCurrent()).type === 'messageCompose';
       composeMethod = composeMethod === 'reply' || composeMethod === 'forward' ? composeMethod : undefined;
-      if (accountEmails) {
+      if (accountEmails.length !== 0) {
         await BgUtils.openExtensionTab(
           Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId, composeMethod })
         );
