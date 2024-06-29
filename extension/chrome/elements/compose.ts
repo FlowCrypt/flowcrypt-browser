@@ -32,6 +32,7 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -283,7 +284,13 @@ export class ComposeView extends View {
       const msgId = headers?.['message-id'][0] || '';
       let plainTextBody;
       if (parts?.[0]?.contentType === 'multipart/alternative') {
-        plainTextBody = parts?.[0]?.parts?.[0].body;
+        if (parts?.[0].parts?.[0].contentType === 'text/plain') {
+          plainTextBody = parts?.[0]?.parts?.[0].body;
+        } else {
+          // no plain text body found so HTML should be sanitized
+          const sanitizedHtmlBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.parts?.[0].body || '<br>', '');
+          plainTextBody = sanitizedHtmlBody;
+        }
       }
       if (plainTextBody && this.composeMethod) {
         this.quoteModule.messageToReplyOrForward = {
