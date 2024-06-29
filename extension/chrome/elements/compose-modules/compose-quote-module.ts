@@ -215,7 +215,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return;
     }
     const text = this.messageToReplyOrForward.text;
-    const from = this.messageToReplyOrForward.headers.from;
+    const from = Str.parseEmail(this.messageToReplyOrForward.headers.from || '').email;
     const date = new Date(String(this.messageToReplyOrForward.headers.date));
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
