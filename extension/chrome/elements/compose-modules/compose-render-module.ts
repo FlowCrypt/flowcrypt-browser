@@ -27,6 +27,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private previousReplyOption: ReplyOption | undefined;
 
   public initComposeBox = async () => {
+    if (this.view.useFullScreenSecureCompose) {
+      $('body').addClass('full_window');
+    }
     if (this.view.isReplyBox) {
       this.responseMethod = 'reply';
     }

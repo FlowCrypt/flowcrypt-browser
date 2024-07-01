@@ -32,6 +32,7 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -41,9 +42,12 @@ export class ComposeView extends View {
   public readonly removeAfterClose: boolean;
   public readonly disableDraftSaving: boolean;
   public readonly debug: boolean;
+  public readonly useFullScreenSecureCompose: boolean;
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public readonly composeMethod: 'reply' | 'forward' | undefined;
+  public readonly thunderbirdMsgId: number;
   public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
@@ -119,6 +123,8 @@ export class ComposeView extends View {
     recipients: 'span.recipients',
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
+    input_container_cc: '#input-container-cc input',
+    input_container_bcc: '#input-container-bcc input',
     recipient_left_label: '.recipient-left-label',
     input_container_from: '#input-container-from',
     input_addresses_container_inner: '#input_addresses_container > div:first',
@@ -148,6 +154,9 @@ export class ComposeView extends View {
       'removeAfterClose',
       'replyPubkeyMismatch',
       'replyOption',
+      'useFullScreenSecureCompose',
+      'thunderbirdMsgId',
+      'composeMethod',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -161,6 +170,9 @@ export class ComposeView extends View {
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
+    this.composeMethod = (Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeMethod') as 'reply') || 'forward';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
@@ -201,6 +213,7 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
+    await this.preParseEmailRecipientsIfNeeded();
     if (this.replyOption && this.isReplyBox) {
       await this.renderModule.activateReplyOption(this.replyOption, true);
     }
@@ -260,6 +273,58 @@ export class ComposeView extends View {
   };
 
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
+
+  private preParseEmailRecipientsIfNeeded = async () => {
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
+      const { headers, parts } = await browser.messages.getFull(this.thunderbirdMsgId);
+      const to = headers?.to || [];
+      const cc = headers?.cc || [];
+      const bcc = headers?.bcc || [];
+      const subject = headers?.subject[0] || '';
+      const msgId = headers?.['message-id'][0] || '';
+      let plainTextBody;
+      if (parts?.[0]?.contentType === 'multipart/alternative') {
+        if (parts?.[0].parts?.[0].contentType === 'text/plain') {
+          plainTextBody = parts?.[0]?.parts?.[0].body;
+        } else {
+          // no plain text body found so HTML should be sanitized
+          const sanitizedHtmlBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.parts?.[0].body || '<br>', '');
+          plainTextBody = sanitizedHtmlBody;
+        }
+      }
+      if (plainTextBody && this.composeMethod) {
+        this.quoteModule.messageToReplyOrForward = {
+          text: plainTextBody,
+          headers: {
+            to,
+            subject,
+            from: headers?.from[0],
+            date: headers?.date[0],
+            references: msgId,
+            'message-id': msgId,
+          },
+          decryptedFiles: [], // todo : needs to update - https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
+        };
+        await this.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(msgId, this.composeMethod);
+        this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
+        this.S.cached('password_or_pubkey').height(1);
+      }
+      this.S.cached('input_subject').val(subject);
+      if (to.length || cc.length || bcc.length) {
+        this.S.cached('input_addresses_container_outer').removeClass('invisible');
+        this.S.cached('recipients_placeholder').hide();
+        this.S.cached('input_to').val(to.join(','));
+        this.S.cached('input_container_cc').val(cc.join(','));
+        this.S.cached('input_container_bcc').val(cc.join(','));
+      }
+      const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
+      for (const inputContainer of preParsedRecipient) {
+        if (String($(inputContainer).find('input').val()).trim().length > 0) {
+          await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
+        }
+      }
+    }
+  };
 }
 
 View.run(ComposeView);

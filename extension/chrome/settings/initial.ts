@@ -11,6 +11,7 @@ View.run(
       const browserName = Catch.browser().name === 'chrome' && Number(Catch.browser().v) >= 76 ? 'chrome' : Catch.browser().name;
       if (browserName === 'thunderbird') {
         $('#img-setup-arrow').hide();
+        $('#thunderbird-steps').parent().parent().css('text-align', 'center');
       }
       const stepsEl = document.getElementById(`${browserName}-steps`);
       if (stepsEl) {

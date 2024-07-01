@@ -64,7 +64,7 @@ export class Browser {
   };
 
   public static openExtensionTab = async (url: string) => {
-    if (Catch.browser().name === 'thunderbird') {
+    if (Catch.isThunderbirdMail()) {
       await BgUtils.openExtensionTab(url);
     } else {
       const tab = window.open(url, 'flowcrypt');

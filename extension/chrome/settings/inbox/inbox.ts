@@ -36,6 +36,9 @@ export class InboxView extends View {
   public readonly threadId: string | undefined;
   public readonly showOriginal: boolean;
   public readonly debug: boolean;
+  public readonly useFullScreenSecureCompose: boolean;
+  public readonly thunderbirdMsgId: number | undefined;
+  public readonly composeMethod: 'reply' | 'forward' | undefined;
   public readonly S: SelCache;
   public readonly gmail: Gmail;
 
@@ -49,12 +52,24 @@ export class InboxView extends View {
 
   public constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail',
+      'labelId',
+      'threadId',
+      'showOriginal',
+      'debug',
+      'useFullScreenSecureCompose',
+      'composeMethod',
+      'thunderbirdMsgId',
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.composeMethod = (Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeMethod') as 'reply') || 'forward';
+    this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
@@ -72,6 +87,10 @@ export class InboxView extends View {
     ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
     this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
+    this.preRenderSecureComposeInFullScreen();
+    if (Catch.isThunderbirdMail()) {
+      $('#container-gmail-banner').hide();
+    }
     try {
       await Settings.populateAccountsMenu('inbox.htm');
       if (emailProvider && emailProvider !== 'gmail') {
@@ -81,7 +100,12 @@ export class InboxView extends View {
         if (this.threadId) {
           await this.inboxActiveThreadModule.render(this.threadId);
         } else {
-          await this.inboxListThreadsModule.render(this.labelId);
+          const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
+          if (parsedThreadId) {
+            await this.inboxActiveThreadModule.render(parsedThreadId);
+          } else {
+            await this.inboxListThreadsModule.render(this.labelId);
+          }
         }
       }
     } catch (e) {
@@ -130,6 +154,30 @@ export class InboxView extends View {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
     Xss.sanitizeRender('h1', title);
+  };
+
+  private preRenderSecureComposeInFullScreen = () => {
+    if (this.useFullScreenSecureCompose && this.thunderbirdMsgId) {
+      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId, this.composeMethod);
+    }
+  };
+
+  private parseThreadIdFromHeaderMessageId = async () => {
+    let threadId;
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId && !this.useFullScreenSecureCompose) {
+      const { headers } = await browser.messages.getFull(this.thunderbirdMsgId);
+      if (headers) {
+        const messageId = headers['message-id'][0];
+        if (messageId) {
+          const query = `rfc822msgid:${messageId}`;
+          const gmailRes = await this.gmail.msgList(query);
+          if (gmailRes.messages) {
+            threadId = gmailRes.messages[0].threadId;
+          }
+        }
+      }
+    }
+    return threadId;
   };
 
   private addBrowserMsgListeners = () => {

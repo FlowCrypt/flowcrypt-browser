@@ -37,6 +37,15 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
   };
 
+  public actionRenderTripleDotContentHandle = (el: HTMLElement) => {
+    $(el).remove();
+    const inputEl = this.view.S.cached('input_text');
+    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
+    this.view.draftModule.setLastDraftBody(inputEl.html());
+    this.tripleDotSanitizedHtmlContent = undefined;
+    this.view.sizeModule.resizeComposeBox();
+  };
+
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward', forceReload = false) => {
     if (!this.messageToReplyOrForward || forceReload) {
       this.view.S.cached('triple_dot').addClass('progress');
@@ -206,7 +215,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return;
     }
     const text = this.messageToReplyOrForward.text;
-    const from = this.messageToReplyOrForward.headers.from;
+    const from = Str.parseEmail(this.messageToReplyOrForward.headers.from || '').email;
     const date = new Date(String(this.messageToReplyOrForward.headers.date));
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
     const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
@@ -215,7 +224,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (method === 'reply') {
       const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
       const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
-      return `<blockquote ${dirAttr}>${sanitizedQuote}</blockquote>`;
+      const thunderbirdClass = Catch.isThunderbirdMail() ? 'class="height-0"' : '';
+      return `<blockquote ${thunderbirdClass} ${dirAttr}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
         `<div ${dirAttr}>` +
@@ -228,15 +238,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `</div>`;
       return `${header}<br><br>${escapedText}`;
     }
-  };
-
-  private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
-    $(el).remove();
-    const inputEl = this.view.S.cached('input_text');
-    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
-    this.view.draftModule.setLastDraftBody(inputEl.html());
-    this.tripleDotSanitizedHtmlContent = undefined;
-    this.view.sizeModule.resizeComposeBox();
   };
 
   private setQuoteLoaderProgress = (percentOrString: string | number | undefined): void => {
