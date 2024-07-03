@@ -69,5 +69,7 @@ console.info('background.js service worker starting');
   injectFcIntoWebmail();
 
   // Thunderbird event handlers
-  BrowserMsg.thunderbirdSecureComposeHandler();
+  if (Catch.isThunderbirdMail()) {
+    BrowserMsg.thunderbirdSecureComposeHandler();
+  }
 })().catch(Catch.reportErr);
