@@ -320,11 +320,11 @@ export class BrowserMsg {
     pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => {
       BrowserMsg.sendCatch(dest, 'pgp_block_render', bm);
     },
+    setHandlerReadyForPGPBlock: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'set_handler_ready_for_pgp_block', {});
+    },
     pgpBlockReady: (frame: ChildFrame, bm: Bm.PgpBlockReady) => {
-      Catch.setHandledTimeout(() => {
-        // Adding a timeout here because the parent frame might not be ready immediately to receive the event
-        BrowserMsg.sendToParentWindow(frame, 'pgp_block_ready', bm);
-      }, 2000);
+      BrowserMsg.sendToParentWindow(frame, 'pgp_block_ready', bm);
     },
     pgpBlockRetry: (frame: ChildFrame, bm: Bm.PgpBlockRetry) => {
       BrowserMsg.sendToParentWindow(frame, 'pgp_block_retry', bm);

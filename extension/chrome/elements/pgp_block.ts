@@ -67,6 +67,12 @@ export class PgpBlockView extends View {
     BrowserMsg.addListener('confirmation_result', CommonHandlers.createAsyncResultHandler());
     BrowserMsg.listen(this.getDest());
     BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
+    // Added this listener to handle cases where 'inbox_page/setup-webmail-content-script' is not ready to retrieve 'pgpBlockReady' events.
+    // This can occur if 'setHandlers' is called before 'Inbox.setHandlers' is fully initialized.
+    // https://github.com/FlowCrypt/flowcrypt-browser/pull/5783#discussion_r1663636264
+    BrowserMsg.addListener('set_handler_ready_for_pgp_block', async () => {
+      BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
+    });
   };
 
   private renderProgress = ({ operationId, text, perc, init }: { operationId: string; text: string; perc?: number; init?: boolean }) => {
