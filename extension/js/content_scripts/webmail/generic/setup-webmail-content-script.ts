@@ -263,8 +263,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         appendAfter.after(factory.embeddedPubkey(armoredPubkey, false)); // xss-safe-value
       }
     });
-    BrowserMsg.send.setHandlerReadyForPGPBlock('broadcast');
     BrowserMsg.listen(tabId);
+    BrowserMsg.send.setHandlerReadyForPGPBlock('broadcast');
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
