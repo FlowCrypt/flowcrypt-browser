@@ -114,7 +114,7 @@ View.run(
         const updatedKeyPassphrase = String($('.input_passphrase').val());
         KeyImportUi.allowReselect();
         if (typeof updatedKey === 'undefined') {
-          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.getTestCompatibilityLink(this.acctEmail));
         } else if (updatedKeyEncrypted.identities.length === 0) {
           throw new KeyCanBeFixed(updatedKeyEncrypted);
         } else if (updatedKey.isPublic) {
@@ -148,7 +148,7 @@ View.run(
               `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
                 !!this.fesUrl
               )} to see why is that.`,
-              Ui.testCompatibilityLink
+              Ui.getTestCompatibilityLink(this.acctEmail)
             );
             window.location.href = this.showKeyUrl;
           }

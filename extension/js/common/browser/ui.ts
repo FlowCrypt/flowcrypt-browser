@@ -342,7 +342,9 @@ export class Ui {
     },
   };
 
-  public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+  public static getTestCompatibilityLink = (acctEmail: string): string => {
+    return `<a href="/chrome/settings/modules/compatibility.htm?acctEmail=${acctEmail}" target="_blank">Test your OpenPGP key compatibility</a>`;
+  };
 
   public static getScreenDimensions = (): ScreenDimensions => {
     const { availLeft, availTop } = window.screen as unknown as { availLeft?: number; availTop?: number };

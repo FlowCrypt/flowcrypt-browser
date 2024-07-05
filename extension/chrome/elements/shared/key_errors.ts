@@ -24,7 +24,7 @@ export class KeyErrors {
 
   public handlePrivateKeyError = async (exception: unknown, origPrv: Key, setupOptions?: SetupOptions) => {
     if (exception instanceof UserAlert) {
-      await Ui.modal.warning(exception.message, Ui.testCompatibilityLink);
+      await Ui.modal.warning(exception.message, Ui.getTestCompatibilityLink(this.acctEmail));
       return;
     } else if (exception instanceof KeyCanBeFixed) {
       await this.renderCompatibilityFixBlockAndFinalizeSetup(origPrv, setupOptions);
@@ -37,7 +37,7 @@ export class KeyErrors {
       await Ui.modal.error(
         `An error happened when processing the key: ${String(exception)}\n${Lang.general.contactForSupportSentence(this.isCustomerUrlFesUsed())}`,
         false,
-        Ui.testCompatibilityLink
+        Ui.getTestCompatibilityLink(this.acctEmail)
       );
       return;
     }
@@ -93,7 +93,11 @@ export class KeyErrors {
       await this.saveKeyAndContinue(fixedPrv);
     } catch (e) {
       Catch.reportErr(e);
-      await Ui.modal.error(`Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`, false, Ui.testCompatibilityLink);
+      await Ui.modal.error(
+        `Failed to fix key (${String(e)}). ${Lang.general.writeMeToFixIt(this.isCustomerUrlFesUsed())}`,
+        false,
+        Ui.getTestCompatibilityLink(this.acctEmail)
+      );
       if (this.setupView) {
         this.setupView.setupRender.displayBlock('step_2b_manual_enter');
       } else {
