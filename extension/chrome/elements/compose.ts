@@ -283,14 +283,16 @@ export class ComposeView extends View {
       const subject = headers?.subject[0] || '';
       const msgId = headers?.['message-id'][0] || '';
       let plainTextBody;
+      // todo - mime type parsing should be done here extensively - https://github.com/FlowCrypt/flowcrypt-browser/issues/5787
       if (parts?.[0]?.contentType === 'multipart/alternative') {
         if (parts?.[0].parts?.[0].contentType === 'text/plain') {
           plainTextBody = parts?.[0]?.parts?.[0].body;
         } else {
           // no plain text body found so HTML should be sanitized
-          const sanitizedHtmlBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.parts?.[0].body || '<br>', '');
-          plainTextBody = sanitizedHtmlBody;
+          plainTextBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.parts?.[0].body || '<br>', '');
         }
+      } else if (parts?.length === 1 && parts?.[0].contentType === 'text/html') {
+        plainTextBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.body || '<br>', '');
       }
       if (plainTextBody && this.composeMethod) {
         this.quoteModule.messageToReplyOrForward = {
