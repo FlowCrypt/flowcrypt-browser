@@ -275,7 +275,7 @@ export class ComposeView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
 
   private preParseEmailRecipientsIfNeeded = async () => {
-    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId && this.thunderbirdMsgId !== 0) {
       const { headers, parts } = await browser.messages.getFull(this.thunderbirdMsgId);
       const to = headers?.to || [];
       const cc = headers?.cc || [];
