@@ -123,6 +123,7 @@ export class InboxView extends View {
   public setHandlers = () => {
     this.addBrowserMsgListeners();
     BrowserMsg.listen(this.tabId);
+    BrowserMsg.send.setHandlerReadyForPGPBlock('broadcast');
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
     $('.action_open_settings').on(
       'click',

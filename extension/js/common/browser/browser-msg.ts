@@ -325,6 +325,9 @@ export class BrowserMsg {
     pgpBlockRender: (dest: Bm.Dest, bm: RenderMessage) => {
       BrowserMsg.sendCatch(dest, 'pgp_block_render', bm);
     },
+    setHandlerReadyForPGPBlock: (dest: Bm.Dest) => {
+      BrowserMsg.sendCatch(dest, 'set_handler_ready_for_pgp_block', {});
+    },
     pgpBlockReady: (frame: ChildFrame, bm: Bm.PgpBlockReady) => {
       BrowserMsg.sendToParentWindow(frame, 'pgp_block_ready', bm);
     },
