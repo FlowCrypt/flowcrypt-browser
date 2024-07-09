@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { ApiErr, MAX_RATE_LIMIT_ERROR_RETRY_COUNT } from '../../../../js/common/api/shared/api-error.js';
+import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
 import { Catch } from '../../../../js/common/platform/catch.js';
 import { GmailParser } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { InboxView } from '../inbox.js';
@@ -11,7 +11,6 @@ import { Str, promiseAllWithLimit } from '../../../../js/common/core/common.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { ViewModule } from '../../../../js/common/view-module.js';
 import { Xss } from '../../../../js/common/platform/xss.js';
-import { Time } from '../../../../js/common/browser/time.js';
 
 export class InboxListThreadsModule extends ViewModule<InboxView> {
   public render = async (labelId: string) => {
@@ -43,7 +42,7 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
     }
   };
 
-  private renderInboxItem = async (threadId: string, retryCount = 0): Promise<void> => {
+  private renderInboxItem = async (threadId: string): Promise<void> => {
     this.inboxThreadItemAdd(threadId);
     const threadItem = $('.threads #' + this.threadListItemId(threadId));
     try {
@@ -74,10 +73,6 @@ export class InboxListThreadsModule extends ViewModule<InboxView> {
         threadItem.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
-      if (ApiErr.isRateLimit(e) && retryCount < MAX_RATE_LIMIT_ERROR_RETRY_COUNT) {
-        await Time.sleep(1000);
-        return await this.renderInboxItem(threadId, retryCount + 1);
-      }
       if (ApiErr.isNetErr(e)) {
         Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>')
           .find('a')
