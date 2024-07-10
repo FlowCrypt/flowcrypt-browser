@@ -29,6 +29,8 @@ abstract class AuthErr extends Error {}
 export class GoogleAuthErr extends AuthErr {}
 export class BackendAuthErr extends AuthErr {}
 
+export const MAX_RATE_LIMIT_ERROR_RETRY_COUNT = 5;
+
 abstract class ApiCallErr extends Error {
   protected static describeApiAction = (req: { url: string; method?: string; data?: unknown }) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;

@@ -17,7 +17,8 @@ import { Google } from './google.js';
 import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
-import { AjaxErr } from '../../shared/api-error.js';
+import { AjaxErr, ApiErr, MAX_RATE_LIMIT_ERROR_RETRY_COUNT } from '../../shared/api-error.js';
+import { Time } from '../../../browser/time.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -33,8 +34,16 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
   };
 
-  public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread> => {
-    return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${threadId}`, { method: 'GET', data: { format } }, { download: progressCb });
+  public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb, retryCount = 0): Promise<GmailRes.GmailThread> => {
+    try {
+      return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${threadId}`, { method: 'GET', data: { format } }, { download: progressCb });
+    } catch (e) {
+      if (ApiErr.isRateLimit(e) && retryCount < MAX_RATE_LIMIT_ERROR_RETRY_COUNT) {
+        await Time.sleep(1000);
+        return await this.threadGet(threadId, format, progressCb, retryCount + 1);
+      }
+      throw e;
+    }
   };
 
   public threadList = async (labelId: string): Promise<GmailRes.GmailThreadList> => {
@@ -126,13 +135,21 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    * because strings over 1 MB may fail to get to/from bg page. A way to mitigate that would be to pass `R.GmailMsg$raw` prop
    * as a Buf instead of a string.
    */
-  public msgGet = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg> => {
-    return await Google.gmailCall<GmailRes.GmailMsg>(
-      this.acctEmail,
-      `messages/${msgId}`,
-      { method: 'GET', data: { format: format || 'full' } },
-      progressCb ? { download: progressCb } : undefined
-    );
+  public msgGet = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb, retryCount = 0): Promise<GmailRes.GmailMsg> => {
+    try {
+      return await Google.gmailCall<GmailRes.GmailMsg>(
+        this.acctEmail,
+        `messages/${msgId}`,
+        { method: 'GET', data: { format: format || 'full' } },
+        progressCb ? { download: progressCb } : undefined
+      );
+    } catch (e) {
+      if (ApiErr.isRateLimit(e) && retryCount < MAX_RATE_LIMIT_ERROR_RETRY_COUNT) {
+        await Time.sleep(1000);
+        return await this.msgGet(msgId, format, progressCb, retryCount + 1);
+      }
+      throw e;
+    }
   };
 
   public msgsGet = async (msgIds: string[], format: GmailResponseFormat): Promise<GmailRes.GmailMsg[]> => {
