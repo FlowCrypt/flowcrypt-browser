@@ -167,7 +167,7 @@ export class InboxView extends View {
   private parseThreadIdFromHeaderMessageId = async () => {
     let threadId;
     if (Catch.isThunderbirdMail() && this.thunderbirdMsgId && !this.useFullScreenSecureCompose) {
-      const { headers } = await browser.messages.getFull(this.thunderbirdMsgId);
+      const { headers } = await messenger.messages.getFull(this.thunderbirdMsgId);
       if (headers) {
         const messageId = headers['message-id'][0];
         if (messageId) {

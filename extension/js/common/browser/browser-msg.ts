@@ -455,34 +455,34 @@ export class BrowserMsg {
   }
 
   public static thunderbirdSecureComposeHandler() {
-    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: browser.compose._ComposeDetailsType) => {
+    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: messenger.compose._ComposeDetailsType) => {
       const accountEmails = await GlobalStore.acctEmailsGet();
-      const useFullScreenSecureCompose = (await browser.windows.getCurrent()).type === 'messageCompose';
+      const useFullScreenSecureCompose = (await messenger.windows.getCurrent()).type === 'messageCompose';
       composeMethod = composeMethod === 'reply' || composeMethod === 'forward' ? composeMethod : undefined;
       if (accountEmails.length !== 0) {
         await BgUtils.openExtensionTab(
           Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId, composeMethod })
         );
-        await browser.tabs.remove(tabId);
+        await messenger.tabs.remove(tabId);
       } else {
         await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
       }
     };
-    browser.composeAction.onClicked.addListener(async tab => {
-      const messageDetails = await browser.compose.getComposeDetails(Number(tab.id));
+    messenger.composeAction.onClicked.addListener(async tab => {
+      const messageDetails = await messenger.compose.getComposeDetails(Number(tab.id));
       const composeMethod = messageDetails.type;
       const msgId = Number(messageDetails.relatedMessageId);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const acctEmail = Str.parseEmail(messageDetails.from as string).email!;
       await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
     });
-    browser.messageDisplayAction.onClicked.addListener(async tab => {
+    messenger.messageDisplayAction.onClicked.addListener(async tab => {
       const tabId = Number(tab.id);
-      const messageDetails = await browser.messageDisplay.getDisplayedMessage(tabId);
+      const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
       if (messageDetails) {
         const msgId = messageDetails.id;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const acctEmail = (await browser.accounts.get(messageDetails.folder!.accountId)).name;
+        const acctEmail = (await messenger.accounts.get(messageDetails.folder!.accountId)).name;
         await handleClickEvent(tabId, acctEmail, msgId);
       }
     });
