@@ -277,9 +277,9 @@ export class ComposeView extends View {
       const to = headers?.to || [];
       const cc = headers?.cc || [];
       const bcc = headers?.bcc || [];
-      const subject = headers?.subject[0] || '';
-      const msgId = headers?.['message-id'][0] || '';
       const replyOption = this.replyOption === 'a_reply' ? 'reply' : 'forward';
+      const subject = `${replyOption === 'reply' ? 'Re:' : 'Fwd:'} ${headers?.subject[0]}` || '';
+      const msgId = headers?.['message-id'][0] || '';
       let plainTextBody;
       // todo - mime type parsing should be done here extensively - https://github.com/FlowCrypt/flowcrypt-browser/issues/5787
       if (parts?.[0]?.contentType === 'multipart/alternative') {
@@ -310,17 +310,19 @@ export class ComposeView extends View {
         this.S.cached('password_or_pubkey').height(1);
       }
       this.S.cached('input_subject').val(subject);
-      if (to.length || cc.length || bcc.length) {
-        this.S.cached('input_addresses_container_outer').removeClass('invisible');
-        this.S.cached('recipients_placeholder').hide();
-        this.S.cached('input_to').val(to.join(','));
-        this.S.cached('input_container_cc').val(cc.join(','));
-        this.S.cached('input_container_bcc').val(cc.join(','));
-      }
-      const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
-      for (const inputContainer of preParsedRecipient) {
-        if (String($(inputContainer).find('input').val()).trim().length > 0) {
-          await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
+      if (replyOption === 'reply') {
+        if (to.length || cc.length || bcc.length) {
+          this.S.cached('input_addresses_container_outer').removeClass('invisible');
+          this.S.cached('recipients_placeholder').hide();
+          this.S.cached('input_to').val(to.join(','));
+          this.S.cached('input_container_cc').val(cc.join(','));
+          this.S.cached('input_container_bcc').val(cc.join(','));
+        }
+        const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
+        for (const inputContainer of preParsedRecipient) {
+          if (String($(inputContainer).find('input').val()).trim().length > 0) {
+            await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
+          }
         }
       }
     }
