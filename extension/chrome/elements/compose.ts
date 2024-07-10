@@ -46,7 +46,6 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
-  public readonly composeMethod: 'reply' | 'forward' | undefined;
   public readonly thunderbirdMsgId: number;
   public replyOption?: ReplyOption;
   public fesUrl?: string;
@@ -156,7 +155,6 @@ export class ComposeView extends View {
       'replyOption',
       'useFullScreenSecureCompose',
       'thunderbirdMsgId',
-      'composeMethod',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -172,7 +170,6 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
     this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
-    this.composeMethod = (Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeMethod') as 'reply') || 'forward';
     this.isReplyBox = !!this.replyMsgId;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
@@ -282,6 +279,7 @@ export class ComposeView extends View {
       const bcc = headers?.bcc || [];
       const subject = headers?.subject[0] || '';
       const msgId = headers?.['message-id'][0] || '';
+      const replyOption = this.replyOption === 'a_reply' ? 'reply' : 'forward';
       let plainTextBody;
       // todo - mime type parsing should be done here extensively - https://github.com/FlowCrypt/flowcrypt-browser/issues/5787
       if (parts?.[0]?.contentType === 'multipart/alternative') {
@@ -294,7 +292,7 @@ export class ComposeView extends View {
       } else if (parts?.length === 1 && parts?.[0].contentType === 'text/html') {
         plainTextBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.body || '<br>', '');
       }
-      if (plainTextBody && this.composeMethod) {
+      if (plainTextBody) {
         this.quoteModule.messageToReplyOrForward = {
           text: plainTextBody,
           headers: {
@@ -307,7 +305,7 @@ export class ComposeView extends View {
           },
           decryptedFiles: [], // todo : needs to update - https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         };
-        await this.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(msgId, this.composeMethod);
+        await this.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(msgId, replyOption);
         this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
         this.S.cached('password_or_pubkey').height(1);
       }

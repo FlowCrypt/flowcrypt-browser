@@ -96,13 +96,13 @@ export class XssSafeFactory {
     return this.extUrl(`img/${relPath}`);
   };
 
-  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, thunderbirdMsgId?: number, composeMethod?: string) => {
+  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, thunderbirdMsgId?: number, replyOption?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), {
       frameId: this.newId(),
       draftId,
       useFullScreenSecureCompose,
       thunderbirdMsgId,
-      composeMethod,
+      replyOption,
     });
   };
 
@@ -200,8 +200,8 @@ export class XssSafeFactory {
     await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   };
 
-  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, composeMethod?: string) => {
-    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, thunderbirdMsgId, composeMethod);
+  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, replyOption?: string) => {
+    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, thunderbirdMsgId, replyOption);
     return Ui.e('div', {
       class: openInFullScreen ? 'secure_compose_window active full_window' : 'secure_compose_window',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
