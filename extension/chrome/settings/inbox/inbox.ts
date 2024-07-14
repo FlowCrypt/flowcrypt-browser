@@ -87,7 +87,8 @@ export class InboxView extends View {
     ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
     this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
-    this.preRenderSecureComposeInFullScreen();
+    const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
+    this.preRenderSecureComposeInFullScreen(parsedThreadId);
     if (Catch.isThunderbirdMail()) {
       $('#container-gmail-banner').hide();
     }
@@ -100,8 +101,7 @@ export class InboxView extends View {
         if (this.threadId) {
           await this.inboxActiveThreadModule.render(this.threadId);
         } else {
-          const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
-          if (parsedThreadId) {
+          if (parsedThreadId && !this.useFullScreenSecureCompose) {
             await this.inboxActiveThreadModule.render(parsedThreadId);
           } else {
             await this.inboxListThreadsModule.render(this.labelId);
@@ -157,16 +157,16 @@ export class InboxView extends View {
     Xss.sanitizeRender('h1', title);
   };
 
-  private preRenderSecureComposeInFullScreen = () => {
+  private preRenderSecureComposeInFullScreen = (replyMsgId?: string) => {
     if (this.useFullScreenSecureCompose && this.composeMethod) {
       const replyOption = this.composeMethod === 'reply' ? 'a_reply' : 'forward';
-      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId, replyOption);
+      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId, replyOption, replyMsgId);
     }
   };
 
   private parseThreadIdFromHeaderMessageId = async () => {
     let threadId;
-    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId && !this.useFullScreenSecureCompose) {
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
       const { headers } = await messenger.messages.getFull(this.thunderbirdMsgId);
       if (headers) {
         const messageId = headers['message-id'][0];

@@ -174,17 +174,21 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       Xss.sanitizeRender(repliedBodyEl, Str.escapeTextAsRenderableHtml(this.view.inputModule.extract('text', 'input_text', 'SKIP-ADDONS')));
       this.renderReplySuccessAttachments(attachments, msgId, this.view.sendBtnModule.popover.choices.encrypt);
     }
-    const t = new Date();
-    const time =
-      (t.getHours() !== 12 ? t.getHours() % 12 : 12) +
-      ':' +
-      (t.getMinutes() < 10 ? '0' : '') +
-      t.getMinutes() +
-      (t.getHours() >= 12 ? ' PM ' : ' AM ') +
-      '(0 minutes ago)';
-    this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
-    this.view.S.cached('reply_msg_successful').css('display', 'block');
-    this.view.sizeModule.resizeComposeBox();
+    if (this.view.isReplyBox && !this.view.useFullScreenSecureCompose) {
+      const t = new Date();
+      const time =
+        (t.getHours() !== 12 ? t.getHours() % 12 : 12) +
+        ':' +
+        (t.getMinutes() < 10 ? '0' : '') +
+        t.getMinutes() +
+        (t.getHours() >= 12 ? ' PM ' : ' AM ') +
+        '(0 minutes ago)';
+      this.view.S.cached('reply_msg_successful').find('div.replied_time').text(time);
+      this.view.S.cached('reply_msg_successful').css('display', 'block');
+      this.view.sizeModule.resizeComposeBox();
+    } else {
+      this.view.S.cached('body').removeClass('full_window');
+    }
   };
 
   public renderReinsertReplyBox = (msgId: string) => {
@@ -264,7 +268,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private initComposeBoxStyles = () => {
-    if (this.view.isReplyBox) {
+    if (this.view.isReplyBox && !this.view.useFullScreenSecureCompose) {
       this.view.S.cached('body').addClass('reply_box');
       this.view.S.cached('header').remove();
       this.view.S.cached('subject').remove();
