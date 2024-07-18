@@ -187,8 +187,8 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
-      if (this.view.useFullScreenSecureCompose) {
-        await Time.sleep(2000);
+      if (Catch.isThunderbirdMail() && this.view.useFullScreenSecureCompose) {
+        await Time.sleep(2300);
       }
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
         type: 'quote',
