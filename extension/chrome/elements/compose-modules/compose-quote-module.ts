@@ -17,6 +17,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { MessageToReplyOrForward } from './compose-types.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Time } from '../../../js/common/browser/time.js';
 
 export class ComposeQuoteModule extends ViewModule<ComposeView> {
   public tripleDotSanitizedHtmlContent: { quote: string | undefined; footer: string | undefined } | undefined;
@@ -186,6 +187,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
+      if (this.view.useFullScreenSecureCompose) {
+        await Time.sleep(2000);
+      }
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
         type: 'quote',
         longids: decryptRes.longids.needPassphrase,
