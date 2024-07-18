@@ -32,7 +32,6 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
 import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
-import { Xss } from '../../js/common/platform/xss.js';
 
 export class ComposeView extends View {
   public readonly acctEmail: string;
@@ -170,7 +169,7 @@ export class ComposeView extends View {
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
     this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
-    this.isReplyBox = !!this.replyMsgId;
+    this.isReplyBox = !!this.replyMsgId && !this.useFullScreenSecureCompose;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
   }
@@ -210,8 +209,7 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
-    await this.preParseEmailRecipientsIfNeeded();
-    if (this.replyOption && this.isReplyBox) {
+    if (this.replyOption) {
       await this.renderModule.activateReplyOption(this.replyOption, true);
     }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
@@ -270,61 +268,6 @@ export class ComposeView extends View {
   };
 
   public isCustomerUrlFesUsed = () => Boolean(this.fesUrl);
-
-  private preParseEmailRecipientsIfNeeded = async () => {
-    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId && this.thunderbirdMsgId !== 0) {
-      const { headers, parts } = await messenger.messages.getFull(this.thunderbirdMsgId);
-      const to = headers?.to || [];
-      const cc = headers?.cc || [];
-      const bcc = headers?.bcc || [];
-      const replyOption = this.replyOption === 'a_reply' ? 'reply' : 'forward';
-      const subject = `${replyOption === 'reply' ? 'Re:' : 'Fwd:'} ${headers?.subject[0]}` || '';
-      const msgId = headers?.['message-id'][0] || '';
-      let plainTextBody;
-      // todo - mime type parsing should be done here extensively - https://github.com/FlowCrypt/flowcrypt-browser/issues/5787
-      if (parts?.[0]?.contentType === 'multipart/alternative') {
-        if (parts?.[0].parts?.[0].contentType === 'text/plain') {
-          plainTextBody = parts?.[0]?.parts?.[0].body;
-        } else {
-          // no plain text body found so HTML should be sanitized
-          plainTextBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.parts?.[0].body || '<br>', '');
-        }
-      } else if (parts?.length === 1 && parts?.[0].contentType === 'text/html') {
-        plainTextBody = Xss.htmlSanitizeAndStripAllTags(parts?.[0]?.body || '<br>', '');
-      }
-      if (plainTextBody) {
-        this.quoteModule.messageToReplyOrForward = {
-          text: plainTextBody,
-          headers: {
-            to,
-            subject,
-            from: headers?.from[0],
-            date: headers?.date[0],
-            references: msgId,
-            'message-id': msgId,
-          },
-          decryptedFiles: [], // todo : needs to update - https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
-        };
-        this.S.cached('password_or_pubkey').height(1);
-      }
-      this.S.cached('input_subject').val(subject);
-      if (replyOption === 'reply') {
-        if (to.length || cc.length || bcc.length) {
-          this.S.cached('input_addresses_container_outer').removeClass('invisible');
-          this.S.cached('recipients_placeholder').hide();
-          this.S.cached('input_to').val(to.join(','));
-          this.S.cached('input_container_cc').val(cc.join(','));
-          this.S.cached('input_container_bcc').val(cc.join(','));
-        }
-        const preParsedRecipient = ['#input-container-to', '#input-container-cc', '#input-container-bcc'];
-        for (const inputContainer of preParsedRecipient) {
-          if (String($(inputContainer).find('input').val()).trim().length > 0) {
-            await this.recipientsModule.parseRenderRecipients($(inputContainer).find('input'));
-          }
-        }
-      }
-    }
-  };
 }
 
 View.run(ComposeView);
