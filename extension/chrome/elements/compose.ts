@@ -305,8 +305,6 @@ export class ComposeView extends View {
           },
           decryptedFiles: [], // todo : needs to update - https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         };
-        await this.quoteModule.addTripleDotQuoteExpandFooterAndQuoteBtn(msgId, replyOption);
-        this.quoteModule.actionRenderTripleDotContentHandle(this.S.cached('triple_dot')[0]);
         this.S.cached('password_or_pubkey').height(1);
       }
       this.S.cached('input_subject').val(subject);
