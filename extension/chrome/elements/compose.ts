@@ -110,6 +110,7 @@ export class ComposeView extends View {
     toggle_send_options: '#toggle_send_options',
     toggle_reply_options: '#toggle_reply_options',
     icon_pubkey: '.icon.action_include_pubkey',
+    close_compose_window: '.close_compose_window',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
     triple_dot: '.action_show_prev_msg',
@@ -233,6 +234,10 @@ export class ComposeView extends View {
     });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
+    this.S.cached('close_compose_window').on(
+      'click',
+      this.setHandler(async () => await this.renderModule.actionCloseHandler(), this.errModule.handle(`close compose window`))
+    );
     this.S.cached('icon_help').on(
       'click',
       this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`))

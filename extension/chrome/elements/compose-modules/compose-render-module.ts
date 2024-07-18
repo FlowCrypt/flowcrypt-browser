@@ -268,6 +268,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await this.renderReplyMsgComposeTable();
   };
 
+  public actionCloseHandler = async () => {
+    if (!this.view.sendBtnModule.isSendMessageInProgres() || (await Ui.modal.confirm(Lang.compose.abortSending))) {
+      this.view.renderModule.closeMsg();
+    }
+  };
+
   private initComposeBoxStyles = () => {
     if (this.view.isReplyBox) {
       this.view.S.cached('body').addClass('reply_box');
@@ -342,10 +348,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_compose_window').on(
-        'click',
-        this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`))
-      );
       this.view.S.cached('title').on('click', () => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
           $('.minimize_compose_window').trigger('click');
@@ -405,12 +407,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       $(el).attr('dir', 'rtl');
     } else {
       $(el).removeAttr('dir');
-    }
-  };
-
-  private actionCloseHandler = async () => {
-    if (!this.view.sendBtnModule.isSendMessageInProgres() || (await Ui.modal.confirm(Lang.compose.abortSending))) {
-      this.view.renderModule.closeMsg();
     }
   };
 
