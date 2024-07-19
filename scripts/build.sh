@@ -12,7 +12,7 @@ synchronize_files() {
   local OUTDIR="$1"
 
   # Copying files with the given extensions
-  find . -type f \( -name '*.js' -o -name '*.htm' -o -name '*.css' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.txt' \) \
+  find . -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.htm' -o -name '*.css' -o -name '*.woff2' -o -name '*.png' -o -name '*.svg' -o -name '*.txt' \) \
       -exec rsync -R {} "../$OUTDIR" \;
 }
 
@@ -40,6 +40,7 @@ copy_dependencies() {
   cp node_modules/dompurify/dist/purify.js.map $OUTPUT_DIRECTORY/lib/purify.js.map
   cp node_modules/jquery/dist/jquery.min.js $OUTPUT_DIRECTORY/lib/jquery.min.js
   cp node_modules/openpgp/dist/openpgp.js $OUTPUT_DIRECTORY/lib/openpgp.js
+  cp node_modules/openpgp/dist/openpgp.min.mjs $OUTPUT_DIRECTORY/lib/openpgp.min.mjs
   cp node_modules/linkifyjs/dist/linkify.min.js $OUTPUT_DIRECTORY/lib/linkify.min.js
   cp node_modules/linkify-html/dist/linkify-html.min.js $OUTPUT_DIRECTORY/lib/linkify-html.min.js
   cp node_modules/sweetalert2/dist/sweetalert2.js $OUTPUT_DIRECTORY/lib/sweetalert2.js
@@ -50,8 +51,10 @@ copy_dependencies() {
   cp node_modules/clipboard/dist/clipboard.js $OUTPUT_DIRECTORY/lib/clipboard.js
   cp node_modules/@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js $OUTPUT_DIRECTORY/lib/fine-uploader.js
   cp node_modules/filesize/dist/filesize.js $OUTPUT_DIRECTORY/lib/filesize.js
-  cp node_modules/pdfjs-dist/build/pdf.js $OUTPUT_DIRECTORY/lib/pdf.js
-  cp node_modules/pdfjs-dist/build/pdf.worker.js $OUTPUT_DIRECTORY/lib/pdf.worker.js
+  # Had to use legacy build as puppeteer returns 'Promise.withResolvers is not a function' error
+  # https://github.com/mozilla/pdf.js/issues/18006#issuecomment-2078739672
+  cp node_modules/pdfjs-dist/legacy/build/pdf.min.mjs $OUTPUT_DIRECTORY/lib/pdf.min.mjs
+  cp node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs $OUTPUT_DIRECTORY/lib/pdf.worker.min.mjs
   cp node_modules/bootstrap/dist/js/bootstrap.min.js $OUTPUT_DIRECTORY/lib/bootstrap/bootstrap.min.js
   cp node_modules/bootstrap/dist/css/bootstrap.min.css $OUTPUT_DIRECTORY/lib/bootstrap/bootstrap.min.css
   cp node_modules/@openpgp/web-stream-tools/lib/*.js $OUTPUT_DIRECTORY/lib/streams
@@ -78,12 +81,13 @@ main() {
       synchronize_files "build/chrome-enterprise"
       synchronize_files "build/chrome-consumer"
       synchronize_files "build/firefox-consumer"
+      synchronize_files "build/thunderbird-consumer"
     }
     exit 0
   fi
 
   if [[ "$#" == 1 ]] && [[ "$1" == "--incremental" ]]; then
-    delete_directories $BUILD_DIRECTORY/firefox-consumer $BUILD_DIRECTORY/chrome-consumer $BUILD_DIRECTORY/chrome-consumer-mock $BUILD_DIRECTORY/chrome-enterprise $BUILD_DIRECTORY/chrome-enterprise-mock $BUILD_DIRECTORY/generic-extension-wip/js/content_scripts
+    delete_directories $BUILD_DIRECTORY/firefox-consumer $BUILD_DIRECTORY/thunderbird-consumer $BUILD_DIRECTORY/chrome-consumer $BUILD_DIRECTORY/chrome-consumer-mock $BUILD_DIRECTORY/chrome-enterprise $BUILD_DIRECTORY/chrome-enterprise-mock $BUILD_DIRECTORY/generic-extension-wip/js/content_scripts
     # build concurrently - using standard typescript compiler with --incremental flag
     mkdir -p $BUILD_DIRECTORY
     build_typescript_project false "./tsconfig.json" true "$BUILD_DIRECTORY/tsconfig.tsbuildinfo"
@@ -120,13 +124,12 @@ main() {
   ISUINT8ARRAY_REGEX2="s/\(([^\(\)\x20]+)\x20instanceof\x20Uint8Array\)/\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\)/g"
   # this patch handles pattern like \x20n instanceof Uint8Array;
   ISUINT8ARRAY_REGEX3="s/return\x20([^\(\)\x20]+)\x20instanceof\x20Uint8Array;/return\x20\(\1\x20instanceof\x20Uint8Array\x20\|\|\x20\1\x20instanceof\x20globalThis\.Uint8Array\);/g"
-
   apply_regex_replace $STREAMS_REGEX $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $STREAMS_FILES
   apply_regex_replace $ISUINT8ARRAY_REGEX1 $OPENPGP_FILE
   apply_regex_replace $ISUINT8ARRAY_REGEX2 $OPENPGP_FILE
   apply_regex_replace $ISUINT8ARRAY_REGEX3 $OPENPGP_FILE
-
+  
   # bundle web-stream-tools as Stream var for the content script
   ( cd conf && npx webpack ) & pids+=($!)
   for pid in "${pids[@]}"; do wait "$pid" || exit 1; done
@@ -148,6 +151,7 @@ main() {
   cp -r $OUTPUT_DIRECTORY ./build/chrome-enterprise
   cp -r $OUTPUT_DIRECTORY ./build/chrome-consumer
   cp -r $OUTPUT_DIRECTORY ./build/firefox-consumer
+  cp -r $OUTPUT_DIRECTORY ./build/thunderbird-consumer
   node ./build/tooling/build-types-and-manifests
 }
 

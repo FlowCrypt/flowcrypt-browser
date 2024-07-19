@@ -1,4 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 
 'use strict';
 
@@ -60,7 +61,7 @@ export type MimeProccesedMsg = {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
-  public static processBody = (decoded: MessageBody): MsgBlock[] => {
+  public static processBody(decoded: MessageBody): MsgBlock[] {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = MsgBlockParser.detectBlocks(Str.normalize(decoded.text), true).blocks;
@@ -74,17 +75,17 @@ export class Mime {
       blocks.push(MsgBlock.fromContent('plainHtml', decoded.html));
     }
     return blocks;
-  };
+  }
 
-  public static isBodyEmpty = ({ text, html }: MessageBody) => {
+  public static isBodyEmpty({ text, html }: MessageBody) {
     return Mime.isBodyTextEmpty(text) && Mime.isBodyTextEmpty(html);
-  };
+  }
 
-  public static isBodyTextEmpty = (text: string | undefined) => {
+  public static isBodyTextEmpty(text: string | undefined) {
     return !(text && !/^(\r)?(\n)?$/.test(text));
-  };
+  }
 
-  public static processAttachments = (bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg => {
+  public static processAttachments(bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg {
     const attachmentBlocks: MsgBlock[] = [];
     const signatureAttachments: Attachment[] = [];
     for (const file of decoded.attachments) {
@@ -142,19 +143,19 @@ export class Mime {
       blocks: [...bodyBlocks, ...attachmentBlocks],
       rawSignedContent: decoded.rawSignedContent,
     };
-  };
+  }
 
-  public static processDecoded = (decoded: MimeContent): MimeProccesedMsg => {
+  public static processDecoded(decoded: MimeContent): MimeProccesedMsg {
     const bodyBlocks = Mime.processBody(decoded);
     return Mime.processAttachments(bodyBlocks, decoded);
-  };
+  }
 
-  public static process = async (mimeMsg: Uint8Array) => {
+  public static async process(mimeMsg: Uint8Array) {
     const decoded = await Mime.decode(mimeMsg);
     return Mime.processDecoded(decoded);
-  };
+  }
 
-  public static resemblesMsg = (msg: Uint8Array | string) => {
+  public static resemblesMsg(msg: Uint8Array | string) {
     const chunk = (typeof msg === 'string' ? msg.substring(0, 3000) : new Buf(msg.slice(0, 3000)).toUtfStr('ignore')).toLowerCase().replace(/\r\n/g, '\n');
     const headers = chunk.split('\n\n')[0];
     if (!headers) {
@@ -174,9 +175,9 @@ export class Mime {
       return true; // these tend to be inside body-part headers, after the first `\n\n` which we test above
     }
     return contentType.index === 0;
-  };
+  }
 
-  public static decode = async (mimeMsg: Uint8Array | string): Promise<MimeContentWithHeaders> => {
+  public static async decode(mimeMsg: Uint8Array | string): Promise<MimeContentWithHeaders> {
     let mimeContent: MimeContentWithHeaders = {
       attachments: [],
       headers: {},
@@ -218,7 +219,7 @@ export class Mime {
                 mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
               } else if (nodeType === 'text/rfc822-headers') {
                 /* eslint-disable no-underscore-dangle */
-                if (node._parentNode && node._parentNode.headers.subject) {
+                if (node._parentNode?.headers.subject) {
                   mimeContent.subject = node._parentNode.headers.subject[0].value;
                 }
                 /* eslint-enable no-underscore-dangle */
@@ -231,7 +232,7 @@ export class Mime {
             mimeContent = Object.assign(mimeContent, headers);
             resolve(mimeContent);
           } catch (e) {
-            reject(e);
+            reject(e as Error);
           }
         };
         parser.write(mimeMsg);
@@ -242,9 +243,9 @@ export class Mime {
         resolve(mimeContent);
       }
     });
-  };
+  }
 
-  public static encode = async (body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> => {
+  public static async encode(body: SendableMsgBody, headers: RichHeaders, attachments: Attachment[] = [], type?: MimeEncodeType): Promise<string> {
     const rootContentType = type !== 'pgpMimeEncrypted' ? 'multipart/mixed' : `multipart/encrypted; protocol="application/pgp-encrypted";`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
     for (const key of Object.keys(headers)) {
@@ -267,9 +268,9 @@ export class Mime {
       rootNode.appendChild(Mime.createAttachmentNode(attachment, type));
     }
     return rootNode.build() as string;
-  };
+  }
 
-  public static encodeSmime = async (body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> => {
+  public static async encodeSmime(body: Uint8Array, headers: RichHeaders, type: 'enveloped-data' | 'signed-data'): Promise<string> {
     const rootContentType = `application/pkcs7-mime; name="smime.p7m"; smime-type=${type}`;
     const rootNode = new MimeBuilder(rootContentType, { includeBccInHeader: true });
     for (const key of Object.keys(headers)) {
@@ -284,18 +285,18 @@ export class Mime {
     }
     rootNode.addHeader('Content-Description', contentDescription);
     return rootNode.build() as string;
-  };
+  }
 
-  public static subjectWithoutPrefixes = (subject: string): string => {
+  public static subjectWithoutPrefixes(subject: string): string {
     return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
-  };
+  }
 
-  public static encodePgpMimeSigned = async (
+  public static async encodePgpMimeSigned(
     body: SendableMsgBody,
     headers: RichHeaders,
     attachments: Attachment[] = [],
     sign: (data: string) => Promise<string>
-  ): Promise<string> => {
+  ): Promise<string> {
     const sigPlaceholder = `SIG_PLACEHOLDER_${Str.sloppyRandom(10)}`;
     const rootNode = new MimeBuilder(`multipart/signed; protocol="application/pgp-signature";`, {
       includeBccInHeader: true,
@@ -335,14 +336,14 @@ export class Mime {
       throw new Error('Replaced sigPlaceholder with realSignature but mime stayed the same');
     }
     return pgpMimeSigned;
-  };
+  }
 
-  private static headerGetAddress = (parsedMimeMsg: MimeContentWithHeaders, headersNames: (SendingType | 'from')[]) => {
+  private static headerGetAddress(parsedMimeMsg: MimeContentWithHeaders, headersNames: (SendingType | 'from')[]) {
     const result: { to: string[]; cc: string[]; bcc: string[] } = { to: [], cc: [], bcc: [] };
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
       typeof hdr === 'string' ? ([hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[]) : hdr.map(h => h.address);
-    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? hdr[0]?.address : String(hdr || '')) || '').email;
     for (const hdrName of headersNames) {
       const header = parsedMimeMsg.headers[hdrName];
       if (header) {
@@ -354,9 +355,9 @@ export class Mime {
       }
     }
     return { ...result, from };
-  };
+  }
 
-  private static retrieveRawSignedContent = (nodes: MimeParserNode[]): string | undefined => {
+  private static retrieveRawSignedContent(nodes: MimeParserNode[]): string | undefined {
     for (const node of nodes) {
       /* eslint-disable no-underscore-dangle */
       if (!node._childNodes || !node._childNodes.length) {
@@ -371,7 +372,7 @@ export class Mime {
         // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
         // however emailjs parser will replace it to <LF>, so we fix it here
         let rawSignedContent = node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
-        if (/--$/.test(rawSignedContent)) {
+        if (rawSignedContent.endsWith('--')) {
           // end of boundary without a mandatory newline
           rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
         }
@@ -381,10 +382,10 @@ export class Mime {
     }
     /* eslint-enable no-underscore-dangle */
     return undefined;
-  };
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private static createAttachmentNode = (attachment: Attachment, encodeType: MimeEncodeType): any => {
+  private static createAttachmentNode(attachment: Attachment, encodeType: MimeEncodeType): any {
     // todo: MimeBuilder types
     const header: Dict<string> = {};
     let type = attachment.type;
@@ -406,44 +407,44 @@ export class Mime {
         ? attachment.getData().toRawBytesStr() // emailjs-mime-builder doesn't support Buf for 7bit encoding
         : attachment.getData();
     return new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(content);
-  };
+  }
 
-  private static getNodeType = (node: MimeParserNode, type: 'value' | 'initial' = 'value') => {
-    if (node.headers['content-type'] && node.headers['content-type'][0]) {
+  private static getNodeType(node: MimeParserNode, type: 'value' | 'initial' = 'value') {
+    if (node.headers['content-type']?.[0]) {
       return node.headers['content-type'][0][type];
     }
     return undefined;
-  };
+  }
 
-  private static getNodeContentId = (node: MimeParserNode) => {
-    if (node.headers['content-id'] && node.headers['content-id'][0]) {
+  private static getNodeContentId(node: MimeParserNode) {
+    if (node.headers['content-id']?.[0]) {
       return node.headers['content-id'][0].value;
     }
     return undefined;
-  };
+  }
 
-  private static getNodeFilename = (node: MimeParserNode): string | undefined => {
-    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
+  private static getNodeFilename(node: MimeParserNode): string | undefined {
+    if (node.headers['content-disposition']?.[0]) {
       const header = node.headers['content-disposition'][0];
-      if (header.params && header.params.filename) {
+      if (header.params?.filename) {
         return String(header.params.filename);
       }
     }
-    if (node.headers['content-type'] && node.headers['content-type'][0]) {
+    if (node.headers['content-type']?.[0]) {
       const header = node.headers['content-type'][0];
-      if (header.params && header.params.name) {
+      if (header.params?.name) {
         return String(header.params.name);
       }
     }
     return;
-  };
+  }
 
-  private static isNodeInline = (node: MimeParserNode): boolean => {
+  private static isNodeInline(node: MimeParserNode): boolean {
     const cd = node.headers['content-disposition'];
-    return cd && cd[0] && cd[0].value === 'inline';
-  };
+    return cd?.[0] && cd[0].value === 'inline';
+  }
 
-  private static fromEqualSignNotationAsBuf = (str: string): Buf => {
+  private static fromEqualSignNotationAsBuf(str: string): Buf {
     return Buf.fromRawBytesStr(
       str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
         const bytes = equalSignUtfPart
@@ -453,15 +454,14 @@ export class Mime {
         return new Buf(bytes).toRawBytesStr();
       })
     );
-  };
+  }
 
-  private static getNodeAsAttachment = (node: MimeParserNode): Attachment => {
+  private static getNodeAsAttachment(node: MimeParserNode): Attachment {
     let treatAs: 'hidden' | 'encryptedMsg' | undefined;
     // are we dealing with a PGP/MIME encrypted message?
     if (
       /* eslint-disable no-underscore-dangle */
-      node._parentNode &&
-      node._parentNode.contentType &&
+      node._parentNode?.contentType &&
       node._parentNode._childNodes &&
       node._parentNode.contentType.params?.protocol === 'application/pgp-encrypted' &&
       node._parentNode.contentType.value === 'multipart/encrypted'
@@ -477,12 +477,12 @@ export class Mime {
       data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) : node.content,
       cid: Mime.getNodeContentId(node),
     });
-  };
+  }
 
-  private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
+  private static getNodeContentAsUtfStr(node: MimeParserNode): string {
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return Iso88592.decode(node.rawContent!) as string;
+      return Iso88592.decode(node.rawContent!);
     }
     let resultBuf: Buf;
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
@@ -498,15 +498,15 @@ export class Mime {
       return iso2022jpToUtf(resultBuf);
     }
     return resultBuf.toUtfStr();
-  };
+  }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any
-  private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => {
+  private static newContentNode(MimeBuilder: any, type: string, content: string): MimeParserNode {
     const node: MimeParserNode = new MimeBuilder(type).setContent(content);
     if (type === 'text/plain') {
       // gmail likes this
       node.addHeader('Content-Transfer-Encoding', 'quoted-printable');
     }
     return node;
-  };
+  }
 }

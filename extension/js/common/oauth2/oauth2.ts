@@ -1,21 +1,18 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { Bm, BrowserMsg } from '../browser/browser-msg.js';
+import { Bm, BrowserMsg, ScreenDimensions } from '../browser/browser-msg.js';
 import { windowsCreate } from '../browser/chrome.js';
 
 export class OAuth2 {
-  public static webAuthFlow = async (url: string): Promise<Bm.AuthWindowResult> => {
-    const screenWidth = window.screen.width || window.innerWidth;
-    const screenHeight = window.screen.height || window.innerHeight;
-    // non-standard but supported by most of the browsers
-    const { availLeft, availTop } = window.screen as unknown as { availLeft?: number; availTop?: number };
-    let adaptiveWidth = Math.floor(screenWidth * 0.4);
+  public static webAuthFlow = async (url: string, screenDimensions: ScreenDimensions): Promise<Bm.AuthWindowResult> => {
+    let adaptiveWidth = Math.floor(screenDimensions.width * 0.4);
     if (adaptiveWidth < 550) {
-      adaptiveWidth = Math.min(550, Math.floor(screenWidth * 0.9));
+      adaptiveWidth = Math.min(550, Math.floor(screenDimensions.width * 0.9));
     }
-    const adaptiveHeight = Math.floor(screenHeight * 0.9);
-    const leftOffset = Math.floor(screenWidth / 2 - adaptiveWidth / 2 + (availLeft || 0));
-    const topOffset = Math.floor(screenHeight / 2 - adaptiveHeight / 2 + (availTop || 0));
+    const adaptiveHeight = Math.floor(screenDimensions.height * 0.9);
+    const leftOffset = Math.floor(screenDimensions.width / 2 - adaptiveWidth / 2 + screenDimensions.availLeft);
+    const topOffset = Math.floor(screenDimensions.height / 2 - adaptiveHeight / 2 + screenDimensions.availTop);
+
     const oauthWin = await windowsCreate({
       url,
       left: leftOffset,
@@ -24,10 +21,11 @@ export class OAuth2 {
       width: adaptiveWidth,
       type: 'popup',
     });
-    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length || !oauthWin.id) {
+
+    if (!oauthWin?.tabs?.length || !oauthWin.id) {
       return { error: 'No oauth window returned after initiating it' };
     }
-    const tabId = oauthWin?.tabs && oauthWin.tabs[0].id;
+    const tabId = oauthWin?.tabs?.[0].id;
     return await new Promise(resolve => {
       // need to use chrome.runtime.onMessage because BrowserMsg.addListener doesn't work
       // In gmail page reconnect auth popup, it sends event to background page (BrowserMsg.send.bg.await.reconnectAcctAuthPopup)

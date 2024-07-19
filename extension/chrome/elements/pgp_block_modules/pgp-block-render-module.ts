@@ -65,7 +65,9 @@ export class PgpBlockViewRenderModule {
       Xss.appendRemoteImagesToContainer();
       $('#pgp_block .remote_image_container img').on(
         'load',
-        this.view.setHandler(() => this.resizePgpBlockFrame())
+        this.view.setHandler(() => {
+          this.resizePgpBlockFrame();
+        })
       );
     } else {
       // rendering our own ui
@@ -85,7 +87,9 @@ export class PgpBlockViewRenderModule {
     Catch.setHandledTimeout(() => {
       window.addEventListener(
         'resize',
-        this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame())
+        this.view.setHandlerPrevent('spree', () => {
+          this.resizePgpBlockFrame();
+        })
       );
     }, 1000); // start auto-resizing the window after 1s
   };
@@ -122,21 +126,21 @@ export class PgpBlockViewRenderModule {
       })
     );
   };
-  public renderErrorStatus = (status: string): JQuery<HTMLElement> => {
+  public renderErrorStatus = (status: string): JQuery => {
     return $('#pgp_error').text(status).show();
   };
 
-  public clearErrorStatus = (): JQuery<HTMLElement> => {
+  public clearErrorStatus = (): JQuery => {
     return $('#pgp_error').hide();
   };
 
-  public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
+  public renderEncryptionStatus = (status: string): JQuery => {
     return $('#pgp_encryption')
       .addClass(status === 'encrypted' ? 'green_label' : 'red_label')
       .text(status);
   };
 
-  public renderSignatureStatus = (status: string): JQuery<HTMLElement> => {
+  public renderSignatureStatus = (status: string): JQuery => {
     return $('#pgp_signature')
       .addClass(status === 'signed' ? 'green_label' : 'red_label')
       .text(status);
@@ -145,7 +149,9 @@ export class PgpBlockViewRenderModule {
   public renderSignatureOffline = () => {
     this.renderSignatureStatus('error verifying signature: offline, click to retry').on(
       'click',
-      this.view.setHandler(() => BrowserMsg.send.pgpBlockRetry(this.view, { frameId: this.view.frameId, messageSender: this.view.getDest() }))
+      this.view.setHandler(() => {
+        BrowserMsg.send.pgpBlockRetry(this.view, { frameId: this.view.frameId, messageSender: this.view.getDest() });
+      })
     );
   };
 }

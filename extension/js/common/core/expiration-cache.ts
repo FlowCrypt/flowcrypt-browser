@@ -1,55 +1,104 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { BrowserMsg } from '../browser/browser-msg.js';
+import { storageGet, storageGetAll, storageRemove, storageSet } from '../browser/chrome.js';
+import { Env } from '../browser/env.js';
+
 /**
  * Cache, keeping entries for limited duration
  */
-export class ExpirationCache<K, V> {
-  private cache = new Map<K, { value: V; expiration: number }>();
+type ExpirationCacheType<V> = { value: V; expiration: number };
+export class ExpirationCache<V> {
+  public constructor(
+    public prefix: string,
+    public expirationTicks: number
+  ) {}
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  public constructor(public EXPIRATION_TICKS: number) {}
-
-  public set = (key: K, value?: V, expiration?: number) => {
+  public set = async (key: string, value?: V, expiration?: number) => {
+    if (Env.isContentScript()) {
+      // Get chrome storage data from content script not allowed
+      // Need to get data from service worker
+      await BrowserMsg.send.bg.await.expirationCacheSet<V>({
+        key,
+        prefix: this.prefix,
+        value,
+        expirationTicks: this.expirationTicks,
+        expiration,
+      });
+      return;
+    }
     if (value) {
-      this.cache.set(key, { value, expiration: expiration || Date.now() + this.EXPIRATION_TICKS });
+      const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
+      await storageSet('session', { [this.getPrefixedKey(key)]: expirationVal });
     } else {
-      this.cache.delete(key);
+      await storageRemove('session', [this.getPrefixedKey(key)]);
     }
   };
 
-  public get = (key: K): V | undefined => {
-    const found = this.cache.get(key);
+  public get = async (key: string): Promise<V | undefined> => {
+    if (Env.isContentScript()) {
+      // Get chrome storage data from content script not allowed
+      // Need to get data from service worker
+      // Just disable eslint warning as setting expirationCacheGet interface
+      // will require lots of code changes in browser-msg.ts
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await BrowserMsg.send.bg.await.expirationCacheGet<V>({
+        key,
+        prefix: this.prefix,
+        expirationTicks: this.expirationTicks,
+      });
+    }
+    const prefixedKey = this.getPrefixedKey(key);
+    const result = await storageGet('session', [prefixedKey]);
+    const found = result[prefixedKey] as ExpirationCacheType<V>;
     if (found) {
       if (found.expiration > Date.now()) {
         return found.value;
       } else {
         // expired, so delete it and return as if not found
-        this.cache.delete(key);
+        await storageRemove('session', [prefixedKey]);
       }
     }
     return undefined;
   };
 
-  public deleteExpired = (additionalPredicate: (key: K, value: V) => boolean = () => false): void => {
-    const keysToDelete: K[] = [];
-    for (const [key, value] of this.cache.entries()) {
+  public deleteExpired = async (additionalPredicate: (key: string, value: V) => boolean = () => false): Promise<void> => {
+    if (Env.isContentScript()) {
+      // Get chrome storage data from content script not allowed
+      // Need to get data from service worker
+      await BrowserMsg.retryOnBgNotReadyErr(() =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        BrowserMsg.send.bg.await.expirationCacheDeleteExpired({ prefix: this.prefix, expirationTicks: this.expirationTicks })
+      );
+      return;
+    }
+
+    const keysToDelete: string[] = [];
+    const entries = (await storageGetAll('session')) as Record<string, ExpirationCacheType<V>>;
+    for (const key of Object.keys(entries)) {
+      const value = entries[key];
       if (value.expiration <= Date.now() || additionalPredicate(key, value.value)) {
         keysToDelete.push(key);
       }
     }
     for (const key of keysToDelete) {
-      this.cache.delete(key);
+      await this.set(key);
     }
   };
 
   // await the value if it's a promise and remove from cache in case of exception
   // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
-  public await = async (key: K, value: V): Promise<V> => {
+  public await = async (key: string, value: V): Promise<V> => {
     try {
+      // eslint-disable-next-line @typescript-eslint/await-thenable
       return await value;
     } catch (e) {
-      if (this.get(key) === value) this.set(key); // remove faulty record
-      return Promise.reject(e);
+      if ((await this.get(key)) === value) await this.set(key); // remove faulty record
+      return Promise.reject(e as Error);
     }
+  };
+
+  private getPrefixedKey = (key: string) => {
+    return `${this.prefix}_${key}`;
   };
 }

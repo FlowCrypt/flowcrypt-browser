@@ -223,7 +223,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
 
-        const key = Config.key('flowcrypt.compatibility.1pp1')!;
+        const key = Config.key('flowcrypt.compatibility.1pp1');
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, key.armored!, key.passphrase, {}, false);
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
@@ -1146,14 +1146,16 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - print feature in pgp block',
       testWithBrowser(async (t, browser) => {
-        const msgId = '182917712be838e1';
+        const msgId = '18ecbf57e1dfb9b5';
         const testPrintBlockInPage = async (page: ControllablePage) => {
           await page.waitAll('iframe');
           const pgpBlock = await page.getFrame(['pgp_block.htm']);
           await pgpBlock.waitForSelTestState('ready');
+          const expectedPrintDateString = new Date(1712818847000).toLocaleString();
           const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
+          await printPage.waitForContent('@print-date', expectedPrintDateString);
           await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
-          await printPage.waitForContent('@print-subject', 'Test print dialog');
+          await printPage.waitForContent('@print-subject', '<b><h1>Test print dialog');
           await printPage.waitForContent('@print-from', 'From: sender@domain.com');
           await printPage.waitForContent('@print-to', 'To: flowcrypt.compatibility@gmail.com');
           await printPage.waitForContent('@print-cc', 'ci.tests.gmail@flowcrypt.dev');
@@ -2045,6 +2047,25 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(await inboxPage3.isElementPresent('iframe.pgp_block')).to.equal(true);
         expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
         await inboxPage3.close();
+      })
+    );
+
+    test(
+      'decrypt - multipart/encrypted with "application/pgp-encrypted" correctly rendered regardless of filename',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '18f5b8fe65b3c1cf'; // with two noname file attachments which has correctly follows PGP-encrypted message structure mime types.
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
+          t,
+          browser,
+          threadId,
+          {
+            content: ['this is a test email'],
+            encryption: 'encrypted',
+            signature: 'signed',
+          },
+          authHdr
+        );
       })
     );
 

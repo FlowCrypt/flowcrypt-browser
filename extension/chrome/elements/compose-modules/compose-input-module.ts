@@ -22,7 +22,9 @@ declare global {
 }
 
 interface SquireWillPasteEvent extends Event {
-  fragment: DocumentFragment;
+  detail: {
+    fragment: DocumentFragment;
+  };
 }
 
 export class ComposeInputModule extends ViewModule<ComposeView> {
@@ -52,7 +54,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public removeRichTextFormatting = () => {
-    this.initSquire(false, true);
+    if (this.view.inputModule.isRichText()) {
+      this.initSquire(false, true);
+    }
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
@@ -103,11 +107,15 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private initSquire = (addLinks: boolean, removeExistingLinks = false) => {
     const squireHtml = this.squire?.getHTML();
-    const el = this.view.S.cached('input_text').get(0) as HTMLElement;
+    const el = this.view.S.cached('input_text').get(0);
+    if (!el) {
+      throw new Error('Input element not found');
+    }
     this.squire?.destroy();
     this.squire = new window.Squire(el, { addLinks });
     this.initShortcuts();
     this.handlePaste();
+    this.handleDragImages();
     this.handlePasteImages();
     this.resizeReplyBox();
     this.scrollIntoView();
@@ -121,45 +129,61 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private handlePaste = () => {
     this.squire.addEventListener('willPaste', async (e: SquireWillPasteEvent) => {
       const div = document.createElement('div');
-      div.appendChild(e.fragment);
+      div.appendChild(e.detail.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
-      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length as number)) {
+      if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
         e.preventDefault();
         await Ui.modal.warning(Lang.compose.inputLimitExceededOnPaste);
         return;
       }
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
-      e.fragment.appendChild(div);
+      e.detail.fragment.appendChild(div);
+    });
+  };
+
+  private loadImageFromFile = (file: File, callback: (result: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = () => callback(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  private insertImageIntoSquire = (imageData: string, name: string) => {
+    try {
+      this.squire.insertImage(imageData, { name, title: name });
+      this.view.draftModule.draftSave().catch(Catch.reportErr);
+    } catch (e) {
+      Catch.reportErr(e);
+    }
+  };
+
+  private handleDragImages = () => {
+    this.squire.addEventListener('drop', (ev: DragEvent) => {
+      if (!this.isRichText() || !ev.dataTransfer?.files.length) {
+        return;
+      }
+      const file = ev.dataTransfer.files[0];
+      this.loadImageFromFile(file, imageData => {
+        this.insertImageIntoSquire(imageData, file.name);
+      });
+    });
+    this.squire.addEventListener('dragover', (e: DragEvent) => {
+      e.preventDefault(); // this is needed for 'drop' event to fire
     });
   };
 
   private handlePasteImages = () => {
-    this.squire.addEventListener('drop', (ev: DragEvent) => {
-      try {
-        if (!this.isRichText()) {
-          return;
-        }
-        if (!ev.dataTransfer?.files.length) {
-          return;
-        }
-        const file = ev.dataTransfer.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            this.squire.insertImage(reader.result?.toString() ?? '', { name: file.name, title: file.name });
-            this.view.draftModule.draftSave().catch(Catch.reportErr);
-          } catch (e) {
-            Catch.reportErr(e);
-          }
-        };
-        reader.readAsDataURL(file);
-      } catch (e) {
-        Catch.reportErr(e);
+    this.squire.addEventListener('pasteImage', (ev: Event & { detail: { clipboardData: DataTransfer } }) => {
+      if (!this.isRichText()) return;
+      const items = Array.from(ev.detail.clipboardData?.items ?? []);
+      const imageItem = items.find(item => item.type.includes('image'));
+
+      const imageFile = imageItem?.getAsFile();
+      if (imageItem && imageFile) {
+        this.loadImageFromFile(imageFile, imageData => {
+          this.insertImageIntoSquire(imageData, 'Pasted Image');
+        });
       }
-    });
-    this.squire.addEventListener('dragover', (e: DragEvent) => {
-      e.preventDefault(); // this is needed for 'drop' event to fire
     });
   };
 
@@ -187,7 +211,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private initShortcuts = () => {
     try {
-      const isMac = /Mac OS X/.test(navigator.userAgent);
+      const isMac = navigator.userAgent.includes('Mac OS X');
       const ctrlKey = isMac ? 'Meta-' : 'Ctrl-';
       const mapKeyToFormat = (tag: string) => {
         return (self: Squire, event: Event) => {

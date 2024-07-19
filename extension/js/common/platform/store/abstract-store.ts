@@ -29,7 +29,7 @@ export abstract class AbstractStore {
     return `cryptup_${emailKeyIndex(scope, key)}`;
   };
 
-  public static errCategorize = (err: unknown): Error => {
+  public static errCategorize(err: unknown): Error {
     let message: string;
     if (err instanceof Error) {
       message = err.message;
@@ -44,47 +44,47 @@ export abstract class AbstractStore {
     }
     if (/Internal error opening backing store for indexedDB.open/.test(message)) {
       return new StoreCorruptedError(`db: ${message}`);
-    } else if (/A mutation operation was attempted on a database that did not allow mutations/.test(message)) {
+    } else if (message.includes('A mutation operation was attempted on a database that did not allow mutations')) {
       return new StoreDeniedError(`db: ${message}`);
-    } else if (/The operation failed for reasons unrelated to the database itself and not covered by any other error code/.test(message)) {
+    } else if (message.includes('The operation failed for reasons unrelated to the database itself and not covered by any other error code')) {
       return new StoreFailedError(`db: ${message}`);
     } else if (/IO error: .+: Unable to create sequential file/.test(message)) {
       return new StoreCorruptedError(`storage.local: ${message}`);
     } else if (/IO error: .+LOCK: No further details/.test(message)) {
       return new StoreFailedError(`storage.local: ${message}`);
-    } else if (/The browser is shutting down/.test(message)) {
+    } else if (message.includes('The browser is shutting down')) {
       return new UnreportableError(message);
     } else {
       Catch.reportErr(err instanceof Error ? err : new Error(message));
       return new StoreFailedError(message);
     }
-  };
+  }
 
-  public static setReqOnError = (req: IDBRequest | IDBTransaction, reject: (reason?: unknown) => void) => {
+  public static setReqOnError(req: IDBRequest | IDBTransaction, reject: (reason?: unknown) => void) {
     req.onerror = () => reject(AbstractStore.errCategorize(req.error || new Error('Unknown db error')));
-  };
+  }
 
-  public static setTxHandlers = (tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) => {
+  public static setTxHandlers(tx: IDBTransaction, resolve: (value: unknown) => void, reject: (reason?: unknown) => void) {
     tx.oncomplete = () => resolve(undefined);
     AbstractStore.setReqOnError(tx, reject);
-  };
+  }
 
-  protected static buildSingleAccountStoreFromRawResults = (scope: string, storageObj: RawStore): AcctStoreDict => {
+  protected static buildSingleAccountStoreFromRawResults(scope: string, storageObj: RawStore): AcctStoreDict {
     const accountStore: AcctStoreDict = {};
     for (const k of Object.keys(storageObj)) {
       const fixedKey = k.replace(AbstractStore.singleScopeRawIndex(scope, ''), '');
       if (fixedKey !== k) {
         // the scope matches and was thus removed from the raw index
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
         accountStore[fixedKey as AccountIndex] = storageObj[k] as any;
       }
     }
     return accountStore;
-  };
+  }
 
-  protected static singleScopeRawIndexArr = (scope: string, keys: string[]) => {
+  protected static singleScopeRawIndexArr(scope: string, keys: string[]) {
     return keys.map(key => AbstractStore.singleScopeRawIndex(scope, key));
-  };
+  }
 
   protected static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
     const allResults: string[] = [];

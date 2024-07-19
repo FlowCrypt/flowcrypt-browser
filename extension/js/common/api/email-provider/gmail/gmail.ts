@@ -4,21 +4,21 @@
 
 import { AddrParserResult, BrowserWindow } from '../../../browser/browser-window.js';
 import { ChunkedCb, ProgressCb, EmailProviderContact } from '../../shared/api.js';
-import { Dict, Str, Value } from '../../../core/common.js';
+import { Dict, Str, Value, promiseAllWithLimit } from '../../../core/common.js';
 import { EmailProviderApi, EmailProviderInterface, Backups } from '../email-provider-api.js';
 import { GMAIL_GOOGLE_API_HOST, gmailBackupSearchQuery } from '../../../core/const.js';
 import { GmailParser, GmailRes } from './gmail-parser.js';
-import { AjaxErr } from '../../shared/api-error.js';
 import { Attachment } from '../../../core/attachment.js';
 import { BrowserMsg } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
-import { Catch } from '../../../platform/catch.js';
 import { KeyUtil } from '../../../core/crypto/key.js';
 import { Env } from '../../../browser/env.js';
 import { Google } from './google.js';
 import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { SendableMsg } from '../sendable-msg.js';
 import { KeyStore } from '../../../platform/store/key-store.js';
+import { AjaxErr, ApiErr, MAX_RATE_LIMIT_ERROR_RETRY_COUNT } from '../../shared/api-error.js';
+import { Time } from '../../../browser/time.js';
 
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 
@@ -34,8 +34,16 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
   };
 
-  public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread> => {
-    return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${threadId}`, { method: 'GET', data: { format } }, { download: progressCb });
+  public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb, retryCount = 0): Promise<GmailRes.GmailThread> => {
+    try {
+      return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${threadId}`, { method: 'GET', data: { format } }, { download: progressCb });
+    } catch (e) {
+      if (ApiErr.isRateLimit(e) && retryCount < MAX_RATE_LIMIT_ERROR_RETRY_COUNT) {
+        await Time.sleep(1000);
+        return await this.threadGet(threadId, format, progressCb, retryCount + 1);
+      }
+      throw e;
+    }
   };
 
   public threadList = async (labelId: string): Promise<GmailRes.GmailThreadList> => {
@@ -127,17 +135,28 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
    * because strings over 1 MB may fail to get to/from bg page. A way to mitigate that would be to pass `R.GmailMsg$raw` prop
    * as a Buf instead of a string.
    */
-  public msgGet = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg> => {
-    return await Google.gmailCall<GmailRes.GmailMsg>(
-      this.acctEmail,
-      `messages/${msgId}`,
-      { method: 'GET', data: { format: format || 'full' } },
-      progressCb ? { download: progressCb } : undefined
-    );
+  public msgGet = async (msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb, retryCount = 0): Promise<GmailRes.GmailMsg> => {
+    try {
+      return await Google.gmailCall<GmailRes.GmailMsg>(
+        this.acctEmail,
+        `messages/${msgId}`,
+        { method: 'GET', data: { format: format || 'full' } },
+        progressCb ? { download: progressCb } : undefined
+      );
+    } catch (e) {
+      if (ApiErr.isRateLimit(e) && retryCount < MAX_RATE_LIMIT_ERROR_RETRY_COUNT) {
+        await Time.sleep(1000);
+        return await this.msgGet(msgId, format, progressCb, retryCount + 1);
+      }
+      throw e;
+    }
   };
 
   public msgsGet = async (msgIds: string[], format: GmailResponseFormat): Promise<GmailRes.GmailMsg[]> => {
-    return await Promise.all(msgIds.map(id => this.msgGet(id, format)));
+    return await promiseAllWithLimit(
+      30,
+      msgIds.map(id => () => this.msgGet(id, format))
+    );
   };
 
   public labelsGet = async (): Promise<GmailRes.GmailLabels> => {
@@ -167,8 +186,8 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       });
       return chunk;
     }
-    const stack = Catch.stackTrace();
-    const minBytes = 1000;
+    let totalBytes = 0;
+    const minBytes = 1000; // Define minBytes as per your requirement
     let processed = 0;
     return await new Promise((resolve, reject) => {
       const processChunkAndResolve = (chunk: string) => {
@@ -180,14 +199,14 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           // {"length":123,"data":"kksdwei
           // {"length":123,"data":"kksdwei"
           // {"length":123,"data":"kksdwei"}
-          if (chunk[chunk.length - 1] !== '"' && chunk[chunk.length - 2] !== '"') {
+          if (!chunk.endsWith('"') && chunk[chunk.length - 2] !== '"') {
             chunk += '"}'; // json end
-          } else if (chunk[chunk.length - 1] !== '}') {
+          } else if (!chunk.endsWith('}')) {
             chunk += '}'; // json end
           }
           let parsedJsonDataField;
           try {
-            parsedJsonDataField = JSON.parse(chunk).data;
+            parsedJsonDataField = (JSON.parse(chunk) as { data: string }).data;
           } catch (e) {
             console.info(e);
             reject(new Error('Chunk response could not be parsed'));
@@ -207,48 +226,37 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         }
       };
       GoogleOAuth.googleApiAuthHeader(this.acctEmail)
-        .then(authToken => {
-          const r = new XMLHttpRequest();
-          const method = 'GET';
+        .then(async authToken => {
           const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
-          r.open(method, url, true);
-          r.setRequestHeader('Authorization', authToken);
-          r.send();
-          let status: number;
-          const responsePollInterval = Catch.setHandledInterval(() => {
-            if (status >= 200 && status <= 299 && (r.responseText.length >= minBytes || treatAs === 'publicKey')) {
-              window.clearInterval(responsePollInterval);
-              processChunkAndResolve(r.responseText);
-              r.abort();
+          const response: Response = await fetch(url, {
+            method: 'GET',
+            headers: new Headers({
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              Authorization: authToken,
+            }),
+          });
+
+          if (!response.ok) throw AjaxErr.fromFetchResponse(response);
+          if (!response.body) throw AjaxErr.fromNetErr('No response body!');
+          const reader: ReadableStreamDefaultReader<Uint8Array> = response.body.getReader();
+          let completeChunk = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = new TextDecoder().decode(value);
+            totalBytes += value.length; // Update total bytes based on the Uint8Array length
+            completeChunk += chunk;
+            if (totalBytes >= minBytes || treatAs === 'publicKey') {
+              // Process and return the chunk if the conditions are met
+              return processChunkAndResolve(completeChunk); // Make sure this method returns Buf
             }
-          }, 10);
-          r.onreadystatechange = () => {
-            if (r.readyState === 2 || r.readyState === 3) {
-              // headers, loading
-              status = r.status;
-              if (status >= 300) {
-                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url, stack }));
-                window.clearInterval(responsePollInterval);
-                r.abort();
-              }
-            }
-            if (r.readyState === 3 || r.readyState === 4) {
-              // loading, done
-              if (status >= 200 && status <= 299 && (r.responseText.length >= minBytes || treatAs === 'publicKey')) {
-                // done as a success - resolve in case response_poll didn't catch this yet
-                processChunkAndResolve(r.responseText);
-                window.clearInterval(responsePollInterval);
-                if (r.readyState === 3) {
-                  r.abort();
-                }
-              } else {
-                // done as a fail - reject
-                reject(AjaxErr.fromXhr({ status, readyState: r.readyState }, { method, url, stack }));
-                window.clearInterval(responsePollInterval);
-              }
-            }
-          };
+          }
+
+          // If the loop completes without returning, it means the conditions were never met.
+          // Depending on your needs, you might throw an error or handle this scenario differently.
+          throw new Error('Failed to meet the minimum byte requirement or condition.');
         })
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         .catch(reject);
     });
   };
@@ -403,7 +411,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       rawParsedResults.push(...(window as unknown as BrowserWindow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
-      if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {
+      if (rawParsedRes.address && !allRawEmails.includes(rawParsedRes.address)) {
         allRawEmails.push(rawParsedRes.address);
       }
     }
@@ -415,7 +423,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     );
     const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
-      if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
+      if (!allResults.map(c => c.email).includes(newValidRes.email)) {
         const foundIndex = uniqueNewValidResults.map(c => c.email).indexOf(newValidRes.email);
         if (foundIndex === -1) {
           uniqueNewValidResults.push(newValidRes);

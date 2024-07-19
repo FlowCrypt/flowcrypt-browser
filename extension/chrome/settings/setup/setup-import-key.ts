@@ -8,6 +8,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { KeyErrors } from '../../elements/shared/key_errors.js';
+import { Key } from '../../../js/common/core/crypto/key.js';
 
 export class SetupImportKeyModule {
   private keyErrors: KeyErrors | undefined;
@@ -46,7 +47,7 @@ export class SetupImportKeyModule {
         }
       }
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
-      await saveKeysAndPassPhrase(this.view.acctEmail, [checked.encrypted], options);
+      await saveKeysAndPassPhrase(this.view.acctEmail, [checked.encrypted], options, this.view.submitKeyForAddrs);
       await this.view.submitPublicKeys(options);
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
@@ -58,7 +59,7 @@ export class SetupImportKeyModule {
         this.view.clientConfiguration,
         this.view
       );
-      await this.keyErrors.handlePrivateKeyError(e, e.encrypted, options);
+      await this.keyErrors.handlePrivateKeyError(e, (e as { encrypted: Key }).encrypted, options);
     }
   };
 }

@@ -24,11 +24,11 @@ export class SettingsPageRecipe extends PageRecipe {
 
   public static toggleScreen = async (settingsPage: ControllablePage, to: 'basic' | 'additional') => {
     await SettingsPageRecipe.ready(settingsPage);
-    await Util.sleep(0.5);
+    await Util.sleep(1);
     await settingsPage.waitAndClick(to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
-    await Util.sleep(0.5);
+    await Util.sleep(1);
     await settingsPage.waitAll(to === 'basic' ? '@action-toggle-screen-additional' : '@action-toggle-screen-basic'); // wait for opposite button to show up
-    await Util.sleep(0.5);
+    await Util.sleep(1);
   };
 
   public static closeDialog = async (settingsPage: ControllablePage) => {

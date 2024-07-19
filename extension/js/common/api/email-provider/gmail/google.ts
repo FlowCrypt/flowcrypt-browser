@@ -88,27 +88,26 @@ export class Google {
     const otherContacts = contacts[1].results || [];
     const contactsMerged = [...userContacts, ...otherContacts];
     return contactsMerged
-      .filter(entry => !!(entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)) // find all entries that have primary email
+      .filter(entry => !!(entry.person?.emailAddresses || []).find(email => email.metadata.primary)) // find all entries that have primary email
       .map(entry => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary === true)!.value;
-        const name = (entry.person?.names || []).find(name => name.metadata.primary === true)?.displayName;
+        const email = (entry.person?.emailAddresses || []).find(email => email.metadata.primary)!.value;
+        const name = (entry.person?.names || []).find(name => name.metadata.primary)?.displayName;
         return { email, name };
       });
   };
 
-  public static getNames = async (acctEmail: string) => {
+  public static getNames = async (acctEmail: string): Promise<GmailRes.GoogleUserProfile> => {
     const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
     const data = { personFields: 'names' };
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
-    const contacts = GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, {
+    const contacts = GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<GmailRes.GoogleUserProfile>(acctEmail, {
       url: getProfileUrl,
       method: 'GET',
       data,
       headers: { authorization },
       stack: Catch.stackTrace(),
-    }) as Promise<GmailRes.GoogleUserProfile>;
+    });
     return contacts;
   };
 

@@ -180,7 +180,8 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       }
       if ('src' in node) {
         const img: Element = node;
-        const src = img.getAttribute('src') as string;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const src = img.getAttribute('src')!;
         const { mimeType, data } = this.parseInlineImageSrc(src);
         if (mimeType && data) {
           const imgAttachment = new Attachment({
@@ -271,6 +272,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       } catch (e) {
         failures.push(
           ...msgRecipients.map(recipient => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             return { recipient, e };
           })
         );

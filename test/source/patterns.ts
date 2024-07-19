@@ -1,7 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-
 import * as path from 'path';
-
 import { readFileSync, readdirSync, statSync } from 'fs';
 
 /**
@@ -50,7 +48,7 @@ const validateTypeScriptLine = (line: string, location: string) => {
     console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)) {
+  if (line.match(/^ {2}(public |private |protected |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)) {
     console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #1:\n${line}\n`);
     errsFound++;
   }
@@ -60,7 +58,7 @@ const validateTypeScriptLine = (line: string, location: string) => {
     );
     errsFound++;
   }
-  if (line.match(/^ {2}(public |private |protected |static |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/)) {
+  if (line.match(/^ {2}(public |private |protected |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/)) {
     console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #2:\n${line}\n`);
     errsFound++;
   }
@@ -80,35 +78,28 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
-const expectedConsumerPermissions = [
-  'storage',
-  'tabs',
-  'https://*.google.com/*',
-  'https://www.googleapis.com/*',
-  'https://flowcrypt.com/*',
-  'unlimitedStorage',
-];
-const expectedEnterprisePermissions = [
-  'storage',
-  'tabs',
-  'https://*.google.com/*',
-  'https://*.googleapis.com/*',
-  'https://flowcrypt.com/*',
-  'unlimitedStorage',
-];
-for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'firefox-consumer']) {
-  const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString());
-  const expectedPermissions = buildType.includes('consumer') ? expectedConsumerPermissions : expectedEnterprisePermissions;
+const expectedPermissions: chrome.runtime.ManifestPermissions[] = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
+const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
+const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
+for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
+  const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString()) as chrome.runtime.Manifest;
+  const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
+  for (const expectedHostPermission of expectedHostPermissions) {
+    if (!manifest.host_permissions.includes(expectedHostPermission)) {
+      console.error(`Missing host permission '${expectedHostPermission}' in ${buildType}/manifest.json`);
+      errsFound++;
+    }
+  }
   for (const expectedPermission of expectedPermissions) {
-    if (!manifest.permissions.includes(expectedPermission)) {
-      if (!(expectedPermission === 'unlimitedStorage' && buildType === 'firefox-consumer')) {
+    if (!manifest.permissions?.includes(expectedPermission)) {
+      if (!(expectedPermission === 'unlimitedStorage' && (buildType === 'firefox-consumer' || buildType === 'thunderbird-consumer'))) {
         console.error(`Missing permission '${expectedPermission}' in ${buildType}/manifest.json`);
         errsFound++;
       }
     }
   }
-  const gmailCs = manifest.content_scripts.find((cs: { matches: string }) => cs.matches.includes('https://mail.google.com/*'));
-  if (!gmailCs || !gmailCs.css.length || !gmailCs.js.length) {
+  const gmailCs = manifest.content_scripts?.find(cs => cs.matches?.includes('https://mail.google.com/*'));
+  if (!gmailCs?.css?.length || !gmailCs.js?.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
     errsFound++;
   }

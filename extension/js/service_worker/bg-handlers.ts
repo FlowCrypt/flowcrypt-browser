@@ -8,6 +8,8 @@ import { Gmail } from '../common/api/email-provider/gmail/gmail.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { Api } from '../common/api/shared/api.js';
+import { ExpirationCache } from '../common/core/expiration-cache.js';
+import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -19,10 +21,10 @@ export class BgHandlers {
       console.info(`db corrupted, skipping: ${request.f}`);
       return await new Promise(() => undefined); // never resolve, error was already shown
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const dbFunc = (ContactStore as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     if (request.f === 'obj') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -35,6 +37,30 @@ export class BgHandlers {
 
   public static ajaxGmailAttachmentGetChunkHandler = async (r: Bm.AjaxGmailAttachmentGetChunk): Promise<Bm.Res.AjaxGmailAttachmentGetChunk> => {
     return { chunk: await new Gmail(r.acctEmail).attachmentGetChunk(r.msgId, r.attachmentId, r.treatAs) };
+  };
+
+  public static expirationCacheGetHandler = async <V>(r: Bm.ExpirationCacheGet): Promise<Bm.Res.ExpirationCacheGet<V>> => {
+    const expirationCache = new ExpirationCache<V>(r.prefix, r.expirationTicks);
+    return await expirationCache.get(r.key);
+  };
+
+  public static expirationCacheSetHandler = async <V>(r: Bm.ExpirationCacheSet<V>): Promise<Bm.Res.ExpirationCacheSet> => {
+    const expirationCache = new ExpirationCache<V>(r.prefix, r.expirationTicks);
+    await expirationCache.set(r.key, r.value, r.expiration);
+  };
+
+  public static expirationCacheDeleteExpiredHandler = async (r: Bm.ExpirationCacheDeleteExpired): Promise<Bm.Res.ExpirationCacheDeleteExpired> => {
+    const expirationCache = new ExpirationCache(r.prefix, r.expirationTicks);
+    await expirationCache.deleteExpired();
+  };
+
+  public static getGoogleApiAuthorization = async (r: Bm.GetGoogleApiAuthorization): Promise<Bm.Res.GetGoogleApiAuthorization> => {
+    // force refresh token
+    const { email } = GoogleOAuth.parseIdToken(r.idToken);
+    if (email) {
+      return await GoogleOAuth.googleApiAuthHeader(email, true);
+    }
+    return undefined;
   };
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
@@ -50,16 +76,26 @@ export class BgHandlers {
       chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {
         if (activeTabs.length) {
           if (activeTabs[0].id !== undefined) {
-            type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined }[];
-            chrome.tabs.executeScript(
-              activeTabs[0].id,
-              { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' },
-              (result: ScriptRes) => {
-                resolve({
-                  provider: 'gmail',
-                  acctEmail: result[0].acctEmail,
-                  sameWorld: result[0].sameWorld === true,
-                });
+            type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined };
+            chrome.scripting.executeScript(
+              {
+                target: { tabId: activeTabs[0].id },
+                func: () => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                  return { acctEmail: (window as any).account_email_global, sameWorld: (window as any).same_world_global };
+                },
+              },
+              results => {
+                const scriptResult = results[0].result as ScriptRes;
+                if (scriptResult) {
+                  resolve({
+                    provider: 'gmail',
+                    acctEmail: scriptResult.acctEmail,
+                    sameWorld: scriptResult.sameWorld === true,
+                  });
+                } else {
+                  reject(new Error('Script execution failed'));
+                }
               }
             );
           } else {

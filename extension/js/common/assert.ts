@@ -35,7 +35,7 @@ export class Assert {
     },
   };
 
-  public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
+  public static async abortAndRenderErrOnUnprotectedKey(acctEmail?: string, tabId?: string) {
     if (acctEmail) {
       const kis = await KeyStore.get(acctEmail);
       const parsedKeys = await Promise.all(kis.map(ki => KeyUtil.parse(ki.private)));
@@ -63,9 +63,9 @@ export class Assert {
         }
       }
     }
-  };
+  }
 
-  public static abortAndRenderErrorIfKeyinfoEmpty = (kis: KeyInfoWithIdentity[], doThrow = true) => {
+  public static abortAndRenderErrorIfKeyinfoEmpty(kis: KeyInfoWithIdentity[], doThrow = true) {
     if (!kis.length) {
       const msg = `Cannot find any account key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
       const target = $($('#content').length ? '#content' : 'body');
@@ -75,9 +75,9 @@ export class Assert {
         throw new AssertError(msg);
       }
     }
-  };
+  }
 
-  public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
+  public static abortAndRenderErrOnUrlParamTypeMismatch(values: UrlParams, name: string, expectedType: string): UrlParam {
     // eslint-disable-next-line no-null/no-null
     const actualType = values[name] === null ? 'null' : typeof values[name];
     if (actualType === expectedType.replace(/\?$/, '')) {
@@ -100,15 +100,15 @@ export class Assert {
       })
     );
     throw new AssertError(msg);
-  };
+  }
 
-  public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
-    if (expectedVals.indexOf(values[name]) === -1) {
+  public static abortAndRenderErrOnUrlParamValMismatch<T>(values: Dict<T>, name: string, expectedVals: T[]): T {
+    if (!expectedVals.includes(values[name])) {
       const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))}
         but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new AssertError(msg);
     }
     return values[name];
-  };
+  }
 }

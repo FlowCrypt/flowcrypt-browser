@@ -81,10 +81,13 @@ export class PgpBlockViewPrintModule {
       </body>
       </html>
     `;
-    if (w?.trustedTypes && w?.trustedTypes.createPolicy) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (w?.trustedTypes?.createPolicy) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const policy = w?.trustedTypes.createPolicy('print-policy', {
         createHTML: (string: string) => string,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       html = policy.createHTML(html);
     }
     w?.document.write(html);

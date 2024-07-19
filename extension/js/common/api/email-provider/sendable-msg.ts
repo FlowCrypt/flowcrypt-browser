@@ -194,7 +194,7 @@ export class SendableMsg {
     }
     for (const [recipientType, value] of Object.entries(this.recipients)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (value && value!.length) {
+      if (value?.length) {
         // todo - properly escape/encode this header using emailjs
         this.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = value
           .map(h => Str.formatEmailWithOptionalName(h).replace(/[,]/g, ''))

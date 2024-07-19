@@ -1,33 +1,32 @@
-module.exports = {
-  parser: '@typescript-eslint/parser',
-  env: {
-    browser: true,
-    node: true,
-    commonjs: true,
-    es6: true,
+// Importing necessary ESLint plugins
+import tseslint from 'typescript-eslint';
+import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
+import headerPlugin from 'eslint-plugin-header';
+import jsdocPlugin from 'eslint-plugin-jsdoc';
+import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
+import importPlugin from 'eslint-plugin-import';
+import noNullPlugin from 'eslint-plugin-no-null';
+import localRulesPlugin from 'eslint-plugin-local-rules';
+import eslintConfigPrettier from 'eslint-config-prettier';
+import pluginJs from '@eslint/js';
+
+const commonConfig = {
+  plugins: {
+    '@typescript-eslint': tseslint.plugin,
+    'no-only-tests': noOnlyTestsPlugin,
+    header: headerPlugin,
+    jsdoc: jsdocPlugin,
+    'prefer-arrow': preferArrowPlugin,
+    import: importPlugin,
+    'no-null': noNullPlugin,
+    'local-rules': localRulesPlugin,
   },
-  globals: {
-    $: false,
-    chrome: false,
-    OpenPGP: false,
+  languageOptions: {
+    parser: tseslint.parser,
+    parserOptions: {
+      project: true,
+    },
   },
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'plugin:@typescript-eslint/stylistic', 'prettier'],
-  ignorePatterns: ['.eslintrc.js'],
-  parserOptions: {
-    project: 'tsconfig.json',
-    sourceType: 'module',
-  },
-  plugins: [
-    'no-only-tests',
-    'header',
-    'eslint-plugin-jsdoc',
-    'eslint-plugin-prefer-arrow',
-    'eslint-plugin-import',
-    'eslint-plugin-no-null',
-    'eslint-plugin-local-rules',
-    '@typescript-eslint',
-  ],
-  root: true,
   rules: {
     '@typescript-eslint/consistent-indexed-object-style': 'off',
     '@typescript-eslint/consistent-type-assertions': 'error',
@@ -84,6 +83,14 @@ module.exports = {
     '@typescript-eslint/no-parameter-properties': 'off',
     '@typescript-eslint/no-shadow': 'off',
     '@typescript-eslint/no-unsafe-return': 'error',
+    '@typescript-eslint/prefer-nullish-coalescing': 'off',
+    '@typescript-eslint/no-unnecessary-condition': 'off',
+    '@typescript-eslint/restrict-template-expressions': 'off',
+    '@typescript-eslint/restrict-plus-operands': 'off',
+    '@typescript-eslint/require-await': 'off',
+    '@typescript-eslint/no-confusing-void-expression': 'off',
+    '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/no-redundant-type-constituents': 'off',
     '@typescript-eslint/no-unused-vars': ['error'],
     '@typescript-eslint/no-unused-expressions': 'error',
     '@typescript-eslint/no-use-before-define': 'off',
@@ -93,7 +100,7 @@ module.exports = {
     '@typescript-eslint/prefer-namespace-keyword': 'error',
     '@typescript-eslint/type-annotation-spacing': 'off',
     '@typescript-eslint/typedef': 'off',
-    '@typescript-eslint/unbound-method': 'error',
+    '@typescript-eslint/unbound-method': ['error', { ignoreStatic: true }],
     '@typescript-eslint/unified-signatures': 'error',
     complexity: 'off',
     'constructor-super': 'error',
@@ -156,13 +163,60 @@ module.exports = {
     ],
     'local-rules/standard-loops': 'error',
   },
-  overrides: [
-    {
-      files: './test/**/*.ts',
-      rules: {
-        '@typescript-eslint/no-unused-expressions': 'off',
-        '@typescript-eslint/no-non-null-assertion': 'off',
+};
+
+export default [
+  {
+    ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**', 'eslint.config.js'],
+  },
+  pluginJs.configs.recommended,
+  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
+  eslintConfigPrettier,
+  {
+    ...commonConfig,
+    files: ['extension/**/*.ts'],
+    languageOptions: {
+      ...commonConfig.languageOptions,
+      parserOptions: {
+        project: './tsconfig.json',
       },
     },
-  ],
-};
+  },
+  {
+    ...commonConfig,
+    files: ['tooling/**/*.ts'],
+    languageOptions: {
+      ...commonConfig.languageOptions,
+      parserOptions: {
+        project: './conf/tsconfig.tooling.json',
+      },
+    },
+  },
+  {
+    ...commonConfig,
+    files: ['test/**/*.ts'],
+    languageOptions: {
+      ...commonConfig.languageOptions,
+      parserOptions: {
+        project: './conf/tsconfig.test.eslint.json',
+      },
+    },
+    rules: {
+      ...commonConfig.rules,
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+    },
+  },
+  ...tseslint.config({
+    files: ['extension/js/content_scripts/webmail/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: './conf/tsconfig.content_scripts.json',
+      },
+    },
+  }),
+];

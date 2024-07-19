@@ -10,7 +10,7 @@ import { Assert } from '../../assert.js';
  * Local store of account private keys
  */
 export class KeyStore extends AbstractStore {
-  public static get = async (acctEmail: string, fingerprints?: string[]): Promise<KeyInfoWithIdentity[]> => {
+  public static async get(acctEmail: string, fingerprints?: string[]): Promise<KeyInfoWithIdentity[]> {
     const stored = await AcctStore.get(acctEmail, ['keys']);
     const keys: KeyInfoWithIdentity[] = KeyStore.addIdentityToKeyInfos(stored.keys || []);
     if (!fingerprints) {
@@ -19,32 +19,32 @@ export class KeyStore extends AbstractStore {
     // filters by primary fingerprint - subkey fingerprints are ignored
     // todo - could consider also filtering by subkey fingerprints, but need to think about impact
     return keys.filter(ki => fingerprints.includes(ki.fingerprints[0]));
-  };
+  }
 
-  public static getRequired = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
+  public static async getRequired(acctEmail: string): Promise<KeyInfoWithIdentity[]> {
     const keys = await KeyStore.get(acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(keys);
     return keys;
-  };
+  }
 
-  public static getAllWithOptionalPassPhrase = async (acctEmail: string): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
+  public static async getAllWithOptionalPassPhrase(acctEmail: string): Promise<KeyInfoWithIdentityAndOptionalPp[]> {
     const keys = await KeyStore.get(acctEmail);
     return await Promise.all(
       keys.map(async ki => {
         return { ...ki, passphrase: await PassphraseStore.get(acctEmail, ki) };
       })
     );
-  };
+  }
 
-  public static add = async (acctEmail: string, newKey: string | Key) => {
+  public static async add(acctEmail: string, newKey: string | Key) {
     const keyinfos = await KeyStore.get(acctEmail);
     let updated = false;
     const prv: Key = typeof newKey === 'string' ? await KeyUtil.parse(newKey) : newKey;
     if (!prv.fullyEncrypted) {
       throw new Error('Cannot import plain, unprotected key.');
     }
-    for (const i in keyinfos) {
-      if (KeyUtil.identityEquals(prv, keyinfos[i])) {
+    for (const [i, keyInfo] of keyinfos.entries()) {
+      if (KeyUtil.identityEquals(prv, keyInfo)) {
         // replacing a key
         keyinfos[i] = await KeyUtil.keyInfoObj(prv);
         updated = true;
@@ -54,19 +54,19 @@ export class KeyStore extends AbstractStore {
       keyinfos.push(await KeyUtil.keyInfoObj(prv));
     }
     await KeyStore.set(acctEmail, keyinfos);
-  };
+  }
 
-  public static set = async (acctEmail: string, keyinfos: KeyInfoWithIdentity[]) => {
+  public static async set(acctEmail: string, keyinfos: KeyInfoWithIdentity[]) {
     await AcctStore.set(acctEmail, { keys: keyinfos });
-  };
+  }
 
-  public static remove = async (acctEmail: string, keyIdentity: KeyIdentity): Promise<void> => {
+  public static async remove(acctEmail: string, keyIdentity: KeyIdentity): Promise<void> {
     const privateKeys = await KeyStore.get(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => !KeyUtil.identityEquals(ki, keyIdentity));
     await KeyStore.set(acctEmail, filteredPrivateKeys);
-  };
+  }
 
-  public static getKeyInfosThatCurrentlyHavePassPhraseInSession = async (acctEmail: string): Promise<KeyInfoWithIdentity[]> => {
+  public static async getKeyInfosThatCurrentlyHavePassPhraseInSession(acctEmail: string): Promise<KeyInfoWithIdentity[]> {
     const keys = await KeyStore.get(acctEmail);
     const result: KeyInfoWithIdentity[] = [];
     for (const ki of keys) {
@@ -75,9 +75,9 @@ export class KeyStore extends AbstractStore {
       }
     }
     return result;
-  };
+  }
 
-  private static addIdentityToKeyInfos = (keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] => {
+  private static addIdentityToKeyInfos(keyInfos: StoredKeyInfo[]): KeyInfoWithIdentity[] {
     const kis: KeyInfoWithIdentity[] = [];
     for (const ki of keyInfos) {
       const family = KeyUtil.getKeyFamily(ki.private);
@@ -88,5 +88,5 @@ export class KeyStore extends AbstractStore {
       kis.push({ ...ki, family, id });
     }
     return kis;
-  };
+  }
 }

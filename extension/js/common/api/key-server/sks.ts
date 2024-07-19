@@ -24,7 +24,7 @@ export class Sks extends Api {
    */
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     const index = await this.get(`/pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
-    if (!index || !index.startsWith(Sks.MR_VERSION_1)) {
+    if (!index?.startsWith(Sks.MR_VERSION_1)) {
       return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     const foundUidsByLongid: { [longid: string]: string[] } = {};
@@ -64,7 +64,7 @@ export class Sks extends Api {
       throw new Error('Expected fingerprint or longid, got email');
     }
     const pubkey = await this.get(`/pks/lookup?op=get&search=0x${fingerprintOrLongid}&options=mr`);
-    if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
+    if (!pubkey?.includes(String(PgpArmor.headers('publicKey').end))) {
       return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     return { pubkey };

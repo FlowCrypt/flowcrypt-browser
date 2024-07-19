@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { storageLocalGetAll, storageLocalRemove } from '../common/browser/chrome.js';
+import { storageGetAll, storageRemove } from '../common/browser/chrome.js';
 import { KeyInfoWithIdentity, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
@@ -54,7 +54,7 @@ export const migrateGlobal = async () => {
   if (typeof globalStore.local_drafts === 'undefined') {
     console.info('migrating local drafts in old format...');
     globalStore.local_drafts = {};
-    const storageLocal = await storageLocalGetAll();
+    const storageLocal = await storageGetAll('local');
     const oldDrafts = [];
     for (const key of Object.keys(storageLocal)) {
       if (key.startsWith('local-draft-')) {
@@ -66,7 +66,7 @@ export const migrateGlobal = async () => {
     if (oldDrafts.length) {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       await GlobalStore.set({ local_drafts: globalStore.local_drafts });
-      await storageLocalRemove(oldDrafts);
+      await storageRemove('local', oldDrafts);
     }
   }
   // migrate local compose draft (https://github.com/FlowCrypt/flowcrypt-browser/pull/4026)
@@ -91,7 +91,7 @@ const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrati
   const newPubkeyEntity = ContactStore.pubkeyObj(key, pubkey.lastCheck);
   data.pubkeysToDelete.push(pubkey.fingerprint);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint!);
+  const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint);
   ContactStore.setReqPipe(req, (emailEntities: Email[]) => {
     if (emailEntities.length) {
       data.pubkeysToSave.push(newPubkeyEntity);
@@ -136,7 +136,9 @@ export const updateX509FingerprintsAndLongids = async (db: IDBDatabase): Promise
           tx.objectStore('emails').put(email);
         }
       } else {
-        processSmimeKey(cursor.value as Pubkey, tx, data, () => cursor.continue());
+        processSmimeKey(cursor.value as Pubkey, tx, data, () => {
+          cursor.continue();
+        });
       }
     });
   });
@@ -235,7 +237,8 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
   // transform
   const converted = await Promise.all(
     entries.map(async entry => {
-      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? entry.pubkey.rawArmored ?? entry.pubkey.raw : (entry.pubkey as string);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? (entry.pubkey.rawArmored ?? entry.pubkey.raw) : entry.pubkey!;
       // parse again to re-calculate expiration-related fields etc.
       const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
       return {

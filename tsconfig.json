@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitReturns": true,
@@ -20,7 +20,8 @@
     "paths": {
       "jquery": ["lib/jquery.min.js", "COMMENT"],
       "sweetalert2": ["lib/sweetalert2.js", "COMMENT"],
-      "openpgp": ["../node_modules/openpgp/openpgp.d.js", "lib/openpgp.js", "COMMENT"],
+      "openpgp": ["lib/openpgp.min.mjs", "../node_modules/openpgp/openpgp.d.js"],
+      "pdfjs": ["lib/pdf.min.mjs", "types/pdf.js.d.ts"],
       "squire-rte": ["../node_modules/squire-rte/dist/types/Squire.d.ts"],
       "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts", "lib/streams/streams.js"],
       "dompurify": ["types/purify.d.ts", "lib/purify.js", "COMMENT"],
@@ -31,7 +32,8 @@
       "zxcvbn": ["lib/zxcvbn.js", "COMMENT"],
       "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js", "COMMENT"],
       "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
-      "node-forge": ["lib/forge.js", "COMMENT"]
+      "node-forge": ["./extension/types/node-forge.d.ts", "lib/forge.mjs"],
+      "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"]
     },
     "typeRoots": ["./extension/js/common/core/types", "./extension/types"]
   },

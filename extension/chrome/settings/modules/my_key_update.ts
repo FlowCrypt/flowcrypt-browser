@@ -114,7 +114,7 @@ View.run(
         const updatedKeyPassphrase = String($('.input_passphrase').val());
         KeyImportUi.allowReselect();
         if (typeof updatedKey === 'undefined') {
-          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
+          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.getTestCompatibilityLink(this.acctEmail));
         } else if (updatedKeyEncrypted.identities.length === 0) {
           throw new KeyCanBeFixed(updatedKeyEncrypted);
         } else if (updatedKey.isPublic) {
@@ -125,7 +125,7 @@ View.run(
         } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
           await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
-        } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
+        } else if (!(await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase))) {
           await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
         } else {
           if (updatedKey.usableForEncryption) {
@@ -148,13 +148,14 @@ View.run(
               `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
                 !!this.fesUrl
               )} to see why is that.`,
-              Ui.testCompatibilityLink
+              Ui.getTestCompatibilityLink(this.acctEmail)
             );
             window.location.href = this.showKeyUrl;
           }
         }
       } catch (e) {
-        return await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
+        await this.keyErrors.handlePrivateKeyError(e, (e as { encrypted: Key }).encrypted, undefined);
+        return;
       }
     };
   }

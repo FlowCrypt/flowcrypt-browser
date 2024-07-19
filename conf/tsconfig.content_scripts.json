@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "es6",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
@@ -19,7 +19,8 @@
       "dompurify": ["types/purify.d.ts"],
       "openpgp": ["../node_modules/openpgp/openpgp.d.ts"],
       "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/types/index.v4.9.d.ts"],
-      "squire-rte": ["../node_modules/squire-rte/dist/types/Squire.d.ts"]
+      "squire-rte": ["../node_modules/squire-rte/dist/types/Squire.d.ts"],
+      "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"]
     },
     "typeRoots": ["../extension/types", "../extension/js/common/core/types"]
   },

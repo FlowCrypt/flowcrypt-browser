@@ -165,7 +165,9 @@ export class GmailParser {
       const parts = payload.parts!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       // are we dealing with a PGP/MIME encrypted message?
       const pgpEncrypted = Boolean(
-        parts.length === 2 && contentType?.value?.startsWith('multipart/encrypted;') && contentType.value.includes('protocol="application/pgp-encrypted"')
+        parts.length === 2 &&
+          contentType?.value?.startsWith('multipart/encrypted') &&
+          (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
       );
       for (const [i, part] of parts.entries()) {
         GmailParser.findAttachments(part, internalMsgId, internalResults, {
@@ -185,7 +187,7 @@ export class GmailParser {
           name: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).filename,
           type: (msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part).mimeType,
           treatAs,
-          inline: (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
+          inline: (GmailParser.findHeader(msgOrPayloadOrPart, 'content-disposition') || '').toLowerCase().startsWith('inline'),
         })
       );
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
@@ -209,7 +211,7 @@ export class GmailParser {
         GmailParser.findBodies(part, internalResults);
       }
     }
-    if (isGmailMsgPayloadPart(gmailMsg) && gmailMsg.body && typeof gmailMsg.body.data !== 'undefined' && gmailMsg.body.size !== 0) {
+    if (isGmailMsgPayloadPart(gmailMsg) && typeof gmailMsg.body?.data !== 'undefined' && gmailMsg.body.size !== 0) {
       if (gmailMsg.mimeType) {
         internalResults[gmailMsg.mimeType] = gmailMsg.body.data;
       }

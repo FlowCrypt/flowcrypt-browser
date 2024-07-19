@@ -4,6 +4,7 @@
 
 import { Url } from '../core/common.js';
 import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
+import { GlobalStore } from './store/global-store.js';
 import { InMemoryStore } from './store/in-memory-store.js';
 
 export class UnreportableError extends Error {}
@@ -24,7 +25,7 @@ export type ErrorReport = {
 
 export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
-  private static ORIG_ONERROR = window.onerror;
+  private static ORIG_ONERROR = onerror;
   private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
     // happens in gmail window when reloaded extension + now reloading gmail
@@ -46,13 +47,13 @@ export class Catch {
     '400 when POST-ing https://flowcrypt.com/attester/welcome-message string: email,pubkey -> This key does not appear valid',
   ];
 
-  public static rewrapErr = (e: unknown, message: string): Error => {
+  public static rewrapErr(e: unknown, message: string): Error {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
-  };
+  }
 
-  public static stringify = (e: unknown): string => {
+  public static stringify(e: unknown): string {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -64,25 +65,25 @@ export class Catch {
     } catch (cannotStringify) {
       return `[unstringifiable typeof:${typeof e}:${String(e)}]`;
     }
-  };
+  }
 
-  public static hasStack = (e: unknown): e is ObjWithStack => {
+  public static hasStack(e: unknown): e is ObjWithStack {
     return !!e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
-  };
+  }
 
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static onErrorInternalHandler = (
+  public static onErrorInternalHandler(
     errMsg: string | undefined,
     url: string,
     line: number,
     col: number,
     originalErr: unknown,
     isManuallyCalled: boolean
-  ): boolean => {
+  ): boolean {
     const exception = Catch.formExceptionFromThrown(originalErr, errMsg, url, line, col, isManuallyCalled);
-    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1 || (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1)) {
+    if (Catch.IGNORE_ERR_MSG.some(err => exception.message.includes(err)) || (errMsg && Catch.IGNORE_ERR_MSG.some(err => errMsg.includes(err)))) {
       return false;
     }
     console.error(originalErr);
@@ -90,16 +91,16 @@ export class Catch {
       console.error(exception);
     }
     console.error(exception.message + '\n' + exception.stack);
-    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
+    if (!isManuallyCalled && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-      Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
+      Catch.ORIG_ONERROR.apply(undefined, args); // Call any previously assigned handler
     }
     if (exception instanceof UnreportableError) {
       console.error('Not reporting UnreportableError above');
       return false;
     }
-    if ((exception.stack || '').indexOf('PRIVATE') !== -1) {
+    if ((exception.stack || '').includes('PRIVATE')) {
       exception.stack = '~censored:PRIVATE';
     }
     const formatted = Catch.formatExceptionForReport(exception, line, col);
@@ -112,28 +113,28 @@ export class Catch {
     // consumer flavor
     void Catch.doSendErrorToSharedTenantFes(formatted);
     return true;
-  };
+  }
 
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static reportErr = (e: unknown): boolean => {
+  public static reportErr(e: unknown): boolean {
     const { line, col } = Catch.getErrorLineAndCol(e);
-    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
-  };
+    return Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), location.href, line, col, e, true);
+  }
 
   /**
    * @returns boolean - whether error was reported remotely or not
    */
-  public static report = (name: string, details?: unknown): boolean => {
+  public static report(name: string, details?: unknown): boolean {
     return Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
-  };
+  }
 
-  public static isPromise = (v: unknown): v is Promise<unknown> => {
+  public static isPromise(v: unknown): v is Promise<unknown> {
     return !!v && typeof v === 'object' && typeof (v as Promise<unknown>).then === 'function' && typeof (v as Promise<unknown>).catch === 'function';
-  };
+  }
 
-  public static try = (code: () => void | Promise<void>) => {
+  public static try(code: () => void | Promise<void>) {
     return () => {
       // returns a function
       try {
@@ -145,15 +146,17 @@ export class Catch {
         Catch.reportErr(codeErr);
       }
     };
-  };
+  }
 
-  public static browser = (): {
-    name: 'firefox' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
+  public static browser(): {
+    name: 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
     v: number | undefined;
-  } => {
+  } {
     // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'firefox', v: Number(RegExp.$1) };
+    } else if (/Thunderbird[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return { name: 'thunderbird', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
       return { name: 'ie', v: Number(RegExp.$1) };
     } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
@@ -165,17 +168,21 @@ export class Catch {
     } else {
       return { name: 'unknown', v: undefined };
     }
-  };
+  }
 
-  public static environment = (url = window.location.href): string => {
+  public static isFirefox(): boolean {
+    return Catch.browser().name === 'firefox';
+  }
+
+  public static environment(url = location.href): string {
     const browserName = Catch.browser().name;
-    const origin = new URL(window.location.href).origin;
+    const origin = new URL(location.href).origin;
     let env = 'unknown';
-    if (url.indexOf('bnjglocicd') !== -1) {
+    if (url.includes('bnjglocicd')) {
       env = 'ex:prod';
-    } else if (url.indexOf('gjdhkacdgd') !== -1 || url.indexOf('gggocmadhd') !== -1) {
+    } else if (url.includes('gjdhkacdgd') || url.includes('gggocmadhd')) {
       env = 'ex:dev';
-    } else if (url.indexOf('mefaeofbcc') !== -1) {
+    } else if (url.includes('mefaeofbcc')) {
       env = 'ex:stable';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
       env = 'ex:fork';
@@ -186,31 +193,31 @@ export class Catch {
     } else if (origin === 'https://flowcrypt.com') {
       env = 'web:prod';
     } else if (origin === 'https://mail.google.com') {
-      env = 'ex:script:gmail';
+      env = 'ex:s:gmail';
     }
     return browserName + ':' + env;
-  };
+  }
 
-  public static test = (type: 'error' | 'object' = 'error') => {
+  public static test(type: 'error' | 'object' = 'error') {
     if (type === 'error') {
       throw new Error('intentional error for debugging');
     } else {
-      // eslint-disable-next-line no-throw-literal
+      // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
       throw { what: 'intentional thrown object for debugging' };
     }
-  };
+  }
 
-  public static stackTrace = (): string => {
+  public static stackTrace(): string {
     try {
       Catch.test();
     } catch (e) {
       // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(window.location.href)}\n`;
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(location.href)}\n`;
     }
     return ''; // make ts happy - this will never happen
-  };
+  }
 
-  public static censoredUrl = (url: string | undefined): string => {
+  public static censoredUrl(url: string | undefined): string {
     if (!url) {
       return '(unknown url)';
     }
@@ -218,22 +225,22 @@ export class Catch {
     for (const field of sensitiveFields) {
       url = Url.replaceUrlParam(url, field, '[SCRUBBED]');
     }
-    if (url.indexOf('refreshToken=') !== -1) {
+    if (url.includes('refreshToken=')) {
       return `${url.split('?')[0]}~censored:refreshToken`;
     }
-    if (url.indexOf('token=') !== -1) {
+    if (url.includes('token=')) {
       return `${url.split('?')[0]}~censored:token`;
     }
-    if (url.indexOf('code=') !== -1) {
+    if (url.includes('code=')) {
       return `${url.split('?')[0]}~censored:code`;
     }
-    if (url.indexOf('idToken=') !== -1) {
+    if (url.includes('idToken=')) {
       return `${url.split('?')[0]}~censored:idToken`;
     }
     return url;
-  };
+  }
 
-  public static onUnhandledRejectionInternalHandler = (e: unknown) => {
+  public static onUnhandledRejectionInternalHandler(e: unknown) {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
     } else {
@@ -243,19 +250,19 @@ export class Catch {
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
       const msg = e instanceof Error ? e.message : String(e);
-      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, window.location.href, line, col, e, true);
+      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, location.href, line, col, e, true);
     }
-  };
+  }
 
-  public static setHandledInterval = (cb: () => void | Promise<void>, ms: number): number => {
+  public static setHandledInterval(cb: () => void | Promise<void>, ms: number): number {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
-  };
+  }
 
-  public static setHandledTimeout = (cb: () => void | Promise<void>, ms: number): number => {
+  public static setHandledTimeout(cb: () => void | Promise<void>, ms: number): number {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
-  };
+  }
 
-  public static doesReject = async (p: Promise<unknown>, errNeedle?: string[]) => {
+  public static async doesReject(p: Promise<unknown>, errNeedle?: string[]) {
     try {
       await p;
       return false;
@@ -266,21 +273,29 @@ export class Catch {
       }
       return !!errNeedle.find(needle => String(e).includes(needle));
     }
-  };
+  }
 
-  public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
+  public static async undefinedOnException<T>(p: Promise<T>): Promise<T | undefined> {
     try {
       return await p;
     } catch (e) {
       return undefined;
     }
-  };
+  }
 
-  private static formatExceptionForReport = (thrown: unknown, line?: number, col?: number): ErrorReport => {
+  private static groupSimilarReports(value: string): string {
+    return value
+      .replace(/chrome-extension:\/\/[^\/]+\//, 'chrome-extension://EXTENSION_ID/')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/threads\/[^\/]+/, 'https://www.googleapis.com/gmail/v1/users/me/threads/THREAD_ID')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/messages\/[^\/]+/, 'https://www.googleapis.com/gmail/v1/users/me/messages/MESSAGE_ID')
+      .replace(/https:\/\/www\.googleapis\.com\/gmail\/v1\/users\/me\/drafts\/[^\/]+/, 'https://www.googleapis.com/gmail/v1/users/me/drafts/DRAFT_ID');
+  }
+
+  private static formatExceptionForReport(thrown: unknown, line?: number, col?: number): ErrorReport {
     if (!line || !col) {
       const { line: parsedLine, col: parsedCol } = Catch.getErrorLineAndCol(thrown);
-      line = parsedLine;
-      col = parsedCol;
+      line = parsedLine > 0 ? parsedLine : 1;
+      col = parsedCol > 0 ? parsedCol : 1;
     }
     if (thrown instanceof Error) {
       // reporting stack may differ from the stack of the actual error, both may be interesting
@@ -293,22 +308,22 @@ export class Catch {
     const exception = Catch.formExceptionFromThrown(thrown);
     return {
       name: exception.name.substring(0, 50),
-      message: exception.message.substring(0, 200),
-      url: window.location.href.split('?')[0],
-      line: line || 0,
-      col: col || 0,
-      trace: exception.stack || '',
+      message: Catch.groupSimilarReports(exception.message.substring(0, 200)),
+      url: Catch.groupSimilarReports(location.href.split('?')[0]),
+      line: line || 1,
+      col: col || 1,
+      trace: Catch.groupSimilarReports(exception.stack || ''),
       version: VERSION,
       environment: Catch.RUNTIME_ENVIRONMENT,
       product: 'web-ext',
       buildType: FLAVOR,
     };
-  };
+  }
 
-  private static doSendErrorToSharedTenantFes = async (errorReport: ErrorReport) => {
+  private static async doSendErrorToSharedTenantFes(errorReport: ErrorReport) {
     try {
-      const uncheckedUrlParams = Url.parse(['acctEmail']);
-      const acctEmail = String(uncheckedUrlParams.acctEmail);
+      const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
+      const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
       if (!acctEmail) {
         console.error('Not reporting error because user is not logged in');
         return;
@@ -327,7 +342,7 @@ export class Catch {
           Authorization: `Bearer ${idToken}`,
         },
         success: (response: { saved: boolean }) => {
-          if (response && typeof response === 'object' && response.saved === true) {
+          if (response && typeof response === 'object' && response.saved) {
             console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           } else {
             console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
@@ -341,9 +356,9 @@ export class Catch {
       console.error(ajaxErr);
       console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
     }
-  };
+  }
 
-  private static formExceptionFromThrown = (thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error => {
+  private static formExceptionFromThrown(thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error {
     let exception: Error;
     if (typeof thrown !== 'object') {
       exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown)}`);
@@ -363,33 +378,33 @@ export class Catch {
       exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(thrown)}`;
     }
     return exception;
-  };
+  }
 
-  private static getErrorLineAndCol = (e: unknown) => {
+  private static getErrorLineAndCol(e: unknown) {
     try {
       const callerLine = (e as { stack: string }).stack.split('\n')[1];
       const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return { line: Number(matched![1]), col: Number(matched![2]) };
     } catch (lineErr) {
-      return { line: 0, col: 0 };
+      return { line: 1, col: 1 };
     }
-  };
+  }
 
-  private static formattedStackBlock = (name: string, text: string) => {
+  private static formattedStackBlock(name: string, text: string) {
     return `\n\n### ${name} ###\n# ${text.split('\n').join('\n# ')}\n######################\n`;
-  };
+  }
 
-  private static nameAndDetailsAsException = (name: string, details: unknown): Error => {
+  private static nameAndDetailsAsException(name: string, details: unknown): Error {
     try {
       throw new Error(name);
     } catch (e) {
       (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
       return e as Error;
     }
-  };
+  }
 
-  private static isPromiseRejectionEvent = (ev: unknown): ev is PromiseRejectionEvent => {
+  private static isPromiseRejectionEvent(ev: unknown): ev is PromiseRejectionEvent {
     if (ev && typeof ev === 'object') {
       /* eslint-disable @typescript-eslint/ban-types */
       const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
@@ -398,9 +413,9 @@ export class Catch {
       return eHasReason && eHasPromise;
     }
     return false;
-  };
+  }
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-window.onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
-window.onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;
+onerror = Catch.onErrorInternalHandler as OnErrorEventHandler;
+onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

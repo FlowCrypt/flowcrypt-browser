@@ -53,7 +53,7 @@ export class SymmetricMessageEncryption {
       throw new Error(`IV is ${iv.length} bytes length (${this.ivBytesLength} expected)`);
     }
     const decryptedBytes = await this.doDecrypt(iv, Buf.fromBase64Str(msg.encryptedData), SymmetricMessageEncryption.cryptoKey);
-    const bm: Bm.RawWithWindowExtensions = JSON.parse(new Buf(decryptedBytes).toUtfStr());
+    const bm = JSON.parse(new Buf(decryptedBytes).toUtfStr()) as Bm.RawWithWindowExtensions;
     return bm;
   };
 

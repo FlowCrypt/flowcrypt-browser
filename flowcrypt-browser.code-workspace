@@ -9,6 +9,7 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "eslint.validate": ["javascript", "typescript"],
+    "eslint.useFlatConfig": true,
     "html.format.enable": false,
     "htmlhint.options": {
       "doctype-first": false
@@ -17,8 +18,6 @@
       "**/node_modules/**": true
     },
     "errorLens.enabledDiagnosticLevels": ["error"],
-    "errorLens.errorColor": "#FF00000A",
-    "errorLens.errorTextColor": "#FF000066",
     "editor.tabSize": 2,
     "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit",

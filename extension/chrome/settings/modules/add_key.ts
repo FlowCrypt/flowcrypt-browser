@@ -117,6 +117,7 @@ View.run(
         }
       } catch (e) {
         this.keyErrors = new KeyErrors(this.fesUrl || '', this.acctEmail, this.parentTabId, this.clientConfiguration);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         await this.keyErrors.handlePrivateKeyError(e, e.encrypted, undefined);
       }
     };

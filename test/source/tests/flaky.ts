@@ -15,7 +15,7 @@ import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { testConstants } from './tooling/consts';
 import { SetupPageRecipe } from './page-recipe/setup-page-recipe';
 import { KeyUtil } from '../core/crypto/key';
-import { ElementHandle, Frame, Page } from 'puppeteer';
+import { Frame } from 'puppeteer';
 import { expectRecipientElements } from './compose';
 import { GoogleData } from '../mock/google/google-data';
 import { ControllableFrame } from '../browser/controllable';
@@ -24,6 +24,7 @@ import { singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/atteste
 import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints';
 import { processMessageFromUser4 } from '../mock/fes/fes-constants';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
+import { minutes } from './tooling';
 
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
@@ -61,7 +62,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           clickOn: 'confirm',
         });
         await SettingsPageRecipe.waitForModalAndRespond(settingsPage, 'warning', {
-          contentToCheck: 'Public key not usable - not sumbitting to Attester',
+          contentToCheck: 'Public key not usable - not submitting to Attester',
           clickOn: 'confirm',
         });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
@@ -257,7 +258,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const longid = fingerprint.substring(fingerprint.length - 16);
         const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
 
-        const key = await KeyUtil.parse(downloadedFiles[fileName]!.toString());
+        const key = await KeyUtil.parse(downloadedFiles[fileName].toString());
         expect(key.algo.bits).to.equal(3072);
         expect(key.algo.algorithm).to.equal('rsaEncryptSign');
         await myKeyFrame.close();
@@ -267,120 +268,123 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
-      testWithBrowser(async (t, browser) => {
-        t.context.mockApi!.configProvider = new ConfigurationProvider({
-          attester: {
-            pubkeyLookup: {
-              'flowcrypt.compatibility@gmail.com': {
-                pubkey: somePubkey,
+      testWithBrowser(
+        async (t, browser) => {
+          t.context.mockApi!.configProvider = new ConfigurationProvider({
+            attester: {
+              pubkeyLookup: {
+                'flowcrypt.compatibility@gmail.com': {
+                  pubkey: somePubkey,
+                },
               },
             },
-          },
-          fes: {
-            messagePostValidator: processMessageFromUser4,
-            clientConfiguration: standardSubDomainFesClientConfiguration,
-          },
-        });
-        const port = t.context.urls?.port;
-        const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
-        await SetupPageRecipe.manualEnter(
-          settingsPage,
-          'flowcrypt.test.key.used.pgp',
-          { submitPubkey: false, usedPgpBefore: false },
-          { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
-        );
-        // add a name to one of the contacts
-        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
-        await dbPage.page.evaluate(async () => {
-          /* eslint-disable @typescript-eslint/no-explicit-any */
-          const db = await (window as any).ContactStore.dbOpen();
-          await (window as any).ContactStore.update(db, 'cc@example.com', { name: 'Mr Cc' });
-          /* eslint-enable @typescript-eslint/no-explicit-any */
-        });
-        await dbPage.close();
-        const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
-        let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
-        // 1. vague Gmail error with partial success
-        let composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'confirm',
-          'cancel',
-          'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
-            'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-        // 2. vague Gmail error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'confirm',
-          'cancel',
-          'Google returned an error when sending message. ' + 'Please help us improve FlowCrypt by reporting the error to us.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-        // 3. "invalid To" Gmail error with partial success
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
-            'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-        // 4. "invalid To" Gmail error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-        // 5. "RequestTimeout" error with partial success
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Messages to some recipients were sent successfully, while messages to timeout@example.com ' +
-            'encountered network errors. Please check your internet connection and try again.'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
-        // 6. "RequestTimeout" error with all failures
-        composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
-        await composePage.waitAndType('@input-password', 'gO0d-pwd');
-        await composePage.waitAndClick('@action-send', { delay: 1 });
-        await composePage.waitAndRespondToModal(
-          'error',
-          'confirm',
-          'Could not send message due to network error. Please check your internet connection and try again. ' +
-            '(This may also be caused by missing extension permissions).'
-        );
-        await composePage.close();
-        expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
-        // this test is using PwdEncryptedMessageWithFesReplyBadRequestTestStrategy to check sent result based on subject
-        // "PWD encrypted message with FES web portal - some sends fail with BadRequest error"
-        // also see '/api/v1/message' in customer-url-fes-endpoints.ts mock
-      })
+            fes: {
+              messagePostValidator: processMessageFromUser4,
+              clientConfiguration: standardSubDomainFesClientConfiguration,
+            },
+          });
+          const port = t.context.urls?.port;
+          const acct = `user4@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
+          const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+          await SetupPageRecipe.manualEnter(
+            settingsPage,
+            'flowcrypt.test.key.used.pgp',
+            { submitPubkey: false, usedPgpBefore: false },
+            { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
+          );
+          // add a name to one of the contacts
+          const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+          await dbPage.page.evaluate(async () => {
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            const db = await (window as any).ContactStore.dbOpen();
+            await (window as any).ContactStore.update(db, 'cc@example.com', { name: 'Mr Cc' });
+            /* eslint-enable @typescript-eslint/no-explicit-any */
+          });
+          await dbPage.close();
+          const subject = 'PWD encrypted message with FES web portal - some sends fail with BadRequest error - ' + testVariant;
+          let expectedNumberOfPassedMessages = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length;
+          // 1. vague Gmail error with partial success
+          let composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+          await ComposePageRecipe.fillMsg(composePage, { to: 'to@example.com', cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
+          await composePage.waitAndType('@input-password', 'gO0d-pwd');
+          await composePage.waitAndClick('@action-send', { delay: 1 });
+          await composePage.waitAndRespondToModal(
+            'confirm',
+            'cancel',
+            'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
+              'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
+          );
+          await composePage.close();
+          expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
+          // 2. vague Gmail error with all failures
+          composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+          await ComposePageRecipe.fillMsg(composePage, { cc: 'cc@example.com', bcc: 'flowcrypt.compatibility@gmail.com' }, subject);
+          await composePage.waitAndType('@input-password', 'gO0d-pwd');
+          await composePage.waitAndClick('@action-send', { delay: 1 });
+          await composePage.waitAndRespondToModal(
+            'confirm',
+            'cancel',
+            'Google returned an error when sending message. ' + 'Please help us improve FlowCrypt by reporting the error to us.'
+          );
+          await composePage.close();
+          expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
+          // 3. "invalid To" Gmail error with partial success
+          composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+          await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'to@example.com' }, subject);
+          await composePage.waitAndType('@input-password', 'gO0d-pwd');
+          await composePage.waitAndClick('@action-send', { delay: 1 });
+          await composePage.waitAndRespondToModal(
+            'error',
+            'confirm',
+            'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
+              'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+          );
+          await composePage.close();
+          expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
+          // 4. "invalid To" Gmail error with all failures
+          composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+          await ComposePageRecipe.fillMsg(composePage, { to: 'invalid@example.com', cc: 'cc@example.com' }, subject);
+          await composePage.waitAndType('@input-password', 'gO0d-pwd');
+          await composePage.waitAndClick('@action-send', { delay: 1 });
+          await composePage.waitAndRespondToModal(
+            'error',
+            'confirm',
+            'Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+          );
+          await composePage.close();
+          expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
+          // 5. "RequestTimeout" error with partial success
+          composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+          await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'to@example.com' }, subject);
+          await composePage.waitAndType('@input-password', 'gO0d-pwd');
+          await composePage.waitAndClick('@action-send', { delay: 1 });
+          await composePage.waitAndRespondToModal(
+            'error',
+            'confirm',
+            'Messages to some recipients were sent successfully, while messages to timeout@example.com ' +
+              'encountered network errors. Please check your internet connection and try again.'
+          );
+          await composePage.close();
+          expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
+          // 6. "RequestTimeout" error with all failures
+          composePage = await ComposePageRecipe.openStandalone(t, browser, `user4@standardsubdomainfes.localhost:${port}`);
+          await ComposePageRecipe.fillMsg(composePage, { to: 'timeout@example.com', cc: 'cc@example.com' }, subject);
+          await composePage.waitAndType('@input-password', 'gO0d-pwd');
+          await composePage.waitAndClick('@action-send', { delay: 1 });
+          await composePage.waitAndRespondToModal(
+            'error',
+            'confirm',
+            'Could not send message due to network error. Please check your internet connection and try again.'
+          );
+          await composePage.close();
+          expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(expectedNumberOfPassedMessages); // + 0 messages
+          // this test is using PwdEncryptedMessageWithFesReplyBadRequestTestStrategy to check sent result based on subject
+          // "PWD encrypted message with FES web portal - some sends fail with BadRequest error"
+          // also see '/api/v1/message' in customer-url-fes-endpoints.ts mock
+        },
+        undefined,
+        minutes(8)
+      )
     );
 
     test(
@@ -437,7 +441,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           google: { acctAliases: flowcryptCompatibilityAliasList },
         });
         const key = Config.key('flowcryptcompatibility.from.address');
-        await SettingsPageRecipe.addKeyTest(t, browser, acct, key.armored!, key.passphrase!, { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
+        await SettingsPageRecipe.addKeyTest(t, browser, acct, key.armored!, key.passphrase, { isSavePassphraseChecked: true, isSavePassphraseHidden: false });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', undefined, {
@@ -476,9 +480,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
-        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
 
-        await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
+        await fileInput.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf', 'test/samples/large.jpg');
         await ComposePageRecipe.sendAndClose(composePage, { expectProgress: true, timeout: 120 });
       })
     );
@@ -491,9 +495,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
-        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
 
-        await fileInput!.uploadFile('test/samples/large.jpg');
+        await fileInput.uploadFile('test/samples/large.jpg');
         await Util.sleep(2);
         await ComposePageRecipe.sendAndClose(composePage, { timeout: 60, expectProgress: true });
       })
@@ -507,9 +511,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
-        const fileInput = (await composePage.target.$('input[type=file]')) as ElementHandle<HTMLInputElement>;
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
 
-        await fileInput!.uploadFile('test/samples/small.txt');
+        await fileInput.uploadFile('test/samples/small.txt');
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
         // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"
       })
@@ -592,43 +596,47 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     );
     test(
       'decrypt - entering pass phrase should unlock all keys that match the pass phrase',
-      testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const passphrase = 'pa$$w0rd';
-        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
-        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
-        await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
-        const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
-        await BrowserRecipe.finishSession(inboxPage);
-        await InboxPageRecipe.checkDecryptMsg(t, browser, {
-          acctEmail,
-          threadId: '17c0e50966d7877c',
-          content: ['1st key of of 2 keys with the same passphrase'],
-          enterPp: {
-            passphrase,
-            isForgetPpChecked: true,
-            isForgetPpHidden: false,
-          },
-        });
-        await InboxPageRecipe.checkDecryptMsg(t, browser, {
-          acctEmail,
-          threadId: '17c0e55caaa4abb3',
-          content: ['2nd key of of 2 keys with the same passphrase'],
-          // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
-        });
-        // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead
-        const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-        await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
-        await ComposePageRecipe.pastePublicKeyManually(
-          composeFrame,
-          inboxPage,
-          'smime@recipient.com',
-          testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871
-        );
-        await composeFrame.waitAndClick('@action-send', { delay: 2 });
-        await inboxPage.waitTillGone('@container-new-message');
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          const acctEmail = 'flowcrypt.compatibility@gmail.com';
+          await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+          const passphrase = 'pa$$w0rd';
+          await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey17AD7D07, passphrase, {}, false);
+          await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
+          await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultipleSmimeCEA2D53BB9D24871, passphrase, {}, false);
+          const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
+          await BrowserRecipe.finishSession(inboxPage);
+          await InboxPageRecipe.checkDecryptMsg(t, browser, {
+            acctEmail,
+            threadId: '17c0e50966d7877c',
+            content: ['1st key of of 2 keys with the same passphrase'],
+            enterPp: {
+              passphrase,
+              isForgetPpChecked: true,
+              isForgetPpHidden: false,
+            },
+          });
+          await InboxPageRecipe.checkDecryptMsg(t, browser, {
+            acctEmail,
+            threadId: '17c0e55caaa4abb3',
+            content: ['2nd key of of 2 keys with the same passphrase'],
+            // passphrase for the 2nd key should not be needed because it's the same as for the 1st key
+          });
+          // as decrypted s/mime messages are not rendered yet (#4070), let's test signing instead
+          const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
+          await ComposePageRecipe.fillMsg(composeFrame, { to: 'smime@recipient.com' }, 'send signed and encrypted S/MIME without attachment');
+          await ComposePageRecipe.pastePublicKeyManually(
+            composeFrame,
+            inboxPage,
+            'smime@recipient.com',
+            testConstants.testCertificateMultipleSmimeCEA2D53BB9D24871
+          );
+          await composeFrame.waitAndClick('@action-send', { delay: 2 });
+          await inboxPage.waitTillGone('@container-new-message');
+        },
+        undefined,
+        minutes(8)
+      )
     );
     test.skip(
       'decrypt - benchmark decryption of 50 pgp messages',
@@ -776,7 +784,7 @@ AfYUJUhqjgSuBctnpj0=
         const frameName = 'pgp_block.htm';
         let frames: Frame[] = [];
         while (frames.length !== 50) {
-          frames = (inboxPage.target as Page).frames().filter(frame => frame.url().includes(frameName));
+          frames = inboxPage.target.frames().filter(frame => frame.url().includes(frameName));
         }
         await Promise.all(frames.map(frame => new ControllableFrame(frame, inboxPage).waitForSelTestState('ready', 60)));
         const stop = new Date();

@@ -1,9 +1,9 @@
 version: v1.0
-name: Flowcrypt Node Core Tests
+name: FlowCrypt Extension Tests
 agent:
   machine:
-    type: e1-standard-8
-    os_image: ubuntu2004
+    type: e2-standard-4
+    os_image: ubuntu2204
 auto_cancel:
   running:
     when: branch != 'master'
@@ -53,7 +53,7 @@ blocks:
               shopt -s nullglob
               for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
                 echo "Uploading debug file $file as job artifact..."
-                artifact push job "$file"
+                artifact push job "$file" --force
               done
 
   - name: Live UI Gmail tests
@@ -89,7 +89,7 @@ blocks:
               shopt -s nullglob
               for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
                 echo "Uploading debug file $file as job artifact..."
-                artifact push job "$file"
+                artifact push job "$file" --force
               done
 
   - name: Other tests

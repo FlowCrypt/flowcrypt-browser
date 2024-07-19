@@ -202,7 +202,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   };
 
   private generateHtmlPreviousMsgQuote = (method: 'reply' | 'forward') => {
-    if (!this.messageToReplyOrForward || !this.messageToReplyOrForward.text || !this.messageToReplyOrForward.headers.date) {
+    if (!this.messageToReplyOrForward?.text || !this.messageToReplyOrForward.headers.date) {
       return;
     }
     const text = this.messageToReplyOrForward.text;
@@ -213,9 +213,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
     const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
     if (method === 'reply') {
-      const header = `<div ${dirAttr} style="display: inline-block">On ${dateStr}, ${from ?? ''} wrote:</div>`;
+      const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
       const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
-      return `<blockquote ${dirAttr}}>${sanitizedQuote}</blockquote>`;
+      return `<blockquote ${dirAttr}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
         `<div ${dirAttr}>` +
@@ -224,7 +224,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `Date: ${dateStr}<br>` +
         `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
         `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
-        `${this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc.join(', ')}` : ''}` +
+        (this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc?.join(', ')}` : '') +
         `</div>`;
       return `${header}<br><br>${escapedText}`;
     }

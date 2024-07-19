@@ -3,28 +3,29 @@
 'use strict';
 
 import Swal from 'sweetalert2';
-import { AccountServer } from '../../common/api/account-server.js';
-import { KeyManager } from '../../common/api/key-server/key-manager.js';
-import { ApiErr, BackendAuthErr } from '../../common/api/shared/api-error.js';
-import { BrowserMsgCommonHandlers } from '../../common/browser/browser-msg-common-handlers.js';
-import { Bm, BrowserMsg, TabIdRequiredError } from '../../common/browser/browser-msg.js';
-import { ContentScriptWindow } from '../../common/browser/browser-window.js';
-import { Env, WebMailName } from '../../common/browser/env.js';
-import { Time } from '../../common/browser/time.js';
-import { CommonHandlers, Ui } from '../../common/browser/ui.js';
-import { ClientConfiguration, ClientConfigurationError } from '../../common/client-configuration.js';
-import { Str, Url } from '../../common/core/common.js';
-import { InMemoryStoreKeys, VERSION } from '../../common/core/const.js';
-import { getLocalKeyExpiration, processAndStoreKeysFromEkmLocally } from '../../common/helpers.js';
-import { Injector } from '../../common/inject.js';
-import { Lang } from '../../common/lang.js';
-import { Notifications } from '../../common/notifications.js';
-import { Catch } from '../../common/platform/catch.js';
-import { AcctStore } from '../../common/platform/store/acct-store.js';
-import { GlobalStore } from '../../common/platform/store/global-store.js';
-import { InMemoryStore } from '../../common/platform/store/in-memory-store.js';
-import { WebmailVariantString, XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { RelayManager } from '../../common/relay-manager.js';
+import { AccountServer } from '../../../common/api/account-server.js';
+import { KeyManager } from '../../../common/api/key-server/key-manager.js';
+import { ApiErr, BackendAuthErr } from '../../../common/api/shared/api-error.js';
+import { BrowserMsgCommonHandlers } from '../../../common/browser/browser-msg-common-handlers.js';
+import { Bm, BrowserMsg, TabIdRequiredError } from '../../../common/browser/browser-msg.js';
+import { ContentScriptWindow } from '../../../common/browser/browser-window.js';
+import { Env, WebMailName } from '../../../common/browser/env.js';
+import { Time } from '../../../common/browser/time.js';
+import { CommonHandlers, Ui } from '../../../common/browser/ui.js';
+import { ClientConfiguration, ClientConfigurationError } from '../../../common/client-configuration.js';
+import { Str, Url } from '../../../common/core/common.js';
+import { InMemoryStoreKeys, VERSION } from '../../../common/core/const.js';
+import { getLocalKeyExpiration, processAndStoreKeysFromEkmLocally } from '../../../common/helpers.js';
+import { Injector } from '../../../common/inject.js';
+import { Lang } from '../../../common/lang.js';
+import { Notifications } from '../../../common/notifications.js';
+import { Catch } from '../../../common/platform/catch.js';
+import { AcctStore } from '../../../common/platform/store/acct-store.js';
+import { GlobalStore } from '../../../common/platform/store/global-store.js';
+import { InMemoryStore } from '../../../common/platform/store/in-memory-store.js';
+import { WebmailVariantString, XssSafeFactory } from '../../../common/xss-safe-factory.js';
+import { RelayManager } from '../../../common/relay-manager.js';
+import { WebmailElementReplacer } from './webmail-element-replacer.js';
 
 export type WebmailVariantObject = {
   newDataLayer: undefined | boolean;
@@ -32,7 +33,7 @@ export type WebmailVariantObject = {
   email: undefined | string;
   gmailVariant: WebmailVariantString;
 };
-export type IntervalFunction = { interval: number; handler: () => void };
+
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
@@ -45,17 +46,9 @@ type WebmailSpecificInfo = {
     inject: Injector,
     notifications: Notifications,
     factory: XssSafeFactory,
-    notifyMurdered: () => void,
     relayManager: RelayManager
   ) => Promise<void>;
 };
-export interface WebmailElementReplacer {
-  getIntervalFunctions: () => IntervalFunction[];
-  setReplyBoxEditable: () => Promise<void>;
-  reinsertReplyBox: (replyMsgId: string) => void;
-  scrollToReplyBox: (replyMsgId: string) => void;
-  scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
-}
 
 const win = window as unknown as ContentScriptWindow;
 
@@ -157,7 +150,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     relayManager: RelayManager,
     ppEvent: { entered?: boolean }
   ) => {
-    BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('set_active_window', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
         return; // already active
       }
@@ -165,7 +159,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
-    BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('close_compose_window', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();
       if ($('.secure_compose_window.previous_active:not(.minimized)').length) {
         BrowserMsg.send.focusPreviousActiveWindow(tabId, {
@@ -191,59 +186,74 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       $('body').trigger('focus');
     });
-    BrowserMsg.addListener('focus_frame', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('focus_frame', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       $(`iframe#${frameId}`).trigger('focus');
     });
-    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.ComposeWindow) => {
+    BrowserMsg.addListener('close_reply_message', async req => {
+      const { frameId } = req as Bm.ComposeWindow;
       $(`iframe#${frameId}`).remove();
     });
-    BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
+    BrowserMsg.addListener('reinsert_reply_box', async req => {
+      const { replyMsgId } = req as Bm.ReinsertReplyBox;
       webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
     BrowserMsg.addListener('close_dialog', async () => {
       Swal.close();
     });
-    BrowserMsg.addListener('scroll_to_reply_box', async ({ replyMsgId }: Bm.ScrollToReplyBox) => {
+    BrowserMsg.addListener('scroll_to_reply_box', async req => {
+      const { replyMsgId } = req as Bm.ScrollToReplyBox;
       webmailSpecific.getReplacer().scrollToReplyBox(replyMsgId);
     });
-    BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async ({ replyMsgId, cursorOffsetTop }: Bm.ScrollToCursorInReplyBox) => {
+    BrowserMsg.addListener('scroll_to_cursor_in_reply_box', async req => {
+      const { replyMsgId, cursorOffsetTop } = req as Bm.ScrollToCursorInReplyBox;
       webmailSpecific.getReplacer().scrollToCursorInReplyBox(replyMsgId, cursorOffsetTop);
     });
-    BrowserMsg.addListener('passphrase_dialog', async (args: Bm.PassphraseDialog) => {
+    BrowserMsg.addListener('passphrase_dialog', async req => {
+      const args = req as Bm.PassphraseDialog;
       await showPassphraseDialog(factory, args);
     });
-    BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+    BrowserMsg.addListener('passphrase_entry', async req => {
+      const { entered } = req as Bm.PassphraseEntry;
       ppEvent.entered = entered;
     });
     BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
-    BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
+    BrowserMsg.addListener('add_pubkey_dialog', async req => {
+      const { emails } = req as Bm.AddPubkeyDialog;
       await factory.showAddPubkeyDialog(emails);
     });
-    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
+    BrowserMsg.addListener('pgp_block_ready', async req => {
+      const { frameId, messageSender } = req as Bm.PgpBlockReady;
       relayManager.associate(frameId, messageSender);
     });
-    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+    BrowserMsg.addListener('pgp_block_retry', async req => {
+      const { frameId, messageSender } = req as Bm.PgpBlockRetry;
       relayManager.retry(frameId, messageSender);
     });
-    BrowserMsg.addListener('notification_show', async ({ notification, callbacks, group }: Bm.NotificationShow) => {
+    BrowserMsg.addListener('notification_show', async req => {
+      const { notification, callbacks, group } = req as Bm.NotificationShow;
       notifications.show(notification, callbacks, group);
       $('body').one(
         'click',
         Catch.try(() => notifications.clear(group))
       );
     });
-    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+    BrowserMsg.addListener('notification_show_auth_popup_needed', async req => {
+      const { acctEmail } = req as Bm.NotificationShowAuthPopupNeeded;
       notifications.showAuthPopupNeeded(acctEmail);
     });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
-    BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
+    BrowserMsg.addListener('show_attachment_preview', async req => {
+      const { iframeUrl } = req as Bm.ShowAttachmentPreview;
       await Ui.modal.attachmentPreview(iframeUrl);
     });
-    BrowserMsg.addListener('ajax_progress', async (progress: Bm.AjaxProgress) => {
+    BrowserMsg.addListener('ajax_progress', async req => {
+      const progress = req as Bm.AjaxProgress;
       relayManager.renderProgress(progress);
     });
-    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+    BrowserMsg.addListener('render_public_keys', async req => {
+      const { traverseUp, afterFrameId, publicKeys } = req as Bm.RenderPublicKeys;
       const traverseUpLevels = traverseUp || 0;
       let appendAfter = $(`iframe#${afterFrameId}`);
       for (let i = 0; i < traverseUpLevels; i++) {
@@ -254,6 +264,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
     });
     BrowserMsg.listen(tabId);
+    BrowserMsg.send.setHandlerReadyForPGPBlock('broadcast');
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
@@ -273,23 +284,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         }
       }
     }
-  };
-
-  const notifyMurdered = () => {
-    const notifEl = document.getElementsByClassName('webmail_notifications')[0];
-    const div = document.createElement('div');
-    div.innerText = 'FlowCrypt has updated, please reload the tab. ';
-    div.classList.add('webmail_notification');
-    const a = document.createElement('a');
-    a.href = '#';
-    a.onclick = function () {
-      const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
-      parent?.remove();
-    };
-    a.textContent = 'close';
-    div.appendChild(a);
-    notifEl.textContent = '';
-    notifEl.appendChild(div);
   };
 
   const showPassphraseDialog = async (factory: XssSafeFactory, { longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
@@ -389,6 +383,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e.message}`, false, 5);
       } else {
         Catch.reportErr(e);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const errType = e.constructor?.name || 'Error';
         Ui.toast(`Failed to update FlowCrypt Client Configuration: ${e instanceof Error ? e.message : String(e)} (${errType})`);
       }
@@ -414,7 +409,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       warningMsg =
         expirationText +
-        `To receive the latest keys, please ensure that you can connect to your corporate network either through VPN or in person and reload Gmail.<br/>` +
+        `To receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and have entered your FlowCrypt passphrase. Then reload Gmail.<br/>` +
         `If this notification still shows after that, please contact your Help Desk.`;
     } else {
       let expirationText: string;
@@ -431,6 +426,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
   const entrypoint = async () => {
     try {
+      // Do not try to show decrypted content for original message content view
+      if (location.href.includes('/popout') || location.href.includes('view=om')) {
+        console.info('Showing original message');
+        return;
+      }
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
@@ -446,7 +446,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         ppEvent,
         Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
       );
-      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, notifyMurdered, relayManager);
+      await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
         console.error(`FlowCrypt cannot start: ${String(e)}`);
@@ -517,8 +517,33 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
 
     if (win.vacant()) {
       await entrypoint();
-    } else if (Catch.browser().name === 'firefox') {
+    } else if (Catch.isFirefox()) {
       notifyMurdered();
     }
   }
+};
+
+/**
+ * This happens when Firefox (or possibly Thunderbird) just updated FlowCrypt.
+ *
+ * Previous (meaning this currently running) instance of FlowCrypt will no longer
+ *   have access to its various classes or global variables, and is left in a
+ *   semi-functioning state. The best we can do is to ask the user to reload
+ *   the tab, which will load the newly updated version of the extension cleanly.
+ */
+export const notifyMurdered = () => {
+  const notifEl = document.getElementsByClassName('webmail_notifications')[0];
+  const div = document.createElement('div');
+  div.innerText = 'FlowCrypt has updated, please reload the tab. ';
+  div.classList.add('webmail_notification');
+  const a = document.createElement('a');
+  a.href = '#';
+  a.onclick = function () {
+    const parent = (this as HTMLAnchorElement).parentNode as HTMLElement | undefined;
+    parent?.remove();
+  };
+  a.textContent = 'close';
+  div.appendChild(a);
+  notifEl.textContent = '';
+  notifEl.appendChild(div);
 };

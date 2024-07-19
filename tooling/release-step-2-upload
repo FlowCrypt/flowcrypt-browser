@@ -65,7 +65,7 @@ with open('./tooling/release-firefox-latest-update.json', 'w') as outfile:
             "update_hash": f"sha256:{get_hash(ff_path_saved)}",
             "applications": {
               "gecko": {
-                "strict_min_version": "60.0"
+                "strict_min_version": "112.0"
               }
             }
           }

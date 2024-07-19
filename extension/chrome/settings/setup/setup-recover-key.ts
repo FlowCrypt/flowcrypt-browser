@@ -31,7 +31,7 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        if ((await KeyUtil.checkPassPhrase(fetchedKey.private, passphrase)) === true) {
+        if (await KeyUtil.checkPassPhrase(fetchedKey.private, passphrase)) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }
@@ -66,7 +66,7 @@ export class SetupRecoverKeyModule {
         passphrase_ensure_single_copy: true,
         recovered: true,
       };
-      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);
+      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options, [], true);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       /* eslint-enable @typescript-eslint/naming-convention */
       if (!setup_done) {

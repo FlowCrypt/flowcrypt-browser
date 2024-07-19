@@ -28,7 +28,7 @@ import { saveFetchedPubkeysIfNewerThanInStorage } from './shared.js';
 import { XssSafeFactory } from './xss-safe-factory.js';
 import * as DOMPurify from 'dompurify';
 import { Downloader } from './downloader.js';
-import { JQueryEl, LoaderContextInterface } from './loader-context-interface.js';
+import { LoaderContextInterface } from './loader-context-interface.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { ApiErr } from './api/shared/api-error.js';
 import { isCustomerUrlFesUsed } from './helpers.js';
@@ -43,7 +43,7 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   public readonly downloader: Downloader;
-  private readonly processedMessages = new ExpirationCache<string, Promise<ProcessedMessage>>(24 * 60 * 60 * 1000); // 24 hours
+  private readonly processedMessages = new ExpirationCache<Promise<ProcessedMessage>>('processed_message', 24 * 60 * 60 * 1000); // 24 hours
 
   private constructor(
     private readonly acctEmail: string,
@@ -57,14 +57,14 @@ export class MessageRenderer {
     this.downloader = new Downloader(gmail);
   }
 
-  public static newInstance = async (acctEmail: string, gmail: Gmail, relayManager: RelayManager, factory: XssSafeFactory, debug = false) => {
+  public static async newInstance(acctEmail: string, gmail: Gmail, relayManager: RelayManager, factory: XssSafeFactory, debug = false) {
     const { sendAs, full_name: fullName } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
     return new MessageRenderer(acctEmail, gmail, relayManager, factory, new Set(sendAs ? Object.keys(sendAs) : [acctEmail]), fullName, debug);
-  };
+  }
 
-  public static isPwdMsg = (text: string) => {
+  public static isPwdMsg(text: string) {
     return /https:\/\/flowcrypt\.com\/[a-zA-Z0-9]{10}$/.test(text);
-  };
+  }
 
   /**
    * Replaces inline image CID references with base64 encoded data in sanitized HTML
@@ -74,7 +74,7 @@ export class MessageRenderer {
    * @param attachments - An array of email attachments.
    * @returns An object containing sanitized HTML and an array of inline CID attachments.
    */
-  private static replaceInlineImageCIDs = (html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Set<Attachment> } => {
+  private static replaceInlineImageCIDs(html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Set<Attachment> } {
     // Set to store inline CID attachments
     const inlineCIDAttachments = new Set<Attachment>();
 
@@ -82,12 +82,12 @@ export class MessageRenderer {
     const processImageElements = (node: Element | null) => {
       // Ensure the node exists and has a 'src' attribute
       if (!node || !('src' in node)) return;
-      const imageSrc = node.getAttribute('src') as string;
+      const imageSrc = node.getAttribute('src');
       if (!imageSrc) return;
       const matches = imageSrc.match(CID_PATTERN);
 
       // Check if the src attribute contains a CID
-      if (matches && matches[1]) {
+      if (matches?.[1]) {
         const contentId = matches[1];
         const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
 
@@ -107,9 +107,9 @@ export class MessageRenderer {
     DOMPurify.removeAllHooks();
 
     return { sanitizedHtml, inlineCIDAttachments };
-  };
+  }
 
-  private static getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
+  private static getEncryptedSubjectText(subject: string, isHtml: boolean) {
     if (isHtml) {
       return `<div style="white-space: normal"> Encrypted Subject:
                 <b> ${Xss.escape(subject)}</b>
@@ -118,19 +118,19 @@ export class MessageRenderer {
     } else {
       return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
     }
-  };
+  }
 
-  private static decryptFunctionToVerifyRes = async (decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> => {
+  private static async decryptFunctionToVerifyRes(decrypt: () => Promise<DecryptResult>): Promise<VerifyRes | undefined> {
     const decryptResult = await decrypt();
     if (!decryptResult.success) {
       return undefined; // note: this internal error results in a wrong "Not Signed" badge
     } else {
       return decryptResult.signature;
     }
-  };
+  }
 
   // attachments returned by this method are missing data, so they need to be fetched
-  private static getMessageBodyAndAttachments = (gmailMsg: GmailRes.GmailMsg): { body: MessageBody; attachments: Attachment[] } => {
+  private static getMessageBodyAndAttachments(gmailMsg: GmailRes.GmailMsg): { body: MessageBody; attachments: Attachment[] } {
     const bodies = GmailParser.findBodies(gmailMsg);
     const attachments = GmailParser.findAttachments(gmailMsg, gmailMsg.id);
     const text = bodies['text/plain'] ? Buf.fromBase64UrlStr(bodies['text/plain']).toUtfStr() : undefined;
@@ -145,18 +145,18 @@ export class MessageRenderer {
       },
       attachments,
     };
-  };
+  }
 
-  private static renderPgpSignatureCheckResult = async (
+  private static async renderPgpSignatureCheckResult(
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
     wasSignerEmailSupplied: boolean,
     retryVerification?: () => Promise<VerifyRes | undefined>
-  ) => {
+  ) {
     if (verifyRes?.error) {
       renderModule.renderSignatureStatus(`error verifying signature: ${verifyRes.error}`);
       renderModule.setFrameColor('red');
-    } else if (!verifyRes || !verifyRes.signerLongids.length) {
+    } else if (!verifyRes?.signerLongids.length) {
       renderModule.renderSignatureStatus('not signed');
     } else if (verifyRes.match) {
       renderModule.renderSignatureStatus('signed');
@@ -192,35 +192,35 @@ export class MessageRenderer {
     } else {
       MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes);
     }
-  };
+  }
 
-  private static renderMissingPubkeyOrBadSignature = (renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void => {
+  private static renderMissingPubkeyOrBadSignature(renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void {
     // eslint-disable-next-line no-null/no-null
     if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
       MessageRenderer.renderMissingPubkey(renderModule, verifyRes.signerLongids[0]);
     } else {
       MessageRenderer.renderBadSignature(renderModule);
     }
-  };
+  }
 
-  private static renderMissingPubkey = (renderModule: RenderInterfaceBase, signerLongid: string) => {
+  private static renderMissingPubkey(renderModule: RenderInterfaceBase, signerLongid: string) {
     renderModule.renderSignatureStatus(`could not verify signature: missing pubkey ${signerLongid}`);
-  };
+  }
 
-  private static renderBadSignature = (renderModule: RenderInterfaceBase) => {
+  private static renderBadSignature(renderModule: RenderInterfaceBase) {
     renderModule.renderSignatureStatus('bad signature');
     renderModule.setFrameColor('red');
-  };
+  }
 
-  private static getVerificationPubs = async (signerEmail: string) => {
+  private static async getVerificationPubs(signerEmail: string) {
     const email = Str.parseEmail(signerEmail).email;
     if (!email) return [];
     const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, email))?.sortedPubkeys ?? [];
     // todo: we're armoring pubkeys here to pass them to MsgUtil. Perhaps, we can optimize this
     return parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-  };
+  }
 
-  private static handlePrivateKeyMismatch = async (renderModule: RenderInterface, armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) => {
+  private static async handlePrivateKeyMismatch(renderModule: RenderInterface, armoredPubs: string[], message: Uint8Array | string, isPwdMsg: boolean) {
     // todo - make it work for multiple stored keys
     const msgDiagnosis = await MsgUtil.diagnosePubkeys({ armoredPubs, message });
     if (msgDiagnosis.found_match) {
@@ -245,11 +245,11 @@ export class MessageRenderer {
         undefined
       );
     }
-  };
+  }
 
-  private static btnHtml = (text: string, addClasses: string) => {
+  private static btnHtml(text: string, addClasses: string) {
     return `<button class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</button>`;
-  };
+  }
 
   public renderMsg = ({ senderEmail, blocks }: { blocks: MsgBlock[]; senderEmail?: string }, showOriginal: boolean) => {
     const isOutgoing = this.isOutgoing(senderEmail);
@@ -279,7 +279,7 @@ export class MessageRenderer {
     body: MessageBody,
     attachments: Attachment[],
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQueryEl | undefined,
+    attachmentSel: JQuery | undefined,
     msgId: string, // for PGP/MIME signed messages
     messageInfo: MessageInfo,
     skipSignatureAttachment?: boolean
@@ -292,7 +292,17 @@ export class MessageRenderer {
         if (this.debug) {
           console.debug('processAttachment() try -> awaiting chunk + awaiting type');
         }
-        const data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
+        let data = await this.downloader.waitForAttachmentChunkDownload(a, treatAs);
+        // For some reason, it sometimes doesn't return Buf and instead returns object
+        // Need to convert it to Buf
+        // todo: this is a temporary fix, should be removed
+        // https://github.com/FlowCrypt/flowcrypt-browser/pull/5607#discussion_r1540198173
+        if (!(data instanceof Buf)) {
+          const att = Object.entries(data).map(entry => {
+            return entry[1] as number;
+          });
+          data = new Buf(att);
+        }
         const openpgpType = MsgUtil.type({ data });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
           // todo: publicKey attachment can't be too big, so we could do preparePubkey() call (checking file length) right here
@@ -386,19 +396,35 @@ export class MessageRenderer {
   };
 
   public deleteExpired = (): void => {
-    this.processedMessages.deleteExpired();
+    void this.processedMessages.deleteExpired();
     this.downloader.deleteExpired();
   };
 
   public msgGetProcessed = async (msgId: string): Promise<ProcessedMessage> => {
-    let processed = this.processedMessages.get(msgId);
-    if (!processed) {
-      processed = (async () => {
-        return this.processFull(await this.downloader.msgGetFull(msgId));
-      })();
-      this.processedMessages.set(msgId, processed);
+    // Couldn't use caching mechanism in firefox
+    // https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2054128442
+    if (Catch.isFirefox()) {
+      return await this.processFull(await this.downloader.msgGetFull(msgId));
     }
-    return this.processedMessages.await(msgId, processed);
+    // Couldn't use async await for chunkDownloads.get
+    // because if we call `await chunkDownloads.get`
+    // then return type becomes Buf|undfined instead of Promise<Buf>|undfined
+    return new Promise((resolve, reject) => {
+      this.processedMessages
+        .get(msgId)
+        .then(async processed => {
+          if (!processed || Object.keys(processed).length < 1) {
+            processed = (async () => {
+              return this.processFull(await this.downloader.msgGetFull(msgId));
+            })();
+          }
+          await this.processedMessages.set(msgId, processed);
+          resolve(await this.processedMessages.await(msgId, processed));
+        })
+        .catch((e: unknown) => {
+          reject(e as Error);
+        });
+    });
   };
 
   private processFull = async (fullMsg: GmailRes.GmailMsg): Promise<ProcessedMessage> => {
@@ -411,11 +437,11 @@ export class MessageRenderer {
       const treatAs = a.treatAs(attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
       if (treatAs === 'needChunk') {
-        this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        await this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else if (treatAs === 'publicKey') {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
-        this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        await this.downloader.queueAttachmentChunkDownload(a, treatAs);
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
@@ -431,11 +457,14 @@ export class MessageRenderer {
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
-    const sentDateStr = sentDate ? Str.fromDate(new Date(sentDate)).replace(' ', ' at ') : '';
+    let sentDateStr = $('div.gK span[title]').attr('title');
+    if (!sentDateStr || isNaN(Date.parse(sentDateStr))) {
+      sentDateStr = sentDate ? new Date(sentDate).toLocaleString() : '';
+    }
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
-    const fromHtml = from?.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${fromEmail}&gt;` : fromEmail;
+    const fromHtml = from?.name ? `<b>${Xss.escape(from.name)}</b> &lt;${fromEmail}&gt;` : fromEmail;
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const ccString = GmailParser.findHeader(fullMsg, 'cc')
       ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(fullMsg, 'cc')!)}</span><br/>`
@@ -449,7 +478,7 @@ export class MessageRenderer {
         userNameAndEmail: `<b>${Xss.escape(this.fullName ?? '')}</b> &lt;${Xss.escape(this.acctEmail)}&gt;`,
         html: `
       <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(plainSubject ?? '')}</p>
+        <p class="subject-label" data-test="print-subject">${Xss.escape(plainSubject ?? '')}</p>
       <hr>
       <br/>
       <div>
@@ -457,7 +486,7 @@ export class MessageRenderer {
           <span data-test="print-from">From: ${fromHtml}</span>
         </div>
         <div class="float-right">
-          <span>${sentDateStr}</span>
+          <span data-test="print-date">${sentDateStr}</span>
         </div>
       </div>
       <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(fullMsg, 'to') ?? '')}</span><br/>
@@ -808,7 +837,7 @@ export class MessageRenderer {
   private renderBackupFromFile = async (
     attachment: Attachment,
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQueryEl | undefined
+    attachmentSel: JQuery | undefined
   ): Promise<'shown' | 'hidden'> => {
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);

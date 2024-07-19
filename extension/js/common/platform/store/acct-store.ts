@@ -4,7 +4,7 @@ import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
-import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
+import { storageGet, storageRemove, storageSet } from '../../browser/chrome.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { Dict } from '../../core/common.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
@@ -85,22 +85,22 @@ export type AcctStoreDict = {
  * Local storage of data related to a particular email account
  */
 export class AcctStore extends AbstractStore {
-  public static get = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
-    const storageObj = (await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
-    const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
+  public static async get(acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> {
+    const storageObj = (await storageGet('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
+    const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj);
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
-  };
+  }
 
-  public static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> => {
-    const storageObj = (await storageLocalGet(AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
+  public static async getAccounts(acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> {
+    const storageObj = (await storageGet('local', AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
     const resultsByAcct: Dict<AcctStoreDict> = {};
     for (const account of acctEmails) {
       resultsByAcct[account] = AcctStore.buildSingleAccountStoreFromRawResults(account, storageObj);
     }
     return resultsByAcct;
-  };
+  }
 
-  public static set = async (acctEmail: string, values: AcctStoreDict): Promise<void> => {
+  public static async set(acctEmail: string, values: AcctStoreDict): Promise<void> {
     const indexedUpdateFields: RawStore = {};
     const indexedRemoveFields: string[] = [];
     for (const key of Object.keys(values)) {
@@ -112,18 +112,18 @@ export class AcctStore extends AbstractStore {
       }
     }
     if (Object.keys(indexedUpdateFields).length) {
-      await storageLocalSet(indexedUpdateFields);
+      await storageSet('local', indexedUpdateFields);
     }
     if (indexedRemoveFields.length) {
-      await storageLocalRemove(indexedRemoveFields);
+      await storageRemove('local', indexedRemoveFields);
     }
-  };
+  }
 
-  public static remove = async (acctEmail: string, keys: AccountIndex[]) => {
-    await storageLocalRemove(AcctStore.singleScopeRawIndexArr(acctEmail, keys));
-  };
+  public static async remove(acctEmail: string, keys: AccountIndex[]) {
+    await storageRemove('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys));
+  }
 
-  public static getScopes = async (acctEmail: string): Promise<Scopes> => {
+  public static async getScopes(acctEmail: string): Promise<Scopes> {
     const accessToken = await InMemoryStore.getUntilAvailable(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
     // const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
@@ -157,13 +157,13 @@ export class AcctStore extends AbstractStore {
       }
     }
     return result;
-  };
+  }
 
-  private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
+  private static fixAcctStorageResult(acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
       const sendAs = new Map<string, SendAsAlias>([[acctEmail, { isPrimary: true, isDefault: true }]]);
       acctStore.sendAs = Object.fromEntries(sendAs);
     }
     return acctStore;
-  };
+  }
 }

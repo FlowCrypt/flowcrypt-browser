@@ -5,12 +5,11 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'fs';
 
 import { getFilesInDir } from './utils/tooling-utils';
+import { TSConfig } from './resolve-modules';
 
 const OUT_DIR = `./build/generic-extension-wip/js/content_scripts`;
-let {
-  compilerOptions: { outDir: sourceDir },
-} = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
-sourceDir = `./build/${sourceDir}`;
+const { compilerOptions } = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString()) as TSConfig;
+const sourceDir = `./build/${compilerOptions.outDir}`;
 
 const processedSrc = (srcFilePath: string) => {
   let file = readFileSync(srcFilePath).toString();

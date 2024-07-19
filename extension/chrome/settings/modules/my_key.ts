@@ -56,8 +56,8 @@ View.run(
       $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
       Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
       const expiration = this.pubKey.expiration;
-      $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
-      await this.renderPrivateKeyLink();
+      $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Does not expire');
+      this.renderPrivateKeyLink();
       await this.renderPubkeyShareableLink();
       await initPassphraseToggle(['input_passphrase']);
     };

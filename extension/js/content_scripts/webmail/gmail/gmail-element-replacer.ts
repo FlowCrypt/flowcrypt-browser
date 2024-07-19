@@ -2,34 +2,33 @@
 
 'use strict';
 
-import { Dict, Str } from '../../common/core/common.js';
-import { FactoryReplyParams, XssSafeFactory } from '../../common/xss-safe-factory.js';
-import { IntervalFunction, WebmailElementReplacer } from './setup-webmail-content-script.js';
-import { ApiErr } from '../../common/api/shared/api-error.js';
-import { Attachment } from '../../common/core/attachment.js';
-import { BrowserMsg } from '../../common/browser/browser-msg.js';
-import { Catch } from '../../common/platform/catch.js';
-import { GlobalStore, LocalDraft } from '../../common/platform/store/global-store.js';
-import { Injector } from '../../common/inject.js';
-import { PubLookup } from '../../common/api/pub-lookup.js';
-import { Notifications } from '../../common/notifications.js';
-import { PgpArmor } from '../../common/core/crypto/pgp/pgp-armor.js';
-import { Ui } from '../../common/browser/ui.js';
-import { WebmailCommon } from '../../common/webmail.js';
-import { Xss } from '../../common/platform/xss.js';
-import { ClientConfiguration } from '../../common/client-configuration.js';
+import { Dict, Str } from '../../../common/core/common.js';
+import { FactoryReplyParams, XssSafeFactory } from '../../../common/xss-safe-factory.js';
+import { ApiErr } from '../../../common/api/shared/api-error.js';
+import { Attachment } from '../../../common/core/attachment.js';
+import { BrowserMsg } from '../../../common/browser/browser-msg.js';
+import { Catch } from '../../../common/platform/catch.js';
+import { GlobalStore, LocalDraft } from '../../../common/platform/store/global-store.js';
+import { Injector } from '../../../common/inject.js';
+import { PubLookup } from '../../../common/api/pub-lookup.js';
+import { Notifications } from '../../../common/notifications.js';
+import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor.js';
+import { Ui } from '../../../common/browser/ui.js';
+import { WebmailCommon } from '../../../common/webmail.js';
+import { Xss } from '../../../common/platform/xss.js';
+import { ClientConfiguration } from '../../../common/client-configuration.js';
 // todo: can we somehow define a purely relay class for ContactStore to clearly show that crypto-libraries are not loaded and can't be used?
-import { ContactStore } from '../../common/platform/store/contact-store.js';
-import { MessageRenderer } from '../../common/message-renderer.js';
-import { RelayManager } from '../../common/relay-manager.js';
-import { MessageInfo } from '../../common/render-message.js';
+import { ContactStore } from '../../../common/platform/store/contact-store.js';
+import { MessageRenderer } from '../../../common/message-renderer.js';
+import { RelayManager } from '../../../common/relay-manager.js';
+import { MessageInfo } from '../../../common/render-message.js';
 import { GmailLoaderContext } from './gmail-loader-context.js';
-import { JQueryEl } from '../../common/loader-context-interface.js';
-import { MessageBody, Mime } from '../../common/core/mime.js';
-import { MsgBlock } from '../../common/core/msg-block.js';
-import { ReplyOption } from '../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
+import { MessageBody, Mime } from '../../../common/core/mime.js';
+import { MsgBlock } from '../../../common/core/msg-block.js';
+import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
+import { WebmailElementReplacer, IntervalFunction } from '../generic/webmail-element-replacer.js';
 
-export class GmailElementReplacer implements WebmailElementReplacer {
+export class GmailElementReplacer extends WebmailElementReplacer {
   private debug = false;
 
   private recipientHasPgpCache: Dict<boolean> = {};
@@ -39,7 +38,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private currentlyReplacingAttachments = false;
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
-  private shouldShowEditableSecureReply = false;
+  private lastSwitchToEncryptedReply = false;
   private replyOption: ReplyOption | undefined;
 
   private sel = {
@@ -74,6 +73,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     private readonly notifications: Notifications,
     private readonly relayManager: RelayManager
   ) {
+    super();
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.pubLookup = new PubLookup(clientConfiguration);
   }
@@ -113,7 +113,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         // or to the top of the element if the element's height is bigger than the convoRoot
         /* eslint-disable @typescript-eslint/no-non-null-assertion */
         convoRootScrollable.get(0)!.scrollTop =
-          replyMsg.position()!.top + $(replyMsg).height()! - Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
+          replyMsg.position().top + $(replyMsg).height()! - Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
       }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) {
@@ -262,7 +262,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return blocksFromEmailContainer;
   };
 
-  private addFcConvoIcon = (containerSel: JQueryEl, iconHtml: string, iconSel: string, onClick: () => void) => {
+  private addFcConvoIcon = (containerSel: JQuery, iconHtml: string, iconSel: string, onClick: () => void) => {
     if ($(containerSel).find(iconSel).length) {
       return;
     }
@@ -351,7 +351,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       $('#switch_to_encrypted_reply').trigger('click');
       return;
     }
-    const messageContainer = $(btn.closest('.h7') as HTMLElement);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const messageContainer = $(btn.closest('.h7')!);
     if (messageContainer.is(':last-child')) {
       if (this.isEncrypted()) {
         await this.setReplyBoxEditable();
@@ -387,7 +388,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
       if (draftId) {
         // close original draft window
-        const closeGmailComposeWindow = (target: JQuery<HTMLElement>) => {
+        const closeGmailComposeWindow = (target: JQuery) => {
           const mouseUpEvent = document.createEvent('Event');
           mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
           target.closest('.nH.Hd').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
@@ -448,7 +449,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private processNewPgpAttachments = async (pgpAttachments: JQuery<HTMLElement>, attachmentsContainer: JQuery<HTMLElement>) => {
+  private processNewPgpAttachments = async (pgpAttachments: JQuery, attachmentsContainer: JQuery) => {
     if (this.debug) {
       console.debug('processNewPgpAttachments()');
     }
@@ -489,7 +490,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private processAttachments = async (
     msgId: string,
     attachments: Attachment[],
-    attachmentsContainerInner: JQueryEl,
+    attachmentsContainerInner: JQuery,
     messageInfo: MessageInfo,
     body: MessageBody,
     skipGoogleDrive: boolean
@@ -505,7 +506,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
     let nRenderedAttachments = attachments.length;
-    for (const a of attachments) {
+    for (const a of attachments.reverse()) {
       const attachmentSel = this.filterAttachments(
         attachmentsContainerInner.children().not('.attachment_processed'),
         new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)
@@ -552,7 +553,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private processGoogleDriveAttachments = async (msgId: string, msgEl: JQueryEl, attachmentsContainerInner: JQueryEl, messageInfo: MessageInfo) => {
+  private processGoogleDriveAttachments = async (msgId: string, msgEl: JQuery, attachmentsContainerInner: JQuery, messageInfo: MessageInfo) => {
     const notProcessedAttachmentsLoaders = attachmentsContainerInner.find('.attachment_loader');
     if (notProcessedAttachmentsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
@@ -579,7 +580,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private filterAttachments = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
+  private filterAttachments = (potentialMatches: JQuery | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches)
       .filter('span.aZo:visible, span.a5r:visible')
       .find('span.aV3')
@@ -594,7 +595,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       .closest('span.aZo, span.a5r');
   };
 
-  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
+  private determineMsgId = (innerMsgEl: HTMLElement | JQuery) => {
     const parents = $(innerMsgEl).parents(this.sel.msgOuter);
     return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   };
@@ -603,12 +604,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(this.sel.msgOuter).filter(`[data-legacy-message-id="${msgId}"]`).find(this.sel.msgInner);
   };
 
-  private getFrom = (msgEl: HTMLElement | JQueryEl) => {
+  private getFrom = (msgEl: HTMLElement | JQuery) => {
     const from = $(msgEl).closest('.gs').find('span.gD').attr('email')?.toLowerCase();
     return from ? Str.parseEmail(from) : undefined;
   };
 
-  private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
+  private getLastMsgReplyParams = (convoRootEl: JQuery): FactoryReplyParams => {
     return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   };
 
@@ -616,7 +617,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(anyInnerElement).closest('div.if, div.aHU, td.Bu').first();
   };
 
-  private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
+  private insertEncryptedReplyBox = (messageContainer: JQuery<Element>) => {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
     const replyParams: FactoryReplyParams = { replyMsgId: msgId, removeAfterClose: true };
@@ -632,6 +633,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
+      this.replyOption = undefined;
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
@@ -669,7 +671,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             replyBox.addClass('reply_message_evaluated');
             continue;
           }
-          this.switchToEncryptedReply = false;
           if (this.removeNextReplyBoxBorders) {
             replyBox.addClass('remove_borders');
             this.removeNextReplyBoxBorders = false;
@@ -686,10 +687,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
             const secureReplyBoxXssSafe = /* xss-safe-factory */ `
               <div class="remove_borders reply_message_iframe_container">
-                ${this.factory.embeddedReply(replyParams, this.shouldShowEditableSecureReply || alreadyHasSecureReplyBox)}
+                ${this.factory.embeddedReply(replyParams, !isReplyButtonView || alreadyHasSecureReplyBox || this.lastSwitchToEncryptedReply)}
               </div>
             `;
-            this.shouldShowEditableSecureReply = !isReplyButtonView;
+            // Added `lastSwitchToEncryptedReply` logic to handle when a user switches from `plain reply` to `encrypted reply`
+            // by clicking the `Switch to encrypted reply` button.
+            // Initially, this action removes the `plain reply view` and replaces it with the `plain reply button view`,
+            // which previously led to an incorrect status in `switchToEncryptedReply`.
+            // https://github.com/FlowCrypt/flowcrypt-browser/pull/5778
+            this.lastSwitchToEncryptedReply = false;
             if (hasDraft || alreadyHasSecureReplyBox) {
               replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
               replyBox.hide();
@@ -698,6 +704,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               this.replyOption = undefined;
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
+              this.lastSwitchToEncryptedReply = this.switchToEncryptedReply;
               if (deleteReplyEl) {
                 // Remove standard reply by clicking `delete` button
                 (deleteReplyEl as HTMLElement).click();
@@ -706,13 +713,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
           }
         }
+        this.switchToEncryptedReply = false;
       }
     }
   };
 
   // loaderEl is a loader reference in case we're processing an attachment
   // todo: we could also re-use a common method like this in Inbox
-  private handleException = (e: unknown, loaderEl?: JQueryEl) => {
+  private handleException = (e: unknown, loaderEl?: JQuery) => {
     if (ApiErr.isAuthErr(e)) {
       this.notifications.showAuthPopupNeeded(this.acctEmail);
       loaderEl?.text('Auth needed');
@@ -729,7 +737,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private showSwitchToEncryptedReplyWarningIfNeeded = (replyBox: JQueryEl) => {
+  private showSwitchToEncryptedReplyWarningIfNeeded = (replyBox: JQuery) => {
     const showSwitchToEncryptedReplyWarning = replyBox.closest('div.h7').find(this.sel.msgOuter).find('iframe.pgp_block').hasClass('encryptedMsg');
 
     if (showSwitchToEncryptedReplyWarning) {
@@ -753,7 +761,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   };
 
-  private parseReplyOption = (replyBox: JQueryEl) => {
+  private parseReplyOption = (replyBox: JQuery) => {
     const replyBoxTypeImgClass = replyBox.find(this.sel.replyOptionImg).find('img').attr('class');
     if (replyBoxTypeImgClass?.includes('mK')) {
       return 'a_reply_all';
@@ -791,7 +799,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               if (typeof cache === 'undefined') {
                 try {
                   const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
-                  if (contactWithPubKeys && contactWithPubKeys.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0) {
+                  if (contactWithPubKeys?.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0) {
                     this.recipientHasPgpCache[email] = true;
                   } else if ((await this.pubLookup.lookupEmail(email)).pubkeys.length) {
                     this.recipientHasPgpCache[email] = true;
@@ -810,7 +818,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                   everyoneUsesEncryption = false;
                   break;
                 }
-              } else if (cache === false) {
+              } else if (!cache) {
                 everyoneUsesEncryption = false;
                 break;
               }
