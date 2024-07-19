@@ -399,9 +399,8 @@ export class BrowserMsg {
       // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, _sender);
       if (msg.to && [dest, 'broadcast'].includes(msg.to)) {
         BrowserMsg.handleMsg(msg, rawRespond);
-        return true;
       }
-      return false; // will not respond
+      return false; // will not respond as we only need response for BrowserMsg.send.bg.await
     });
     BrowserMsg.listenForWindowMessages(dest);
   }
@@ -658,7 +657,11 @@ export class BrowserMsg {
               }
             });
           } else {
-            chrome.runtime.sendMessage(msg, processRawMsgResponse);
+            if (awaitRes) {
+              chrome.runtime.sendMessage(msg, processRawMsgResponse);
+            } else {
+              void chrome.runtime.sendMessage(msg);
+            }
           }
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
