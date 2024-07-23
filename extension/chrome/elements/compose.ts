@@ -210,7 +210,7 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
-    if (this.replyOption) {
+    if (this.replyOption && this.replyMsgId) {
       await this.renderModule.activateReplyOption(this.replyOption, true);
     }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
