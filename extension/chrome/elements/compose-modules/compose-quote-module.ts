@@ -38,15 +38,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
   };
 
-  public actionRenderTripleDotContentHandle = (el: HTMLElement) => {
-    $(el).remove();
-    const inputEl = this.view.S.cached('input_text');
-    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
-    this.view.draftModule.setLastDraftBody(inputEl.html());
-    this.tripleDotSanitizedHtmlContent = undefined;
-    this.view.sizeModule.resizeComposeBox();
-  };
-
   public addTripleDotQuoteExpandFooterAndQuoteBtn = async (msgId: string, method: 'reply' | 'forward', forceReload = false) => {
     if (!this.messageToReplyOrForward || forceReload) {
       this.view.S.cached('triple_dot').addClass('progress');
@@ -84,6 +75,15 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
       );
     }
+  };
+
+  private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
+    $(el).remove();
+    const inputEl = this.view.S.cached('input_text');
+    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
+    this.view.draftModule.setLastDraftBody(inputEl.html());
+    this.tripleDotSanitizedHtmlContent = undefined;
+    this.view.sizeModule.resizeComposeBox();
   };
 
   private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
