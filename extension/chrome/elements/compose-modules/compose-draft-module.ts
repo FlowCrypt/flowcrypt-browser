@@ -40,7 +40,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     super(composer);
     // Only start draft timer when draft id is not set.
     // When draft id is set, draft timer will start only when draft is decrypted successfully
-    if (!this.view.disableDraftSaving && !this.view.draftId && !this.view.thunderbirdMsgId) {
+    if (!this.view.disableDraftSaving && !this.view.draftId) {
       this.startDraftTimer();
     }
   }

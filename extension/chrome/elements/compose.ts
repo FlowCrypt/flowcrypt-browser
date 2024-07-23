@@ -45,7 +45,6 @@ export class ComposeView extends View {
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
-  public readonly thunderbirdMsgId: number;
   public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
@@ -154,7 +153,6 @@ export class ComposeView extends View {
       'replyPubkeyMismatch',
       'replyOption',
       'useFullScreenSecureCompose',
-      'thunderbirdMsgId',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -169,7 +167,6 @@ export class ComposeView extends View {
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
     this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
-    this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
     this.isReplyBox = !!this.replyMsgId && !this.useFullScreenSecureCompose;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
