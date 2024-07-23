@@ -228,7 +228,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (method === 'reply') {
       const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
       const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
-      const thunderbirdClass = Catch.isThunderbirdMail() ? 'class="height-0"' : '';
+      const thunderbirdClass = this.view.useFullScreenSecureCompose ? 'class="height-0"' : ''; // fix long quoted email UI issue happens in fullscreen
       return `<blockquote ${thunderbirdClass} ${dirAttr}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
