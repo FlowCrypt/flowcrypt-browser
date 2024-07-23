@@ -77,15 +77,6 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
-    $(el).remove();
-    const inputEl = this.view.S.cached('input_text');
-    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
-    this.view.draftModule.setLastDraftBody(inputEl.html());
-    this.tripleDotSanitizedHtmlContent = undefined;
-    this.view.sizeModule.resizeComposeBox();
-  };
-
   private getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward'): Promise<MessageToReplyOrForward | undefined> => {
     try {
       const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
@@ -242,6 +233,15 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         `</div>`;
       return `${header}<br><br>${escapedText}`;
     }
+  };
+
+  private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
+    $(el).remove();
+    const inputEl = this.view.S.cached('input_text');
+    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
+    this.view.draftModule.setLastDraftBody(inputEl.html());
+    this.tripleDotSanitizedHtmlContent = undefined;
+    this.view.sizeModule.resizeComposeBox();
   };
 
   private setQuoteLoaderProgress = (percentOrString: string | number | undefined): void => {
