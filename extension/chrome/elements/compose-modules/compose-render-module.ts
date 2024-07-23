@@ -28,7 +28,8 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
 
   public initComposeBox = async () => {
     if (this.view.useFullScreenSecureCompose) {
-      $('body').addClass('full_window');
+      this.view.S.cached('body').addClass('full_window');
+      this.view.S.cached('password_or_pubkey').height(1); // fix UI issue in fullscreen
     }
     if (this.view.replyMsgId) {
       this.responseMethod = 'reply';
