@@ -159,7 +159,7 @@ export class InboxView extends View {
 
   private preRenderSecureComposeInFullScreen = (replyMsgId?: string) => {
     if (this.useFullScreenSecureCompose && this.composeMethod) {
-      const replyOption = this.composeMethod === 'reply' ? 'a_reply' : 'forward';
+      const replyOption = this.composeMethod === 'reply' ? 'a_reply' : 'a_forward';
       this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId, replyOption, replyMsgId);
     }
   };
