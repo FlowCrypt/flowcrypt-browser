@@ -121,8 +121,6 @@ export class ComposeView extends View {
     recipients: 'span.recipients',
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
-    input_container_cc: '#input-container-cc input',
-    input_container_bcc: '#input-container-bcc input',
     recipient_left_label: '.recipient-left-label',
     input_container_from: '#input-container-from',
     input_addresses_container_inner: '#input_addresses_container > div:first',
