@@ -96,8 +96,15 @@ export class XssSafeFactory {
     return this.extUrl(`img/${relPath}`);
   };
 
-  public srcComposeMsg = (draftId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
+  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, thunderbirdMsgId?: number, replyOption?: string, replyMsgId?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), {
+      frameId: this.newId(),
+      draftId,
+      useFullScreenSecureCompose,
+      thunderbirdMsgId,
+      replyOption,
+      replyMsgId,
+    });
   };
 
   public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, initiatorFrameId?: string) => {
@@ -194,10 +201,10 @@ export class XssSafeFactory {
     await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   };
 
-  public embeddedCompose = (draftId?: string) => {
-    const srcComposeMsg = this.srcComposeMsg(draftId);
+  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, replyOption?: string, replyMsgId?: string) => {
+    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, thunderbirdMsgId, replyOption, replyMsgId);
     return Ui.e('div', {
-      class: 'secure_compose_window',
+      class: openInFullScreen ? 'secure_compose_window active full_window' : 'secure_compose_window',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
       'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
       'data-test': 'container-new-message',

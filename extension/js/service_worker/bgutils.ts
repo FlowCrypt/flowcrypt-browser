@@ -21,9 +21,9 @@ export class BgUtils {
     }
   }
 
-  public static async openExtensionTab(url: string) {
+  public static async openExtensionTab(url: string, openInNewTab = false) {
     const openedTab = await BgUtils.getFcSettingsTabIdIfOpen();
-    if (!openedTab) {
+    if (!openedTab || openInNewTab) {
       await chrome.tabs.create({ url });
     } else {
       await chrome.tabs.update(openedTab, { url, active: true });

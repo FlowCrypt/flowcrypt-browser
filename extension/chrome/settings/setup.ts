@@ -34,6 +34,7 @@ import Swal from 'sweetalert2';
 import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
 import { InMemoryStoreKeys } from '../../js/common/core/const.js';
 import { InMemoryStore } from '../../js/common/platform/store/in-memory-store.js';
+import { BgUtils } from '../../js/service_worker/bgutils.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface PassphraseOptions {
@@ -167,7 +168,10 @@ export class SetupView extends View {
       await Ui.modal.info(notification);
     });
     BrowserMsg.listen(this.tabId);
-    $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
+    $('.action_send').on(
+      'click',
+      this.setHandler(async () => await this.actionComposeEncryptedEmailHandler())
+    );
     $('.action_show_help').on(
       'click',
       this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/help.htm'))
@@ -373,6 +377,12 @@ export class SetupView extends View {
       return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
     }
     return true;
+  };
+
+  private actionComposeEncryptedEmailHandler = async () => {
+    const inboxUrl = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail });
+    const redirectUrl = Catch.isThunderbirdMail() ? inboxUrl : Google.webmailUrl(this.acctEmail);
+    await BgUtils.openExtensionTab(redirectUrl, true);
   };
 
   /**

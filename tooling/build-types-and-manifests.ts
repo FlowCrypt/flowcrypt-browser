@@ -58,23 +58,23 @@ addManifest('firefox-consumer', manifest => {
 addManifest(
   'thunderbird-consumer',
   manifest => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    manifest.browser_specific_settings.strict_min_version = '112.0';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    manifest.browser_action.default_title = 'FlowCrypt Encryption for Thunderbird';
+    const manifestV3 = manifest as messenger._manifest.WebExtensionManifest;
+    (manifest.browser_action as messenger._manifest.ActionManifest).default_title = 'FlowCrypt';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
-    manifest.description = 'Secure end-to-end encryption with FlowCrypt'; // needs to updated later
+    manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';
+    manifest.permissions = [...(manifestV3.permissions ?? []), 'compose', 'messagesRead', 'accountsRead'];
     manifest.compose_action = {
-      default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
+      default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
-      // default_popup will be updated later
-      default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
     };
     manifest.message_display_action = {
-      default_title: 'FlowCrypt', // eslint-disable-line @typescript-eslint/naming-convention
+      default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
-      // default_popup will be updated later
-      default_popup: '/chrome/popups/default.htm', // eslint-disable-line @typescript-eslint/naming-convention
+    };
+    (manifest.browser_specific_settings as messenger._manifest.FirefoxSpecificProperties).strict_min_version = '102.0';
+    manifest.background = {
+      type: 'module',
+      scripts: ['/js/service_worker/background.js'],
     };
   },
   'firefox-consumer'

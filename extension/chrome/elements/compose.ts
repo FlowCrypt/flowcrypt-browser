@@ -41,6 +41,7 @@ export class ComposeView extends View {
   public readonly removeAfterClose: boolean;
   public readonly disableDraftSaving: boolean;
   public readonly debug: boolean;
+  public readonly useFullScreenSecureCompose: boolean;
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
@@ -108,6 +109,7 @@ export class ComposeView extends View {
     toggle_send_options: '#toggle_send_options',
     toggle_reply_options: '#toggle_reply_options',
     icon_pubkey: '.icon.action_include_pubkey',
+    close_compose_window: '.close_compose_window',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
     triple_dot: '.action_show_prev_msg',
@@ -148,6 +150,7 @@ export class ComposeView extends View {
       'removeAfterClose',
       'replyPubkeyMismatch',
       'replyOption',
+      'useFullScreenSecureCompose',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -161,7 +164,8 @@ export class ComposeView extends View {
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
-    this.isReplyBox = !!this.replyMsgId;
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.isReplyBox = !!this.replyMsgId && !this.useFullScreenSecureCompose;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
   }
@@ -201,7 +205,7 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
-    if (this.replyOption && this.isReplyBox) {
+    if (this.replyOption && this.replyMsgId) {
       await this.renderModule.activateReplyOption(this.replyOption, true);
     }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
@@ -225,6 +229,10 @@ export class ComposeView extends View {
     });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
+    this.S.cached('close_compose_window').on(
+      'click',
+      this.setHandler(async () => await this.renderModule.actionCloseHandler(), this.errModule.handle(`close compose window`))
+    );
     this.S.cached('icon_help').on(
       'click',
       this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`))
