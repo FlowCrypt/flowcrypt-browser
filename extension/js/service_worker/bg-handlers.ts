@@ -10,6 +10,7 @@ import { ContactStore } from '../common/platform/store/contact-store.js';
 import { Api } from '../common/api/shared/api.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
+import { Url, Str } from '../common/core/common.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -106,4 +107,45 @@ export class BgHandlers {
         }
       });
     });
+
+  public static thunderbirdSecureComposeHandler() {
+    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: messenger.compose._ComposeDetailsType) => {
+      const accountEmails = await GlobalStore.acctEmailsGet();
+      const useFullScreenSecureCompose = (await messenger.windows.getCurrent()).type === 'messageCompose';
+      composeMethod = composeMethod === 'reply' || composeMethod === 'forward' ? composeMethod : undefined;
+      if (accountEmails.length !== 0) {
+        await BgUtils.openExtensionTab(
+          Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId, composeMethod })
+        );
+        await messenger.tabs.remove(tabId);
+      } else {
+        await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
+      }
+    };
+    messenger.composeAction.onClicked.addListener(async tab => {
+      const messageDetails = await messenger.compose.getComposeDetails(Number(tab.id));
+      const composeMethod = messageDetails.type;
+      const msgId = Number(messageDetails.relatedMessageId);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const acctEmail = Str.parseEmail(messageDetails.from as string).email!;
+      await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
+    });
+    messenger.messageDisplayAction.onClicked.addListener(async tab => {
+      const tabId = Number(tab.id);
+      const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
+      if (messageDetails) {
+        const msgId = messageDetails.id;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const acctEmail = (await messenger.accounts.get(messageDetails.folder!.accountId)).name;
+        await handleClickEvent(tabId, acctEmail, msgId);
+      }
+    });
+  }
+
+  public static thunderbirdContentScriptRegistration = async () => {
+    await messenger.messageDisplayScripts.register({
+      js: [{ file: './js/content_scripts/thunderbird-content-script.js' }],
+      css: [{ file: './css/cryptup.css' }],
+    });
+  };
 }
