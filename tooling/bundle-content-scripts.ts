@@ -56,3 +56,9 @@ buildContentScript(
   ),
   'webmail_bundle.js'
 );
+
+// thunderbird
+buildContentScript(
+  ([] as string[]).concat(getFilesInDir(`${sourceDir}/js/content_scripts/webmail/thunderbird/message-display-scripts`, /\.js$/)),
+  'thunderbird-content-script.js'
+);
