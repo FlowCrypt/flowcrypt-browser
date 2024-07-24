@@ -174,6 +174,10 @@ export class Catch {
     return Catch.browser().name === 'firefox';
   }
 
+  public static isThunderbirdMail(): boolean {
+    return Catch.browser().name === 'thunderbird';
+  }
+
   public static environment(url = location.href): string {
     const browserName = Catch.browser().name;
     const origin = new URL(location.href).origin;
