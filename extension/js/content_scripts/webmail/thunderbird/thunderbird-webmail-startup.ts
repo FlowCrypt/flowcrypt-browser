@@ -3,11 +3,10 @@ import { ClientConfiguration } from '../../../common/client-configuration';
 import { Injector } from '../../../common/inject';
 import { Notifications } from '../../../common/notifications';
 import { contentScriptSetupIfVacant } from '../generic/setup-webmail-content-script';
-import { GmailElementReplacer } from '../gmail/gmail-element-replacer';
 import { ThunderbirdElementReplacer } from './thunderbird-element-replacer';
 
 export class ThunderbirdWebmailStartup {
-  private replacer: GmailElementReplacer;
+  private replacer: ThunderbirdElementReplacer;
 
   public asyncConstructor = async () => {
     await contentScriptSetupIfVacant({
