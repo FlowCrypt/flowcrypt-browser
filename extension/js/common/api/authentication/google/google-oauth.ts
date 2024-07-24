@@ -7,38 +7,23 @@ import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../.
 import { ApiErr } from '../../shared/api-error.js';
 import { Ajax, Api } from '../../shared/api.js';
 
-import { Bm, GoogleAuthWindowResult$result, ScreenDimensions } from '../../../browser/browser-msg.js';
+import { Bm, ScreenDimensions } from '../../../browser/browser-msg.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 import { OAuth2 } from '../../../oauth2/oauth2.js';
 import { Catch } from '../../../platform/catch.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
-import { OAuth } from '../generic/oauth.js';
+import { AuthReq, AuthRes, OAuth, OAuthTokensResponse } from '../generic/oauth.js';
 import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { Assert, AssertError } from '../../../assert.js';
 import { Ui } from '../../../browser/ui.js';
+import { ConfiguredIdpOAuth } from '../configured-idp-oauth.js';
 
-/* eslint-disable @typescript-eslint/naming-convention */
-type GoogleAuthTokensResponse = {
-  access_token: string;
-  expires_in: number;
-  refresh_token?: string;
-  id_token: string;
-  token_type: 'Bearer';
-};
-type AuthResultSuccess = { result: 'Success'; acctEmail: string; id_token: string; error?: undefined };
-type AuthResultError = {
-  result: GoogleAuthWindowResult$result;
-  acctEmail?: string;
-  error?: string;
-  id_token: undefined;
-};
-
-type AuthReq = { acctEmail?: string; scopes: string[]; messageId?: string; expectedState: string };
+// eslint-disable-next-line @typescript-eslint/naming-convention
 type GoogleTokenInfo = { email: string; scope: string; expires_in: number; token_type: string };
-export type AuthRes = AuthResultSuccess | AuthResultError;
+
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class GoogleOAuth extends OAuth {
@@ -209,6 +194,7 @@ export class GoogleOAuth extends OAuth {
         }
         // fetch and store ClientConfiguration (not authenticated)
         await (await AccountServer.init(authRes.acctEmail)).fetchAndSaveClientConfiguration();
+        return await ConfiguredIdpOAuth.newAuthPopupForEnterpriseServerAuthenticationIfNeeded(authRes);
       } catch (e) {
         if (GoogleOAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;
@@ -283,18 +269,6 @@ export class GoogleOAuth extends OAuth {
     /* eslint-enable @typescript-eslint/naming-convention */
   }
 
-  private static newAuthRequest(acctEmail: string | undefined, scopes: string[]): AuthReq {
-    const authReq = {
-      acctEmail,
-      scopes,
-      csrfToken: `csrf-${Api.randomFortyHexChars()}`,
-    };
-    return {
-      ...authReq,
-      expectedState: GoogleOAuth.OAUTH.state_header + JSON.stringify(authReq),
-    };
-  }
-
   private static apiGoogleAuthCodeUrl(authReq: AuthReq) {
     /* eslint-disable @typescript-eslint/naming-convention */
     return Url.create(GoogleOAuth.OAUTH.url_code, {
@@ -310,7 +284,7 @@ export class GoogleOAuth extends OAuth {
     /* eslint-enable @typescript-eslint/naming-convention */
   }
 
-  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: GoogleAuthTokensResponse) {
+  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: OAuthTokensResponse) {
     const parsedOpenId = GoogleOAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']); // eslint-disable-line @typescript-eslint/naming-convention
     const googleTokenExpires = new Date().getTime() + (tokensObj.expires_in - 120) * 1000; // let our copy expire 2 minutes beforehand
@@ -326,7 +300,7 @@ export class GoogleOAuth extends OAuth {
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   }
 
-  private static async googleAuthGetTokens(code: string): Promise<GoogleAuthTokensResponse> {
+  private static async googleAuthGetTokens(code: string): Promise<OAuthTokensResponse> {
     return await Api.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */
@@ -345,7 +319,7 @@ export class GoogleOAuth extends OAuth {
     );
   }
 
-  private static async googleAuthRefreshToken(refreshToken: string): Promise<GoogleAuthTokensResponse> {
+  private static async googleAuthRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
     const url =
       /* eslint-disable @typescript-eslint/naming-convention */
       Url.create(GoogleOAuth.OAUTH.url_tokens, {

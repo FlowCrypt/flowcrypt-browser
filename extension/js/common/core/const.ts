@@ -38,5 +38,6 @@ export const gmailBackupSearchQuery = (acctEmail: string) => {
 
 export class InMemoryStoreKeys {
   public static readonly ID_TOKEN = 'idToken';
+  public static readonly CUSTOM_IDP_ID_TOKEN = 'customIdpIdToken';
   public static readonly GOOGLE_TOKEN_ACCESS = 'google_token_access';
 }

@@ -2,9 +2,33 @@
 
 'use strict';
 
+import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { Str } from '../../../core/common.js';
 import { GmailRes } from '../../email-provider/gmail/gmail-parser.js';
+import { Api } from '../../shared/api.js';
+
+export type AuthReq = { acctEmail?: string; scopes: string[]; messageId?: string; expectedState: string };
+// eslint-disable-next-line @typescript-eslint/naming-convention
+type AuthResultSuccess = { result: 'Success'; acctEmail: string; id_token: string; error?: undefined };
+type AuthResultError = {
+  result: GoogleAuthWindowResult$result;
+  acctEmail?: string;
+  error?: string;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  id_token: undefined;
+};
+export type AuthRes = AuthResultSuccess | AuthResultError;
+
+/* eslint-disable @typescript-eslint/naming-convention */
+export type OAuthTokensResponse = {
+  access_token: string;
+  expires_in: number;
+  refresh_token?: string;
+  id_token: string;
+  token_type: 'Bearer';
+};
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export class OAuth {
   /**
@@ -32,4 +56,16 @@ export class OAuth {
     }
     return claims;
   };
+
+  public static newAuthRequest(acctEmail: string | undefined, scopes: string[]): AuthReq {
+    const authReq = {
+      acctEmail,
+      scopes,
+      csrfToken: `csrf-${Api.randomFortyHexChars()}`,
+    };
+    return {
+      ...authReq,
+      expectedState: `CRYPTUP_STATE_${JSON.stringify(authReq)}`,
+    };
+  }
 }
