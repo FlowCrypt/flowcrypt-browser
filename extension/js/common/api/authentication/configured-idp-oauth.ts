@@ -14,24 +14,26 @@ import { Api } from '../shared/api.js';
 import { Catch } from '../../platform/catch.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
+import { AcctStore } from '../../platform/store/acct-store.js';
 // import { GoogleOAuth } from './google/google-oauth.js';
 export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (authRes: AuthRes) => {
-    const authConf = {
-      clientId: 'ZFfdspDb9Oz1vnFdA4NrCyNaA9N3jYDl',
-      clientSecret: 'HnXSXW5x1ea0nKTIqxZGrtHf1hdzQ83DA5fY0_j2catzmA9TlXw7_XE6F_r0nblc',
-      redirectUrl: 'https://www.google.com/robots.txt',
-      authCodeUrl: 'https://dev-c6f0fhaxut6kyeif.us.auth0.com/authorize',
-      tokensUrl: 'https://dev-c6f0fhaxut6kyeif.us.auth0.com/oauth/token',
-    };
-    // const storage = await AcctStore.get(acctEmail, ['authentication']);
-    // if (storage?.authentication?.oauth?.clientId && storage.authentication.oauth.clientId !== GoogleOAuth.OAUTH.client_id) {
+    // const authConf = {
+    //   clientId: 'ZFfdspDb9Oz1vnFdA4NrCyNaA9N3jYDl',
+    //   clientSecret: 'HnXSXW5x1ea0nKTIqxZGrtHf1hdzQ83DA5fY0_j2catzmA9TlXw7_XE6F_r0nblc',
+    //   redirectUrl: 'https://www.google.com/robots.txt',
+    //   authCodeUrl: 'https://dev-c6f0fhaxut6kyeif.us.auth0.com/authorize',
+    //   tokensUrl: 'https://dev-c6f0fhaxut6kyeif.us.auth0.com/oauth/token',
+    // };
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const res = await this.newAuthPopup(authRes.acctEmail!, { oauth: authConf });
-    return res;
-    // } else {
-    //   return authRes;
-    // }
+    const acctEmail = authRes.acctEmail!;
+    const storage = await AcctStore.get(acctEmail, ['authentication']);
+    if (storage?.authentication?.oauth?.clientId && storage.authentication.oauth.clientId !== this.GOOGLE_OAUTH_CONFIG.client_id) {
+      const res = await this.newAuthPopup(acctEmail, { oauth: storage.authentication.oauth });
+      return res;
+    } else {
+      return authRes;
+    }
   };
 
   public static async newAuthPopup(acctEmail: string, authConf: AuthenticationConfiguration): Promise<AuthRes> {
@@ -44,14 +46,12 @@ export class ConfiguredIdpOAuth extends OAuth {
     // Therefore need to retrieve screenDimensions when calling service worker and pass it to OAuth2
     const screenDimensions = Ui.getScreenDimensions();
     const authWindowResult = await OAuth2.webAuthFlow(authUrl, screenDimensions);
-    console.log(authWindowResult);
     const authRes = await this.getAuthRes({
       acctEmail,
       expectedState: authRequest.expectedState,
       authWindowResult,
       authConf,
     });
-    console.log(authRes);
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
         return {

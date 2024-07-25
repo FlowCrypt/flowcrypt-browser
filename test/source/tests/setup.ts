@@ -34,6 +34,7 @@ import { FesAuthenticationConfiguration, FesClientConfiguration } from '../mock/
 import { GoogleData } from '../mock/google/google-data';
 import Parse from '../util/parse';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
+import { OauthMock } from '../mock/lib/oauth';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2525,12 +2526,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - check custom authentication config from the local store (customer url fes)',
       testWithBrowser(async (t, browser) => {
+        const port = t.context.urls?.port ?? '';
         const oauthConfig = {
-          clientId: 'your-client-id',
-          clientSecret: 'your-client-secret',
-          redirectUrl: 'https://example.com/redirect',
-          authCodeUrl: 'https://example.com/auth',
-          tokensUrl: 'https://example.com/tokens',
+          clientId: OauthMock.customIDPClientId,
+          clientSecret: OauthMock.customIDPClientId,
+          redirectUrl: `https://google.localhost:${port}/robots.txt`,
+          authCodeUrl: `https://localhost:${port}/o/oauth2/auth`,
+          tokensUrl: `https://localhost:${port}/token`,
         };
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           fes: {
@@ -2548,6 +2550,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const auth = (await settingsPage.getFromLocalStorage([key]))[key];
         const { oauth } = auth as FesAuthenticationConfiguration;
         expect(oauth).to.deep.equal(oauthConfig);
+        const savedCustomIDPIDToken = await BrowserRecipe.getCustomIDPIdTokenFromInMemoryStore(settingsPage, acctEmail);
+        expect(savedCustomIDPIDToken).to.not.be.an.undefined;
       })
     );
   }

@@ -5,6 +5,7 @@
 import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { Str } from '../../../core/common.js';
+import { GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from '../../email-provider/gmail/gmail-parser.js';
 import { Api } from '../../shared/api.js';
 
@@ -31,6 +32,28 @@ export type OAuthTokensResponse = {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class OAuth {
+  /* eslint-disable @typescript-eslint/naming-convention */
+  public static GOOGLE_OAUTH_CONFIG = {
+    client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
+    client_secret: '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',
+    redirect_uri: 'https://www.google.com/robots.txt',
+    url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
+    url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
+    state_header: 'CRYPTUP_STATE_',
+    scopes: {
+      email: 'email',
+      openid: 'openid',
+      profile: 'https://www.googleapis.com/auth/userinfo.profile', // needed so that `name` is present in `id_token`, which is required for key-server auth when in use
+      compose: 'https://www.googleapis.com/auth/gmail.compose',
+      modify: 'https://www.googleapis.com/auth/gmail.modify',
+      readContacts: 'https://www.googleapis.com/auth/contacts.readonly',
+      readOtherContacts: 'https://www.googleapis.com/auth/contacts.other.readonly',
+    },
+    legacy_scopes: {
+      gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
+    },
+  };
+  /* eslint-enable @typescript-eslint/naming-convention */
   /**
    * Happens on enterprise builds
    */

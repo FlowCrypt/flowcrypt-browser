@@ -8,6 +8,8 @@ import { Str } from '../../core/common';
 const authURL = 'https://localhost:8001';
 
 export class OauthMock {
+  public static customIDPClientId = 'ZFfdspDb9Oz1vnFdA4NrCyNaA9N3jYDl';
+  public static customIDPClientSecret = 'test-secret';
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
 
