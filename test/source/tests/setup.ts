@@ -2535,9 +2535,15 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           tokensUrl: `https://localhost:${port}/token`,
         };
         t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
           fes: {
             authenticationConfiguration: {
               oauth: oauthConfig,
+            },
+            clientConfiguration: {
+              flags: ['NO_ATTESTER_SUBMIT'],
             },
           },
         });

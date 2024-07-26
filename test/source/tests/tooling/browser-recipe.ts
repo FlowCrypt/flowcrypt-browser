@@ -46,7 +46,8 @@ export class BrowserRecipe {
     const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
-    if (checkForConfiguredIdPOAuth) await Util.sleep(20); // Wait until custom IDP authentication finished
+    if (checkForConfiguredIdPOAuth) await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle2' });
+    // Wait until custom IDP authentication finished
     return settingsPage;
   };
 
