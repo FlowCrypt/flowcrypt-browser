@@ -71,5 +71,16 @@ console.info('background.js service worker starting');
   if (Catch.isThunderbirdMail()) {
     BgHandlers.thunderbirdSecureComposeHandler();
     await BgHandlers.thunderbirdContentScriptRegistration();
+    chrome.runtime.onMessage.addListener(async (message, sender) => {
+      if (message === 'decrypt') {
+        const tabId = sender.tab?.id;
+        if (tabId) {
+          const res = await messenger.messageDisplay.getDisplayedMessage(tabId);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          return await messenger.messages.getFull(res!.id);
+        }
+      }
+      return;
+    });
   }
 })().catch(Catch.reportErr);
