@@ -108,7 +108,7 @@ export class BgHandlers {
       });
     });
 
-  public static thunderbirdSecureComposeHandler() {
+  public static thunderbirdSecureComposeHandler = () => {
     const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: messenger.compose._ComposeDetailsType) => {
       const accountEmails = await GlobalStore.acctEmailsGet();
       const useFullScreenSecureCompose = (await messenger.windows.getCurrent()).type === 'messageCompose';
@@ -140,7 +140,7 @@ export class BgHandlers {
         await handleClickEvent(tabId, acctEmail, msgId);
       }
     });
-  }
+  };
 
   public static thunderbirdContentScriptRegistration = async () => {
     await messenger.messageDisplayScripts.register({

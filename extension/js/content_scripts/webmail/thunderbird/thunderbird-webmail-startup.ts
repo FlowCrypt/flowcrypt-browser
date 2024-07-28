@@ -14,7 +14,7 @@ export class ThunderbirdWebmailStartup {
       variant: undefined,
       getUserAccountEmail: () => undefined, // todo, but can start with undefined
       getUserFullName: () => undefined, // todo, but can start with undefined
-      getReplacer: () => new ThunderbirdElementReplacer(), // todo - add this class empty, methods do nothing
+      getReplacer: () => this.replacer, // todo - add this class empty, methods do nothing
       start: this.start,
     });
   };
