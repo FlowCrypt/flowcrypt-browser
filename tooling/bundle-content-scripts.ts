@@ -59,6 +59,24 @@ buildContentScript(
 
 // thunderbird
 buildContentScript(
-  ([] as string[]).concat(getFilesInDir(`${sourceDir}/js/content_scripts/webmail/thunderbird/message-display-scripts`, /\.js$/)),
+  ([] as string[]).concat(
+    getFilesInDir(`${sourceDir}/js/common/platform`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/platform/store`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/core`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/core/crypto/`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/core/crypto/smime`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/shared`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/key-server`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/account-servers`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication/generic`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication/google`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/email-provider`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/email-provider/gmail`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/browser`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/content_scripts/webmail`, /\.js$/)
+  ),
   'thunderbird-content-script.js'
 );

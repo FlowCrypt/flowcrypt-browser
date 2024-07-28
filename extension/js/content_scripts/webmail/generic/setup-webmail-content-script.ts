@@ -74,6 +74,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     let acctEmailInterval = 1000;
     const webmails = await Env.webmails();
     while (true) {
+      // todo - find a way to obtain current user account from Thundermail
       const acctEmail = webmailSpecific.getUserAccountEmail();
       if (typeof acctEmail !== 'undefined') {
         win.account_email_global = acctEmail;
@@ -515,6 +516,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     document.dispatchEvent(new CustomEvent(win.destruction_event));
     document.addEventListener(win.destruction_event, win.destroy);
 
+    if (Catch.isThunderbirdMail()) {
+      await entrypoint();
+    }
     if (win.vacant()) {
       await entrypoint();
     } else if (Catch.isFirefox()) {
