@@ -29,7 +29,7 @@ export class ThunderbirdWebmailStartup {
   ) => {
     // injector.btns(); // todo in another issue - add compose button
     this.replacer = new ThunderbirdElementReplacer();
-    this.replacer.getIntervalFunctions();
+    this.replacer.runIntervalFunctionsPeriodically();
     await notifications.showInitial(acctEmail);
     notifications.show(
       'FlowCrypt Thunderbird support is still in early development, and not expected to function properly yet. Support will be gradually added in upcoming versions.'

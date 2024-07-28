@@ -75,7 +75,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     const webmails = await Env.webmails();
     while (true) {
       // todo - find a way to obtain current user account from Thundermail
-      const acctEmail = webmailSpecific.getUserAccountEmail();
+      let acctEmail: string | undefined;
+      if (Catch.isThunderbirdMail()) {
+        acctEmail = (await messenger.runtime.sendMessage('thunderbird_get_current_user')) as string; // todo - add to BrowserMsg
+      } else {
+        acctEmail = webmailSpecific.getUserAccountEmail();
+      }
       if (typeof acctEmail !== 'undefined') {
         win.account_email_global = acctEmail;
         if (webmails.includes(webmailSpecific.name)) {
@@ -434,12 +439,16 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
-      await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
+
       Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
       const relayManager = new RelayManager();
-      browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
+      if (webmailSpecific.name === 'gmail') {
+        await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
+        browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
+      }
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
+      // todo - investigate startPullingKeysFromEkm in Thunderbird
       await startPullingKeysFromEkm(
         acctEmail,
         clientConfiguration,

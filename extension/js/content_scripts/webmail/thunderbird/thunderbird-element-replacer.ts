@@ -16,8 +16,9 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     return [{ interval: 1000, handler: () => this.replaceThunderbirdMsgPane() }];
   };
 
-  public replaceThunderbirdMsgPane = () => {
+  private replaceThunderbirdMsgPane = () => {
     if (Catch.isThunderbirdMail()) {
+      console.log('todo');
       // const fullMsg = (await messenger.runtime.sendMessage('decrypt')) as messenger.messages.MessagePart;
       //   if (fullMsg?.headers && 'openpgp' in fullMsg.headers) {
       //     // note : embeddedMsg for pgp_block injection -> replaceArmoredBlocks

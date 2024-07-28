@@ -72,5 +72,18 @@ console.info('background.js service worker starting');
     BgHandlers.thunderbirdSecureComposeHandler();
     await BgHandlers.thunderbirdContentScriptRegistration();
     // todo - add background listener here with name "thunderbird_msg_decrypt"
+    // todo - move this to BrowserMsg
+    messenger.runtime.onMessage.addListener(async (message, sender) => {
+      if (message === 'thunderbird_get_current_user') {
+        if (sender.tab?.id) {
+          const messageDetails = await messenger.messageDisplay.getDisplayedMessage(sender.tab?.id);
+          if (messageDetails) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return (await messenger.accounts.get(messageDetails.folder!.accountId)).name;
+          }
+        }
+      }
+      return;
+    });
   }
 })().catch(Catch.reportErr);
