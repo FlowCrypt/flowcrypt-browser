@@ -480,9 +480,13 @@ export class BrowserMsg {
       const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
       if (messageDetails) {
         const msgId = messageDetails.id;
+        if (messageDetails.folder?.accountId) {
+          const account = await messenger.accounts.get(messageDetails.folder.accountId);
+          if (account) {
+            await handleClickEvent(tabId, account.name, msgId);
+          }
+        }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const acctEmail = (await messenger.accounts.get(messageDetails.folder!.accountId)).name;
-        await handleClickEvent(tabId, acctEmail, msgId);
       }
     });
   }
