@@ -29,7 +29,7 @@ export class ConfiguredIdpOAuth extends OAuth {
 
   public static async newAuthPopup(acctEmail: string, authConf: AuthenticationConfiguration): Promise<AuthRes> {
     acctEmail = acctEmail?.toLowerCase();
-    const authRequest = this.newAuthRequest(acctEmail, ['offline_access', 'openid', 'profile', 'email']);
+    const authRequest = this.newAuthRequest(acctEmail, this.OAUTH_REQUEST_SCOPES);
     const authUrl = this.apiOAuthCodeUrl(authConf, authRequest.expectedState, acctEmail);
     // Added below logic because in service worker, it's not possible to access window object.
     // Therefore need to retrieve screenDimensions when calling service worker and pass it to OAuth2
@@ -71,7 +71,7 @@ export class ConfiguredIdpOAuth extends OAuth {
       prompt: 'login',
       state,
       redirect_uri: authConf.oauth.redirectUrl,
-      scope: 'offline_access openid profile email',
+      scope: this.OAUTH_REQUEST_SCOPES.join(' '),
       login_hint: acctEmail,
     });
     /* eslint-enable @typescript-eslint/naming-convention */
@@ -120,7 +120,7 @@ export class ConfiguredIdpOAuth extends OAuth {
         return {
           acctEmail,
           result: 'Error',
-          error: `Google account email and custom IDP email doesn't match. Please use the same email address.`,
+          error: `Google account email and custom IDP email do not match. Please use the same email address..`,
           id_token: undefined,
         };
       }

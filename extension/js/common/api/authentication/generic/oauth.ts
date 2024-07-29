@@ -53,6 +53,7 @@ export class OAuth {
       gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
     },
   };
+  public static OAUTH_REQUEST_SCOPES = ['offline_access', 'openid', 'profile', 'email'];
   /* eslint-enable @typescript-eslint/naming-convention */
   /**
    * Happens on enterprise builds
