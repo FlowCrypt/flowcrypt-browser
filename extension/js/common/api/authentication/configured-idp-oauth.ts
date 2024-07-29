@@ -18,28 +18,17 @@ import { AcctStore } from '../../platform/store/acct-store.js';
 // import { GoogleOAuth } from './google/google-oauth.js';
 export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (authRes: AuthRes) => {
-    // const authConf = {
-    //   clientId: 'ZFfdspDb9Oz1vnFdA4NrCyNaA9N3jYDl',
-    //   clientSecret: 'HnXSXW5x1ea0nKTIqxZGrtHf1hdzQ83DA5fY0_j2catzmA9TlXw7_XE6F_r0nblc',
-    //   redirectUrl: 'https://www.google.com/robots.txt',
-    //   authCodeUrl: 'https://dev-c6f0fhaxut6kyeif.us.auth0.com/authorize',
-    //   tokensUrl: 'https://dev-c6f0fhaxut6kyeif.us.auth0.com/oauth/token',
-    // };
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const acctEmail = authRes.acctEmail!;
     const storage = await AcctStore.get(acctEmail, ['authentication']);
     if (storage?.authentication?.oauth?.clientId && storage.authentication.oauth.clientId !== this.GOOGLE_OAUTH_CONFIG.client_id) {
-      const res = await this.newAuthPopup(acctEmail, { oauth: storage.authentication.oauth });
-      return res;
-    } else {
-      return authRes;
+      return await this.newAuthPopup(acctEmail, { oauth: storage.authentication.oauth });
     }
+    return authRes;
   };
 
   public static async newAuthPopup(acctEmail: string, authConf: AuthenticationConfiguration): Promise<AuthRes> {
-    if (acctEmail) {
-      acctEmail = acctEmail.toLowerCase();
-    }
+    acctEmail = acctEmail?.toLowerCase();
     const authRequest = this.newAuthRequest(acctEmail, ['offline_access', 'openid', 'profile', 'email']);
     const authUrl = this.apiOAuthCodeUrl(authConf, authRequest.expectedState, acctEmail);
     // Added below logic because in service worker, it's not possible to access window object.
