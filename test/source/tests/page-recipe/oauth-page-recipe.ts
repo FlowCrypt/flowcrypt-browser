@@ -39,6 +39,11 @@ export class OauthPageRecipe extends PageRecipe {
     }
   };
 
+  public static customIdp = async (t: AvaContext, oauthPage: ControllablePage): Promise<void> => {
+    const mockOauthUrl = oauthPage.target.url();
+    await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+  };
+
   public static google = async (
     t: AvaContext,
     oauthPage: ControllablePage,

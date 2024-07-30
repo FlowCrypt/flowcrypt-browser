@@ -22,6 +22,7 @@ export class ConfiguredIdpOAuth extends OAuth {
     const acctEmail = authRes.acctEmail!;
     const storage = await AcctStore.get(acctEmail, ['authentication']);
     if (storage?.authentication?.oauth?.clientId && storage.authentication.oauth.clientId !== this.GOOGLE_OAUTH_CONFIG.client_id) {
+      await Ui.modal.info('Google login succeeded. Now, please log in with your company credentials as well.');
       return await this.newAuthPopup(acctEmail, { oauth: storage.authentication.oauth });
     }
     return authRes;

@@ -42,11 +42,16 @@ export class BrowserRecipe {
     return settingsPage;
   };
 
-  public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, checkForConfiguredIdPOAuth?: boolean) => {
+  public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, expectCustomIdp?: boolean) => {
     const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
-    const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
-    await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
-    if (checkForConfiguredIdPOAuth) await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle2' });
+    const googleOAuthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    await OauthPageRecipe.google(t, googleOAuthPopup, acctEmail, 'approve');
+    if (expectCustomIdp) {
+      const customOAuthPopup = await browser.newPageTriggeredBy(t, () =>
+        settingsPage.waitAndRespondToModal('info', 'confirm', 'Google login succeeded. Now, please log in with your company credentials as well.')
+      );
+      await OauthPageRecipe.customIdp(t, customOAuthPopup);
+    }
     // Wait until custom IDP authentication finished
     return settingsPage;
   };

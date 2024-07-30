@@ -135,6 +135,9 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
             return oauth.successResult(parsePort(req), login_hint, state, scope);
           }
         } else if (client_id === OauthMock.customIDPClientId) {
+          if (!proceed) {
+            return oauth.renderText('redirect with proceed=true to continue');
+          }
           return oauth.successResult(parsePort(req), login_hint, state, scope);
         }
       }
