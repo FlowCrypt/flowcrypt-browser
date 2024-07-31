@@ -6,7 +6,6 @@ import { Catch } from '../../../common/platform/catch';
 import { IntervalFunction, WebmailElementReplacer } from '../generic/webmail-element-replacer';
 
 export class ThunderbirdElementReplacer extends WebmailElementReplacer {
-  // public getIntervalFunctions: () => IntervalFunction[];
   public setReplyBoxEditable: () => Promise<void>;
   public reinsertReplyBox: (replyMsgId: string) => void;
   public scrollToReplyBox: (replyMsgId: string) => void;

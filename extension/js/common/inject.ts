@@ -57,7 +57,7 @@ export class Injector {
   }
 
   public meta = () => {
-    if (!Catch.isThunderbirdMail()) {
+    if (this.webmailName === 'gmail') {
       this.S.cached('body')
         .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
         .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory

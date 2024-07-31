@@ -349,6 +349,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     completion: () => void
   ) => {
     if (clientConfiguration.usesKeyManager()) {
+      if (Catch.isThunderbirdMail()) {
+        return completion();
+      }
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (idToken) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -448,7 +451,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
       }
       const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      // todo - investigate startPullingKeysFromEkm in Thunderbird
       await startPullingKeysFromEkm(
         acctEmail,
         clientConfiguration,
@@ -507,7 +509,11 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     };
 
     win.vacant = () => {
-      return !$('.' + win.destroyable_class).length;
+      if (Catch.isThunderbirdMail()) {
+        return true;
+      } else {
+        return !$('.' + win.destroyable_class).length;
+      }
     };
 
     win.TrySetDestroyableInterval = (code, ms) => {
@@ -525,9 +531,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     document.dispatchEvent(new CustomEvent(win.destruction_event));
     document.addEventListener(win.destruction_event, win.destroy);
 
-    if (Catch.isThunderbirdMail()) {
-      await entrypoint();
-    }
     if (win.vacant()) {
       await entrypoint();
     } else if (Catch.isFirefox()) {
