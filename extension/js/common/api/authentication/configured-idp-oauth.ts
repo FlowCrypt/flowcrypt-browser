@@ -3,7 +3,6 @@
 'use strict';
 
 import { Ui } from '../../browser/ui.js';
-// import { AcctStore } from '../../platform/store/acct-store.js';
 import { AuthRes, OAuth, OAuthTokensResponse } from './generic/oauth.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { Url } from '../../core/common.js';
@@ -15,7 +14,6 @@ import { Catch } from '../../platform/catch.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
-// import { GoogleOAuth } from './google/google-oauth.js';
 export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (authRes: AuthRes) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -29,7 +27,7 @@ export class ConfiguredIdpOAuth extends OAuth {
   };
 
   public static async newAuthPopup(acctEmail: string, authConf: AuthenticationConfiguration): Promise<AuthRes> {
-    acctEmail = acctEmail?.toLowerCase();
+    acctEmail = acctEmail.toLowerCase();
     const authRequest = this.newAuthRequest(acctEmail, this.OAUTH_REQUEST_SCOPES);
     const authUrl = this.apiOAuthCodeUrl(authConf, authRequest.expectedState, acctEmail);
     // Added below logic because in service worker, it's not possible to access window object.
