@@ -74,7 +74,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     let acctEmailInterval = 1000;
     const webmails = await Env.webmails();
     while (true) {
-      // todo - find a way to obtain current user account from Thundermail
       let acctEmail: string | undefined;
       if (Catch.isThunderbirdMail()) {
         acctEmail = (await messenger.runtime.sendMessage('thunderbird_get_current_user')) as string; // todo - add to BrowserMsg
@@ -442,22 +441,21 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
       const acctEmail = await waitForAcctEmail();
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
-
-      Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
       const ppEvent: { entered?: boolean } = {};
       const relayManager = new RelayManager();
+      const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
       if (webmailSpecific.name === 'gmail') {
+        Catch.setHandledTimeout(() => updateClientConfiguration(acctEmail), 0);
         await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
         browserMsgListen(acctEmail, tabId, inject, factory, notifications, relayManager, ppEvent);
+        await startPullingKeysFromEkm(
+          acctEmail,
+          clientConfiguration,
+          factory,
+          ppEvent,
+          Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
+        );
       }
-      const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
-      await startPullingKeysFromEkm(
-        acctEmail,
-        clientConfiguration,
-        factory,
-        ppEvent,
-        Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
-      );
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {

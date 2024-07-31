@@ -15,14 +15,28 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     return [{ interval: 1000, handler: () => this.replaceThunderbirdMsgPane() }];
   };
 
-  private replaceThunderbirdMsgPane = () => {
+  public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
-      console.log('todo');
-      // const fullMsg = (await messenger.runtime.sendMessage('decrypt')) as messenger.messages.MessagePart;
-      //   if (fullMsg?.headers && 'openpgp' in fullMsg.headers) {
-      //     // note : embeddedMsg for pgp_block injection -> replaceArmoredBlocks
-      //     // do secure compose badge injection eg. signed or encrypted, (secure email status rendering) etc
-      //     // render decrypted message right into the messageDisplay
+      const fullMsg = (await messenger.runtime.sendMessage('thunderbird_msg_decrypt')) as messenger.messages.MessagePart;
+      if (fullMsg?.headers && 'openpgp' in fullMsg.headers) {
+        // console.log(this.isPgpEncryptedMsg(fullMsg));
+        // note : embeddedMsg for pgp_block injection -> replaceArmoredBlocks
+        // do secure compose badge injection eg. signed or encrypted, (secure email status rendering) etc
+        // render decrypted message right into the messageDisplay
+      }
     }
   };
+
+  // private isPgpEncryptedMsg = (fullMsg: messenger.messages.MessagePart) => {
+  //   const isPgpEncryptedMsg =
+  //     fullMsg?.headers &&
+  //     'openpgp' in fullMsg.headers &&
+  //     fullMsg?.parts &&
+  //     fullMsg.parts[0]?.parts?.length === 1 &&
+  //     fullMsg.parts[0]?.parts[0].body?.startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) &&
+  //     fullMsg.parts[0]?.parts[0].body?.endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin);
+  //   // content script complains that PgpArmor is not defined. Additionally, adding so in bundle causes an unhandled error.
+  //   // needs further investigation.
+  //   return isPgpEncryptedMsg;
+  // };
 }

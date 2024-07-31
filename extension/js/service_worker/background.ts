@@ -81,6 +81,11 @@ console.info('background.js service worker starting');
           return (await messenger.accounts.get(accountId))?.name;
         }
       }
+      if (message === 'thunderbird_msg_decrypt') {
+        if (sender.tab?.id) {
+          return await messenger.messages.getFull(sender.tab.id);
+        }
+      }
       return;
     });
   }
