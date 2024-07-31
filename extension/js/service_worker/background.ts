@@ -77,10 +77,8 @@ console.info('background.js service worker starting');
       if (message === 'thunderbird_get_current_user') {
         if (sender.tab?.id) {
           const messageDetails = await messenger.messageDisplay.getDisplayedMessage(sender.tab?.id);
-          if (messageDetails) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return (await messenger.accounts.get(messageDetails.folder!.accountId)).name;
-          }
+          const accountId = messageDetails?.folder?.accountId || '';
+          return (await messenger.accounts.get(accountId))?.name;
         }
       }
       return;

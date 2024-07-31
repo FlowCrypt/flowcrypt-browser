@@ -135,8 +135,8 @@ export class BgHandlers {
       const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
       if (messageDetails) {
         const msgId = messageDetails.id;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const acctEmail = (await messenger.accounts.get(messageDetails.folder!.accountId)).name;
+        const accountId = messageDetails?.folder?.accountId || '';
+        const acctEmail = (await messenger.accounts.get(accountId))?.name || '';
         await handleClickEvent(tabId, acctEmail, msgId);
       }
     });
