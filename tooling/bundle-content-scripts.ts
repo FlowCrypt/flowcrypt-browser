@@ -64,7 +64,7 @@ buildContentScript(
     getFilesInDir(`${sourceDir}/js/common/platform/store`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/core`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/core/crypto/`, /\.js$/, false),
-    // todo: see 'thunderbird-element-replacer.ts for core/crypto/pgp import error
+    getFilesInDir(`${sourceDir}/js/common/core/crypto/pgp`, /\.js$/, false, ['openpgpjs-custom.js']),
     getFilesInDir(`${sourceDir}/js/common/core/crypto/smime`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/shared`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/key-server`, /\.js$/, false),
