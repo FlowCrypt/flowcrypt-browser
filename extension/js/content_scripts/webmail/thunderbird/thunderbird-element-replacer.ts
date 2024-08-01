@@ -2,8 +2,9 @@
 
 'use strict';
 
+import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
 import { Catch } from '../../../common/platform/catch';
-import { IntervalFunction, WebmailElementReplacer } from '../generic/webmail-element-replacer';
+import { IntervalFunction, WebmailElementReplacer } from '../generic/webmail-element-replacer.js';
 
 export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public setReplyBoxEditable: () => Promise<void>;
@@ -18,8 +19,8 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
       const fullMsg = (await messenger.runtime.sendMessage('thunderbird_msg_decrypt')) as messenger.messages.MessagePart;
-      if (fullMsg?.headers && 'openpgp' in fullMsg.headers) {
-        // console.log(this.isPgpEncryptedMsg(fullMsg));
+      if (this.checkIfPgpEncryptedMsg(fullMsg)) {
+        console.log('ready for decryption!');
         // note : embeddedMsg for pgp_block injection -> replaceArmoredBlocks
         // do secure compose badge injection eg. signed or encrypted, (secure email status rendering) etc
         // render decrypted message right into the messageDisplay
@@ -27,16 +28,14 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  // private isPgpEncryptedMsg = (fullMsg: messenger.messages.MessagePart) => {
-  //   const isPgpEncryptedMsg =
-  //     fullMsg?.headers &&
-  //     'openpgp' in fullMsg.headers &&
-  //     fullMsg?.parts &&
-  //     fullMsg.parts[0]?.parts?.length === 1 &&
-  //     fullMsg.parts[0]?.parts[0].body?.startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) &&
-  //     fullMsg.parts[0]?.parts[0].body?.endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin);
-  //   // content script complains that PgpArmor is not defined. Additionally, adding so in bundle causes an unhandled error.
-  //   // needs further investigation.
-  //   return isPgpEncryptedMsg;
-  // };
+  private checkIfPgpEncryptedMsg = (fullMsg: messenger.messages.MessagePart) => {
+    const isPgpEncryptedMsg =
+      fullMsg.headers &&
+      'openpgp' in fullMsg.headers &&
+      fullMsg.parts &&
+      fullMsg.parts[0]?.parts?.length === 1 &&
+      fullMsg.parts[0]?.parts[0].body?.trim().startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) &&
+      fullMsg.parts[0]?.parts[0].body?.trim().endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end as string);
+    return isPgpEncryptedMsg;
+  };
 }
