@@ -6,8 +6,6 @@ import { Ui } from '../../browser/ui.js';
 import { AuthRes, OAuth, OAuthTokensResponse } from './generic/oauth.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { Url } from '../../core/common.js';
-import { OAuth2 } from '../../oauth2/oauth2.js';
-import { Bm } from '../../browser/browser-msg.js';
 import { Assert, AssertError } from '../../assert.js';
 import { Api } from '../shared/api.js';
 import { Catch } from '../../platform/catch.js';
@@ -30,14 +28,10 @@ export class ConfiguredIdpOAuth extends OAuth {
     acctEmail = acctEmail.toLowerCase();
     const authRequest = this.newAuthRequest(acctEmail, this.OAUTH_REQUEST_SCOPES);
     const authUrl = this.apiOAuthCodeUrl(authConf, authRequest.expectedState, acctEmail);
-    // Added below logic because in service worker, it's not possible to access window object.
-    // Therefore need to retrieve screenDimensions when calling service worker and pass it to OAuth2
-    const screenDimensions = Ui.getScreenDimensions();
-    const authWindowResult = await OAuth2.webAuthFlow(authUrl, screenDimensions);
     const authRes = await this.getAuthRes({
       acctEmail,
       expectedState: authRequest.expectedState,
-      authWindowResult,
+      authUrl,
       authConf,
     });
     if (authRes.result === 'Success') {
@@ -69,7 +63,7 @@ export class ConfiguredIdpOAuth extends OAuth {
       access_type: 'offline',
       prompt: 'login',
       state,
-      redirect_uri: authConf.oauth.redirectUrl,
+      redirect_uri: chrome.identity.getRedirectURL('oauth'),
       scope: this.OAUTH_REQUEST_SCOPES.join(' '),
       login_hint: acctEmail,
     });
@@ -79,24 +73,25 @@ export class ConfiguredIdpOAuth extends OAuth {
   private static async getAuthRes({
     acctEmail,
     expectedState,
-    authWindowResult,
+    authUrl,
     authConf,
   }: {
     acctEmail: string;
     expectedState: string;
-    authWindowResult: Bm.AuthWindowResult;
+    authUrl: string;
     authConf: AuthenticationConfiguration;
   }): Promise<AuthRes> {
     /* eslint-disable @typescript-eslint/naming-convention */
     try {
-      if (!authWindowResult.url) {
+      const redirectUri = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true });
+      if (chrome.runtime.lastError || !redirectUri || redirectUri?.includes('access_denied')) {
+        return { acctEmail, result: 'Denied', error: `Failed to launch web auth flow`, id_token: undefined };
+      }
+
+      if (!redirectUri) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
       }
-      if (authWindowResult.error) {
-        return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
-      }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url);
+      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], redirectUri);
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
       if (!code) {
@@ -141,8 +136,7 @@ export class ConfiguredIdpOAuth extends OAuth {
           grant_type: 'authorization_code',
           code,
           client_id: authConf.oauth.clientId,
-          client_secret: authConf.oauth.clientSecret,
-          redirect_uri: authConf.oauth.redirectUrl,
+          redirect_uri: chrome.identity.getRedirectURL('oauth'),
         },
         dataType: 'JSON',
         /* eslint-enable @typescript-eslint/naming-convention */

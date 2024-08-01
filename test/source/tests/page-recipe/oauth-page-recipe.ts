@@ -41,7 +41,13 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static customIdp = async (t: AvaContext, oauthPage: ControllablePage): Promise<void> => {
     const mockOauthUrl = oauthPage.target.url();
-    await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+    try {
+      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+    } catch (e) {
+      if (!e.message.includes('Navigating frame was detached')) {
+        throw e;
+      }
+    }
   };
 
   public static google = async (

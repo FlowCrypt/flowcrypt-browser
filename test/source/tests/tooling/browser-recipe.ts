@@ -50,9 +50,9 @@ export class BrowserRecipe {
       const customOAuthPopup = await browser.newPageTriggeredBy(t, () =>
         settingsPage.waitAndRespondToModal('info', 'confirm', 'Google login succeeded. Now, please log in with your company credentials as well.')
       );
+      // Wait until custom IDP authentication finished
       await OauthPageRecipe.customIdp(t, customOAuthPopup);
     }
-    // Wait until custom IDP authentication finished
     return settingsPage;
   };
 

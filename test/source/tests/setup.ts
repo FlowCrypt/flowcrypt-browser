@@ -2530,7 +2530,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const oauthConfig = {
           clientId: OauthMock.customIDPClientId,
           clientSecret: OauthMock.customIDPClientSecret,
-          redirectUrl: `https://google.localhost:${port}/robots.txt`,
+          redirectUrl: `custom-redirect-url`, // This won't be used as we use our https://{id}.chromiumapp.org with chrome.identity.getRedirectURL
           authCodeUrl: `https://localhost:${port}/o/oauth2/auth`,
           tokensUrl: `https://localhost:${port}/token`,
         };

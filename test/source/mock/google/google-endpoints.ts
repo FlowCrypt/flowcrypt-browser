@@ -121,7 +121,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
   return {
     '/o/oauth2/auth': async (
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      { query: { client_id, response_type, access_type, state, scope, login_hint, proceed } },
+      { query: { client_id, response_type, access_type, state, scope, login_hint, proceed, redirect_uri } },
       req
     ) => {
       if (isGet(req) && response_type === 'code' && access_type === 'offline' && state && scope) {
@@ -138,7 +138,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
           if (!proceed) {
             return oauth.renderText('redirect with proceed=true to continue');
           }
-          return oauth.successResult(parsePort(req), login_hint, state, scope);
+          return oauth.successResult(parsePort(req), login_hint, state, scope, redirect_uri);
         }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
