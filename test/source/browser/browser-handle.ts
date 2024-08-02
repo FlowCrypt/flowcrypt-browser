@@ -73,12 +73,13 @@ export class BrowserHandle {
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = (await this.doAwaitTriggeredPage(triggeringAction))!;
     const url = page.url();
+    const parsedUrl = new URL(url);
     const controllablePage = new ControllablePage(t, page);
     try {
       await page.setViewport(this.viewport);
       this.pages.push(controllablePage);
 
-      if (url.includes(t.context.urls!.extensionId)) {
+      if (parsedUrl.pathname.includes(t.context.urls!.extensionId)) {
         await controllablePage.waitUntilViewLoaded();
       }
       return controllablePage;

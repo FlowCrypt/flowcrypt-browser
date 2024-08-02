@@ -42,16 +42,17 @@ export class BrowserRecipe {
     return settingsPage;
   };
 
-  public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, checkForConfiguredIdPOAuth?: boolean) => {
+  public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, expectCustomIdp?: boolean) => {
     const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
-    const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
-    await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
-    if (checkForConfiguredIdPOAuth)
-      await settingsPage.waitAndRespondToModal(
-        'warning',
-        'confirm',
-        'Custom IdP is configured on this domain, but it is not supported on browser extension yet.'
+    const googleOAuthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    await OauthPageRecipe.google(t, googleOAuthPopup, acctEmail, 'approve');
+    if (expectCustomIdp) {
+      const customOAuthPopup = await browser.newPageTriggeredBy(t, () =>
+        settingsPage.waitAndRespondToModal('info', 'confirm', 'Google login succeeded. Now, please log in with your company credentials as well.')
       );
+      // Wait until custom IDP authentication finished
+      await OauthPageRecipe.customIdp(t, customOAuthPopup);
+    }
     return settingsPage;
   };
 
@@ -214,6 +215,9 @@ export class BrowserRecipe {
 
   public static getPassphraseFromInMemoryStore = (controllable: Controllable, acctEmail: string, longid: string): Promise<string> =>
     BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, `passphrase_${longid}`);
+
+  public static getCustomIDPIdTokenFromInMemoryStore = (controllable: Controllable, acctEmail: string): Promise<string> =>
+    BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, 'customIdpIdToken');
 
   public static deleteAllDraftsInGmailAccount = async (accessToken: string): Promise<void> => {
     const gmail = google.gmail({ version: 'v1' });

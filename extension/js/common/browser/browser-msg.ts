@@ -5,7 +5,6 @@
 
 'use strict';
 
-import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, Url, UrlParams } from '../core/common.js';
@@ -18,6 +17,7 @@ import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
 import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 import { Ui } from './ui.js';
+import { AuthRes } from '../api/authentication/generic/oauth.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
 
