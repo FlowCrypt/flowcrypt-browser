@@ -425,7 +425,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       let normalizedPub: string;
       try {
         normalizedPub = await keyImportUi.checkPub(textData);
-      } catch (e) {
+      } catch {
         return; // key is invalid
       }
       const key = await KeyUtil.parse(normalizedPub);

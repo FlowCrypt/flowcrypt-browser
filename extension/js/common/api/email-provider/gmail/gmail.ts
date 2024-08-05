@@ -216,7 +216,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             try {
               resolve(Buf.fromBase64UrlStr(parsedJsonDataField));
               return;
-            } catch (e) {
+            } catch {
               // the chunk of data may have been cut at an inconvenient index
               // shave off up to 50 trailing characters until it can be decoded
               parsedJsonDataField = parsedJsonDataField.slice(0, -1);
@@ -312,7 +312,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           .map(bigNeedle => {
             const email = Str.parseEmail(bigNeedle);
             if (email?.email) {
-              const match = email.email.match(/^(.*@.+)\.[^@]+?$/);
+              const match = /^(.*@.+)\.[^@]+?$/.exec(email.email);
               if (match) bigNeedle = match[1]; // omit the top-level domain
             }
             return bigNeedle.split('.').filter(v => !['com', 'org', 'net'].includes(v));

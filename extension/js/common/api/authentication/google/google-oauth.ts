@@ -97,7 +97,7 @@ export class GoogleOAuth extends OAuth {
     };
 
     try {
-      return performAjaxRequest(req);
+      return await performAjaxRequest(req);
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
