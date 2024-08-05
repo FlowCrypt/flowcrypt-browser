@@ -37,10 +37,10 @@ export class ConfiguredIdpOAuth extends OAuth {
       return { authorization: `Bearer ${idToken}` };
     }
     if (shouldThrowErrorForEmptyIdToken) {
-      return undefined;
+      // user will not actually see this message, they'll see a generic login prompt
+      throw new BackendAuthErr('Missing id token, please re-authenticate');
     }
-    // user will not actually see this message, they'll see a generic login prompt
-    throw new BackendAuthErr('Missing id token, please re-authenticate');
+    return undefined;
   };
 
   public static async newAuthPopup(acctEmail: string, authConf: AuthenticationConfiguration): Promise<AuthRes> {
