@@ -115,7 +115,7 @@ export class SetupWithEmailKeyManagerModule {
     }
     const storePrvOnKm = async () => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv));
+      await this.view.keyManager!.storePrivateKey(this.view.acctEmail, KeyUtil.armor(decryptablePrv));
     };
     await Settings.retryUntilSuccessful(
       storePrvOnKm,
