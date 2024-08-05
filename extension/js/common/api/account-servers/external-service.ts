@@ -161,8 +161,14 @@ export class ExternalService extends Api {
   };
 
   private authHdr = async (): Promise<{ authorization: string }> => {
-    const idToken = await InMemoryStore.getUntilAvailable(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
+    let idToken = await InMemoryStore.getUntilAvailable(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
+      const customIDPIdToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.CUSTOM_IDP_ID_TOKEN);
+      // if special JWT is stored in local store, it should be used for Enterprise Server authentication instead of Google JWT
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/5799
+      if (customIDPIdToken) {
+        idToken = customIDPIdToken;
+      }
       return { authorization: `Bearer ${idToken}` };
     }
     // user will not actually see this message, they'll see a generic login prompt

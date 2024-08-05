@@ -2526,14 +2526,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     test(
       'setup - check custom authentication config from the local store (customer url fes)',
       testWithBrowser(async (t, browser) => {
-        const port = t.context.urls?.port ?? '';
-        const oauthConfig = {
-          clientId: OauthMock.customIDPClientId,
-          clientSecret: OauthMock.customIDPClientSecret,
-          redirectUrl: `custom-redirect-url`, // This won't be used as we use our https://{id}.chromiumapp.org with chrome.identity.getRedirectURL
-          authCodeUrl: `https://localhost:${port}/o/oauth2/auth`,
-          tokensUrl: `https://localhost:${port}/token`,
-        };
+        const port = t.context.urls?.port;
+        const oauthConfig = OauthMock.getCustomIDPOAuthConfig(port);
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},

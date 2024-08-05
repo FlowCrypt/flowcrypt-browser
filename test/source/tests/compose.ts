@@ -43,6 +43,7 @@ import {
 import { Buf } from '../core/buf';
 import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
+import { OauthMock } from '../mock/lib/oauth';
 
 export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -3007,18 +3008,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       'user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal',
       testWithBrowser(async (t, browser) => {
+        const port = t.context.urls?.port;
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
             pubkeyLookup: {},
           },
           fes: {
+            authenticationConfiguration: {
+              oauth: OauthMock.getCustomIDPOAuthConfig(port),
+            },
             messagePostValidator: processMessageFromUser,
             clientConfiguration: standardSubDomainFesClientConfiguration,
           },
         });
-        const port = t.context.urls?.port;
         const acct = `user@standardsubdomainfes.localhost:${port}`; // added port to trick extension into calling the mock
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct, true);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'flowcrypt.test.key.used.pgp',
