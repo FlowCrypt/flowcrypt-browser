@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@openpgp/web-stream-tools": "^0.0.13",
-    "@types/chai": "4.3.16",
+    "@types/chai": "4.3.17",
     "@types/chai-as-promised": "7.1.8",
     "@types/chrome": "0.0.269",
     "@types/dompurify": "3.0.5",
