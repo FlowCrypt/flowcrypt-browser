@@ -167,7 +167,7 @@ export class KeyImportUi {
         let prv: Key | undefined;
         const utf = file.getData().toUtfStr('ignore'); // ignore utf8 errors because this may be a binary key (in which case we use the bytes directly below)
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
-          const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
+          const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.find(b => b.type === 'privateKey');
           if (firstPrv) {
             // filter out all content except for the first encountered private key (GPGKeychain compatibility)
             prv = await KeyUtil.parse(Str.with(firstPrv.content));
@@ -176,7 +176,7 @@ export class KeyImportUi {
           try {
             const parsed = await KeyUtil.parseBinary(file.getData(), '');
             prv = parsed[0];
-          } catch (e) {
+          } catch {
             // ignore
           }
         }
@@ -185,7 +185,7 @@ export class KeyImportUi {
           $('.source_paste_container').css('display', 'block');
         } else {
           $('.input_private_key').val('').change().prop('disabled', false);
-          await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.testCompatibilityLink);
+          await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.getTestCompatibilityLink(acctEmail));
           KeyImportUi.allowReselect();
         }
       },

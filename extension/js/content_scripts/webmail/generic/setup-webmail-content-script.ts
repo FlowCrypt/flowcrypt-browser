@@ -264,6 +264,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       }
     });
     BrowserMsg.listen(tabId);
+    BrowserMsg.send.setHandlerReadyForPGPBlock('broadcast');
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {

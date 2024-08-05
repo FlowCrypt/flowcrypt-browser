@@ -27,7 +27,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   private previousReplyOption: ReplyOption | undefined;
 
   public initComposeBox = async () => {
-    if (this.view.isReplyBox) {
+    if (this.view.useFullScreenSecureCompose) {
+      this.view.S.cached('body').addClass('full_window');
+      this.view.S.cached('password_or_pubkey').height(1); // fix UI issue in fullscreen
+    }
+    if (this.view.replyMsgId) {
       this.responseMethod = 'reply';
     }
     await this.view.replyPopoverModule.render(this.view.isReplyBox);
@@ -41,11 +45,11 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         this.view.draftModule.startDraftTimer();
         this.view.S.cached('triple_dot').remove(); // if it's draft, footer and quote should already be included in the draft
       }
-      if (this.view.isReplyBox) {
+      if (this.view.replyMsgId) {
         await this.view.renderModule.renderReplyMsgComposeTable();
       }
     } else {
-      if (this.view.isReplyBox && this.view.replyParams) {
+      if (this.view.replyMsgId && this.view.replyParams) {
         const recipients: Recipients = {
           to: this.view.replyParams.to,
           cc: this.view.replyParams.cc,
@@ -99,6 +103,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         )?.value;
       }
       this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
+      if (this.view.useFullScreenSecureCompose) {
+        this.view.S.cached('input_subject').val(this.view.replyParams.subject);
+      }
     }
     if (!this.view.draftModule.wasMsgLoadedFromDraft) {
       // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
@@ -260,6 +267,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     await this.renderReplyMsgComposeTable();
   };
 
+  public actionCloseHandler = async () => {
+    if (!this.view.sendBtnModule.isSendMessageInProgres() || (await Ui.modal.confirm(Lang.compose.abortSending))) {
+      this.view.renderModule.closeMsg();
+    }
+  };
+
   private initComposeBoxStyles = () => {
     if (this.view.isReplyBox) {
       this.view.S.cached('body').addClass('reply_box');
@@ -328,16 +341,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     this.view.S.cached('compose_table').css('display', 'table');
     await this.addComposeTableHandlers();
     await this.view.senderModule.renderSendFromIfMoreThanOneAlias();
-    if (this.view.isReplyBox) {
+    if (this.view.replyMsgId) {
       if (this.view.replyParams?.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur(): recipients may be left unrendered, as standard text, with a trailing comma
         await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to')); // this will force firefox to render them on load
       }
     } else {
-      $('.close_compose_window').on(
-        'click',
-        this.view.setHandler(() => this.actionCloseHandler(), this.view.errModule.handle(`close compose window`))
-      );
       this.view.S.cached('title').on('click', () => {
         if (this.view.sizeModule.composeWindowIsMinimized) {
           $('.minimize_compose_window').trigger('click');
@@ -400,12 +409,6 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
-  private actionCloseHandler = async () => {
-    if (!this.view.sendBtnModule.isSendMessageInProgres() || (await Ui.modal.confirm(Lang.compose.abortSending))) {
-      this.view.renderModule.closeMsg();
-    }
-  };
-
   private onRecipientsClickHandler = () => {
     if (!this.view.S.cached('input_to').is(':focus')) {
       this.view.errModule.debug(
@@ -422,7 +425,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       let normalizedPub: string;
       try {
         normalizedPub = await keyImportUi.checkPub(textData);
-      } catch (e) {
+      } catch {
         return; // key is invalid
       }
       const key = await KeyUtil.parse(normalizedPub);

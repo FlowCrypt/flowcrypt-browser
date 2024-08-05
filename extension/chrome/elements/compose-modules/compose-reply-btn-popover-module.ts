@@ -45,7 +45,9 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
   };
 
   public changeOptionImage = (option: ReplyOption) => {
-    $('.reply-options-icon').attr('src', this.popoverItems[option].iconPath);
+    if (!this.view.useFullScreenSecureCompose) {
+      $('.reply-options-icon').attr('src', this.popoverItems[option].iconPath);
+    }
   };
 
   private didOptionClick = async (option: ReplyOption) => {

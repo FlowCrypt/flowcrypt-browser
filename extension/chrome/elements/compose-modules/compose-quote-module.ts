@@ -17,6 +17,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { MessageToReplyOrForward } from './compose-types.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Time } from '../../../js/common/browser/time.js';
 
 export class ComposeQuoteModule extends ViewModule<ComposeView> {
   public tripleDotSanitizedHtmlContent: { quote: string | undefined; footer: string | undefined } | undefined;
@@ -177,6 +178,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
+      if (Catch.isThunderbirdMail() && this.view.useFullScreenSecureCompose) {
+        await Time.sleep(2300);
+      }
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
         type: 'quote',
         longids: decryptRes.longids.needPassphrase,
@@ -206,16 +210,17 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return;
     }
     const text = this.messageToReplyOrForward.text;
-    const from = this.messageToReplyOrForward.headers.from;
+    const from = Str.parseEmail(this.messageToReplyOrForward.headers.from || '').email;
     const date = new Date(String(this.messageToReplyOrForward.headers.date));
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
-    const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
+    const rtl = new RegExp('[' + Str.rtlChars + ']').exec(text);
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
     const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
     if (method === 'reply') {
       const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
       const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
-      return `<blockquote ${dirAttr}>${sanitizedQuote}</blockquote>`;
+      const thunderbirdClass = this.view.useFullScreenSecureCompose ? 'class="height-0"' : ''; // fix long quoted email UI issue happens in fullscreen
+      return `<blockquote ${thunderbirdClass} ${dirAttr}>${sanitizedQuote}</blockquote>`;
     } else {
       const header =
         `<div ${dirAttr}>` +

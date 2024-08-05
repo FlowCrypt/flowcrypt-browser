@@ -233,9 +233,9 @@ export class Api<REQ, RES> {
   };
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: http2.Http2ServerResponse): Buffer => {
-    if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
+    if (typeof handlerRes === 'string' && /^<!DOCTYPE HTML><html>/.exec(handlerRes)) {
       serverRes.setHeader('content-type', 'text/html');
-    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
+    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && /^\{/.exec(handlerRes) && /\}$/.exec(handlerRes))) {
       serverRes.setHeader('content-type', 'application/json');
     } else if (typeof handlerRes === 'string') {
       serverRes.setHeader('content-type', 'text/plain');
@@ -300,8 +300,8 @@ export class Api<REQ, RES> {
   };
 
   private throttledResponse = async (response: http2.Http2ServerResponse, data: Buffer) => {
-    // If google oauth2 login, then redirect to url
-    if (/^https:\/\/google\.localhost:[0-9]+\/robots\.txt/.test(data.toString())) {
+    // If google oauth2 or custom oauth login, then redirect to url
+    if (/^https:\/\/(google\.localhost:[0-9]+\/robots\.txt|[a-zA-Z0-9]+\.chromiumapp\.org)/.test(data.toString())) {
       response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention
     } else {
       const chunkSize = 100 * 1024;

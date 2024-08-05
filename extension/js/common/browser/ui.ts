@@ -117,7 +117,7 @@ export class Ui {
         Catch.reportErr(e);
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters, @typescript-eslint/no-invalid-void-type
     prevent: <THIS extends HTMLElement | void>(
       evName: PreventableEventName,
       cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
@@ -342,7 +342,9 @@ export class Ui {
     },
   };
 
-  public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+  public static getTestCompatibilityLink = (acctEmail: string): string => {
+    return `<a href="/chrome/settings/modules/compatibility.htm?acctEmail=${acctEmail}" target="_blank">Test your OpenPGP key compatibility</a>`;
+  };
 
   public static getScreenDimensions = (): ScreenDimensions => {
     const { availLeft, availTop } = window.screen as unknown as { availLeft?: number; availTop?: number };

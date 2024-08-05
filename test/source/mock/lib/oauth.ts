@@ -8,6 +8,8 @@ import { Str } from '../../core/common';
 const authURL = 'https://localhost:8001';
 
 export class OauthMock {
+  public static customIDPClientId = 'custom-test-idp-client-id';
+  public static customIDPClientSecret = 'test-secret';
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
 
@@ -23,7 +25,8 @@ export class OauthMock {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (port: string, acct: string, state: string, scope: string) => {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  public successResult = (port: string, acct: string, state: string, scope: string, redirect_uri?: string) => {
     const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -32,7 +35,7 @@ export class OauthMock {
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
     this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
-    const url = new URL(`https://google.localhost:${port}/robots.txt`);
+    const url = new URL(redirect_uri ?? `https://google.localhost:${port}/robots.txt`);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
     // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
@@ -67,7 +70,7 @@ export class OauthMock {
       const id_token = this.generateIdToken(acct);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
       /* eslint-enable @typescript-eslint/naming-convention */
-    } catch (e) {
+    } catch {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
     }
   };

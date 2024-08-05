@@ -3,70 +3,32 @@
 'use strict';
 
 import { Url } from '../../../core/common.js';
-import { FLAVOR, GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
+import { FLAVOR, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
 import { Ajax, Api } from '../../shared/api.js';
 
-import { Bm, GoogleAuthWindowResult$result, ScreenDimensions } from '../../../browser/browser-msg.js';
+import { Bm, ScreenDimensions } from '../../../browser/browser-msg.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 import { OAuth2 } from '../../../oauth2/oauth2.js';
 import { Catch } from '../../../platform/catch.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
-import { OAuth } from '../generic/oauth.js';
+import { AuthReq, AuthRes, OAuth, OAuthTokensResponse } from '../generic/oauth.js';
 import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { Assert, AssertError } from '../../../assert.js';
 import { Ui } from '../../../browser/ui.js';
+import { ConfiguredIdpOAuth } from '../configured-idp-oauth.js';
 
-/* eslint-disable @typescript-eslint/naming-convention */
-type GoogleAuthTokensResponse = {
-  access_token: string;
-  expires_in: number;
-  refresh_token?: string;
-  id_token: string;
-  token_type: 'Bearer';
-};
-type AuthResultSuccess = { result: 'Success'; acctEmail: string; id_token: string; error?: undefined };
-type AuthResultError = {
-  result: GoogleAuthWindowResult$result;
-  acctEmail?: string;
-  error?: string;
-  id_token: undefined;
-};
-
-type AuthReq = { acctEmail?: string; scopes: string[]; messageId?: string; expectedState: string };
+// eslint-disable-next-line @typescript-eslint/naming-convention
 type GoogleTokenInfo = { email: string; scope: string; expires_in: number; token_type: string };
-export type AuthRes = AuthResultSuccess | AuthResultError;
+
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export class GoogleOAuth extends OAuth {
-  /* eslint-disable @typescript-eslint/naming-convention */
-  public static OAUTH = {
-    client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
-    client_secret: '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',
-    redirect_uri: 'https://www.google.com/robots.txt',
-    url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
-    url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
-    state_header: 'CRYPTUP_STATE_',
-    scopes: {
-      email: 'email',
-      openid: 'openid',
-      profile: 'https://www.googleapis.com/auth/userinfo.profile', // needed so that `name` is present in `id_token`, which is required for key-server auth when in use
-      compose: 'https://www.googleapis.com/auth/gmail.compose',
-      modify: 'https://www.googleapis.com/auth/gmail.modify',
-      readContacts: 'https://www.googleapis.com/auth/contacts.readonly',
-      readOtherContacts: 'https://www.googleapis.com/auth/contacts.other.readonly',
-    },
-    legacy_scopes: {
-      gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
-    },
-  };
-  /* eslint-enable @typescript-eslint/naming-convention */
-
   public static defaultScopes(group: 'default' | 'contacts' = 'default') {
-    const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = GoogleOAuth.OAUTH.scopes;
+    const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = this.GOOGLE_OAUTH_CONFIG.scopes;
     if (group === 'default') {
       if (FLAVOR === 'consumer') {
         return [openid, email, profile, compose, modify]; // consumer may freak out that extension asks for their contacts early on
@@ -135,7 +97,7 @@ export class GoogleOAuth extends OAuth {
     };
 
     try {
-      return performAjaxRequest(req);
+      return await performAjaxRequest(req);
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
@@ -209,6 +171,7 @@ export class GoogleOAuth extends OAuth {
         }
         // fetch and store ClientConfiguration (not authenticated)
         await (await AccountServer.init(authRes.acctEmail)).fetchAndSaveClientConfiguration();
+        return await ConfiguredIdpOAuth.newAuthPopupForEnterpriseServerAuthenticationIfNeeded(authRes);
       } catch (e) {
         if (GoogleOAuth.isFesUnreachableErr(e, authRes.acctEmail)) {
           const error = `Cannot reach your company's FlowCrypt External Service (FES). Contact your Help Desk when unsure. (${String(e)})`;
@@ -251,7 +214,12 @@ export class GoogleOAuth extends OAuth {
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
-      const scopesToCheck = [this.OAUTH.scopes.compose, this.OAUTH.scopes.modify, this.OAUTH.scopes.readContacts, this.OAUTH.scopes.readOtherContacts];
+      const scopesToCheck = [
+        this.GOOGLE_OAUTH_CONFIG.scopes.compose,
+        this.GOOGLE_OAUTH_CONFIG.scopes.modify,
+        this.GOOGLE_OAUTH_CONFIG.scopes.readContacts,
+        this.GOOGLE_OAUTH_CONFIG.scopes.readOtherContacts,
+      ];
       for (const scopeToCheck of scopesToCheck) {
         if (requestedScopes.includes(scopeToCheck) && !allowedScopes?.includes(scopeToCheck)) {
           return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
@@ -283,34 +251,22 @@ export class GoogleOAuth extends OAuth {
     /* eslint-enable @typescript-eslint/naming-convention */
   }
 
-  private static newAuthRequest(acctEmail: string | undefined, scopes: string[]): AuthReq {
-    const authReq = {
-      acctEmail,
-      scopes,
-      csrfToken: `csrf-${Api.randomFortyHexChars()}`,
-    };
-    return {
-      ...authReq,
-      expectedState: GoogleOAuth.OAUTH.state_header + JSON.stringify(authReq),
-    };
-  }
-
   private static apiGoogleAuthCodeUrl(authReq: AuthReq) {
     /* eslint-disable @typescript-eslint/naming-convention */
-    return Url.create(GoogleOAuth.OAUTH.url_code, {
-      client_id: GoogleOAuth.OAUTH.client_id,
+    return Url.create(this.GOOGLE_OAUTH_CONFIG.url_code, {
+      client_id: this.GOOGLE_OAUTH_CONFIG.client_id,
       response_type: 'code',
       access_type: 'offline',
       prompt: 'consent',
       state: authReq.expectedState,
-      redirect_uri: GoogleOAuth.OAUTH.redirect_uri,
+      redirect_uri: this.GOOGLE_OAUTH_CONFIG.redirect_uri,
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     });
     /* eslint-enable @typescript-eslint/naming-convention */
   }
 
-  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: GoogleAuthTokensResponse) {
+  private static async googleAuthSaveTokens(acctEmail: string, tokensObj: OAuthTokensResponse) {
     const parsedOpenId = GoogleOAuth.parseIdToken(tokensObj.id_token);
     const { full_name, picture } = await AcctStore.get(acctEmail, ['full_name', 'picture']); // eslint-disable-line @typescript-eslint/naming-convention
     const googleTokenExpires = new Date().getTime() + (tokensObj.expires_in - 120) * 1000; // let our copy expire 2 minutes beforehand
@@ -326,16 +282,16 @@ export class GoogleOAuth extends OAuth {
     await InMemoryStore.set(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS, tokensObj.access_token, googleTokenExpires);
   }
 
-  private static async googleAuthGetTokens(code: string): Promise<GoogleAuthTokensResponse> {
+  private static async googleAuthGetTokens(code: string): Promise<OAuthTokensResponse> {
     return await Api.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */
-        url: Url.create(GoogleOAuth.OAUTH.url_tokens, {
+        url: Url.create(this.GOOGLE_OAUTH_CONFIG.url_tokens, {
           grant_type: 'authorization_code',
           code,
-          client_id: GoogleOAuth.OAUTH.client_id,
-          client_secret: GoogleOAuth.OAUTH.client_secret,
-          redirect_uri: GoogleOAuth.OAUTH.redirect_uri,
+          client_id: this.GOOGLE_OAUTH_CONFIG.client_id,
+          client_secret: this.GOOGLE_OAUTH_CONFIG.client_secret,
+          redirect_uri: this.GOOGLE_OAUTH_CONFIG.redirect_uri,
         }),
         /* eslint-enable @typescript-eslint/naming-convention */
         method: 'POST',
@@ -345,14 +301,14 @@ export class GoogleOAuth extends OAuth {
     );
   }
 
-  private static async googleAuthRefreshToken(refreshToken: string): Promise<GoogleAuthTokensResponse> {
+  private static async googleAuthRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
     const url =
       /* eslint-disable @typescript-eslint/naming-convention */
-      Url.create(GoogleOAuth.OAUTH.url_tokens, {
+      Url.create(this.GOOGLE_OAUTH_CONFIG.url_tokens, {
         grant_type: 'refresh_token',
         refreshToken,
-        client_id: GoogleOAuth.OAUTH.client_id,
-        client_secret: GoogleOAuth.OAUTH.client_secret,
+        client_id: this.GOOGLE_OAUTH_CONFIG.client_id,
+        client_secret: this.GOOGLE_OAUTH_CONFIG.client_secret,
       });
     /* eslint-enable @typescript-eslint/naming-convention */
     const req: Ajax = {
@@ -376,14 +332,14 @@ export class GoogleOAuth extends OAuth {
   }
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes(addScopes: string[]): string[] {
-    if (!addScopes.includes(GoogleOAuth.OAUTH.scopes.email)) {
-      addScopes.push(GoogleOAuth.OAUTH.scopes.email);
+    if (!addScopes.includes(this.GOOGLE_OAUTH_CONFIG.scopes.email)) {
+      addScopes.push(this.GOOGLE_OAUTH_CONFIG.scopes.email);
     }
-    if (!addScopes.includes(GoogleOAuth.OAUTH.scopes.openid)) {
-      addScopes.push(GoogleOAuth.OAUTH.scopes.openid);
+    if (!addScopes.includes(this.GOOGLE_OAUTH_CONFIG.scopes.openid)) {
+      addScopes.push(this.GOOGLE_OAUTH_CONFIG.scopes.openid);
     }
-    if (!addScopes.includes(GoogleOAuth.OAUTH.scopes.profile)) {
-      addScopes.push(GoogleOAuth.OAUTH.scopes.profile);
+    if (!addScopes.includes(this.GOOGLE_OAUTH_CONFIG.scopes.profile)) {
+      addScopes.push(this.GOOGLE_OAUTH_CONFIG.scopes.profile);
     }
     return addScopes;
   }

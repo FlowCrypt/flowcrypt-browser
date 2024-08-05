@@ -27,7 +27,6 @@ import { isCustomerUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
-import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
 
 declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
 
@@ -344,7 +343,6 @@ export class Settings {
       const response = await GoogleOAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await GlobalStore.acctEmailsAdd(response.acctEmail);
-        await ConfiguredIdpOAuth.newAuthPopupForEnterpriseServerAuthenticationIfNeeded(response.acctEmail);
         const storage = await AcctStore.get(response.acctEmail, ['setup_done']);
         if (storage.setup_done) {
           // this was just an additional permission
