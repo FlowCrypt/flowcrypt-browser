@@ -136,11 +136,5 @@ const authenticate = (req: { headers: IncomingHttpHeaders }, isCustomIDPUsed: bo
   if (!issuedTokens.includes(jwt)) {
     throw new Error('ID token is invalid');
   }
-  // if {
-  //   // fes
-  //   if (!issuedIdTokens.includes(jwt)) {
-  //     throw new HttpClientErr('FES mock received access token it didnt issue', 401);
-  //   }
-  // }
   return MockJwt.parseEmail(jwt);
 };
