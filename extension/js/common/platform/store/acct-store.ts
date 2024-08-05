@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { OAuth } from '../../api/authentication/generic/oauth.js';
 import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
@@ -13,7 +14,7 @@ import { AbstractStore, RawStore } from './abstract-store.js';
 import { InMemoryStore } from './in-memory-store.js';
 
 export type EmailProvider = 'gmail';
-type GoogleAuthScopesNames = [keyof typeof GoogleOAuth.OAUTH.scopes, keyof typeof GoogleOAuth.OAUTH.legacy_scopes][number];
+type GoogleAuthScopesNames = [keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.scopes, keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes][number];
 
 export type Scopes = {
   openid: boolean;
@@ -148,12 +149,12 @@ export class AcctStore extends AbstractStore {
         BrowserMsg.send.notificationShowAuthPopupNeeded('broadcast', { acctEmail });
       }
     }
-    for (const key of Object.keys({ ...GoogleOAuth.OAUTH.scopes, ...GoogleOAuth.OAUTH.legacy_scopes })) {
+    for (const key of Object.keys({ ...OAuth.GOOGLE_OAUTH_CONFIG.scopes, ...OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes })) {
       const scopeName = key as GoogleAuthScopesNames;
-      if (scopeName in GoogleOAuth.OAUTH.scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleOAuth.OAUTH.scopes[scopeName as keyof typeof GoogleOAuth.OAUTH.scopes]);
-      } else if (scopeName in GoogleOAuth.OAUTH.legacy_scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleOAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleOAuth.OAUTH.legacy_scopes]);
+      if (scopeName in OAuth.GOOGLE_OAUTH_CONFIG.scopes) {
+        result[scopeName] = allowedScopes.includes(OAuth.GOOGLE_OAUTH_CONFIG.scopes[scopeName as keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.scopes]);
+      } else if (scopeName in OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes) {
+        result[scopeName] = allowedScopes.includes(OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes[scopeName as keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes]);
       }
     }
     return result;

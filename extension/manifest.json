@@ -25,7 +25,7 @@
     "64": "/img/logo/flowcrypt-logo-64-64.png",
     "128": "/img/logo/flowcrypt-logo-128-128.png"
   },
-  "permissions": ["alarms", "storage", "tabs", "scripting", "unlimitedStorage"],
+  "permissions": ["alarms", "storage", "tabs", "scripting", "unlimitedStorage", "identity"],
   "host_permissions": [
     "https://flowcrypt.com/*",
     "https://*.google.com/*",

@@ -5,10 +5,9 @@
 
 'use strict';
 
-import { AuthRes } from '../api/authentication/google/google-oauth.js';
 import { AjaxErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
-import { Dict, Str, UrlParams } from '../core/common.js';
+import { Dict, Str, Url, UrlParams } from '../core/common.js';
 import { NotificationGroupType } from '../notifications.js';
 import { Catch } from '../platform/catch.js';
 import { PassphraseDialogType } from '../xss-safe-factory.js';
@@ -18,6 +17,9 @@ import { RenderMessage } from '../render-message.js';
 import { SymEncryptedMessage, SymmetricMessageEncryption } from '../symmetric-message-encryption.js';
 import { Ajax as ApiAjax, ResFmt } from '../api/shared/api.js';
 import { Ui } from './ui.js';
+import { AuthRes } from '../api/authentication/generic/oauth.js';
+import { GlobalStore } from '../platform/store/global-store.js';
+import { BgUtils } from '../../service_worker/bgutils.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -447,6 +449,44 @@ export class BrowserMsg {
         // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         BrowserMsg.sendRawResponse(Promise.reject(exception), respondIfPageStillOpen);
         return true; // will respond
+      }
+    });
+  }
+
+  public static thunderbirdSecureComposeHandler() {
+    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: messenger.compose._ComposeDetailsType) => {
+      const accountEmails = await GlobalStore.acctEmailsGet();
+      const useFullScreenSecureCompose = (await messenger.windows.getCurrent()).type === 'messageCompose';
+      composeMethod = composeMethod === 'reply' || composeMethod === 'forward' ? composeMethod : undefined;
+      if (accountEmails.length !== 0) {
+        await BgUtils.openExtensionTab(
+          Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId, composeMethod })
+        );
+        await messenger.tabs.remove(tabId);
+      } else {
+        await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
+      }
+    };
+    messenger.composeAction.onClicked.addListener(async tab => {
+      const messageDetails = await messenger.compose.getComposeDetails(Number(tab.id));
+      const composeMethod = messageDetails.type;
+      const msgId = Number(messageDetails.relatedMessageId);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const acctEmail = Str.parseEmail(messageDetails.from as string).email!;
+      await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
+    });
+    messenger.messageDisplayAction.onClicked.addListener(async tab => {
+      const tabId = Number(tab.id);
+      const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
+      if (messageDetails) {
+        const msgId = messageDetails.id;
+        if (messageDetails.folder?.accountId) {
+          const account = await messenger.accounts.get(messageDetails.folder.accountId);
+          if (account) {
+            await handleClickEvent(tabId, account.name, msgId);
+          }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       }
     });
   }

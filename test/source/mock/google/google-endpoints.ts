@@ -14,6 +14,16 @@ import { Dict } from '../../core/common';
 
 type DraftSaveModel = { message: { raw: string; threadId: string } };
 
+/* eslint-disable @typescript-eslint/naming-convention */
+type OAuthTokenRequestModel = {
+  grant_type: string;
+  code: string;
+  client_id: string;
+  client_secret: string;
+  redirect_uri: string;
+};
+/* eslint-enable @typescript-eslint/naming-convention */
+
 const allowedRecipients: string[] = [
   'flowcrypt.compatibility@gmail.com',
   'manualcopypgp@flowcrypt.com',
@@ -111,29 +121,43 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
   return {
     '/o/oauth2/auth': async (
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      { query: { client_id, response_type, access_type, state, scope, login_hint, proceed } },
+      { query: { client_id, response_type, access_type, state, scope, login_hint, proceed, redirect_uri } },
       req
     ) => {
-      if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && scope) {
-        // auth screen
-        if (!login_hint) {
-          return oauth.renderText('choose account with login_hint');
-        } else if (!proceed) {
-          return oauth.renderText('redirect with proceed=true to continue');
-        } else {
-          return oauth.successResult(parsePort(req), login_hint, state, scope);
+      if (isGet(req) && response_type === 'code' && access_type === 'offline' && state && scope) {
+        if (client_id === oauth.clientId) {
+          // auth screen
+          if (!login_hint) {
+            return oauth.renderText('choose account with login_hint');
+          } else if (!proceed) {
+            return oauth.renderText('redirect with proceed=true to continue');
+          } else {
+            return oauth.successResult(parsePort(req), login_hint, state, scope);
+          }
+        } else if (client_id === OauthMock.customIDPClientId) {
+          if (!proceed) {
+            return oauth.renderText('redirect with proceed=true to continue');
+          }
+          return oauth.successResult(parsePort(req), login_hint, state, scope, redirect_uri);
         }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    '/token': async ({ query: { grant_type, refreshToken, client_id, code } }, req) => {
-      if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
-        // auth code from auth screen gets exchanged for access and refresh tokens
-        return oauth.getRefreshTokenResponse(code);
-      } else if (isPost(req) && grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) {
-        // here also later refresh token gets exchanged for access token
-        return oauth.getTokenResponse(refreshToken);
+    '/token': async ({ query: { grant_type, refreshToken, client_id, code }, body }, req) => {
+      if (isPost(req)) {
+        if (grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
+          // auth code from auth screen gets exchanged for access and refresh tokens
+          return oauth.getRefreshTokenResponse(code);
+        } else if (grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) {
+          // here also later refresh token gets exchanged for access token
+          return oauth.getTokenResponse(refreshToken);
+        }
+        const parsedBody = body as OAuthTokenRequestModel;
+        // Above is for Google OAuth and this is for normal OAuth
+        if (parsedBody.grant_type === 'authorization_code' && parsedBody.code && parsedBody.client_id === OauthMock.customIDPClientId) {
+          return oauth.getRefreshTokenResponse(parsedBody.code);
+        }
       }
       throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
     },
