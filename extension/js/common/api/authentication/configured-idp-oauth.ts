@@ -12,6 +12,7 @@ import { Catch } from '../../platform/catch.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
+import { BackendAuthErr } from '../shared/api-error.js';
 export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (authRes: AuthRes) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -22,6 +23,24 @@ export class ConfiguredIdpOAuth extends OAuth {
       return await this.newAuthPopup(acctEmail, { oauth: storage.authentication.oauth });
     }
     return authRes;
+  };
+
+  public static authHdrForFES = async (acctEmail: string, shouldThrowErrorForEmptyIdToken = true): Promise<{ authorization: string } | undefined> => {
+    let idToken = await InMemoryStore.getUntilAvailable(acctEmail, InMemoryStoreKeys.ID_TOKEN);
+    if (idToken) {
+      const customIDPIdToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.CUSTOM_IDP_ID_TOKEN);
+      // if special JWT is stored in local store, it should be used for Enterprise Server authentication instead of Google JWT
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/5799
+      if (customIDPIdToken) {
+        idToken = customIDPIdToken;
+      }
+      return { authorization: `Bearer ${idToken}` };
+    }
+    if (shouldThrowErrorForEmptyIdToken) {
+      return undefined;
+    }
+    // user will not actually see this message, they'll see a generic login prompt
+    throw new BackendAuthErr('Missing id token, please re-authenticate');
   };
 
   public static async newAuthPopup(acctEmail: string, authConf: AuthenticationConfiguration): Promise<AuthRes> {
