@@ -15,7 +15,6 @@ const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
     const filePath = path.join(dir, fileInDir);
     const stat = statSync(filePath);
     if (stat.isDirectory()) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       all.push(...getAllFilesInDir(filePath, filePattern));
     } else if (filePattern.test(filePath)) {
       all.push(filePath);
@@ -25,12 +24,10 @@ const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
 };
 
 const hasXssComment = (line: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return /\/[\/\*] xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(line);
 };
 
 const hasErrHandledComment = (line: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return /\/[\/\*] error-handled/.test(line);
 };
 
@@ -73,7 +70,6 @@ const validateTypeScriptLine = (line: string, location: string) => {
 for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
   const lines = readFileSync(srcFilePath).toString().split('\n');
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     validateTypeScriptLine(lines[lineIndex], `${srcFilePath}:${lineIndex + 1}`);
   }
 }
@@ -102,7 +98,6 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise']) {
       }
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   const gmailCs = manifest.content_scripts?.find(cs => cs.matches?.includes('https://mail.google.com/*'));
   if (!gmailCs?.css?.length || !gmailCs.js?.length) {
     console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
