@@ -4,6 +4,7 @@
 
 import { Api } from './../shared/api.js';
 import { Url } from '../../core/common.js';
+import { ConfiguredIdpOAuth } from '../authentication/configured-idp-oauth.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
 
@@ -15,17 +16,17 @@ export class KeyManager extends Api {
     this.url = Url.removeTrailingSlash(url);
   }
 
-  public getPrivateKeys = async (idToken: string): Promise<LoadPrvRes> => {
-    return await Api.apiCall(this.url, '/v1/keys/private', undefined, undefined, idToken ? { authorization: `Bearer ${idToken}` } : undefined, 'json');
+  public getPrivateKeys = async (acctEmail: string): Promise<LoadPrvRes> => {
+    return await Api.apiCall(this.url, '/v1/keys/private', undefined, undefined, await ConfiguredIdpOAuth.authHdr(acctEmail, false), 'json');
   };
 
-  public storePrivateKey = async (idToken: string, privateKey: string): Promise<void> => {
+  public storePrivateKey = async (acctEmail: string, privateKey: string): Promise<void> => {
     await Api.apiCall(
       this.url,
       '/v1/keys/private',
       { data: { privateKey }, fmt: 'JSON', method: 'PUT' },
       undefined,
-      idToken ? { authorization: `Bearer ${idToken}` } : undefined
+      await ConfiguredIdpOAuth.authHdr(acctEmail, false)
     );
   };
 }

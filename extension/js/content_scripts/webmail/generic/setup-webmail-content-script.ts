@@ -349,7 +349,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         const keyManager = new KeyManager(clientConfiguration.getKeyManagerUrlForPrivateKeys()!);
         Catch.setHandledTimeout(async () => {
           try {
-            const { privateKeys } = await keyManager.getPrivateKeys(idToken);
+            const { privateKeys } = await keyManager.getPrivateKeys(acctEmail);
             await processKeysFromEkm(
               acctEmail,
               privateKeys.map(entry => entry.decryptedPrivateKey),
