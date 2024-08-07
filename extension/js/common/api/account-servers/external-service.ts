@@ -183,6 +183,6 @@ export class ExternalService extends Api {
           method: 'POST',
         }
       : undefined;
-    return await ExternalService.apiCall(this.url, path, values, progress, await ConfiguredIdpOAuth.authHdrForFES(this.acctEmail), 'json');
+    return await ExternalService.apiCall(this.url, path, values, progress, await ConfiguredIdpOAuth.authHdr(this.acctEmail), 'json');
   };
 }

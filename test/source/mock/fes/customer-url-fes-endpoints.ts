@@ -135,7 +135,7 @@ const authenticate = (req: { headers: IncomingHttpHeaders }, isCustomIDPUsed: bo
   const issuedTokens = isCustomIDPUsed ? issuedCustomIDPIdTokens : issuedGoogleIDPIdTokens;
 
   if (!issuedTokens.includes(jwt)) {
-    throw new Error('ID token is invalid');
+    throw new HttpClientErr('FES mock received access token it didnt issue', 401);
   }
   return MockJwt.parseEmail(jwt);
 };

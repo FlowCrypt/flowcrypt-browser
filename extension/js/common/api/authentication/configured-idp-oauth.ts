@@ -25,7 +25,7 @@ export class ConfiguredIdpOAuth extends OAuth {
     return authRes;
   };
 
-  public static authHdrForFES = async (acctEmail: string, shouldThrowErrorForEmptyIdToken = true): Promise<{ authorization: string } | undefined> => {
+  public static authHdr = async (acctEmail: string, shouldThrowErrorForEmptyIdToken = true): Promise<{ authorization: string } | undefined> => {
     let idToken = await InMemoryStore.getUntilAvailable(acctEmail, InMemoryStoreKeys.ID_TOKEN);
     if (idToken) {
       const customIDPIdToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.CUSTOM_IDP_ID_TOKEN);

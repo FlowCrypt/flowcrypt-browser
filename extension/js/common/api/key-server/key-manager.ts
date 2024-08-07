@@ -17,7 +17,7 @@ export class KeyManager extends Api {
   }
 
   public getPrivateKeys = async (acctEmail: string): Promise<LoadPrvRes> => {
-    return await Api.apiCall(this.url, '/v1/keys/private', undefined, undefined, await ConfiguredIdpOAuth.authHdrForFES(acctEmail, false), 'json');
+    return await Api.apiCall(this.url, '/v1/keys/private', undefined, undefined, await ConfiguredIdpOAuth.authHdr(acctEmail, false), 'json');
   };
 
   public storePrivateKey = async (acctEmail: string, privateKey: string): Promise<void> => {
@@ -26,7 +26,7 @@ export class KeyManager extends Api {
       '/v1/keys/private',
       { data: { privateKey }, fmt: 'JSON', method: 'PUT' },
       undefined,
-      await ConfiguredIdpOAuth.authHdrForFES(acctEmail, false)
+      await ConfiguredIdpOAuth.authHdr(acctEmail, false)
     );
   };
 }
