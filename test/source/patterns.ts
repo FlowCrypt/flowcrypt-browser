@@ -32,33 +32,33 @@ const hasErrHandledComment = (line: string) => {
 };
 
 const validateTypeScriptLine = (line: string, location: string) => {
-  if (line.match(/\.(innerHTML|outerHTML) ?= ?/) && !hasXssComment(line)) {
+  if (line.match(/\.(innerHTML|outerHTML) ?= ?/g) && !hasXssComment(line)) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/\.(html|append|prepend|replaceWith|insertBefore|insertAfter|before|after)\([^)]/) && !hasXssComment(line)) {
+  if (line.match(/\.(html|append|prepend|replaceWith|insertBefore|insertAfter|before|after)\([^)]/g) && !hasXssComment(line)) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/DANGEROUS/i) && !hasXssComment(line) && !line.includes(' is dangerous ')) {
+  if (line.match(/DANGEROUS/gi) && !hasXssComment(line) && !line.includes(' is dangerous ')) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/setInterval|setTimeout/) && !hasErrHandledComment(line)) {
+  if (line.match(/setInterval|setTimeout/g) && !hasErrHandledComment(line)) {
     console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/^ {2}(public |private |protected |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/)) {
+  if (line.match(/^ {2}(public |private |protected |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^;]+[^>] \{$/g)) {
     console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #1:\n${line}\n`);
     errsFound++;
   }
-  if (line.match(/^ {2}(public |private |protected |static )+?[a-z][a-zA-Z0-9]+ = (async )?\(.+\)(: .+)? => .+;$/)) {
+  if (line.match(/^ {2}(public |private |protected |static )+?[a-z][a-zA-Z0-9]+ = (async )?\(.+\)(: .+)? => .+;$/g)) {
     console.error(
       `don't use single-line "method = (arg) => result" class methods, give them a method body and a return statement "method = (arg) => { return result; }":\n${line}\n`
     );
     errsFound++;
   }
-  if (line.match(/^ {2}(public |private |protected |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/)) {
+  if (line.match(/^ {2}(public |private |protected |async )*((?!constructor)[a-z][a-zA-Z0-9]+)\([^)]*\) \{$/g)) {
     console.error(`wrongly using class method, which can cause binding loss (use fat arrow method properties instead) #2:\n${line}\n`);
     errsFound++;
   }

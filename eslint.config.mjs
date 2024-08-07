@@ -4,7 +4,6 @@ import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
 import headerPlugin from 'eslint-plugin-header';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
 import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
-import importPlugin from 'eslint-plugin-import';
 import noNullPlugin from 'eslint-plugin-no-null';
 import localRulesPlugin from 'eslint-plugin-local-rules';
 import eslintConfigPrettier from 'eslint-config-prettier';
@@ -17,7 +16,6 @@ const commonConfig = {
     header: headerPlugin,
     jsdoc: jsdocPlugin,
     'prefer-arrow': preferArrowPlugin,
-    import: importPlugin,
     'no-null': noNullPlugin,
     'local-rules': localRulesPlugin,
   },
@@ -110,7 +108,6 @@ const commonConfig = {
     'header/header': ['error', 'block', ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com '],
     'id-denylist': 'error',
     'id-match': 'error',
-    'import/order': 'off',
     'jsdoc/check-alignment': 'off',
     'jsdoc/check-indentation': 'off',
     'jsdoc/newline-after-description': 'off',
