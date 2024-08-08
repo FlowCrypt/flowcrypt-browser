@@ -73,12 +73,11 @@ export class BrowserHandle {
   public newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = (await this.doAwaitTriggeredPage(triggeringAction))!;
     const url = page.url();
-    let pathname = url;
+    let pathname: string;
     try {
-      const parsedUrl = new URL(url);
-      pathname = parsedUrl.pathname;
-    } catch (e) {
-      console.error('Error parsing URL:', e.message);
+      pathname = new URL(url).pathname;
+    } catch {
+      pathname = url;
     }
     const controllablePage = new ControllablePage(t, page);
     try {
