@@ -68,8 +68,25 @@ console.info('background.js service worker starting');
   await BgHandlers.updateUninstallUrl({});
   injectFcIntoWebmail();
 
-  // Thunderbird event handlers
   if (Catch.isThunderbirdMail()) {
-    BrowserMsg.thunderbirdSecureComposeHandler();
+    BgHandlers.thunderbirdSecureComposeHandler();
+    await BgHandlers.thunderbirdContentScriptRegistration();
+    // todo - add background listener here with name "thunderbird_msg_decrypt"
+    // todo - move this to BrowserMsg
+    messenger.runtime.onMessage.addListener(async (message, sender) => {
+      if (message === 'thunderbird_get_current_user') {
+        if (sender.tab?.id) {
+          const messageDetails = await messenger.messageDisplay.getDisplayedMessage(sender.tab?.id);
+          const accountId = messageDetails?.folder?.accountId || '';
+          return (await messenger.accounts.get(accountId))?.name;
+        }
+      }
+      if (message === 'thunderbird_msg_decrypt') {
+        if (sender.tab?.id) {
+          return await messenger.messages.getFull(sender.tab.id);
+        }
+      }
+      return;
+    });
   }
 })().catch(Catch.reportErr);
