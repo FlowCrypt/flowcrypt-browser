@@ -27,14 +27,14 @@ export class ConfiguredIdpOAuth extends OAuth {
 
   public static authHdr = async (acctEmail: string, shouldThrowErrorForEmptyIdToken = true, forceRefresh = false): Promise<AuthorizationHeader | undefined> => {
     const { custom_idp_token_refresh } = await AcctStore.get(acctEmail, ['custom_idp_token_refresh']); // eslint-disable-line @typescript-eslint/naming-convention
-    if (!custom_idp_token_refresh) {
-      throw new EnterpriseServerAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
-    }
     if (!forceRefresh) {
       const authHdr = await this.getAuthHeaderDependsOnType(acctEmail);
       if (authHdr) {
         return authHdr;
       }
+    }
+    if (!custom_idp_token_refresh) {
+      throw new EnterpriseServerAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
     }
     // refresh token
     const refreshTokenRes = await this.authRefreshToken(custom_idp_token_refresh);
