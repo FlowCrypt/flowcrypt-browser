@@ -39,7 +39,7 @@ module.exports = {
 
             if (propertyName === 'forEach' || propertyName === 'each') {
               context.report({ node, message: DO_NOT_USE_EACH });
-            } else if (propertyName === 'map') {
+            } else if (propertyName === 'map' && context.hasOwnProperty('getAncestors')) {
               const ancestors = context.getAncestors();
               const parent = ancestors[ancestors.length - 1];
               if (parent && parent.type === 'ExpressionStatement') {

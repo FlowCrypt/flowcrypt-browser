@@ -60,7 +60,7 @@ export class Google {
         dataPart = { method: 'GET' };
       }
     }
-    const headers = { authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail) };
+    const headers = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const progressCbs = 'download' in progress || 'upload' in progress ? progress : undefined;
     const request: Ajax = { url, headers, ...dataPart, stack: Catch.stackTrace(), progress: progressCbs };
     return await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<RT>(acctEmail, request);
@@ -71,7 +71,7 @@ export class Google {
     const searchContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people:searchContacts`;
     const searchOtherContactsUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/otherContacts:search`;
     const data = { query, readMask: 'names,emailAddresses', pageSize: max };
-    const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
+    const authorizationHeader = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const contacts = await Promise.all(
       [searchContactsUrl, searchOtherContactsUrl].map(url =>
         GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<GmailRes.GoogleContacts>(acctEmail, {
@@ -79,7 +79,7 @@ export class Google {
           url,
           method: 'GET',
           data,
-          headers: { authorization },
+          headers: authorizationHeader,
           stack: Catch.stackTrace(),
         })
       )
@@ -100,12 +100,12 @@ export class Google {
   public static getNames = async (acctEmail: string): Promise<GmailRes.GoogleUserProfile> => {
     const getProfileUrl = `${PEOPLE_GOOGLE_API_HOST}/v1/people/me`;
     const data = { personFields: 'names' };
-    const authorization = await GoogleOAuth.googleApiAuthHeader(acctEmail);
+    const authorizationHeader = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const contacts = GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<GmailRes.GoogleUserProfile>(acctEmail, {
       url: getProfileUrl,
       method: 'GET',
       data,
-      headers: { authorization },
+      headers: authorizationHeader,
       stack: Catch.stackTrace(),
     });
     return contacts;

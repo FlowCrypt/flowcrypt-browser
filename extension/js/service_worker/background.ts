@@ -57,7 +57,7 @@ console.info('background.js service worker starting');
   BrowserMsg.bgAddListener('expirationCacheGet', BgHandlers.expirationCacheGetHandler);
   BrowserMsg.bgAddListener('expirationCacheSet', BgHandlers.expirationCacheSetHandler);
   BrowserMsg.bgAddListener('expirationCacheDeleteExpired', BgHandlers.expirationCacheDeleteExpiredHandler);
-  BrowserMsg.bgAddListener('getGoogleApiAuthorization', BgHandlers.getGoogleApiAuthorization);
+  BrowserMsg.bgAddListener('getApiAuthorization', BgHandlers.getApiAuthorization);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);

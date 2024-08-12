@@ -27,6 +27,7 @@ interface RawAjaxErr {
 
 abstract class AuthErr extends Error {}
 export class GoogleAuthErr extends AuthErr {}
+export class EnterpriseServerAuthErr extends AuthErr {}
 export class BackendAuthErr extends AuthErr {}
 
 export const MAX_RATE_LIMIT_ERROR_RETRY_COUNT = 5;
@@ -41,7 +42,7 @@ abstract class ApiCallErr extends Error {
     if (typeof req.data === 'string') {
       try {
         return Object.keys(JSON.parse(req.data) as string).join(',');
-      } catch (e) {
+      } catch {
         return 'not-a-json';
       }
     } else if (req.data && typeof req.data === 'object') {
@@ -111,7 +112,7 @@ export class AjaxErr extends ApiCallErr {
     let parsedRes: unknown;
     try {
       parsedRes = JSON.parse(responseText);
-    } catch (e) {
+    } catch {
       return {};
     }
     try {
@@ -128,7 +129,7 @@ export class AjaxErr extends ApiCallErr {
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
-    } catch (e) {
+    } catch {
       // skip
     }
     try {
@@ -145,7 +146,7 @@ export class AjaxErr extends ApiCallErr {
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
-    } catch (e) {
+    } catch {
       // skip
     }
     return returnable;
@@ -212,7 +213,7 @@ export class ApiErr {
   };
 
   public static isAuthErr = (e: unknown): boolean => {
-    if (e instanceof AuthErr || e instanceof GoogleAuthErr) {
+    if (e instanceof AuthErr || e instanceof GoogleAuthErr || e instanceof EnterpriseServerAuthErr) {
       return true;
     }
     if (ApiErr.isStandardErr(e, 'auth')) {
@@ -230,7 +231,7 @@ export class ApiErr {
           const jsonErrorDesc = (json as { error_description: string }).error_description;
           return jsonErrorDesc === 'Bad Request' || jsonErrorDesc === 'Token has been expired or revoked.';
         }
-      } catch (e) {
+      } catch {
         return false;
       }
     }

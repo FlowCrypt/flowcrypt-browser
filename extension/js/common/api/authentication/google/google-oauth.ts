@@ -14,7 +14,7 @@ import { Catch } from '../../../platform/catch.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
-import { AuthReq, AuthRes, OAuth, OAuthTokensResponse } from '../generic/oauth.js';
+import { AuthorizationHeader, AuthReq, AuthRes, OAuth, OAuthTokensResponse } from '../generic/oauth.js';
 import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { Assert, AssertError } from '../../../assert.js';
@@ -23,8 +23,6 @@ import { ConfiguredIdpOAuth } from '../configured-idp-oauth.js';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type GoogleTokenInfo = { email: string; scope: string; expires_in: number; token_type: string };
-
-/* eslint-enable @typescript-eslint/naming-convention */
 
 export class GoogleOAuth extends OAuth {
   public static defaultScopes(group: 'default' | 'contacts' = 'default') {
@@ -56,7 +54,7 @@ export class GoogleOAuth extends OAuth {
     );
   }
 
-  public static async googleApiAuthHeader(acctEmail: string, forceRefresh = false): Promise<string> {
+  public static async googleApiAuthHeader(acctEmail: string, forceRefresh = false): Promise<AuthorizationHeader> {
     if (!acctEmail) {
       throw new Error('missing account_email in api_gmail_call');
     }
@@ -67,16 +65,16 @@ export class GoogleOAuth extends OAuth {
     if (!forceRefresh) {
       const googleAccessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
       if (googleAccessToken) {
-        return `Bearer ${googleAccessToken}`;
+        return { authorization: `Bearer ${googleAccessToken}` };
       }
     }
     // refresh token
-    const refreshTokenRes = await GoogleOAuth.googleAuthRefreshToken(google_token_refresh);
+    const refreshTokenRes = await GoogleOAuth.authRefreshToken(google_token_refresh);
     if (refreshTokenRes.access_token) {
       await GoogleOAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes);
       const googleAccessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
       if (googleAccessToken) {
-        return `Bearer ${googleAccessToken}`;
+        return { authorization: `Bearer ${googleAccessToken}` };
       }
     }
     throw new GoogleAuthErr(
@@ -97,13 +95,13 @@ export class GoogleOAuth extends OAuth {
     };
 
     try {
-      return performAjaxRequest(req);
+      return await performAjaxRequest(req);
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
         return performAjaxRequest({
           ...req,
-          headers: { ...(req.headers ?? {}), authorization: await GoogleOAuth.googleApiAuthHeader(acctEmail, true) },
+          headers: { ...(req.headers ?? {}), ...(await GoogleOAuth.googleApiAuthHeader(acctEmail, true)) },
           stack: Catch.stackTrace(),
         });
       }
@@ -188,6 +186,25 @@ export class GoogleOAuth extends OAuth {
     return authRes;
   }
 
+  protected static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
+    const url =
+      /* eslint-disable @typescript-eslint/naming-convention */
+      Url.create(this.GOOGLE_OAUTH_CONFIG.url_tokens, {
+        grant_type: 'refresh_token',
+        refreshToken,
+        client_id: this.GOOGLE_OAUTH_CONFIG.client_id,
+        client_secret: this.GOOGLE_OAUTH_CONFIG.client_secret,
+      });
+    /* eslint-enable @typescript-eslint/naming-convention */
+    const req: Ajax = {
+      url,
+      method: 'POST',
+      stack: Catch.stackTrace(),
+    };
+
+    return await Api.ajax(req, 'json');
+  }
+
   private static async getAuthRes({
     acctEmail,
     save,
@@ -209,7 +226,7 @@ export class GoogleOAuth extends OAuth {
       if (authWindowResult.error) {
         return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url);
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
@@ -299,25 +316,6 @@ export class GoogleOAuth extends OAuth {
       },
       'json'
     );
-  }
-
-  private static async googleAuthRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
-    const url =
-      /* eslint-disable @typescript-eslint/naming-convention */
-      Url.create(this.GOOGLE_OAUTH_CONFIG.url_tokens, {
-        grant_type: 'refresh_token',
-        refreshToken,
-        client_id: this.GOOGLE_OAUTH_CONFIG.client_id,
-        client_secret: this.GOOGLE_OAUTH_CONFIG.client_secret,
-      });
-    /* eslint-enable @typescript-eslint/naming-convention */
-    const req: Ajax = {
-      url,
-      method: 'POST',
-      stack: Catch.stackTrace(),
-    };
-
-    return await Api.ajax(req, 'json');
   }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -31,6 +31,10 @@ export type OAuthTokensResponse = {
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
+export type AuthorizationHeader = {
+  authorization: string;
+};
+
 export class OAuth {
   /* eslint-disable @typescript-eslint/naming-convention */
   public static GOOGLE_OAUTH_CONFIG = {
@@ -91,5 +95,10 @@ export class OAuth {
       ...authReq,
       expectedState: `CRYPTUP_STATE_${JSON.stringify(authReq)}`,
     };
+  }
+
+  protected static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
+    void refreshToken;
+    throw new Error(`authRefreshToken should be implemented`);
   }
 }
