@@ -550,7 +550,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.close();
         // test the pubkeys we copied
         const contact = await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, 'manualcopypgp@flowcrypt.com');
         });
         expect(contact.sortedPubkeys.length).to.equal(2);
@@ -1934,7 +1934,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
         const message = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
-        const encryptedData = message.match(/\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s)![0];
+        const encryptedData = /\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s.exec(message)![0];
         const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
         // decryption without a ki should fail
         expect(decrypted0.success).to.equal(false);
@@ -2036,7 +2036,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const framesUrls = await inboxPage.getFramesUrls(['compose.htm']);
         expect(framesUrls.length).to.equal(3);
         // focus the 1st one
-        const firstFrameId = framesUrls[0].match(/frameId=.*?&/s)![0];
+        const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
         const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
         await inboxPage.waitAndFocus('iframe');
         await firstComposeFrame.waitAndFocus('@input-body');

@@ -92,7 +92,6 @@ const commonConfig = {
     '@typescript-eslint/no-unused-vars': ['error'],
     '@typescript-eslint/no-unused-expressions': 'error',
     '@typescript-eslint/no-use-before-define': 'off',
-    '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/prefer-for-of': 'error',
     '@typescript-eslint/prefer-function-type': 'error',
     '@typescript-eslint/prefer-namespace-keyword': 'error',
@@ -151,20 +150,22 @@ const commonConfig = {
     radix: 'off',
     'require-atomic-updates': 0,
     'sort-imports': 'off',
-    'spaced-comment': [
-      'error',
-      'always',
-      {
-        markers: ['/'],
-      },
-    ],
     'local-rules/standard-loops': 'error',
   },
 };
 
 export default [
   {
-    ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**', 'eslint.config.js'],
+    ignores: [
+      'build/**',
+      'conf/**',
+      'eslint.config.mjs',
+      'eslint-local-rules.js',
+      'extension/lib/**',
+      'extension/types/**',
+      'extension/js/common/core/types/**',
+      'test/source/core/types/**',
+    ],
   },
   pluginJs.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

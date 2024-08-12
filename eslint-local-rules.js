@@ -40,7 +40,8 @@ module.exports = {
             if (propertyName === 'forEach' || propertyName === 'each') {
               context.report({ node, message: DO_NOT_USE_EACH });
             } else if (propertyName === 'map') {
-              const ancestors = context.getAncestors();
+              const sourceCode = context.sourceCode ?? context.getSourceCode();
+              const ancestors = sourceCode.getAncestors ? sourceCode.getAncestors(node) : context.getAncestors();
               const parent = ancestors[ancestors.length - 1];
               if (parent && parent.type === 'ExpressionStatement') {
                 context.report({ node, message: DO_NOT_USE_MAP_EXPR_STMT });
