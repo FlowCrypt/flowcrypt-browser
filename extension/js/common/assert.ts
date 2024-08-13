@@ -84,7 +84,7 @@ export class Assert {
       // eg expected string or optional string, and got string
       return values[name];
     }
-    if (actualType === 'undefined' && expectedType.match(/\?$/)) {
+    if (actualType === 'undefined' && /\?$/.exec(expectedType)) {
       // optional type, got undefined: ok
       return values[name];
     }

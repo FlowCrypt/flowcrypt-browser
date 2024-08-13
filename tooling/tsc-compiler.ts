@@ -99,7 +99,6 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
  * Compile using the transformer above
  */
 const compile = (): void => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath).toString()) as TSConfig;
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);

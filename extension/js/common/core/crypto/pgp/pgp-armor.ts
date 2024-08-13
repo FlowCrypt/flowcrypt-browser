@@ -66,7 +66,7 @@ export class PgpArmor {
   };
 
   public static isEncryptedMsg(msg: string): boolean {
-    return !!msg.match(new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`));
+    return !!new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`).exec(msg);
   }
 
   public static clipIncomplete(text: string): string | undefined {
@@ -112,10 +112,10 @@ export class PgpArmor {
     // check for and fix missing a mandatory empty line
     if (lines.length > 5 && lines[0].includes(h.begin) && lines[lines.length - 1].includes(String(h.end)) && !lines.includes('')) {
       for (let i = 1; i < 5; i++) {
-        if (lines[i].match(/^[a-zA-Z0-9\-_. ]+: .+$/)) {
+        if (/^[a-zA-Z0-9\-_. ]+: .+$/.exec(lines[i])) {
           continue; // skip comment lines, looking for first data line
         }
-        if (lines[i].match(/^[a-zA-Z0-9\/+]{32,77}$/)) {
+        if (/^[a-zA-Z0-9\/+]{32,77}$/.exec(lines[i])) {
           // insert empty line before first data line
           armored = `${lines.slice(0, i).join('\n')}\n\n${lines.slice(i).join('\n')}`;
           break;

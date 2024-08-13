@@ -86,7 +86,7 @@ export class Config {
   };
 
   public static key = (title: string) => {
-    return testKeyConstants.keys.filter(k => k.title === title)[0];
+    return testKeyConstants.keys.find(k => k.title === title)!;
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
@@ -123,7 +123,7 @@ export class Util {
   public static deleteFileIfExists = (filename: string) => {
     try {
       fs.unlinkSync(filename);
-    } catch (e) {
+    } catch {
       // file didn't exist
     }
   };

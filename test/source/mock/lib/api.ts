@@ -233,9 +233,9 @@ export class Api<REQ, RES> {
   };
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: http2.Http2ServerResponse): Buffer => {
-    if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
+    if (typeof handlerRes === 'string' && /^<!DOCTYPE HTML><html>/.exec(handlerRes)) {
       serverRes.setHeader('content-type', 'text/html');
-    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
+    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && /^\{/.exec(handlerRes) && /\}$/.exec(handlerRes))) {
       serverRes.setHeader('content-type', 'application/json');
     } else if (typeof handlerRes === 'string') {
       serverRes.setHeader('content-type', 'text/plain');

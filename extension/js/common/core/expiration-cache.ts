@@ -41,7 +41,7 @@ export class ExpirationCache<V> {
       // Need to get data from service worker
       // Just disable eslint warning as setting expirationCacheGet interface
       // will require lots of code changes in browser-msg.ts
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
       return await BrowserMsg.send.bg.await.expirationCacheGet<V>({
         key,
         prefix: this.prefix,
@@ -67,7 +67,6 @@ export class ExpirationCache<V> {
       // Get chrome storage data from content script not allowed
       // Need to get data from service worker
       await BrowserMsg.retryOnBgNotReadyErr(() =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         BrowserMsg.send.bg.await.expirationCacheDeleteExpired({ prefix: this.prefix, expirationTicks: this.expirationTicks })
       );
       return;
@@ -90,8 +89,7 @@ export class ExpirationCache<V> {
   // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
   public await = async (key: string, value: V): Promise<V> => {
     try {
-      // eslint-disable-next-line @typescript-eslint/await-thenable
-      return await value;
+      return value;
     } catch (e) {
       if ((await this.get(key)) === value) await this.set(key); // remove faulty record
       return Promise.reject(e as Error);

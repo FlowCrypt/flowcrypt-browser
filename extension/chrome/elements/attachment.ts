@@ -221,7 +221,7 @@ export class AttachmentDownloadView extends View {
       try {
         const googleDriveFileId = url.split('/').pop()?.split('?').shift(); // try and catch any errors below if structure is not as expected
         url = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : url; // attempt to get length headers from Google Drive file if available
-      } catch (e) {
+      } catch {
         // leave url as is
       }
     }

@@ -149,7 +149,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
 
   private renderFolder = (labelEl: HTMLSpanElement) => {
     for (const cls of labelEl.classList) {
-      const labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
+      const labelId = (/^label_([a-zA-Z0-9_]+)$/.exec(cls) || [])[1];
       if (labelId) {
         this.view.redirectToUrl({ acctEmail: this.view.acctEmail, labelId });
         return;

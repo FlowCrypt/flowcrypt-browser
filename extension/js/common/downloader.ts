@@ -64,7 +64,6 @@ export class Downloader {
   public waitForAttachmentChunkDownload = async (a: Attachment, treatAs: Attachment$treatAs) => {
     if (a.hasData()) return a.getData();
     if (Catch.isFirefox()) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const res = await this.queueAttachmentChunkDownload(a, treatAs);
       return await res.result;
     }

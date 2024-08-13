@@ -20,8 +20,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
 declare class ClipboardJS {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public constructor(selector: string, options: {});
+  public constructor(selector: string, options: unknown);
 }
 
 View.run(

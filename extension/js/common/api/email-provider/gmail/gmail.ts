@@ -309,7 +309,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           .map(bigNeedle => {
             const email = Str.parseEmail(bigNeedle);
             if (email?.email) {
-              const match = new RegExp(/^(.*@.+)\.[^@]+?$/).exec(email.email);
+              const match = /^(.*@.+)\.[^@]+?$/.exec(email.email);
               if (match) bigNeedle = match[1]; // omit the top-level domain
             }
             return bigNeedle.split('.').filter(v => !['com', 'org', 'net'].includes(v));
