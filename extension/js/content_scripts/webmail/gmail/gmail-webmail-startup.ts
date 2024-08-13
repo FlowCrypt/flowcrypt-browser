@@ -122,7 +122,7 @@ export class GmailWebmailStartup {
       } else if (insights.newUi === true) {
         insights.gmailVariant = 'new';
       }
-    } catch (e) {
+    } catch {
       // no need to handle
     }
     return insights;

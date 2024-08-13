@@ -116,7 +116,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
           replyMsg.position().top + $(replyMsg).height()! - Math.max(0, $(replyMsg).height()! - convoRootScrollable.height()! + gmailHeaderHeight + topGap);
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
       }
-    } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) {
+    } else if (/^#inbox\/[a-zA-Z]+$/.exec(window.location.hash)) {
       // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
     }
@@ -369,10 +369,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
       let draftId = '';
-      const legacyDraftLinkMatch = contenteditable
-        .html()
-        .substring(0, 1000)
-        .match(/\[flowcrypt:link:draft_compose:([0-9a-fr\-]+)]/);
+      const legacyDraftLinkMatch = /\[flowcrypt:link:draft_compose:([0-9a-fr\-]+)]/.exec(contenteditable.html().substring(0, 1000));
       if (legacyDraftLinkMatch) {
         const [, legacyDraftId] = legacyDraftLinkMatch;
         draftId = legacyDraftId;
@@ -642,7 +639,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       }
       const hasDraft = newReplyBoxes.filter(replyBox => {
         const msgText = $(replyBox).find(this.sel.msgInnerText).text();
-        return PgpArmor.isEncryptedMsg(msgText) || msgText.substring(0, 1000).match(legacyDraftReplyRegex);
+        return PgpArmor.isEncryptedMsg(msgText) || legacyDraftReplyRegex.exec(msgText.substring(0, 1000));
       }).length;
       const doReplace = Boolean(
         convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child') || (convoRootEl.is(':visible') && force) || hasDraft
@@ -658,7 +655,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             continue;
           }
           const replyBoxInnerText = msgInnerText.text().trim();
-          const legacyDraftReplyLinkMatch = replyBoxInnerText.substring(0, 1000).match(legacyDraftReplyRegex);
+          const legacyDraftReplyLinkMatch = legacyDraftReplyRegex.exec(replyBoxInnerText.substring(0, 1000));
           if (legacyDraftReplyLinkMatch) {
             // legacy reply draft
             replyParams.draftId = legacyDraftReplyLinkMatch[2];

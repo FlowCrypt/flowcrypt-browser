@@ -161,17 +161,17 @@ export class Mime {
     if (!headers) {
       return false;
     }
-    const contentType = headers.match(/content-type: +[0-9a-z\-\/]+/);
+    const contentType = /content-type: +[0-9a-z\-\/]+/.exec(headers);
     if (!contentType) {
       return false;
     }
-    if (headers.match(/;\s+boundary=/) || headers.match(/;\s+charset=/)) {
+    if (/;\s+boundary=/.exec(headers) || /;\s+charset=/.exec(headers)) {
       return true;
     }
-    if (!headers.match(/boundary=/)) {
+    if (!/boundary=/.exec(headers)) {
       return false;
     }
-    if (chunk.match(/\ncontent-transfer-encoding: +[0-9a-z\-\/]+/) || chunk.match(/\ncontent-disposition: +[0-9a-z\-\/]+/)) {
+    if (/\ncontent-transfer-encoding: +[0-9a-z\-\/]+/.exec(chunk) || /\ncontent-disposition: +[0-9a-z\-\/]+/.exec(chunk)) {
       return true; // these tend to be inside body-part headers, after the first `\n\n` which we test above
     }
     return contentType.index === 0;

@@ -843,7 +843,7 @@ export class MessageRenderer {
       await this.gmail.fetchAttachmentsMissingData([attachment]);
       loaderContext.setMsgBody_DANGEROUSLY(this.factory.embeddedBackup(attachment.getData().toUtfStr()), 'append'); // xss-safe-factory
       return 'hidden';
-    } catch (e) {
+    } catch {
       loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page'); // todo: unit-test
       return 'shown';
     }

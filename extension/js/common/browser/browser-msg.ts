@@ -486,7 +486,6 @@ export class BrowserMsg {
             await handleClickEvent(tabId, account.name, msgId);
           }
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       }
     });
   }

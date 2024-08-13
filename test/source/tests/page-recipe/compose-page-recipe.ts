@@ -91,7 +91,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
-      await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
+      await composePageOrFrame.type('@input-subject', /RTL/.exec(subject) ? subject : `Automated puppeteer test: ${subject}`);
     }
     await composePageOrFrame.click('@input-body');
     // bring cursor to the beginning of the multiline contenteditable

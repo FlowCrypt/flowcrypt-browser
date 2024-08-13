@@ -420,7 +420,7 @@ export class GoogleData {
   };
 
   public searchMessages = (q: string) => {
-    const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
+    const subject = (/subject:"([^"]+)"/.exec(q) || [])[1];
     if (subject) {
       // if any subject query found, all else is ignored
       // messages just filtered by subject
