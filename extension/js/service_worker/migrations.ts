@@ -90,7 +90,7 @@ const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrati
   const key = SmimeKey.parse(pubkey.armoredKey);
   const newPubkeyEntity = ContactStore.pubkeyObj(key, pubkey.lastCheck);
   data.pubkeysToDelete.push(pubkey.fingerprint);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const req = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint);
   ContactStore.setReqPipe(req, (emailEntities: Email[]) => {
     if (emailEntities.length) {
@@ -238,7 +238,7 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
   const converted = await Promise.all(
     entries.map(async entry => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? entry.pubkey.rawArmored ?? entry.pubkey.raw : entry.pubkey!;
+      const armoredPubkey = entry.pubkey && typeof entry.pubkey === 'object' ? (entry.pubkey.rawArmored ?? entry.pubkey.raw) : entry.pubkey!;
       // parse again to re-calculate expiration-related fields etc.
       const pubkey = armoredPubkey ? await KeyUtil.parse(armoredPubkey) : undefined;
       return {

@@ -41,7 +41,7 @@ abstract class ApiCallErr extends Error {
     if (typeof req.data === 'string') {
       try {
         return Object.keys(JSON.parse(req.data) as string).join(',');
-      } catch (e) {
+      } catch {
         return 'not-a-json';
       }
     } else if (req.data && typeof req.data === 'object') {
@@ -111,7 +111,7 @@ export class AjaxErr extends ApiCallErr {
     let parsedRes: unknown;
     try {
       parsedRes = JSON.parse(responseText);
-    } catch (e) {
+    } catch {
       return {};
     }
     try {
@@ -128,7 +128,7 @@ export class AjaxErr extends ApiCallErr {
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
-    } catch (e) {
+    } catch {
       // skip
     }
     try {
@@ -145,7 +145,7 @@ export class AjaxErr extends ApiCallErr {
       if (typeof resCode === 'number') {
         returnable.resCode = resCode;
       }
-    } catch (e) {
+    } catch {
       // skip
     }
     return returnable;
@@ -230,7 +230,7 @@ export class ApiErr {
           const jsonErrorDesc = (json as { error_description: string }).error_description;
           return jsonErrorDesc === 'Bad Request' || jsonErrorDesc === 'Token has been expired or revoked.';
         }
-      } catch (e) {
+      } catch {
         return false;
       }
     }

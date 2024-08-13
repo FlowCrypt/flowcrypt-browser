@@ -165,6 +165,7 @@ export default [
       'extension/types/**',
       'extension/js/common/core/types/**',
       'test/source/core/types/**',
+      'test/source/tests/**/*.js',
     ],
   },
   pluginJs.configs.recommended,

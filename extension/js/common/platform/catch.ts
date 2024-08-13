@@ -62,7 +62,7 @@ export class Catch {
     }
     try {
       return `[typeof:${typeof e}:${String(e)}] ${JSON.stringify(e)}`;
-    } catch (cannotStringify) {
+    } catch {
       return `[unstringifiable typeof:${typeof e}:${String(e)}]`;
     }
   }
@@ -249,7 +249,7 @@ export class Catch {
       Catch.reportErr(e.reason);
     } else {
       const str = Catch.stringify(e);
-      if (str.match(/^\[typeof:object:\[object (PromiseRejectionEvent|CustomEvent|ProgressEvent)\]\] \{"isTrusted":(?:true|false)\}$/)) {
+      if (/^\[typeof:object:\[object (PromiseRejectionEvent|CustomEvent|ProgressEvent)\]\] \{"isTrusted":(?:true|false)\}$/.exec(str)) {
         return; // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
@@ -282,7 +282,7 @@ export class Catch {
   public static async undefinedOnException<T>(p: Promise<T>): Promise<T | undefined> {
     try {
       return await p;
-    } catch (e) {
+    } catch {
       return undefined;
     }
   }
@@ -387,10 +387,10 @@ export class Catch {
   private static getErrorLineAndCol(e: unknown) {
     try {
       const callerLine = (e as { stack: string }).stack.split('\n')[1];
-      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      const matched = /\.js:([0-9]+):([0-9]+)\)?/.exec(callerLine);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return { line: Number(matched![1]), col: Number(matched![2]) };
-    } catch (lineErr) {
+    } catch {
       return { line: 1, col: 1 };
     }
   }
@@ -410,10 +410,8 @@ export class Catch {
 
   private static isPromiseRejectionEvent(ev: unknown): ev is PromiseRejectionEvent {
     if (ev && typeof ev === 'object') {
-      /* eslint-disable @typescript-eslint/ban-types */
-      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
-      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
-      /* eslint-enable @typescript-eslint/ban-types */
+      const eHasReason = ev.hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = ev.hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
       return eHasReason && eHasPromise;
     }
     return false;

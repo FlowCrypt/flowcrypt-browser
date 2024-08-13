@@ -8,6 +8,7 @@ import { ApiErr } from './api/shared/api-error.js';
 import { Xss } from './platform/xss.js';
 
 export abstract class View {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
       const view = new viewClass();

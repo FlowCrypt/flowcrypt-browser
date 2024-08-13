@@ -260,7 +260,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req)) {
         // temporary replacement for parseResourceId() until #5050 is fixed
-        const id = req.url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1];
+        const id = /\/([a-zA-Z0-9\-_]+)(\?|$)/.exec(req.url)?.[1];
         if (!id) {
           return {};
         }
@@ -301,7 +301,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
-      if (req.url?.match(/\/modify$/)) {
+      if (/\/modify$/.exec(req.url)) {
         return {};
       }
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);

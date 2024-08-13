@@ -80,7 +80,7 @@ export class OauthMock {
       const id_token = this.generateIdToken(acct, isCustomIDPAuth);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
       /* eslint-enable @typescript-eslint/naming-convention */
-    } catch (e) {
+    } catch {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
     }
   };

@@ -44,7 +44,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         } else if (typeof e === 'object' && e && typeof (e as { stack: string }).stack === 'undefined') {
           try {
             (e as { stack: string }).stack = `[compose action: ${couldNotDoWhat}]`;
-          } catch (e) {
+          } catch {
             // no need
           }
         }

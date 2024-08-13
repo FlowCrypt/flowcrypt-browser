@@ -198,7 +198,7 @@ export class OpenPGPKey {
     let lastModified: undefined | number;
     try {
       lastModified = await OpenPGPKey.getLastSigTime(keyWithoutWeakPackets);
-    } catch (e) {
+    } catch {
       // never had any valid signature
     }
     const fingerprint = keyWithoutWeakPackets.getFingerprint();
@@ -583,7 +583,7 @@ export class OpenPGPKey {
           await signatures[i].verify(primaryKey, signatureType, dataToVerify);
           signature = signatures[i];
         }
-      } catch (e) {
+      } catch {
         // skip signature with failed verification
       }
     }

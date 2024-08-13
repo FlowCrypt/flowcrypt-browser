@@ -47,11 +47,9 @@ export class GeneralMailFormatter {
           `Could not sign this encrypted message. The sender email ${view.senderModule.getSender()} isn't present in the signing key's user ids`
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const msg = await new SignedMsgMailFormatter(view).sendableMsg(newMsgData, signingKey.key);
 
       return {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         senderKi: signingKey.keyInfo,
         msgs: [msg],
         renderSentMessage: { recipients: msg.recipients, attachments: msg.attachments },
