@@ -85,8 +85,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     } else if (e instanceof EnterpriseServerAuthErr) {
       BrowserMsg.send.notificationShowCustomIDPAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
-    }
-    if (ApiErr.isAuthErr(e)) {
+    } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
     } else if (ApiErr.isReqTooLarge(e)) {
