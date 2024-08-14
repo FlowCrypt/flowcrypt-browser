@@ -34,7 +34,10 @@ export class ConfiguredIdpOAuth extends OAuth {
       }
     }
     if (!custom_idp_token_refresh) {
-      throw new EnterpriseServerAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
+      if (shouldThrowErrorForEmptyIdToken) {
+        throw new EnterpriseServerAuthErr(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
+      }
+      return undefined;
     }
     // refresh token
     const refreshTokenRes = await this.authRefreshToken(custom_idp_token_refresh);
@@ -219,15 +222,14 @@ export class ConfiguredIdpOAuth extends OAuth {
 
   private static async getAuthHeaderDependsOnType(acctEmail: string): Promise<AuthorizationHeader | undefined> {
     let idToken = await InMemoryStore.getUntilAvailable(acctEmail, InMemoryStoreKeys.ID_TOKEN);
-    if (idToken) {
-      const customIDPIdToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.CUSTOM_IDP_ID_TOKEN);
-      // if special JWT is stored in local store, it should be used for Enterprise Server authentication instead of Google JWT
+    const storage = await AcctStore.get(acctEmail, ['authentication']);
+    if (storage.authentication?.oauth) {
+      // If custom authentication (IDP) is used, return the custom IDP ID token if available.
+      // If the custom IDP ID token is not found, throw an EnterpriseServerAuthErr.
+      // The custom IDP ID token should be used for Enterprise Server authentication instead of the Google JWT.
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/5799
-      if (customIDPIdToken) {
-        idToken = customIDPIdToken;
-      }
-      return { authorization: `Bearer ${idToken}` };
+      idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.CUSTOM_IDP_ID_TOKEN);
     }
-    return undefined;
+    return idToken ? { authorization: `Bearer ${idToken}` } : undefined;
   }
 }

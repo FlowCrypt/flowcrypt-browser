@@ -213,7 +213,7 @@ export class ApiErr {
   };
 
   public static isAuthErr = (e: unknown): boolean => {
-    if (e instanceof AuthErr || e instanceof GoogleAuthErr || e instanceof EnterpriseServerAuthErr) {
+    if (e instanceof AuthErr || e instanceof GoogleAuthErr) {
       return true;
     }
     if (ApiErr.isStandardErr(e, 'auth')) {

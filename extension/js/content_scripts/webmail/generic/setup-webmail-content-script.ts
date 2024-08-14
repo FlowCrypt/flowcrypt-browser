@@ -242,6 +242,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const { acctEmail } = req as Bm.NotificationShowAuthPopupNeeded;
       notifications.showAuthPopupNeeded(acctEmail);
     });
+    BrowserMsg.addListener('notification_show_custom_idp_auth_popup_needed', async req => {
+      const { acctEmail } = req as Bm.NotificationShowAuthPopupNeeded;
+      notifications.showCustomIDPAuthPopupNeeded(acctEmail);
+    });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.addListener('show_attachment_preview', async req => {

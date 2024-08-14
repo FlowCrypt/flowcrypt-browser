@@ -14,6 +14,7 @@ import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, u
 import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-store.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
+import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 
 console.info('background.js service worker starting');
 
@@ -62,6 +63,7 @@ console.info('background.js service worker starting');
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
+  BrowserMsg.bgAddListener('reconnect_custom_idp_acct_auth_popup', (r: Bm.ReconnectCustomIDPAcctAuthPopup) => ConfiguredIdpOAuth.newAuthPopup(r.acctEmail));
   BrowserMsg.intervalAddListener('delete_expired', inMemoryStore.deleteExpired);
   BrowserMsg.bgListen();
   BrowserMsg.alarmListen();

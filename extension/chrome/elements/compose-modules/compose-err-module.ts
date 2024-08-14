@@ -6,7 +6,7 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { NewMsgData, SendBtnTexts, SendMsgsResult } from './compose-types.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -82,7 +82,11 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html" target="_blank">missing extension permissions</a>).';
       }
       await Ui.modal.error(netErrMsg, true);
-    } else if (ApiErr.isAuthErr(e)) {
+    } else if (e instanceof EnterpriseServerAuthErr) {
+      BrowserMsg.send.notificationShowCustomIDPAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
+    }
+    if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
     } else if (ApiErr.isReqTooLarge(e)) {
