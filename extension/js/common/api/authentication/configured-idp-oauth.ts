@@ -89,7 +89,7 @@ export class ConfiguredIdpOAuth extends OAuth {
     return authRes;
   }
 
-  protected static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
+  private static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
     return await Api.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */

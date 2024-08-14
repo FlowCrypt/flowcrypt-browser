@@ -96,9 +96,4 @@ export class OAuth {
       expectedState: `CRYPTUP_STATE_${JSON.stringify(authReq)}`,
     };
   }
-
-  protected static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
-    void refreshToken;
-    throw new Error(`authRefreshToken should be implemented`);
-  }
 }

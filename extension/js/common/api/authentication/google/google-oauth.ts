@@ -186,7 +186,7 @@ export class GoogleOAuth extends OAuth {
     return authRes;
   }
 
-  protected static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
+  private static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
     const url =
       /* eslint-disable @typescript-eslint/naming-convention */
       Url.create(this.GOOGLE_OAUTH_CONFIG.url_tokens, {
