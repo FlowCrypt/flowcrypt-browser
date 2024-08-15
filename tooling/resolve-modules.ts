@@ -29,7 +29,7 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
     moduleMap[moduleName] = null; // eslint-disable-line no-null/no-null
   } else {
     // replace import with full path from config
-    moduleMap[moduleName] = `${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.(mjs|js)$/) !== null)}`; // eslint-disable-line no-null/no-null
+    moduleMap[moduleName] = `${compilerOptions.paths[moduleName].find((x: string) => /\.(mjs|js)$/.exec(x) !== null)}`; // eslint-disable-line no-null/no-null
   }
 }
 

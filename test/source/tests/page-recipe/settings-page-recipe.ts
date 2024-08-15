@@ -89,7 +89,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(1);
     const k = Config.key(expectedKeyName);
     await myKeyFrame.waitAll('@content-fingerprint');
-    if (!k.longid) {
+    if (!k?.longid) {
       throw new Error(`Missing key longid for tests: ${expectedKeyName}`);
     }
     expect(await myKeyFrame.read('@content-fingerprint')).to.contain(Str.spaced(k.longid));

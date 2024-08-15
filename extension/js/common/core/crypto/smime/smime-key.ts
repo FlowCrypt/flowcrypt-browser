@@ -50,7 +50,7 @@ export class SmimeKey {
     try {
       // try to recognize a certificate
       certificate = this.forge.pki.certificateFromAsn1(asn1);
-    } catch (e) {
+    } catch {
       // fall back to p12
     }
     if (certificate) {

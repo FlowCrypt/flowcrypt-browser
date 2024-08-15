@@ -55,7 +55,7 @@ export class SetupWithEmailKeyManagerModule {
     /* eslint-enable @typescript-eslint/naming-convention */
     try {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
+      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.acctEmail);
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
         try {
@@ -115,7 +115,7 @@ export class SetupWithEmailKeyManagerModule {
     }
     const storePrvOnKm = async () => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv));
+      await this.view.keyManager!.storePrivateKey(this.view.acctEmail, KeyUtil.armor(decryptablePrv));
     };
     await Settings.retryUntilSuccessful(
       storePrvOnKm,

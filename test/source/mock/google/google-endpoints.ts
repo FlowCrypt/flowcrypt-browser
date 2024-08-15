@@ -148,15 +148,15 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       if (isPost(req)) {
         if (grant_type === 'authorization_code' && code && client_id === oauth.clientId) {
           // auth code from auth screen gets exchanged for access and refresh tokens
-          return oauth.getRefreshTokenResponse(code);
+          return oauth.getRefreshTokenResponse(code, false);
         } else if (grant_type === 'refresh_token' && refreshToken && client_id === oauth.clientId) {
           // here also later refresh token gets exchanged for access token
-          return oauth.getTokenResponse(refreshToken);
+          return oauth.getTokenResponse(refreshToken, false);
         }
         const parsedBody = body as OAuthTokenRequestModel;
         // Above is for Google OAuth and this is for normal OAuth
         if (parsedBody.grant_type === 'authorization_code' && parsedBody.code && parsedBody.client_id === OauthMock.customIDPClientId) {
-          return oauth.getRefreshTokenResponse(parsedBody.code);
+          return oauth.getRefreshTokenResponse(parsedBody.code, true);
         }
       }
       throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
@@ -260,7 +260,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);
       if (isGet(req)) {
         // temporary replacement for parseResourceId() until #5050 is fixed
-        const id = req.url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)?.[1];
+        const id = /\/([a-zA-Z0-9\-_]+)(\?|$)/.exec(req.url)?.[1];
         if (!id) {
           return {};
         }
@@ -301,7 +301,7 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
-      if (req.url?.match(/\/modify$/)) {
+      if (/\/modify$/.exec(req.url)) {
         return {};
       }
       const acct = oauth.checkAuthorizationHeaderWithAccessToken(req.headers.authorization);

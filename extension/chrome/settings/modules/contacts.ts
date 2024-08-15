@@ -233,7 +233,7 @@ View.run(
           const pubkey = await KeyUtil.parse(armoredPubkey);
           await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
           await this.loadAndRenderContactList();
-        } catch (e) {
+        } catch {
           await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(!!this.fesUrl));
           $('#edit_contact .input_pubkey').val('').trigger('focus');
         }

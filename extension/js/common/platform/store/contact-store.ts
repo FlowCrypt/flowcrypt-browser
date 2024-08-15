@@ -659,6 +659,7 @@ export class ContactStore extends AbstractStore {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: unknown) => void) | undefined) {
     req.onsuccess = () => {
       try {
@@ -811,7 +812,6 @@ export class ContactStore extends AbstractStore {
   private static updateTxPhase2(tx: IDBTransaction, email: string, update: ContactUpdateParsed, existingPubkey: Pubkey | undefined, revocations: Revocation[]) {
     let pubkeyEntity: Pubkey | undefined;
     if (update.pubkey) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const internalFingerprint = ContactStore.getPubkeyId(update.pubkey);
       if (update.pubkey.family === 'openpgp' && !update.pubkey.revoked && revocations.some(r => r.fingerprint === internalFingerprint)) {
         // we have this fingerprint revoked but the supplied key isn't

@@ -41,7 +41,7 @@ export class Catch {
   public static undefinedOnException = async <T>(p: Promise<T>): Promise<T | undefined> => {
     try {
       return await p;
-    } catch (e) {
+    } catch {
       return undefined;
     }
   };

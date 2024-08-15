@@ -213,7 +213,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     const from = Str.parseEmail(this.messageToReplyOrForward.headers.from || '').email;
     const date = new Date(String(this.messageToReplyOrForward.headers.date));
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
-    const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
+    const rtl = new RegExp('[' + Str.rtlChars + ']').exec(text);
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
     const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
     if (method === 'reply') {

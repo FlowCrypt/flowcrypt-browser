@@ -379,7 +379,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await Util.sleep(1);
         await contactsFrame.waitAll('iframe');
         const framesUrls = await contactsFrame.getFramesUrls(['pgp_pubkey.htm']);
-        const firstFrameId = framesUrls[0].match(/frameId=.*?&/s)![0];
+        const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
         const errorFrame = await contactsFrame.getFrame(['pgp_pubkey.htm', firstFrameId]);
         await errorFrame.waitForContent('@error-introduce-label', 'This OpenPGP key is not usable.');
         await errorFrame.waitForInputValue('@error-email-input', 'dsa@flowcrypt.test');
@@ -1069,7 +1069,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         // test the pubkey in the storage
         const oldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(oldContact.sortedPubkeys.length).to.equal(1);
@@ -1092,7 +1092,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyFrame.waitAndClick('@action-fix-and-import-key');
         // test the pubkey in the storage
         const expectedOldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
@@ -1112,7 +1112,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // test the pubkey in the storage
         const newContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(newContact.sortedPubkeys.length).to.equal(1);

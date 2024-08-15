@@ -11,11 +11,13 @@ import { FesConfig } from './shared-tenant-fes-endpoints';
 const standardFesUrl = (port: string) => {
   return `fes.standardsubdomainfes.localhost:${port}`;
 };
-const issuedAccessTokens: string[] = [];
+export const issuedGoogleIDPIdTokens: string[] = [];
+export const issuedCustomIDPIdTokens: string[] = [];
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const standardSubDomainFesClientConfiguration = { flags: [], disallow_attester_search_for_domains: ['got.this@fromstandardfes.com'] };
 export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): HandlersDefinition => {
+  const isCustomIDPUsed = !!config?.authenticationConfiguration;
   return {
     // standard fes location at https://fes.domain.com
     '/api/': async ({}, req) => {
@@ -57,7 +59,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
     },
     '/api/v1/message/new-reply-token': async ({}, req) => {
       if (parseAuthority(req) === standardFesUrl(parsePort(req)) && req.method === 'POST') {
-        authenticate(req, 'oidc');
+        authenticate(req, isCustomIDPUsed);
         return { replyToken: 'mock-fes-reply-token' };
       }
       throw new HttpClientErr('Not Found', 404);
@@ -67,7 +69,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       const fesUrl = standardFesUrl(port);
       // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
       if (parseAuthority(req) === fesUrl && req.method === 'POST' && typeof body === 'string') {
-        authenticate(req, 'oidc');
+        authenticate(req, isCustomIDPUsed);
         if (config?.messagePostValidator) {
           return await config.messagePostValidator(body, fesUrl);
         }
@@ -79,7 +81,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
         // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
-        authenticate(req, 'oidc');
+        authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
       }
@@ -89,7 +91,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
         // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
-        authenticate(req, 'oidc');
+        authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
       }
@@ -102,7 +104,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
         // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
         // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
         // test: `compose - user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
-        authenticate(req, 'oidc');
+        authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
       }
@@ -112,7 +114,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
         // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
-        authenticate(req, 'oidc');
+        authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
       }
@@ -125,20 +127,15 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
   };
 };
 
-const authenticate = (req: { headers: IncomingHttpHeaders }, type: 'oidc' | 'fes'): string => {
+const authenticate = (req: { headers: IncomingHttpHeaders }, isCustomIDPUsed: boolean): string => {
   const jwt = (req.headers.authorization || '').replace('Bearer ', '');
   if (!jwt) {
     throw new Error('Mock FES missing authorization header');
   }
-  if (type === 'oidc') {
-    if (issuedAccessTokens.includes(jwt)) {
-      throw new Error('Mock FES access-token call wrongly with FES token');
-    }
-  } else {
-    // fes
-    if (!issuedAccessTokens.includes(jwt)) {
-      throw new HttpClientErr('FES mock received access token it didnt issue', 401);
-    }
+  const issuedTokens = isCustomIDPUsed ? issuedCustomIDPIdTokens : issuedGoogleIDPIdTokens;
+
+  if (!issuedTokens.includes(jwt)) {
+    throw new HttpClientErr('FES mock received access token it didnt issue', 401);
   }
   return MockJwt.parseEmail(jwt);
 };

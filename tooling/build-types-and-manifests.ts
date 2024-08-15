@@ -14,7 +14,6 @@ import { execSync as exec } from 'child_process';
 const DIR = './build';
 const version: string = (JSON.parse(readFileSync('./package.json').toString()) as { version: string }).version;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const addManifest = (toBuildType: string, transform: (manifest: chrome.runtime.Manifest) => void, fromBuildType = 'generic-extension-wip') => {
   const manifest = JSON.parse(readFileSync(`${DIR}/${fromBuildType}/manifest.json`).toString()) as chrome.runtime.ManifestV3;
   transform(manifest);
@@ -59,7 +58,7 @@ addManifest(
   'thunderbird-consumer',
   manifest => {
     const manifestV3 = manifest as messenger._manifest.WebExtensionManifest;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     (manifest.browser_action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';

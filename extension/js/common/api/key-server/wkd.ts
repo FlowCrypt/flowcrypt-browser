@@ -68,7 +68,7 @@ export class Wkd extends Api {
   private urlLookup = async (methodUrlBase: string, userPart: string, timeout: number): Promise<{ hasPolicy: boolean; buf?: Buf }> => {
     try {
       await Wkd.download(`${methodUrlBase}/policy`, undefined, timeout);
-    } catch (e) {
+    } catch {
       return { hasPolicy: false };
     }
     try {

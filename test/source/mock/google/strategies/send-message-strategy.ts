@@ -54,7 +54,7 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
   }
   const keyInfos = await Config.getKeyInfo(keyInfoTitles);
   if (expectPubkey) {
-    const pubkeyMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----)/s);
+    const pubkeyMatch = /Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----)/s.exec(msg);
     if (!pubkeyMatch) {
       throw new HttpClientErr(`Could not find the pubkey with Content-Transfer-Encoding: 7bit`);
     }
@@ -63,7 +63,7 @@ const check7bitEncodedPgpMimeParts = async (parseResult: ParseMsgResult, keyInfo
     expect(keyInfos.some(ki => ki.id === pubkeys[0].id)).to.be.true;
   }
 
-  const msgMatch = msg.match(/Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s);
+  const msgMatch = /Content-Transfer-Encoding: 7bit\r?\n\r?\n(-----BEGIN PGP MESSAGE-----.*?-----END PGP MESSAGE-----)/s.exec(msg);
   if (!msgMatch) {
     throw new HttpClientErr(`Could not find the encrypted message with Content-Transfer-Encoding: 7bit`);
   }

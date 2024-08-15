@@ -5,7 +5,7 @@
 import type OpenPGP from 'openpgp';
 
 export const requireOpenpgp = (): typeof OpenPGP => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('openpgp') as unknown as typeof OpenPGP;
 };
 

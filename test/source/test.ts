@@ -154,7 +154,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(
       e =>
         e.message !== 'Some keys could not be parsed' &&
-        !e.message.match(/Bad Request: 400 when GET-ing https:\/\/.*localhost:\d+\/flowcrypt-email-key-manager/)
+        !e.message.match(/Bad Request: 400 when GET-ing https:\/\/.*localhost:\d+\/flowcrypt-email-key-manager/g)
     )
     // below for test "decrypt - failure retrieving chunk download - next request will try anew"
     .filter(
@@ -171,7 +171,7 @@ test.after.always('evaluate Catch.reportErr errors', async t => {
     .filter(e => !e.trace.includes('-1 when GET-ing https://openpgpkey.flowcrypt.com'))
     // below for test "allows to retry public key search when attester returns error"
     .filter(
-      e => !e.message.match(/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/)
+      e => !/Error: Internal Server Error: 500 when GET-ing https:\/\/localhost:\d+\/attester\/pub\/attester\.return\.error@flowcrypt\.test/.exec(e.message)
     );
   const foundExpectedErr = usefulErrors.find(re => re.message === `intentional error for debugging`);
   const foundUnwantedErrs = usefulErrors.filter(
@@ -222,7 +222,7 @@ test.afterEach.always('finalize', async t => {
       writeFileSync(filePath, debugHtmlAttachments[i]);
       try {
         await asyncExec(`artifact push job ${filePath}`);
-      } catch (e) {
+      } catch {
         // probably local environment without semaphore CLI tooling
       }
     }

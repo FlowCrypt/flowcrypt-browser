@@ -24,8 +24,6 @@ import { ConfiguredIdpOAuth } from '../configured-idp-oauth.js';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 type GoogleTokenInfo = { email: string; scope: string; expires_in: number; token_type: string };
 
-/* eslint-enable @typescript-eslint/naming-convention */
-
 export class GoogleOAuth extends OAuth {
   public static defaultScopes(group: 'default' | 'contacts' = 'default') {
     const { readContacts, readOtherContacts, compose, modify, openid, email, profile } = this.GOOGLE_OAUTH_CONFIG.scopes;
@@ -97,7 +95,7 @@ export class GoogleOAuth extends OAuth {
     };
 
     try {
-      return performAjaxRequest(req);
+      return await performAjaxRequest(req);
     } catch (firstAttemptErr) {
       if (ApiErr.isAuthErr(firstAttemptErr)) {
         // force refresh token
@@ -209,7 +207,7 @@ export class GoogleOAuth extends OAuth {
       if (authWindowResult.error) {
         return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url);
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');

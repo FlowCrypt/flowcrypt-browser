@@ -51,7 +51,6 @@ View.run(
       const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
       this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
       this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (this.page && !/^(\/chrome|modules)/.test(this.page)) {
         Ui.modal.error('An unexpected value was found for the page parameter').catch((err: unknown) => {
           console.log(err);
@@ -244,7 +243,6 @@ View.run(
       $('#status-row #status_local_store').on(
         'click',
         this.setHandler(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
         })
       );
@@ -391,7 +389,6 @@ View.run(
             );
             statusContainer.empty().append(authNeededLink); // xss-direct
             $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => {
               window.location.reload();
             });

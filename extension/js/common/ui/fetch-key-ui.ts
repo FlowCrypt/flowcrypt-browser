@@ -32,7 +32,7 @@ export class FetchKeyUI {
       const result: string = await Api.ajax({ url, method: 'GET', stack: Catch.stackTrace() }, 'text');
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       return await keyImportUi.checkPub(result);
-    } catch (e) {
+    } catch {
       return;
     }
   };

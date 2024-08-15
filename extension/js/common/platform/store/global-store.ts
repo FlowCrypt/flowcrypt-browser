@@ -80,7 +80,7 @@ export class GlobalStore extends AbstractStore {
     if (!acctEmail) {
       throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
     }
-    if (acctEmail.match(/[A-Z]/)) {
+    if (/[A-Z]/.exec(acctEmail)) {
       Catch.report(`attempting to save acctEmail that wasn't lowercased: ${acctEmail}`);
       acctEmail = acctEmail.toLowerCase();
     }

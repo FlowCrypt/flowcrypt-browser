@@ -42,7 +42,7 @@ export class BrowserPool {
     const slowMo = this.isMock ? 60 : 60;
     const browser = await launch({
       args,
-      ignoreHTTPSErrors: this.isMock,
+      acceptInsecureCerts: this.isMock,
       headless: false,
       devtools: false,
       slowMo,
@@ -78,7 +78,7 @@ export class BrowserPool {
       const urls = pages.map(page => page.url());
       const extensionUrl = urls.find(url => url !== 'about:blank');
       if (extensionUrl) {
-        const match = extensionUrl.match(/[a-z]{32}/);
+        const match = extensionUrl.match(/[a-z]{32}/g);
         if (match) {
           await browser.close();
           return match[0];
