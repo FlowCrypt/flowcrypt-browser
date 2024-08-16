@@ -76,7 +76,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     while (true) {
       let acctEmail: string | undefined;
       if (Catch.isThunderbirdMail()) {
-        acctEmail = (await messenger.runtime.sendMessage('thunderbird_get_current_user')) as string; // todo - add to BrowserMsg
+        acctEmail = await BrowserMsg.send.bg.await.thunderGetCurrentUser();
       } else {
         acctEmail = webmailSpecific.getUserAccountEmail();
       }

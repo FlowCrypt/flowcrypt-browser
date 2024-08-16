@@ -148,4 +148,18 @@ export class BgHandlers {
       css: [{ file: './css/cryptup.css' }],
     });
   };
+
+  public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {
+    const tabs = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (tabs.length) {
+      for (const tab of tabs) {
+        if (tab.id) {
+          const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+          const accountId = messageDetails?.folder?.accountId || '';
+          return (await messenger.accounts.get(accountId))?.name;
+        }
+      }
+    }
+    return;
+  };
 }
