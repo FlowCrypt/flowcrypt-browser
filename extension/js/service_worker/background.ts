@@ -72,10 +72,6 @@ console.info('background.js service worker starting');
     BgHandlers.thunderbirdSecureComposeHandler();
     await BgHandlers.thunderbirdContentScriptRegistration();
     BrowserMsg.bgAddListener('thunderbird_get_current_user', BgHandlers.thunderbirdGetCurrentUserHandler);
-    //   if (message === 'thunderbird_msg_decrypt') {
-    //     if (sender.tab?.id) {
-    //       return await messenger.messages.getFull(sender.tab.id);
-    //     }
-    //   }
+    BrowserMsg.bgAddListener('thunderbird_msg_decrypt', BgHandlers.thunderbirdMsgDecryptHandler);
   }
 })().catch(Catch.reportErr);

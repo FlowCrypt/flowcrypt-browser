@@ -162,4 +162,12 @@ export class BgHandlers {
     }
     return;
   };
+
+  public static thunderbirdMsgDecryptHandler = async (): Promise<Bm.Res.ThunderbirdMsgDecrypt> => {
+    const tabs = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (tabs.length && tabs[0].id) {
+      return await messenger.messages.getFull(tabs[0].id);
+    }
+    return;
+  };
 }
