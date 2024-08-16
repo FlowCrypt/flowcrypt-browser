@@ -33,12 +33,15 @@ export class Notifications {
   };
 
   public showCustomIDPAuthPopupNeeded = (acctEmail: string) => {
-    this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup" data-test="action-reconnect-custom-idp-account">Re-connect Account</a>`, {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      auth_popup: async () => {
-        await this.reconnectCustomIDPAcctAuthPopup(acctEmail);
-      },
-    });
+    this.show(
+      `${Lang.compose.pleaseReconnectCustomIDPAccount} <a href="#" class="auth_popup" data-test="action-reconnect-custom-idp-account">Re-connect Account</a>`,
+      {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        auth_popup: async () => {
+          await this.reconnectCustomIDPAcctAuthPopup(acctEmail);
+        },
+      }
+    );
   };
 
   public clear = (group: NotificationGroupType) => {

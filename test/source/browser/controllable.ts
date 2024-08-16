@@ -874,6 +874,10 @@ export class ControllablePage extends ControllableBase {
     return result as Dict<unknown>;
   };
 
+  public setLocalStorage = async (key: string, value: string | null): Promise<void> => {
+    await this.target.evaluate(async (key, value) => await chrome.storage.local.set({ [key]: value }), key, value);
+  };
+
   public getPage = () => {
     return this;
   };

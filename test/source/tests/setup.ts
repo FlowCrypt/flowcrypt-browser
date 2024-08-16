@@ -34,7 +34,7 @@ import { FesAuthenticationConfiguration, FesClientConfiguration } from '../mock/
 import { GoogleData } from '../mock/google/google-data';
 import Parse from '../util/parse';
 import { MsgUtil } from '../core/crypto/pgp/msg-util';
-import { OauthMock } from '../mock/lib/oauth';
+import { MockJwt, OauthMock } from '../mock/lib/oauth';
 
 const getAuthorizationHeader = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
   const settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
@@ -2552,6 +2552,41 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(oauth).to.deep.equal(oauthConfig);
         const savedCustomIDPIDToken = await BrowserRecipe.getCustomIDPIdTokenFromInMemoryStore(settingsPage, acctEmail);
         expect(savedCustomIDPIDToken).to.not.be.an.undefined;
+      })
+    );
+
+    test(
+      'setup - check if correct auth modal is shown when custom IdP is configured and Enterprise Server error is received',
+      testWithBrowser(async (t, browser) => {
+        const port = t.context.urls?.port;
+        const oauthConfig = OauthMock.getCustomIDPOAuthConfig(port);
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.wkdAtgooglemockflowcryptlocalcom8001Private],
+          },
+          fes: {
+            authenticationConfiguration: {
+              oauth: oauthConfig,
+            },
+            clientConfiguration: getKeyManagerAutogenRules(port!),
+          },
+        });
+        const acct = `user@standardsubdomainfes.localhost:${port}`;
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct, true);
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+        // Set invalid token to custom idp token and check if correct custom idp auth popup appears
+        await BrowserRecipe.setInMemoryStore(settingsPage, acct, 'customIdpIdToken', MockJwt.new(acct, 100));
+        // eslint-disable-next-line no-null/no-null
+        await settingsPage.setLocalStorage(`cryptup_${emailKeyIndex(acct, 'custom_idp_token_refresh')}`, null);
+        const gmailPage = await openMockGmailPage(t, browser, acct, true);
+        await gmailPage.waitAndClick('@action-secure-compose');
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@action-reconnect-custom-idp-account'));
+        await OauthPageRecipe.customIdp(t, oauthPopup);
+        // after successful reauth, check if connection is successful
+        await gmailPage.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
       })
     );
   }

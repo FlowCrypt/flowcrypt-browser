@@ -193,15 +193,8 @@ export class BrowserRecipe {
     return await this.setUpCommonAcct(t, browser, acct);
   };
 
-  public static getGoogleAccessToken = async (controllable: Controllable, acctEmail: string): Promise<string> => {
-    const result = await PageRecipe.sendMessage(controllable, {
-      name: 'inMemoryStoreGet',
-      data: { bm: { acctEmail, key: InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS }, objUrls: {} },
-      to: null, // eslint-disable-line no-null/no-null
-      uid: '2',
-    });
-    return (result as { result: string }).result;
-  };
+  public static getGoogleAccessToken = async (controllable: Controllable, acctEmail: string): Promise<string> =>
+    BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
 
   public static getFromInMemoryStore = async (controllable: Controllable, acctEmail: string, key: string): Promise<string> => {
     const result = await PageRecipe.sendMessage(controllable, {
@@ -211,6 +204,15 @@ export class BrowserRecipe {
       uid: '2', // todo: random uid?
     });
     return (result as { result: string }).result;
+  };
+
+  public static setInMemoryStore = async (controllable: Controllable, acctEmail: string, key: string, value: string | undefined): Promise<void> => {
+    await PageRecipe.sendMessage(controllable, {
+      name: 'inMemoryStoreSet',
+      data: { bm: { acctEmail, key, value }, objUrls: {} },
+      to: null, // eslint-disable-line no-null/no-null
+      uid: '2', // todo: random uid?
+    });
   };
 
   public static getPassphraseFromInMemoryStore = (controllable: Controllable, acctEmail: string, longid: string): Promise<string> =>

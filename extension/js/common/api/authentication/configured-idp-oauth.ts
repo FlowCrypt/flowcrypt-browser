@@ -40,7 +40,7 @@ export class ConfiguredIdpOAuth extends OAuth {
       return undefined;
     }
     // refresh token
-    const refreshTokenRes = await this.authRefreshToken(custom_idp_token_refresh);
+    const refreshTokenRes = await this.authRefreshToken(custom_idp_token_refresh, acctEmail);
     if (refreshTokenRes.access_token) {
       await this.authSaveTokens(acctEmail, refreshTokenRes);
       const authHdr = await this.getAuthHeaderDependsOnType(acctEmail);
@@ -89,16 +89,17 @@ export class ConfiguredIdpOAuth extends OAuth {
     return authRes;
   }
 
-  private static async authRefreshToken(refreshToken: string): Promise<OAuthTokensResponse> {
+  private static async authRefreshToken(refreshToken: string, acctEmail: string): Promise<OAuthTokensResponse> {
+    const authConf = await this.getAuthenticationConfiguration(acctEmail);
     return await Api.ajax(
       {
         /* eslint-disable @typescript-eslint/naming-convention */
-        url: 'authConf.oauth.tokensUrl',
+        url: authConf.oauth.tokensUrl,
         method: 'POST',
         data: {
           grant_type: 'refresh_token',
           refreshToken,
-          client_id: 'authConf.oauth.clientId',
+          client_id: authConf.oauth.clientId,
           redirect_uri: chrome.identity.getRedirectURL('oauth'),
         },
         dataType: 'JSON',
