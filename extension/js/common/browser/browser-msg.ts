@@ -231,8 +231,8 @@ export class BrowserMsg {
         expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
         thunderbirdGetCurrentUser: () =>
-          BrowserMsg.sendAwait(undefined, 'thunderbird_get_current_user', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
-        thunderbirdMsgDecrypt: () => BrowserMsg.sendAwait(undefined, 'thunderbird_msg_decrypt', undefined, true) as Promise<Bm.Res.ThunderbirdMsgDecrypt>,
+          BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
+        thunderbirdMsgDecrypt: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgDecrypt', undefined, true) as Promise<Bm.Res.ThunderbirdMsgDecrypt>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => {
