@@ -85,13 +85,18 @@ export class ExternalService extends Api {
   };
 
   public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
-    return await this.request<FesRes.ServiceInfo>(`/api/`);
+    return await this.request<FesRes.ServiceInfo>(`/api/`, undefined, undefined, false);
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const auth = await this.request<AuthenticationConfiguration>(`/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`);
+    const auth = await this.request<AuthenticationConfiguration>(
+      `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`,
+      undefined,
+      undefined,
+      false
+    );
     await AcctStore.set(this.acctEmail, { authentication: auth });
-    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`, undefined, undefined, false);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -168,7 +173,8 @@ export class ExternalService extends Api {
           fmt: 'FORM';
         }
       | { data: Dict<Serializable>; fmt: 'JSON' },
-    progress?: ProgressCbs
+    progress?: ProgressCbs,
+    shouldThrowErrorForEmptyIdToken = true
   ): Promise<RT> => {
     const values:
       | {
@@ -183,6 +189,13 @@ export class ExternalService extends Api {
           method: 'POST',
         }
       : undefined;
-    return await ExternalService.apiCall(this.url, path, values, progress, await ConfiguredIdpOAuth.authHdr(this.acctEmail), 'json');
+    return await ExternalService.apiCall(
+      this.url,
+      path,
+      values,
+      progress,
+      await ConfiguredIdpOAuth.authHdr(this.acctEmail, shouldThrowErrorForEmptyIdToken),
+      'json'
+    );
   };
 }

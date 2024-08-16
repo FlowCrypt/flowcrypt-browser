@@ -420,11 +420,11 @@ export class Api {
         if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
           // Needed authorization from the service worker side to avoid circular dependency injection errors
           // that occur when importing GoogleAuth directly.
-          const authorization = await BrowserMsg.send.bg.await.getGoogleApiAuthorization({ idToken });
-          if (authorization) {
+          const authorizationHeader = await BrowserMsg.send.bg.await.getApiAuthorization({ idToken });
+          if (authorizationHeader) {
             const updatedReq = {
               ...req,
-              headers: { authorization },
+              headers: authorizationHeader,
             };
             return await Api.ajax(updatedReq, resFmt);
           }

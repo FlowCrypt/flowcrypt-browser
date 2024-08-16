@@ -88,7 +88,7 @@ export class OauthPageRecipe extends PageRecipe {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL, .yAlK0b';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
       await oauthPage.waitAny(
-        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
+        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}, ${selectors.googleContinueAuthBtn}`,
         { timeout: 45 }
       );
 

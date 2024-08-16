@@ -27,7 +27,7 @@ interface RawAjaxErr {
 
 abstract class AuthErr extends Error {}
 export class GoogleAuthErr extends AuthErr {}
-export class BackendAuthErr extends AuthErr {}
+export class EnterpriseServerAuthErr extends AuthErr {}
 
 export const MAX_RATE_LIMIT_ERROR_RETRY_COUNT = 5;
 
