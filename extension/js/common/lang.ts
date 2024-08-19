@@ -99,6 +99,8 @@ export const Lang = {
     addMissingRecipientPubkeys: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
     pleaseReconnectAccount:
       'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
+    pleaseReconnectCustomIDPAccount:
+      'Please reconnect FlowCrypt to your custom IDP Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
     msgEncryptedHtml: (lang: string, senderEmail: string) =>
       lang === 'DE'
         ? `${senderEmail}&nbsp;hat&nbsp;Ihnen&nbsp;eine&nbsp;passwortverschlüsselte&nbsp;E-Mail&nbsp;gesendet `

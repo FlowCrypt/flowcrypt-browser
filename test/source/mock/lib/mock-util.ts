@@ -12,5 +12,5 @@ export const parseAuthority = (r: { headers: IncomingHttpHeaders }) => {
 export const parsePort = (r: { headers: IncomingHttpHeaders }) => {
   return parseAuthority(r).split(':')[1];
 };
-export const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
+export const parseResourceId = (url: string) => /\/([a-zA-Z0-9\-_]+)(\?|$)/.exec(url)![1];
 export const messageIdRegex = (port: string) => new RegExp(`{"emailGatewayMessageId":"<(.+)@standardsubdomainfes.localhost:${port}>"}`);

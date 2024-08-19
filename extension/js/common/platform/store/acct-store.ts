@@ -32,6 +32,7 @@ export type AccountIndex =
   | 'notification_setup_needed_dismissed'
   | 'email_provider'
   | 'google_token_refresh'
+  | 'custom_idp_token_refresh'
   | 'hide_message_password'
   | 'sendAs'
   | 'pubkey_sent_to'
@@ -62,6 +63,7 @@ export type AcctStoreDict = {
   notification_setup_needed_dismissed?: boolean;
   email_provider?: EmailProvider;
   google_token_refresh?: string;
+  custom_idp_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
   addresses?: string[];

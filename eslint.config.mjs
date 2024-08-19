@@ -4,7 +4,6 @@ import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
 import headerPlugin from 'eslint-plugin-header';
 import jsdocPlugin from 'eslint-plugin-jsdoc';
 import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
-import importPlugin from 'eslint-plugin-import';
 import noNullPlugin from 'eslint-plugin-no-null';
 import localRulesPlugin from 'eslint-plugin-local-rules';
 import eslintConfigPrettier from 'eslint-config-prettier';
@@ -17,7 +16,6 @@ const commonConfig = {
     header: headerPlugin,
     jsdoc: jsdocPlugin,
     'prefer-arrow': preferArrowPlugin,
-    import: importPlugin,
     'no-null': noNullPlugin,
     'local-rules': localRulesPlugin,
   },
@@ -94,7 +92,6 @@ const commonConfig = {
     '@typescript-eslint/no-unused-vars': ['error'],
     '@typescript-eslint/no-unused-expressions': 'error',
     '@typescript-eslint/no-use-before-define': 'off',
-    '@typescript-eslint/no-var-requires': 'error',
     '@typescript-eslint/prefer-for-of': 'error',
     '@typescript-eslint/prefer-function-type': 'error',
     '@typescript-eslint/prefer-namespace-keyword': 'error',
@@ -110,7 +107,6 @@ const commonConfig = {
     'header/header': ['error', 'block', ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com '],
     'id-denylist': 'error',
     'id-match': 'error',
-    'import/order': 'off',
     'jsdoc/check-alignment': 'off',
     'jsdoc/check-indentation': 'off',
     'jsdoc/newline-after-description': 'off',
@@ -154,20 +150,23 @@ const commonConfig = {
     radix: 'off',
     'require-atomic-updates': 0,
     'sort-imports': 'off',
-    'spaced-comment': [
-      'error',
-      'always',
-      {
-        markers: ['/'],
-      },
-    ],
     'local-rules/standard-loops': 'error',
   },
 };
 
 export default [
   {
-    ignores: ['extension/types/**', 'extension/js/common/core/types/**', 'test/source/core/types/**', 'build/**', 'extension/lib/**', 'eslint.config.js'],
+    ignores: [
+      'build/**',
+      'conf/**',
+      'eslint.config.mjs',
+      'eslint-local-rules.js',
+      'extension/lib/**',
+      'extension/types/**',
+      'extension/js/common/core/types/**',
+      'test/source/core/types/**',
+      'test/source/tests/**/*.js',
+    ],
   },
   pluginJs.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

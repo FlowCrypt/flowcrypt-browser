@@ -10,6 +10,8 @@ import { ContactStore } from '../common/platform/store/contact-store.js';
 import { Api } from '../common/api/shared/api.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
+import { AcctStore } from '../common/platform/store/acct-store.js';
+import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -24,10 +26,10 @@ export class BgHandlers {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     const dbFunc = (ContactStore as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     if (request.f === 'obj') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return await dbFunc(db, ...request.args);
   };
 
@@ -54,10 +56,14 @@ export class BgHandlers {
     await expirationCache.deleteExpired();
   };
 
-  public static getGoogleApiAuthorization = async (r: Bm.GetGoogleApiAuthorization): Promise<Bm.Res.GetGoogleApiAuthorization> => {
+  public static getApiAuthorization = async (r: Bm.GetApiAuthorization): Promise<Bm.Res.GetApiAuthorization> => {
     // force refresh token
     const { email } = GoogleOAuth.parseIdToken(r.idToken);
     if (email) {
+      const storage = await AcctStore.get(email, ['authentication']);
+      if (storage.authentication) {
+        return await ConfiguredIdpOAuth.authHdr(email, true, true);
+      }
       return await GoogleOAuth.googleApiAuthHeader(email, true);
     }
     return undefined;

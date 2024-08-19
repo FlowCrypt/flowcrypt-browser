@@ -6,7 +6,7 @@ import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 
 import { Catch } from '../../js/common/platform/catch.js';
@@ -51,7 +51,6 @@ View.run(
       const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
       this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
       this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (this.page && !/^(\/chrome|modules)/.test(this.page)) {
         Ui.modal.error('An unexpected value was found for the page parameter').catch((err: unknown) => {
           console.log(err);
@@ -140,6 +139,9 @@ View.run(
       });
       BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
         this.notifications.showAuthPopupNeeded(acctEmail);
+      });
+      BrowserMsg.addListener('notification_show_custom_idp_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+        this.notifications.showCustomIDPAuthPopupNeeded(acctEmail);
       });
       BrowserMsg.addListener('close_dialog', async () => {
         Swal.close();
@@ -244,7 +246,6 @@ View.run(
       $('#status-row #status_local_store').on(
         'click',
         this.setHandler(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
         })
       );
@@ -378,20 +379,23 @@ View.run(
           await this.acctServer!.fetchAndSaveClientConfiguration();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
         } catch (e) {
-          if (ApiErr.isAuthErr(e)) {
+          if (e instanceof EnterpriseServerAuthErr) {
+            Settings.offerToLoginCustomIDPWithPopupShowModalOnErr(this.acctEmail, () => {
+              window.location.reload();
+            });
+          } else if (ApiErr.isAuthErr(e)) {
             const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
             authNeededLink.on(
               'click',
               this.setHandler(async () => {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => {
+                await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, false, () => {
                   window.location.reload();
                 });
               })
             );
             statusContainer.empty().append(authNeededLink); // xss-direct
             $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => {
               window.location.reload();
             });

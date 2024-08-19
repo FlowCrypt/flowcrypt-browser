@@ -66,12 +66,12 @@ export namespace GmailRes {
     resultSizeEstimate: number;
   };
   export type GmailDraftCreate = { id: string };
-  export type GmailDraftDelete = {}; // eslint-disable-line @typescript-eslint/ban-types
-  export type GmailDraftUpdate = {}; // eslint-disable-line @typescript-eslint/ban-types
+  export type GmailDraftDelete = object;
+  export type GmailDraftUpdate = object;
   export type GmailDraftGet = { id: string; message: GmailMsg };
   export type GmailDraftMeta = { id: string; message: { id: string; threadId: string } };
   export type GmailDraftList = { drafts: GmailDraftMeta[]; nextPageToken: string };
-  export type GmailDraftSend = {}; // eslint-disable-line @typescript-eslint/ban-types
+  export type GmailDraftSend = object;
   export type GmailAliases = { sendAs: GmailAliases$sendAs[] };
   type GmailAliases$sendAs = {
     sendAsEmail: string;

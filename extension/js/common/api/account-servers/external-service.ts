@@ -5,16 +5,16 @@ import { Api, ProgressCb, ProgressCbs } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Dict, Str } from '../../core/common.js';
 import { ErrorReport } from '../../platform/catch.js';
-import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
-import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
+import { ApiErr } from '../shared/api-error.js';
+import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
-import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 import { Xss } from '../../platform/xss.js';
+import { ConfiguredIdpOAuth } from '../authentication/configured-idp-oauth.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -85,13 +85,18 @@ export class ExternalService extends Api {
   };
 
   public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
-    return await this.request<FesRes.ServiceInfo>(`/api/`);
+    return await this.request<FesRes.ServiceInfo>(`/api/`, undefined, undefined, false);
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const auth = await this.request<AuthenticationConfiguration>(`/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`);
+    const auth = await this.request<AuthenticationConfiguration>(
+      `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`,
+      undefined,
+      undefined,
+      false
+    );
     await AcctStore.set(this.acctEmail, { authentication: auth });
-    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`, undefined, undefined, false);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -160,15 +165,6 @@ export class ExternalService extends Api {
     });
   };
 
-  private authHdr = async (): Promise<{ authorization: string }> => {
-    const idToken = await InMemoryStore.getUntilAvailable(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-    if (idToken) {
-      return { authorization: `Bearer ${idToken}` };
-    }
-    // user will not actually see this message, they'll see a generic login prompt
-    throw new BackendAuthErr('Missing id token, please re-authenticate');
-  };
-
   private request = async <RT>(
     path: string,
     vals?:
@@ -177,7 +173,8 @@ export class ExternalService extends Api {
           fmt: 'FORM';
         }
       | { data: Dict<Serializable>; fmt: 'JSON' },
-    progress?: ProgressCbs
+    progress?: ProgressCbs,
+    shouldThrowErrorForEmptyIdToken = true
   ): Promise<RT> => {
     const values:
       | {
@@ -192,6 +189,13 @@ export class ExternalService extends Api {
           method: 'POST',
         }
       : undefined;
-    return await ExternalService.apiCall(this.url, path, values, progress, await this.authHdr(), 'json');
+    return await ExternalService.apiCall(
+      this.url,
+      path,
+      values,
+      progress,
+      await ConfiguredIdpOAuth.authHdr(this.acctEmail, shouldThrowErrorForEmptyIdToken),
+      'json'
+    );
   };
 }

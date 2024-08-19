@@ -120,24 +120,28 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - send rich-text encrypted message',
-      testWithBrowser(async (t, browser) => {
-        const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
-        const composePage = await GmailPageRecipe.openSecureComposeWithRichTextWorkaround(t, gmailPage, browser);
-        const subject = `New Rich Text Message ${Util.lousyRandom()}`;
-        await ComposePageRecipe.fillMsg(composePage, { to: acctEmail }, subject, undefined, {
-          richtext: true,
-        });
-        await ComposePageRecipe.sendAndClose(composePage);
-        await GmailPageRecipe.expandMainMenuIfNeeded(gmailPage);
-        await gmailPage.waitAndClick('[aria-label^="Inbox"]');
-        await gmailPage.waitAndClick('[role="row"]:first-of-type'); // click the first message
-        await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
-        await GmailPageRecipe.deleteThread(gmailPage);
-        expect(urls.length).to.eq(1);
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          const acctEmail = 'ci.tests.gmail@flowcrypt.dev';
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+          const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
+          const composePage = await GmailPageRecipe.openSecureComposeWithRichTextWorkaround(t, gmailPage, browser);
+          const subject = `New Rich Text Message ${Util.lousyRandom()}`;
+          await ComposePageRecipe.fillMsg(composePage, { to: acctEmail }, subject, undefined, {
+            richtext: true,
+          });
+          await ComposePageRecipe.sendAndClose(composePage);
+          await GmailPageRecipe.expandMainMenuIfNeeded(gmailPage);
+          await gmailPage.waitAndClick('[aria-label^="Inbox"]');
+          await gmailPage.waitAndClick('[role="row"]:first-of-type'); // click the first message
+          await gmailPage.waitForContent('.nH h2.hP', `Automated puppeteer test: ${subject}`);
+          const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 1 });
+          await GmailPageRecipe.deleteThread(gmailPage);
+          expect(urls.length).to.eq(1);
+        },
+        undefined,
+        minutes(6) // explicitly set timer-controlled timeout
+      )
     );
 
     test(

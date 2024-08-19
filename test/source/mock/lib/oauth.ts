@@ -4,6 +4,7 @@ import { HttpClientErr, Status } from './api';
 
 import { Buf } from '../../core/buf';
 import { Str } from '../../core/common';
+import { issuedCustomIDPIdTokens, issuedGoogleIDPIdTokens } from '../fes/customer-url-fes-endpoints';
 
 const authURL = 'https://localhost:8001';
 
@@ -21,6 +22,15 @@ export class OauthMock {
   private acctByIdToken: { [acct: string]: string } = {};
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
+  public static getCustomIDPOAuthConfig = (port: number | undefined) => {
+    return {
+      clientId: OauthMock.customIDPClientId,
+      clientSecret: OauthMock.customIDPClientSecret,
+      redirectUrl: `custom-redirect-url`, // This won't be used as we use our https://{id}.chromiumapp.org with chrome.identity.getRedirectURL
+      authCodeUrl: `https://localhost:${port}/o/oauth2/auth`,
+      tokensUrl: `https://localhost:${port}/token`,
+    };
+  };
   public renderText = (text: string) => {
     return this.htmlPage(text, text);
   };
@@ -43,12 +53,12 @@ export class OauthMock {
     return url.href;
   };
 
-  public getRefreshTokenResponse = (code: string) => {
+  public getRefreshTokenResponse = (code: string, isCustomIDPAuth: boolean) => {
     /* eslint-disable @typescript-eslint/naming-convention */
     const refresh_token = this.refreshTokenByAuthCode[code];
     const access_token = this.getAccessToken(refresh_token);
     const acct = this.acctByAccessToken[access_token];
-    const id_token = this.generateIdToken(acct);
+    const id_token = this.generateIdToken(acct, isCustomIDPAuth);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
     /* eslint-enable @typescript-eslint/naming-convention */
   };
@@ -62,12 +72,12 @@ export class OauthMock {
     };
   };
 
-  public getTokenResponse = (refreshToken: string) => {
+  public getTokenResponse = (refreshToken: string, isCustomIDPAuth: boolean) => {
     try {
       /* eslint-disable @typescript-eslint/naming-convention */
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];
-      const id_token = this.generateIdToken(acct);
+      const id_token = this.generateIdToken(acct, isCustomIDPAuth);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
       /* eslint-enable @typescript-eslint/naming-convention */
     } catch {
@@ -141,13 +151,18 @@ export class OauthMock {
 
   // -- private
 
-  private generateIdToken = (email: string): string => {
+  private generateIdToken = (email: string, isCustomIDPAuth: boolean): string => {
     const newIdToken = MockJwt.new(email, this.expiresIn);
     if (!this.issuedIdTokensByAcct[email]) {
       this.issuedIdTokensByAcct[email] = [];
     }
     this.issuedIdTokensByAcct[email].push(newIdToken);
     this.acctByIdToken[newIdToken] = email;
+    if (isCustomIDPAuth) {
+      issuedCustomIDPIdTokens.push(newIdToken);
+    } else {
+      issuedGoogleIDPIdTokens.push(newIdToken);
+    }
     return newIdToken;
   };
 

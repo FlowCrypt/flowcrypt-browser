@@ -6,7 +6,7 @@ import { SetupOptions, SetupView } from '../setup.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Url } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { AjaxErr, ApiErr, EnterpriseServerAuthErr } from '../../../js/common/api/shared/api-error.js';
 import { Api } from '../../../js/common/api/shared/api.js';
 import { Settings } from '../../../js/common/settings.js';
 import { KeyUtil } from '../../../js/common/core/crypto/key.js';
@@ -14,6 +14,7 @@ import { OpenPGPKey } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 import { Lang } from '../../../js/common/lang.js';
 import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 
 export class SetupWithEmailKeyManagerModule {
   public constructor(private view: SetupView) {}
@@ -55,7 +56,7 @@ export class SetupWithEmailKeyManagerModule {
     /* eslint-enable @typescript-eslint/naming-convention */
     try {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.idToken!);
+      const { privateKeys } = await this.view.keyManager!.getPrivateKeys(this.view.acctEmail);
       if (privateKeys.length) {
         // keys already exist on keyserver, auto-import
         try {
@@ -79,6 +80,10 @@ export class SetupWithEmailKeyManagerModule {
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();
     } catch (e) {
+      if (e instanceof EnterpriseServerAuthErr) {
+        await BrowserMsg.send.bg.await.reconnectCustomIDPAcctAuthPopup({ acctEmail: this.view.acctEmail });
+        return;
+      }
       if (ApiErr.isNetErr(e) && (await Api.isInternetAccessible())) {
         // frendly message when key manager is down, helpful during initial infrastructure setup
         const url = this.view.clientConfiguration.getKeyManagerUrlForPrivateKeys();
@@ -115,7 +120,7 @@ export class SetupWithEmailKeyManagerModule {
     }
     const storePrvOnKm = async () => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.view.keyManager!.storePrivateKey(this.view.idToken!, KeyUtil.armor(decryptablePrv));
+      await this.view.keyManager!.storePrivateKey(this.view.acctEmail, KeyUtil.armor(decryptablePrv));
     };
     await Settings.retryUntilSuccessful(
       storePrvOnKm,

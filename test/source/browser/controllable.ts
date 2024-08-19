@@ -51,7 +51,7 @@ abstract class ControllableBase {
   public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
     try {
       await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: undefined });
-    } catch (e) {
+    } catch {
       throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
     }
   };
@@ -557,7 +557,7 @@ abstract class ControllableBase {
   };
 
   protected isXpath = (selector: string): boolean => {
-    return selector.startsWith('//'); // eslint-disable-line no-null/no-null
+    return selector.startsWith('//');
   };
 
   protected selector = (customSelLanguageQuery: string): string => {
@@ -565,13 +565,13 @@ abstract class ControllableBase {
     let m: RegExpMatchArray | null;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
-    } else if ((m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/))) {
+    } else if ((m = /@(ui-modal-[a-z\-]+)\:message/.exec(customSelLanguageQuery))) {
       return `.${m[1]} .swal2-html-container`; // message inside the modal
-    } else if ((m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/))) {
+    } else if ((m = /@(ui-modal-[a-z\-]+)/.exec(customSelLanguageQuery))) {
       return `.${m[1]}`; // represented as a class
-    } else if ((m = customSelLanguageQuery.match(/@([a-z0-9\-_]+)$/i))) {
+    } else if ((m = /@([a-z0-9\-_]+)$/i.exec(customSelLanguageQuery))) {
       return customSelLanguageQuery.replace(/@([a-z0-9\-_]+)$/i, `[data-test="${m[1]}"]`);
-    } else if ((m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/i))) {
+    } else if ((m = /^@([a-z0-9\-_]+)\(([^()]*)\)$/i.exec(customSelLanguageQuery))) {
       return `//*[@data-test='${m[1]}' and (contains(text(),'${m[2]}') or contains(*/following-sibling::text(),'${m[2]}'))]`;
     } else {
       return customSelLanguageQuery;
@@ -872,6 +872,10 @@ export class ControllablePage extends ControllableBase {
       keys
     );
     return result as Dict<unknown>;
+  };
+
+  public setLocalStorage = async (key: string, value: string | null): Promise<void> => {
+    await this.target.evaluate(async (key, value) => await chrome.storage.local.set({ [key]: value }), key, value);
   };
 
   public getPage = () => {

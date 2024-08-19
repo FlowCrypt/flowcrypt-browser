@@ -410,10 +410,8 @@ export class Catch {
 
   private static isPromiseRejectionEvent(ev: unknown): ev is PromiseRejectionEvent {
     if (ev && typeof ev === 'object') {
-      /* eslint-disable @typescript-eslint/no-empty-object-type */
-      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
-      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
-      /* eslint-enable @typescript-eslint/no-empty-object-type */
+      const eHasReason = ev.hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = ev.hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
       return eHasReason && eHasPromise;
     }
     return false;

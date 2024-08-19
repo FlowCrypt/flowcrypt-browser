@@ -212,7 +212,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     let mimeType;
     let data = '';
     const parts = src.split(/[:;,]/);
-    if (parts.length === 4 && parts[0] === 'data' && parts[1].match(/^image\/\w+/) && parts[2] === 'base64') {
+    if (parts.length === 4 && parts[0] === 'data' && /^image\/\w+/.exec(parts[1]) && parts[2] === 'base64') {
       mimeType = parts[1];
       data = parts[3];
     }

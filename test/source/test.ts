@@ -45,7 +45,6 @@ const consts = {
 
 /* eslint-enable @typescript-eslint/naming-convention */
 console.info('consts: ', JSON.stringify(consts), '\n');
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
 export type Consts = typeof consts;

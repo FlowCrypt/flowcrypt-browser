@@ -136,7 +136,7 @@ export class SetupRecoverKeyModule {
       const backups = await this.view.gmail.fetchKeyBackups();
       this.view.fetchedKeyBackups = backups.keyinfos.backups;
       this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
-    } catch (e) {
+    } catch {
       window.location.href = Url.create('modules/add_key.htm', {
         acctEmail: this.view.acctEmail,
         parentTabId: this.view.parentTabId,

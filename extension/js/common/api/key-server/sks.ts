@@ -34,7 +34,7 @@ export class Sks extends Api {
       .map(l => l.trim())
       .filter(l => !l.startsWith(Sks.MR_VERSION_1))) {
       if (line.startsWith('pub:')) {
-        const match = line.match(/^pub:[A-F0-9]{24}([A-F0-9]{16}):[0-9:]+:$/); // in particular cannot end with :r, meaning revoked
+        const match = /^pub:[A-F0-9]{24}([A-F0-9]{16}):[0-9:]+:$/.exec(line); // in particular cannot end with :r, meaning revoked
         if (!match) {
           currentLongid = '';
         } else {

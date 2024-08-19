@@ -226,14 +226,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
         }
       };
       GoogleOAuth.googleApiAuthHeader(this.acctEmail)
-        .then(async authToken => {
+        .then(async authHeader => {
           const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
           const response: Response = await fetch(url, {
             method: 'GET',
-            headers: new Headers({
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              Authorization: authToken,
-            }),
+            headers: authHeader,
           });
 
           if (!response.ok) throw AjaxErr.fromFetchResponse(response);

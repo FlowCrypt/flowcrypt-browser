@@ -140,7 +140,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     try {
       // no valid keys found, query synchronously, then return result
       await this.updateLocalPubkeysFromRemote(storedContact?.sortedPubkeys || [], email);
-    } catch (e) {
+    } catch {
       return PUBKEY_LOOKUP_RESULT_FAIL;
     }
     // re-query the storage, which is now updated

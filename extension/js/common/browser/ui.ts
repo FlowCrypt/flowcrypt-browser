@@ -117,7 +117,7 @@ export class Ui {
         Catch.reportErr(e);
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters, @typescript-eslint/no-invalid-void-type
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type, @typescript-eslint/no-unnecessary-type-parameters
     prevent: <THIS extends HTMLElement | void>(
       evName: PreventableEventName,
       cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
