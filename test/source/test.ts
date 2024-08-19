@@ -65,6 +65,10 @@ const registerCompletionHandler = () => {
   });
 };
 
+test.before(() => {
+  registerCompletionHandler();
+});
+
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
@@ -260,5 +264,3 @@ if (testGroup === 'UNIT-TESTS') {
   defineSettingsTests(testVariant, testWithBrowser);
   defineElementTests(testVariant, testWithBrowser);
 }
-
-registerCompletionHandler();
