@@ -67,5 +67,9 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
   private actionInputFromChangeHandler = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getValidRecipients());
     this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
+    const signaturePattern = /--\s*<br\s*\/?>[\s\S]*$/i;
+    const inputEl = this.view.S.cached('input_text');
+    const footerWithoutPreviousSignature = inputEl.html().replace(signaturePattern, '');
+    Xss.sanitizeRender(inputEl, `${footerWithoutPreviousSignature}${this.view.quoteModule.tripleDotSanitizedHtmlContent?.footer}`);
   };
 }

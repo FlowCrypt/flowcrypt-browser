@@ -94,7 +94,7 @@ export const multipleEmailAliasList: MockUserAlias[] = [
     sendAsEmail: 'alias2@example.com',
     displayName: 'An Alias1',
     replyToAddress: 'alias2@example.com',
-    signature: '',
+    signature: 'Test signature 2',
     isDefault: false,
     isPrimary: false,
     treatAsAlias: false,
