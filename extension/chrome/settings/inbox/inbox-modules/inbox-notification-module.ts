@@ -49,6 +49,9 @@ export class InboxNotificationModule extends ViewModule<InboxView> {
     BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       this.notifications.showAuthPopupNeeded(acctEmail);
     });
+    BrowserMsg.addListener('notification_show_custom_idp_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+      this.notifications.showCustomIDPAuthPopupNeeded(acctEmail);
+    });
   };
 
   private notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks, group }: Bm.NotificationShow) => {

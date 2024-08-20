@@ -5,7 +5,7 @@
 import Swal from 'sweetalert2';
 import { AccountServer } from '../../../common/api/account-server.js';
 import { KeyManager } from '../../../common/api/key-server/key-manager.js';
-import { ApiErr, BackendAuthErr } from '../../../common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../../common/api/shared/api-error.js';
 import { BrowserMsgCommonHandlers } from '../../../common/browser/browser-msg-common-handlers.js';
 import { Bm, BrowserMsg, TabIdRequiredError } from '../../../common/browser/browser-msg.js';
 import { ContentScriptWindow } from '../../../common/browser/browser-window.js';
@@ -247,6 +247,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const { acctEmail } = req as Bm.NotificationShowAuthPopupNeeded;
       notifications.showAuthPopupNeeded(acctEmail);
     });
+    BrowserMsg.addListener('notification_show_custom_idp_auth_popup_needed', async req => {
+      const { acctEmail } = req as Bm.NotificationShowAuthPopupNeeded;
+      notifications.showCustomIDPAuthPopupNeeded(acctEmail);
+    });
     BrowserMsg.addListener('reply_pubkey_mismatch', BrowserMsgCommonHandlers.replyPubkeyMismatch);
     BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.addListener('show_attachment_preview', async req => {
@@ -345,6 +349,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     clientConfiguration: ClientConfiguration,
     factory: XssSafeFactory,
     ppEvent: { entered?: boolean },
+    notifications: Notifications,
     completion: () => void
   ) => {
     if (clientConfiguration.usesKeyManager()) {
@@ -366,6 +371,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
               idToken,
               ppEvent
             );
+          } catch (e) {
+            if (e instanceof EnterpriseServerAuthErr) {
+              notifications.showCustomIDPAuthPopupNeeded(acctEmail);
+              return;
+            }
+            throw e;
           } finally {
             completion();
           }
@@ -382,7 +393,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     try {
       await (await AccountServer.init(acctEmail)).fetchAndSaveClientConfiguration();
     } catch (e) {
-      if (e instanceof BackendAuthErr) {
+      if (e instanceof EnterpriseServerAuthErr) {
         // user will see a prompt to log in during some other actions that involve backend
         // at which point the update will happen next time user loads the page
       } else if (ApiErr.isNetErr(e)) {
@@ -453,6 +464,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
           clientConfiguration,
           factory,
           ppEvent,
+          notifications,
           Catch.try(() => notifyExpiringKeys(acctEmail, clientConfiguration, notifications))
         );
       }

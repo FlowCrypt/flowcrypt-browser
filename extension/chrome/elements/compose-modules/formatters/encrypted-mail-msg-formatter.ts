@@ -4,7 +4,7 @@
 
 import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
-import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../../../js/common/api/shared/api-error.js';
 import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
@@ -275,6 +275,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         replyToken: response.replyToken,
       };
     } catch (msgTokenErr) {
+      if (msgTokenErr instanceof EnterpriseServerAuthErr) {
+        Settings.offerToLoginCustomIDPWithPopupShowModalOnErr(this.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
+        throw new ComposerResetBtnTrigger();
+      }
       if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
         throw new ComposerResetBtnTrigger();

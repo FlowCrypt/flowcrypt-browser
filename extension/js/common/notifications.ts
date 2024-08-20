@@ -32,6 +32,18 @@ export class Notifications {
     });
   };
 
+  public showCustomIDPAuthPopupNeeded = (acctEmail: string) => {
+    this.show(
+      `${Lang.compose.pleaseReconnectCustomIDPAccount} <a href="#" class="auth_popup" data-test="action-reconnect-custom-idp-account">Re-connect Account</a>`,
+      {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        auth_popup: async () => {
+          await this.reconnectCustomIDPAcctAuthPopup(acctEmail);
+        },
+      }
+    );
+  };
+
   public clear = (group: NotificationGroupType) => {
     $(`.${this.getNotificationGroupClass(group)}`)?.remove();
   };
@@ -83,6 +95,17 @@ export class Notifications {
           },
         }
       );
+    } else {
+      this.show(`Failed to connect (${authRes.result}) ${authRes.error || ''}. <a href="#" class="close">Close</a>`);
+    }
+  };
+
+  private reconnectCustomIDPAcctAuthPopup = async (acctEmail: string) => {
+    const authRes = await BrowserMsg.send.bg.await.reconnectCustomIDPAcctAuthPopup({
+      acctEmail,
+    });
+    if (authRes.result === 'Success') {
+      this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
     } else {
       this.show(`Failed to connect (${authRes.result}) ${authRes.error || ''}. <a href="#" class="close">Close</a>`);
     }

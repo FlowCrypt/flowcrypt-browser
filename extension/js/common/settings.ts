@@ -27,6 +27,7 @@ import { isCustomerUrlFesUsed } from './helpers.js';
 import { Api } from './api/shared/api.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
+import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
 
 declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
 
@@ -423,12 +424,20 @@ export class Settings {
   public static offerToLoginWithPopupShowModalOnErr(acctEmail: string, then: () => void = () => undefined, prepend = '') {
     (async () => {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
-        await Settings.loginWithPopupShowModalOnErr(acctEmail, then);
+        await Settings.loginWithPopupShowModalOnErr(acctEmail, false, then);
       }
     })().catch(Catch.reportErr);
   }
 
-  public static async loginWithPopupShowModalOnErr(acctEmail: string, then: () => void = () => undefined) {
+  public static offerToLoginCustomIDPWithPopupShowModalOnErr(acctEmail: string, then: () => void = () => undefined, prepend = '') {
+    (async () => {
+      if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
+        await Settings.loginWithPopupShowModalOnErr(acctEmail, true, then);
+      }
+    })().catch(Catch.reportErr);
+  }
+
+  public static async loginWithPopupShowModalOnErr(acctEmail: string, isCustomIDP: boolean, then: () => void = () => undefined) {
     if (window !== window.top && !chrome.windows) {
       // Firefox, chrome.windows isn't available in iframes
       await Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
@@ -436,7 +445,13 @@ export class Settings {
       window.location.reload();
       return;
     }
-    const authRes = await GoogleOAuth.newAuthPopup({ acctEmail });
+    let authRes;
+    if (isCustomIDP) {
+      authRes = await ConfiguredIdpOAuth.newAuthPopup(acctEmail);
+    } else {
+      authRes = await GoogleOAuth.newAuthPopup({ acctEmail });
+    }
+
     if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
       then();
     } else {

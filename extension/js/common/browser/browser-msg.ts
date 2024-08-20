@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { AjaxErr } from '../api/shared/api-error.js';
+import { AjaxErr, EnterpriseServerAuthErr } from '../api/shared/api-error.js';
 import { Buf } from '../core/buf.js';
 import { Dict, Str, Url, UrlParams } from '../core/common.js';
 import { NotificationGroupType } from '../notifications.js';
@@ -82,8 +82,9 @@ export namespace Bm {
     expiration: number | undefined;
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
-  export type GetGoogleApiAuthorization = { idToken: string };
+  export type GetApiAuthorization = { idToken: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[]; screenDimensions: ScreenDimensions };
+  export type ReconnectCustomIDPAcctAuthPopup = { acctEmail: string };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
   export type AjaxGmailAttachmentGetChunk = { acctEmail: string; msgId: string; attachmentId: string; treatAs: string };
@@ -105,7 +106,7 @@ export namespace Bm {
     export type InMemoryStoreGet = string | undefined;
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     export type InMemoryStoreSet = void;
-    export type GetGoogleApiAuthorization = string | undefined;
+    export type GetApiAuthorization = { authorization: string } | undefined;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type AjaxGmailAttachmentGetChunk = { chunk: Buf };
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
@@ -121,8 +122,9 @@ export namespace Bm {
     export type Any =
       | GetActiveTabInfo
       | ReconnectAcctAuthPopup
+      | ReconnectCustomIDPAcctAuthPopup
       | InMemoryStoreGet
-      | GetGoogleApiAuthorization
+      | GetApiAuthorization
       | InMemoryStoreSet
       | ExpirationCacheGet<unknown>
       | ExpirationCacheSet
@@ -135,7 +137,7 @@ export namespace Bm {
   export type AnyRequest =
     | PassphraseEntry
     | OpenPage
-    | GetGoogleApiAuthorization
+    | GetApiAuthorization
     | ExpirationCacheGet
     | ExpirationCacheSet<unknown>
     | ExpirationCacheDeleteExpired
@@ -157,6 +159,7 @@ export namespace Bm {
     | SetCss
     | AddOrRemoveClass
     | ReconnectAcctAuthPopup
+    | ReconnectCustomIDPAcctAuthPopup
     | Db
     | InMemoryStoreSet
     | InMemoryStoreGet
@@ -174,7 +177,7 @@ export namespace Bm {
   export type AsyncRespondingHandler = (req: AnyRequest) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest) => Promise<void>;
 
-  type StandardErrAsJson = { stack?: string; message: string; errorConstructor: 'Error' };
+  type StandardErrAsJson = { stack?: string; message: string; errorConstructor: 'Error' | 'EnterpriseServerAuthErr' };
   type AjaxErrDetails = {
     status: number;
     url: string;
@@ -215,11 +218,13 @@ export class BrowserMsg {
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
           BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
+        reconnectCustomIDPAcctAuthPopup: (bm: Bm.ReconnectCustomIDPAcctAuthPopup) =>
+          BrowserMsg.sendAwait(undefined, 'reconnect_custom_idp_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         inMemoryStoreGet: (bm: Bm.InMemoryStoreGet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreGet', bm, true) as Promise<Bm.Res.InMemoryStoreGet>,
         inMemoryStoreSet: (bm: Bm.InMemoryStoreSet) => BrowserMsg.sendAwait(undefined, 'inMemoryStoreSet', bm, true) as Promise<Bm.Res.InMemoryStoreSet>,
-        getGoogleApiAuthorization: (bm: Bm.GetGoogleApiAuthorization) =>
-          BrowserMsg.sendAwait(undefined, 'getGoogleApiAuthorization', bm, true) as Promise<Bm.Res.GetGoogleApiAuthorization>,
+        getApiAuthorization: (bm: Bm.GetApiAuthorization) =>
+          BrowserMsg.sendAwait(undefined, 'getApiAuthorization', bm, true) as Promise<Bm.Res.GetApiAuthorization>,
         db: (bm: Bm.Db): Promise<Bm.Res.Db> => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttachmentGetChunk: (bm: Bm.AjaxGmailAttachmentGetChunk) =>
@@ -297,6 +302,9 @@ export class BrowserMsg {
     },
     notificationShowAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) => {
       BrowserMsg.sendCatch(dest, 'notification_show_auth_popup_needed', bm);
+    },
+    notificationShowCustomIDPAuthPopupNeeded: (dest: Bm.Dest, bm: Bm.NotificationShowAuthPopupNeeded) => {
+      BrowserMsg.sendCatch(dest, 'notification_show_custom_idp_auth_popup_needed', bm);
     },
     showConfirmation: (frame: ChildFrame, bm: Bm.ShowConfirmation) => {
       BrowserMsg.sendToParentWindow(frame, 'confirmation_show', bm, 'confirmation_result');
@@ -705,18 +713,29 @@ export class BrowserMsg {
       };
     }
     const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
-    return { stack, message, errorConstructor: 'Error' };
+    return { stack, message, errorConstructor: e instanceof EnterpriseServerAuthErr ? 'EnterpriseServerAuthErr' : 'Error' };
   }
 
   private static jsonToErr(errAsJson: Bm.ErrAsJson, msg: Bm.Raw) {
     const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
-    if (errAsJson.errorConstructor === 'AjaxErr') {
-      const { status, url, responseText, statusText, resMsg, resDetails } = errAsJson.ajaxErrorDetails;
-      return new AjaxErr(`BrowserMsg(${msg.name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
+    const errorMessage = `BrowserMsg(${msg.name}) ${errAsJson.message}`;
+
+    switch (errAsJson.errorConstructor) {
+      case 'AjaxErr': {
+        const { status, url, responseText, statusText, resMsg, resDetails } = errAsJson.ajaxErrorDetails;
+        return new AjaxErr(errorMessage, stackInfo, status, url, responseText, statusText, resMsg, resDetails);
+      }
+      case 'EnterpriseServerAuthErr': {
+        const authError = new EnterpriseServerAuthErr(errorMessage);
+        authError.stack += stackInfo;
+        return authError;
+      }
+      default: {
+        const generalError = new Error(errorMessage);
+        generalError.stack += stackInfo;
+        return generalError;
+      }
     }
-    const e = new Error(`BrowserMsg(${msg.name}) ${errAsJson.message}`);
-    e.stack += stackInfo;
-    return e;
   }
 
   private static sendRawResponse(handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) {
