@@ -82,7 +82,8 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
         htmlWithUpdatedFooter = inputHtml.replace(lastSignature, footer);
       }
     } else {
-      const signaturePattern = /--\s*<br\s*\/?>\s*[\s\S]*?(?=<br><br><blockquote dir="ltr">|On .* at .*, .*? wrote:|$)/;
+      const signaturePattern =
+        /--\s*<br\s*\/?>\s*[\s\S]*?(?=<br><\/div><div><br><\/div><div>|<br><br><blockquote dir="ltr"|On .* at .*, .*? wrote:|<br><\div><div><br><\div>|$)/;
       htmlWithUpdatedFooter = inputHtml.replace(signaturePattern, footer);
     }
     Xss.sanitizeRender(inputEl, htmlWithUpdatedFooter);
