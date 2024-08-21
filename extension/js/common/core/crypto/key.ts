@@ -6,7 +6,7 @@ import { Buf } from '../buf.js';
 import { Catch } from '../../platform/catch.js';
 import { MsgBlockParser } from '../msg-block-parser.js';
 import { PgpArmor } from './pgp/pgp-armor.js';
-import { opgp } from './pgp/openpgpjs-custom.js';
+import { openpgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
@@ -204,7 +204,7 @@ export class KeyUtil {
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
     try {
-      const keys = await opgp.readKeys({ binaryKeys: key }); // todo: opgp.readKey ?
+      const keys = await openpgp.readKeys({ binaryKeys: key }); // todo: opgp.readKey ?
       uncheckedOpgpKeyCount = keys.length;
       for (const key of keys) {
         try {
@@ -318,12 +318,12 @@ export class KeyUtil {
       let keys: OpenPGP.Key[] = [];
       armored = PgpArmor.normalize(armored, 'key');
       if (RegExp(PgpArmor.headers('publicKey', 're').begin).test(armored)) {
-        keys = await opgp.readKeys({ armoredKeys: armored });
+        keys = await openpgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('privateKey', 're').begin).test(armored)) {
-        keys = await opgp.readKeys({ armoredKeys: armored });
+        keys = await openpgp.readKeys({ armoredKeys: armored });
       } else if (RegExp(PgpArmor.headers('encryptedMsg', 're').begin).test(armored)) {
-        const packets = (await opgp.readMessage({ armoredMessage: armored })).packets;
-        keys = [type === 'publicKey' ? new opgp.PublicKey(packets) : new opgp.PrivateKey(packets)];
+        const packets = (await openpgp.readMessage({ armoredMessage: armored })).packets;
+        keys = [type === 'publicKey' ? new openpgp.PublicKey(packets) : new openpgp.PrivateKey(packets)];
       }
       for (const k of keys) {
         for (const u of k.users) {

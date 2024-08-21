@@ -13,7 +13,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Time } from '../../js/common/browser/time.js';
 import { Url } from '../../js/common/core/common.js';
-import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Url.parse(['acctEmail']);
@@ -123,7 +123,7 @@ Catch.try(async () => {
     const pwd = prompt('Please enter encryption password');
     if (pwd) {
       print('encrypting..');
-      const encrypted = await opgp.encrypt({ format: 'binary', message: await opgp.createMessage({ binary: data }), passwords: [pwd] });
+      const encrypted = await openpgp.encrypt({ format: 'binary', message: await openpgp.createMessage({ binary: data }), passwords: [pwd] });
       save(encrypted); // todo: test
     } else {
       save(data);

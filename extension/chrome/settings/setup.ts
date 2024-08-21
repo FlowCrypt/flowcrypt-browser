@@ -12,7 +12,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
-import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -124,9 +124,9 @@ export class SetupView extends View {
     this.storage = await AcctStore.get(this.acctEmail, ['setup_done', 'email_provider', 'fesUrl']);
     this.storage.email_provider = this.storage.email_provider || 'gmail';
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
-    if (this.clientConfiguration.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
-      opgp.config.showComment = false;
-      opgp.config.showVersion = false;
+    if (this.clientConfiguration.shouldHideArmorMeta() && typeof openpgp !== 'undefined') {
+      openpgp.config.showComment = false;
+      openpgp.config.showVersion = false;
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
     if (this.clientConfiguration.usesKeyManager() && this.idToken) {

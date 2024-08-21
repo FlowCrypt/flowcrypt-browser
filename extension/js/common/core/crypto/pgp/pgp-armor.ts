@@ -8,7 +8,7 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
-import { opgp } from './openpgpjs-custom.js';
+import { openpgp } from './openpgpjs-custom.js';
 import * as Stream from '@openpgp/web-stream-tools';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
@@ -146,25 +146,25 @@ export class PgpArmor {
         isArmored,
         isCleartext: true,
         isPkcs7: false,
-        message: await opgp.readCleartextMessage({ cleartextMessage: Str.with(encrypted) }),
+        message: await openpgp.readCleartextMessage({ cleartextMessage: Str.with(encrypted) }),
       };
     } else if (isArmoredEncrypted) {
-      const message = await opgp.readMessage({ armoredMessage: Str.with(encrypted) });
+      const message = await openpgp.readMessage({ armoredMessage: Str.with(encrypted) });
       const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIDs().length && !message.getEncryptionKeyIDs().length;
       return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {
-      return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.readMessage({ binaryMessage: encrypted }) };
+      return { isArmored, isCleartext: false, isPkcs7: false, message: await openpgp.readMessage({ binaryMessage: encrypted }) };
     }
     throw new Error('Message does not have armor headers');
   }
 
   public static async dearmor(text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> {
-    const decoded = await opgp.unarmor(text);
+    const decoded = await openpgp.unarmor(text);
     const data = await Stream.readToEnd(decoded.data);
     return { type: decoded.type, data };
   }
 
   public static armor(messagetype: OpenPGP.enums.armor, body: object): string {
-    return opgp.armor(messagetype, body, undefined, undefined, undefined, opgp.config);
+    return openpgp.armor(messagetype, body, undefined, undefined, undefined, openpgp.config);
   }
 }

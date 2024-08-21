@@ -7,7 +7,7 @@ import { ApiErr } from '../shared/api-error.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { WKD_API_HOST } from '../../core/const.js';
-import { opgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
+import { openpgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../../core/crypto/key.js';
 
 export class Wkd extends Api {
@@ -52,7 +52,7 @@ export class Wkd extends Api {
     if (!response.buf) {
       return [];
     }
-    if (typeof opgp !== 'undefined') {
+    if (typeof openpgp !== 'undefined') {
       return await KeyUtil.parseAndArmorKeys(response.buf);
     }
     // in pgp-block.html there is no openpgp loaded for performance, use background

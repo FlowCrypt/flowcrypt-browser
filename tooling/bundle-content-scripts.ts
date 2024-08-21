@@ -64,6 +64,7 @@ buildContentScript(
     getFilesInDir(`${sourceDir}/js/common/platform/store`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/core`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/core/crypto/`, /\.js$/, false),
+    getFilesInDir(`./build/generic-extension-wip/lib`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/core/crypto/pgp`, /\.js$/, false, ['openpgpjs-custom.js']),
     getFilesInDir(`${sourceDir}/js/common/core/crypto/smime`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/shared`, /\.js$/, false),
