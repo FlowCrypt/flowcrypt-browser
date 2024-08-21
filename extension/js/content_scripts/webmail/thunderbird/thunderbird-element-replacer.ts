@@ -19,7 +19,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
-      const fullMsg = await BrowserMsg.send.bg.await.thunderbirdMsgDecrypt();
+      const fullMsg = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
       if (fullMsg && this.checkIfPgpEncryptedMsg(fullMsg)) {
         console.log('ready for decryption!');
         // note : embeddedMsg for pgp_block injection -> replaceArmoredBlocks

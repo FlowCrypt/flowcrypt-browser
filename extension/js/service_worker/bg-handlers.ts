@@ -165,7 +165,7 @@ export class BgHandlers {
     return;
   };
 
-  public static thunderbirdMsgDecryptHandler = async (): Promise<Bm.Res.ThunderbirdMsgDecrypt> => {
+  public static thunderbirdMsgGetHandler = async (): Promise<Bm.Res.ThunderbirdMsgGet> => {
     const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
     if (tab.id) {
       const messageId = (await messenger.messageDisplay.getDisplayedMessage(tab.id))?.id || 0;

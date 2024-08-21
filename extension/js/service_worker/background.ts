@@ -74,6 +74,6 @@ console.info('background.js service worker starting');
     BgHandlers.thunderbirdSecureComposeHandler();
     await BgHandlers.thunderbirdContentScriptRegistration();
     BrowserMsg.bgAddListener('thunderbirdGetCurrentUser', BgHandlers.thunderbirdGetCurrentUserHandler);
-    BrowserMsg.bgAddListener('thunderbirdMsgDecrypt', BgHandlers.thunderbirdMsgDecryptHandler);
+    BrowserMsg.bgAddListener('thunderbirdMsgGet', BgHandlers.thunderbirdMsgGetHandler);
   }
 })().catch(Catch.reportErr);

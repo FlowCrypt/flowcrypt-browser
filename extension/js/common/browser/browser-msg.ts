@@ -113,7 +113,7 @@ export namespace Bm {
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
     export type ThunderbirdGetCurrentUser = string | undefined;
-    export type ThunderbirdMsgDecrypt = messenger.messages.MessagePart | undefined;
+    export type ThunderbirdMsgGet = messenger.messages.MessagePart | undefined;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,7 +131,7 @@ export namespace Bm {
       | ExpirationCacheDeleteExpired
       | AjaxGmailAttachmentGetChunk
       | ConfirmationResult
-      | ThunderbirdMsgDecrypt;
+      | ThunderbirdMsgGet;
   }
 
   export type AnyRequest =
@@ -237,7 +237,7 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
         thunderbirdGetCurrentUser: () =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
-        thunderbirdMsgDecrypt: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgDecrypt', undefined, true) as Promise<Bm.Res.ThunderbirdMsgDecrypt>,
+        thunderbirdMsgGet: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgGet', undefined, true) as Promise<Bm.Res.ThunderbirdMsgGet>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => {
