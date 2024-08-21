@@ -67,9 +67,24 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
   private actionInputFromChangeHandler = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getValidRecipients());
     this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
-    const signaturePattern = /--\s*<br\s*\/?>[\s\S]*$/i;
+
     const inputEl = this.view.S.cached('input_text');
-    const footerWithoutPreviousSignature = inputEl.html().replace(signaturePattern, '');
-    Xss.sanitizeRender(inputEl, `${footerWithoutPreviousSignature}${this.view.quoteModule.tripleDotSanitizedHtmlContent?.footer}`);
+    const inputHtml = inputEl.html();
+    const footer = this.view.quoteModule.tripleDotSanitizedHtmlContent?.footer ?? '';
+    let htmlWithUpdatedFooter = inputHtml;
+    if (inputHtml.includes('---------- Forwarded message ---------')) {
+      // Update signature for forwarded messages
+      const forwardSignaturePattern = /(--<br>[\s\S]*?)(?=<br>--<br>[\s\S]*?$|$)/gm;
+      const matches = inputHtml.match(forwardSignaturePattern);
+
+      if (matches?.length) {
+        const lastSignature = matches[matches.length - 1];
+        htmlWithUpdatedFooter = inputHtml.replace(lastSignature, footer);
+      }
+    } else {
+      const signaturePattern = /--\s*<br\s*\/?>\s*[\s\S]*?(?=<br><br><blockquote dir="ltr">|On .* at .*, .*? wrote:|$)/;
+      htmlWithUpdatedFooter = inputHtml.replace(signaturePattern, footer);
+    }
+    Xss.sanitizeRender(inputEl, htmlWithUpdatedFooter);
   };
 }
