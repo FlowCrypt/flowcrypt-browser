@@ -156,23 +156,20 @@ export class BgHandlers {
   };
 
   public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {
-    const tabs = await messenger.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length) {
-      for (const tab of tabs) {
-        if (tab.id) {
-          const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tab.id);
-          const accountId = messageDetails?.folder?.accountId || '';
-          return (await messenger.accounts.get(accountId))?.name;
-        }
-      }
+    const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+      const accountId = messageDetails?.folder?.accountId || '';
+      return (await messenger.accounts.get(accountId))?.name;
     }
     return;
   };
 
   public static thunderbirdMsgDecryptHandler = async (): Promise<Bm.Res.ThunderbirdMsgDecrypt> => {
-    const tabs = await messenger.tabs.query({ active: true, currentWindow: true });
-    if (tabs.length && tabs[0].id) {
-      return await messenger.messages.getFull(tabs[0].id);
+    const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      const messageId = (await messenger.messageDisplay.getDisplayedMessage(tab.id))?.id || 0;
+      return await messenger.messages.getFull(messageId);
     }
     return;
   };

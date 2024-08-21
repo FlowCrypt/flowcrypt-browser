@@ -32,13 +32,22 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   private checkIfPgpEncryptedMsg = (fullMsg: messenger.messages.MessagePart) => {
     const isPgpEncryptedMsg =
-      fullMsg.headers &&
-      'openpgp' in fullMsg.headers &&
-      fullMsg.parts &&
-      fullMsg.parts[0]?.parts?.length === 2 &&
-      fullMsg.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
-      fullMsg.parts[0]?.parts[0].body?.trim().startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) &&
-      fullMsg.parts[0]?.parts[0].body?.trim().endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end as string);
+      (fullMsg.headers &&
+        'openpgp' in fullMsg.headers &&
+        fullMsg.parts &&
+        fullMsg.parts[0]?.parts?.length === 2 &&
+        fullMsg.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
+        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
+      (fullMsg.headers &&
+        'openpgp' in fullMsg.headers &&
+        fullMsg.parts &&
+        fullMsg.parts[0]?.parts?.length === 1 &&
+        fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
+        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || ''));
     return isPgpEncryptedMsg;
+  };
+
+  private resemblesAsciiArmoredMsg = (body: string) => {
+    return body.startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) && body.endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end as string);
   };
 }
