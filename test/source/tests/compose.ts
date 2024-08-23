@@ -41,7 +41,7 @@ import {
   processMessageFromUser4,
 } from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
-import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
+import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
 import { OauthMock } from '../mock/lib/oauth';
 
@@ -81,6 +81,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
         // The actualt test for this is present in '/shared-tenant-fes/api/v1/message' of shared-tenant-fes mock endpoint.
+      })
+    );
+
+    test(
+      'compose - signature changed correctly when user changes from address',
+      testWithBrowser(async (t, browser) => {
+        const primarySignature = 'Test primary signature';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: multipleEmailAliasList, acctPrimarySignature: 'Test primary signature' },
+        });
+
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        let emailBody = await composePage.read('@input-body');
+        expect(emailBody).to.contain(primarySignature);
+        // Select alias email and check if signature changes
+        await ComposePageRecipe.selectFromOption(composePage, 'alias2@example.com');
+        emailBody = await composePage.read('@input-body');
+        expect(emailBody).to.contain('Test signature 2');
+        expect(emailBody).to.not.contain(primarySignature);
       })
     );
 
