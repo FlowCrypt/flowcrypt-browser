@@ -55,6 +55,9 @@ View.run(
       $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
       Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
       const expiration = this.pubKey.expiration;
+      const creation = Str.datetimeToDate(Str.fromDate(new Date(this.pubKey.created)));
+      Xss.sanitizeRender('.key_status_contatiner', KeyUtil.statusHtml(this.keyInfo.longid, this.pubKey));
+      $('.key_creation').text(creation);
       $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Does not expire');
       this.renderPrivateKeyLink();
       await this.renderPubkeyShareableLink();

@@ -794,6 +794,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const expiration = Str.datetimeToDate(Str.fromDate(expirationDate));
         const oneDayBeforeExpiration = Str.datetimeToDate(Str.fromDate(oneDayBeforeExpirationDate));
         expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf([expiration, oneDayBeforeExpiration]);
+        await myKeyFrame.waitForContent('@content-key-creation', '2015-09-16');
+        await myKeyFrame.waitForContent('@container-key-status-77554D9512E22BB5', 'ACTIVE');
       })
     );
 

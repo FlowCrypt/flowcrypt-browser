@@ -143,25 +143,13 @@ View.run(
         for (const pubkey of contact.sortedPubkeys) {
           const keyid = Xss.escape(pubkey.pubkey.id);
           const type = Xss.escape(pubkey.pubkey.family);
-          let keyStatus: { state: string; statusIndicator: string };
-          if (pubkey.revoked) {
-            keyStatus = { state: 'revoked', statusIndicator: 'light-gray' };
-          } else if (pubkey.pubkey?.usableForEncryption) {
-            keyStatus = { state: 'active', statusIndicator: 'green' };
-          } else if (pubkey.pubkey?.usableForEncryptionButExpired) {
-            keyStatus = { state: 'expired', statusIndicator: 'orange' };
-          } else if (pubkey.pubkey?.usableForSigning) {
-            keyStatus = { state: 'sign only', statusIndicator: 'yellow' };
-          } else {
-            keyStatus = { state: 'unusable', statusIndicator: 'red' };
-          }
           const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
           const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
           const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${Str.spaced(keyid)}</a>`;
           tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">
           <div class="contacts-pubkey-info">
             <span class="fc-badge fc-badge-gray" data-test="container-contact-key-type-${keyid}">${type}</span>&nbsp;
-            <span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status-${keyid}">${keyStatus.state}</span>
+            ${KeyUtil.statusHtml(keyid, pubkey.pubkey)}
             ${show}
           </div>
           <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;
