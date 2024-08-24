@@ -3,9 +3,11 @@
 'use strict';
 
 import { BrowserMsg } from '../../../common/browser/browser-msg.js';
-import { DecryptError, DecryptErrTypes, MsgUtil } from '../../../common/core/crypto/pgp/msg-util.js';
+import { KeyUtil } from '../../../common/core/crypto/key.js';
+import { DecryptError, DecryptErrTypes, DecryptSuccess, MsgUtil } from '../../../common/core/crypto/pgp/msg-util.js';
 import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
 import { Catch } from '../../../common/platform/catch';
+import { ContactStore } from '../../../common/platform/store/contact-store.js';
 import { KeyStore } from '../../../common/platform/store/key-store.js';
 import { IntervalFunction, WebmailElementReplacer } from '../generic/webmail-element-replacer.js';
 
@@ -17,31 +19,48 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   private encryptedData: string;
 
   public getIntervalFunctions = (): IntervalFunction[] => {
-    return [{ interval: 1000, handler: () => this.replaceThunderbirdMsgPane() }];
+    return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
   };
 
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
       const fullMsg = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
-      if (fullMsg && this.checkIfPgpEncryptedMsg(fullMsg)) {
-        const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
-        const result = await MsgUtil.decryptMessage({
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(acctEmail!),
-          encryptedData: this.encryptedData,
-          verificationPubs: [], // todo: #4158 signature verification of attachments
-        });
-        if ((result as DecryptError).error && (result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
-          // thunderbird does not allow script to access moz-extension:// and window.alert/confirm does work
-          // needs to show help directly from the email body where-in detected as PGP message and such.
+      if (!fullMsg) {
+        return;
+      } else {
+        if (this.checkIfPgpEncryptedMsg(fullMsg)) {
+          const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
+          const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
+          const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+          const result = await MsgUtil.decryptMessage({
+            kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
+            encryptedData: this.encryptedData,
+            verificationPubs: signerKeys,
+          });
+          if ((result as DecryptError).error && (result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
+            // thunderbird does not allow script to access moz-extension:// and window.alert/confirm does work
+            // needs to show help directly from the email body where-in detected as PGP message and such.
+            // workaround here would be -- start thunderbird setup with passphrase remembered upon key recovery or generation
+          }
+          if (result.content) {
+            const decryptedMsg = result.content.toUtfStr();
+            const verificationStatus = (result as DecryptSuccess).signature?.match; // todo: signature verification could result to error, show verification error in badge
+            const encryptedStatus = (result as DecryptSuccess).isEncrypted;
+            const pgpBlockTemplate = `
+            <div class="pgp_secure">
+              <div>
+                <div id="pgp_encryption" class="pgp_badge short ${encryptedStatus ? 'green_label' : 'red_label'}">${encryptedStatus ? 'encrypted' : 'not encrypted'}</div>
+                <div id="pgp_signature" class="pgp_badge short ${verificationStatus ? 'green_label' : 'red_label'}">${verificationStatus ? 'signed' : 'not signed'}</div>
+              </div>
+              <div class="pgp_block">
+              <pre>${decryptedMsg}</pre>
+              </div>
+            </div>`;
+            $('body').html(pgpBlockTemplate); // xss-sanitized
+          }
         }
-        if (result.content) {
-          // add encryption and signature status badges here
-          document.body.className = 'pgp_secure';
-          document.body.innerText = result.content?.toUtfStr();
-        }
+        // else if signed message found
       }
-      // else if signed message found
     }
   };
 

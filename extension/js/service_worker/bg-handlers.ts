@@ -168,8 +168,10 @@ export class BgHandlers {
   public static thunderbirdMsgGetHandler = async (): Promise<Bm.Res.ThunderbirdMsgGet> => {
     const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
     if (tab.id) {
-      const messageId = (await messenger.messageDisplay.getDisplayedMessage(tab.id))?.id || 0;
-      return await messenger.messages.getFull(messageId);
+      const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+      if (message?.id) {
+        return await messenger.messages.getFull(Number(message.id));
+      }
     }
     return;
   };
