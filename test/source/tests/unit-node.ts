@@ -12,7 +12,7 @@ import { UnreportableError } from '../platform/catch.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
-import { openpgp } from '../core/crypto/pgp/openpgpjs-custom';
+import { opgp as openpgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';

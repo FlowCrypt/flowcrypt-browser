@@ -13,7 +13,7 @@ import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
-import { openpgp } from '../core/crypto/pgp/openpgpjs-custom.js';
+import { opgp as openpgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';

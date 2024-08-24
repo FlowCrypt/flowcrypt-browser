@@ -16,7 +16,7 @@ import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
-import { openpgp } from '../core/crypto/pgp/openpgpjs-custom';
+import { opgp as openpgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { expiredPubkey, hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { prvNoSubmit } from '../mock/key-manager/key-manager-constants';

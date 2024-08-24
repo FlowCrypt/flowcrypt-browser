@@ -5,7 +5,7 @@ import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } f
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
-import { openpgp } from './openpgpjs-custom.js';
+import { opgp as openpgp } from './openpgpjs-custom.js';
 import type * as OpenPGP from 'openpgp';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';

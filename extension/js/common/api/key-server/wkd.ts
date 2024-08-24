@@ -7,7 +7,7 @@ import { ApiErr } from '../shared/api-error.js';
 import { Buf } from '../../core/buf.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { WKD_API_HOST } from '../../core/const.js';
-import { openpgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
+import { opgp as openpgp } from '../../core/crypto/pgp/openpgpjs-custom.js';
 import { ArmoredKeyIdentityWithEmails, KeyUtil } from '../../core/crypto/key.js';
 
 export class Wkd extends Api {

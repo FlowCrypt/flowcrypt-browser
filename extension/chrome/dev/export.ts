@@ -13,7 +13,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Time } from '../../js/common/browser/time.js';
 import { Url } from '../../js/common/core/common.js';
-import { openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { opgp as openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Url.parse(['acctEmail']);

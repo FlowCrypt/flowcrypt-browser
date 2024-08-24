@@ -8,7 +8,7 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
-import { openpgp } from './openpgpjs-custom.js';
+import { opgp as openpgp } from './openpgpjs-custom.js';
 import * as Stream from '@openpgp/web-stream-tools';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 

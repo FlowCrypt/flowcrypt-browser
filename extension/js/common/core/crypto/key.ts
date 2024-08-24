@@ -6,7 +6,7 @@ import { Buf } from '../buf.js';
 import { Catch } from '../../platform/catch.js';
 import { MsgBlockParser } from '../msg-block-parser.js';
 import { PgpArmor } from './pgp/pgp-armor.js';
-import { openpgp } from './pgp/openpgpjs-custom.js';
+import { opgp as openpgp } from './pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from './pgp/openpgp-key.js';
 import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
@@ -204,7 +204,7 @@ export class KeyUtil {
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
     try {
-      const keys = await openpgp.readKeys({ binaryKeys: key }); // todo: opgp.readKey ?
+      const keys = await openpgp.readKeys({ binaryKeys: key }); // todo: openpgp.readKey ?
       uncheckedOpgpKeyCount = keys.length;
       for (const key of keys) {
         try {

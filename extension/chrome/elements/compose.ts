@@ -10,7 +10,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { PromiseCancellation, Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { XssSafeFactory } from '../../js/common/xss-safe-factory.js';
-import { openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { opgp as openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { ComposeAttachmentsModule } from './compose-modules/compose-attachments-module.js';
 import { ComposeDraftModule } from './compose-modules/compose-draft-module.js';
 import { ComposeErrModule } from './compose-modules/compose-err-module.js';

@@ -12,7 +12,7 @@ import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
 import { Lang } from '../../js/common/lang.js';
-import { openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { opgp as openpgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Settings } from '../../js/common/settings.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
