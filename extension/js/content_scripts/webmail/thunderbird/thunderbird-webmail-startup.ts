@@ -11,14 +11,13 @@ export class ThunderbirdWebmailStartup {
       variant: undefined,
       getUserAccountEmail: () => undefined, // todo, but can start with undefined
       getUserFullName: () => undefined, // todo, but can start with undefined
-      getReplacer: () => this.replacer, // todo - add this class empty, methods do nothing
+      getReplacer: () => this.replacer,
       start: this.start,
     });
   };
 
   private start = async () => {
     this.replacer = new ThunderbirdElementReplacer();
-    // this.replacer.replaceThunderbirdMsgPane should now be run in heartbeat-like function runIntervalFunctionsPeriodically()
-    await this.replacer.replaceThunderbirdMsgPane();
+    this.replacer.runIntervalFunctionsPeriodically();
   };
 }
