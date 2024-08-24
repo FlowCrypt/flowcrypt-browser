@@ -18,8 +18,7 @@ export class ThunderbirdWebmailStartup {
 
   private start = async () => {
     this.replacer = new ThunderbirdElementReplacer();
-    // does not need hearbeat-like timeout for checking pgp content since in Thunderbird since
-    // each pgp messages are rendered 1 by 1 per messageDisplay invocation and is already available in a defined situation.
+    // this.replacer.replaceThunderbirdMsgPane should now be run in heartbeat-like function runIntervalFunctionsPeriodically()
     await this.replacer.replaceThunderbirdMsgPane();
   };
 }

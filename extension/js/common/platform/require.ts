@@ -42,7 +42,6 @@ export const requireOpenpgp = () => {
       return new Uint8Array(this).slice(...args);
     };
   }
-  console.log(openpgp);
   return openpgp;
 };
 
