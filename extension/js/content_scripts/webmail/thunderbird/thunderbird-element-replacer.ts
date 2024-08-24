@@ -28,7 +28,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       if (!fullMsg) {
         return;
       } else {
-        if (this.checkIfPgpEncryptedMsg(fullMsg)) {
+        if (this.isPublicKeyEncryptedMsg(fullMsg)) {
           const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
           const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
           const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
@@ -58,14 +58,36 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             </div>`;
             $('body').html(pgpBlockTemplate); // xss-sanitized
           }
+        } else if (this.isClearTextSignedMsg(fullMsg)) {
+          console.log('perform cleartext signed message verification!');
         }
         // else if signed message found
       }
     }
   };
 
-  private checkIfPgpEncryptedMsg = (fullMsg: messenger.messages.MessagePart) => {
-    const isPgpEncryptedMsg =
+  private isClearTextSignedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
+    const isClearTextSignedMsg =
+      (fullMsg.headers &&
+        'openpgp' in fullMsg.headers &&
+        fullMsg.parts &&
+        fullMsg.parts[0]?.parts?.length === 1 &&
+        fullMsg.parts[0].parts[0].contentType === 'text/plain' &&
+        this.resemblesClearSignedMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
+      false;
+    return isClearTextSignedMsg;
+  };
+
+  private resemblesClearSignedMsg = (body: string) => {
+    return (
+      body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signedMsg.begin) &&
+      body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
+      body.endsWith(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.end))
+    );
+  };
+
+  private isPublicKeyEncryptedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
+    const isPublicKeyEncrypted =
       (fullMsg.headers &&
         'openpgp' in fullMsg.headers &&
         fullMsg.parts &&
@@ -77,11 +99,12 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         fullMsg.parts &&
         fullMsg.parts[0]?.parts?.length === 1 &&
         fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
-        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || ''));
-    return isPgpEncryptedMsg;
+        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
+      false;
+    return isPublicKeyEncrypted;
   };
 
-  private resemblesAsciiArmoredMsg = (body: string) => {
+  private resemblesAsciiArmoredMsg = (body: string): boolean => {
     this.encryptedData = body;
     return body.startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) && body.endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end as string);
   };
