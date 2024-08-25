@@ -58,7 +58,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             </div>`;
             $('body').html(pgpBlockTemplate); // xss-sanitized
           }
-        } else if (this.isClearTextSignedMsg(fullMsg)) {
+        } else if (this.isCleartextSignedMsg(fullMsg)) {
           console.log('perform cleartext signed message verification!');
         }
         // else if signed message found
@@ -66,19 +66,19 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private isClearTextSignedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
+  private isCleartextSignedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
     const isClearTextSignedMsg =
       (fullMsg.headers &&
         'openpgp' in fullMsg.headers &&
         fullMsg.parts &&
         fullMsg.parts[0]?.parts?.length === 1 &&
         fullMsg.parts[0].parts[0].contentType === 'text/plain' &&
-        this.resemblesClearSignedMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
+        this.resemblesCleartextSignedMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
       false;
     return isClearTextSignedMsg;
   };
 
-  private resemblesClearSignedMsg = (body: string) => {
+  private resemblesCleartextSignedMsg = (body: string) => {
     return (
       body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signedMsg.begin) &&
       body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
