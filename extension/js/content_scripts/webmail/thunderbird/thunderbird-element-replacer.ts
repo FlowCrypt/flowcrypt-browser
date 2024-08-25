@@ -5,11 +5,13 @@
 import { BrowserMsg } from '../../../common/browser/browser-msg.js';
 import { KeyUtil } from '../../../common/core/crypto/key.js';
 import { DecryptError, DecryptErrTypes, DecryptSuccess, MsgUtil } from '../../../common/core/crypto/pgp/msg-util.js';
+import { OpenPGPKey } from '../../../common/core/crypto/pgp/openpgp-key.js';
 import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
 import { Catch } from '../../../common/platform/catch';
 import { ContactStore } from '../../../common/platform/store/contact-store.js';
 import { KeyStore } from '../../../common/platform/store/key-store.js';
 import { IntervalFunction, WebmailElementReplacer } from '../generic/webmail-element-replacer.js';
+import * as openpgp from 'openpgp';
 
 export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public setReplyBoxEditable: () => Promise<void>;
@@ -44,41 +46,56 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           }
           if (result.content) {
             const decryptedMsg = result.content.toUtfStr();
-            const verificationStatus = (result as DecryptSuccess).signature?.match; // todo: signature verification could result to error, show verification error in badge
-            const encryptedStatus = (result as DecryptSuccess).isEncrypted;
-            const pgpBlockTemplate = `
-            <div class="pgp_secure">
-              <div>
-                <div id="pgp_encryption" class="pgp_badge short ${encryptedStatus ? 'green_label' : 'red_label'}">${encryptedStatus ? 'encrypted' : 'not encrypted'}</div>
-                <div id="pgp_signature" class="pgp_badge short ${verificationStatus ? 'green_label' : 'red_label'}">${verificationStatus ? 'signed' : 'not signed'}</div>
-              </div>
-              <div class="pgp_block">
-              <pre>${decryptedMsg}</pre>
-              </div>
-            </div>`;
-            $('body').html(pgpBlockTemplate); // xss-sanitized
+            const verificationStatus = (result as DecryptSuccess).signature?.match ? 'signed' : 'not signed'; // todo: signature verification could result to error, show verification error in badge
+            const encryptionStatus = (result as DecryptSuccess).isEncrypted ? 'encrypted' : 'not encrypted';
+            const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
+            $('body').html(pgpBlock); // xss-sanitized
           }
-        } else if (this.isCleartextSignedMsg(fullMsg)) {
-          console.log('perform cleartext signed message verification!');
+        } else if (fullMsg.parts?.[0].parts && this.isCleartextMsg(fullMsg)) {
+          const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
+          const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
+          const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+          const cleartextMessage = String(fullMsg.parts[0].parts[0].body?.trim());
+          const message = await openpgp.readCleartextMessage({ cleartextMessage });
+          const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
+          if (result.match) {
+            const pgpBlock = this.generatePgpBlockTemplate('not encrypted', 'signed', result?.content?.toUtfStr() || '');
+            $('body').html(pgpBlock); // xss-sanitized
+          }
+          // add fallback rendering for invalid/bad signatures
         }
-        // else if signed message found
+        // else if detached signed message
       }
     }
   };
 
-  private isCleartextSignedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
-    const isClearTextSignedMsg =
+  private generatePgpBlockTemplate = (encryptionStatus: string, verificationStatus: string, messageToRender: string): string => {
+    const pgpBlockTemplate = `
+            <div class="pgp_secure">
+              <div>
+                <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${encryptionStatus}</div>
+                <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${verificationStatus}</div>
+              </div>
+              <div class="pgp_block">
+              <pre>${messageToRender}</pre>
+              </div>
+            </div>`;
+    return pgpBlockTemplate;
+  };
+
+  private isCleartextMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
+    const isClearTextMsg =
       (fullMsg.headers &&
         'openpgp' in fullMsg.headers &&
         fullMsg.parts &&
         fullMsg.parts[0]?.parts?.length === 1 &&
         fullMsg.parts[0].parts[0].contentType === 'text/plain' &&
-        this.resemblesCleartextSignedMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
+        this.resemblesCleartextMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
       false;
-    return isClearTextSignedMsg;
+    return isClearTextMsg;
   };
 
-  private resemblesCleartextSignedMsg = (body: string) => {
+  private resemblesCleartextMsg = (body: string) => {
     return (
       body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signedMsg.begin) &&
       body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
