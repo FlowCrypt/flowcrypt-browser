@@ -4,7 +4,7 @@
 
 import { BrowserMsg } from '../../../common/browser/browser-msg.js';
 import { KeyUtil } from '../../../common/core/crypto/key.js';
-import { DecryptError, DecryptErrTypes, DecryptSuccess, MsgUtil } from '../../../common/core/crypto/pgp/msg-util.js';
+import { DecryptError, DecryptErrTypes, MsgUtil } from '../../../common/core/crypto/pgp/msg-util.js';
 import { OpenPGPKey } from '../../../common/core/crypto/pgp/openpgp-key.js';
 import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
 import { Catch } from '../../../common/platform/catch';
@@ -19,7 +19,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public reinsertReplyBox: (replyMsgId: string) => void;
   public scrollToReplyBox: (replyMsgId: string) => void;
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
-  private encryptedData: string;
+  private emailBodyFromThunderbirdMail: string;
 
   public getIntervalFunctions = (): IntervalFunction[] => {
     return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
@@ -37,7 +37,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
           const result = await MsgUtil.decryptMessage({
             kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
-            encryptedData: this.encryptedData,
+            encryptedData: this.emailBodyFromThunderbirdMail,
             verificationPubs: signerKeys,
           });
           if ((result as DecryptError).error && (result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
@@ -45,25 +45,38 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             // needs to show help directly from the email body where-in detected as PGP message and such.
             // workaround here would be -- start thunderbird setup with passphrase remembered upon key recovery or generation
           }
-          if (result.content) {
+          if (result.content && result.success) {
             const decryptedMsg = result.content.toUtfStr();
-            const verificationStatus = (result as DecryptSuccess).signature?.match ? 'signed' : 'not signed'; // todo: signature verification could result to error, show verification error in badge
-            const encryptionStatus = (result as DecryptSuccess).isEncrypted ? 'encrypted' : 'not encrypted';
+            const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
+            let verificationStatus = '';
+            if (result?.signature) {
+              if (result.signature.match) {
+                verificationStatus = 'signed';
+              } else if (result.signature.error) {
+                verificationStatus = `could not verify signature: ${result.signature.error}`;
+              } else {
+                verificationStatus = 'not signed';
+              }
+            }
             const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
             $('body').html(pgpBlock); // xss-sanitized
           }
-        } else if (fullMsg.parts?.[0].parts && this.isCleartextMsg(fullMsg)) {
+        } else if (this.isCleartextMsg(fullMsg)) {
           const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
           const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
           const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-          const cleartextMessage = String(fullMsg.parts[0].parts[0].body?.trim());
-          const message = await openpgp.readCleartextMessage({ cleartextMessage });
+          const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
-          if (result.match) {
-            const pgpBlock = this.generatePgpBlockTemplate('not encrypted', 'signed', result?.content?.toUtfStr() || '');
-            $('body').html(pgpBlock); // xss-sanitized
+          let verificationStatus = '';
+          let signedMessage = '';
+          if (result.match && result.content) {
+            verificationStatus = 'signed';
+            signedMessage = result.content.toUtfStr();
+          } else if (result.error) {
+            verificationStatus = `could not verify signature: ${result.error}`;
           }
-          // add fallback rendering for invalid/bad signatures
+          const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
+          $('body').html(pgpBlock); // xss-sanitized
         }
         // else if detached signed message
       }
@@ -72,15 +85,15 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   private generatePgpBlockTemplate = (encryptionStatus: string, verificationStatus: string, messageToRender: string): string => {
     const pgpBlockTemplate = `
-            <div class="pgp_secure">
-              <div>
-                <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${encryptionStatus}</div>
-                <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${verificationStatus}</div>
-              </div>
-              <div class="pgp_block">
-              <pre>${Xss.escape(messageToRender)}</pre>
-              </div>
-            </div>`;
+      <div class="pgp_secure">
+        <div>
+          <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${encryptionStatus}</div>
+          <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${verificationStatus}</div>
+        </div>
+        <div class="pgp_block">
+        <pre>${Xss.escape(messageToRender)}</pre>
+        </div>
+      </div>`;
     return pgpBlockTemplate;
   };
 
@@ -97,6 +110,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private resemblesCleartextMsg = (body: string) => {
+    this.emailBodyFromThunderbirdMail = body;
     return (
       body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signedMsg.begin) &&
       body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
@@ -123,7 +137,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private resemblesAsciiArmoredMsg = (body: string): boolean => {
-    this.encryptedData = body;
+    this.emailBodyFromThunderbirdMail = body;
     return body.startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) && body.endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end as string);
   };
 }
