@@ -40,12 +40,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             encryptedData: this.emailBodyFromThunderbirdMail,
             verificationPubs: signerKeys,
           });
-          if ((result as DecryptError).error && (result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
-            // thunderbird does not allow script to access moz-extension:// and window.alert/confirm does work
-            // needs to show help directly from the email body where-in detected as PGP message and such.
-            // workaround here would be -- start thunderbird setup with passphrase remembered upon key recovery or generation
-          }
-          if (result.content && result.success) {
+          if (result.success && result.content) {
             const decryptedMsg = result.content.toUtfStr();
             const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
             let verificationStatus = '';
@@ -59,6 +54,19 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
               }
             }
             const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
+            $('body').html(pgpBlock); // xss-sanitized
+          } else {
+            const decryptErr = result as DecryptError;
+            let decryptionErrorMsg = '';
+            if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
+              // workaround here would be -- start thunderbird setup with passphrase remembered upon key recovery or generation
+              // or find viable work around here, such as update the messageDisplay button to work as passphrase unlock
+              decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;
+            }
+            if (decryptErr.error) {
+              decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
+            }
+            const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
             $('body').html(pgpBlock); // xss-sanitized
           }
         } else if (this.isCleartextMsg(fullMsg)) {
@@ -85,7 +93,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   private generatePgpBlockTemplate = (encryptionStatus: string, verificationStatus: string, messageToRender: string): string => {
     const pgpBlockTemplate = `
-      <div class="pgp_secure">
+      <div ${encryptionStatus === 'encrypted' ? 'class="pgp_secure"' : 'class="pgp_neutral'}>
         <div>
           <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${encryptionStatus}</div>
           <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${verificationStatus}</div>
