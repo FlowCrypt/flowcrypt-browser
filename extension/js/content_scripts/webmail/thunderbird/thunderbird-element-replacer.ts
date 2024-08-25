@@ -10,6 +10,7 @@ import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
 import { Catch } from '../../../common/platform/catch';
 import { ContactStore } from '../../../common/platform/store/contact-store.js';
 import { KeyStore } from '../../../common/platform/store/key-store.js';
+import { Xss } from '../../../common/platform/xss.js';
 import { IntervalFunction, WebmailElementReplacer } from '../generic/webmail-element-replacer.js';
 import * as openpgp from 'openpgp';
 
@@ -77,7 +78,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
                 <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${verificationStatus}</div>
               </div>
               <div class="pgp_block">
-              <pre>${messageToRender}</pre>
+              <pre>${Xss.escape(messageToRender)}</pre>
               </div>
             </div>`;
     return pgpBlockTemplate;
