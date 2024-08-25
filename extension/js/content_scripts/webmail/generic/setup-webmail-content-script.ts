@@ -37,7 +37,7 @@ export type WebmailVariantObject = {
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
-  getUserAccountEmail: () => string | undefined;
+  getUserAccountEmail: () => Promise<string> | string | undefined;
   getUserFullName: () => string | undefined;
   getReplacer: () => WebmailElementReplacer;
   start: (
@@ -74,12 +74,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     let acctEmailInterval = 1000;
     const webmails = await Env.webmails();
     while (true) {
-      let acctEmail: string | undefined;
-      if (Catch.isThunderbirdMail()) {
-        acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
-      } else {
-        acctEmail = webmailSpecific.getUserAccountEmail();
-      }
+      const acctEmail = await webmailSpecific.getUserAccountEmail();
       if (typeof acctEmail !== 'undefined') {
         win.account_email_global = acctEmail;
         if (webmails.includes(webmailSpecific.name)) {

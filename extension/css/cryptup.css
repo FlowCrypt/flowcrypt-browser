@@ -1428,7 +1428,7 @@ td {
 .backup_neutral {
   border: none;
   border-left: 4px solid #989898;
-  padding-left: 10px;
+  padding: 6px 10px;
 }
 
 .pgp_neutral .error_container {
