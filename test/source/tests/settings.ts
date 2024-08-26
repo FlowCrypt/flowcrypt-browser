@@ -554,9 +554,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitForContent(`@container-key-status-42AAAAD52045B98C74B4052952B2A7FC4171171C`, 'ACTIVE');
         // check imported key at index 1
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
+        await myKeyFrame.waitForContent(`@container-key-status-13E9D8258B0BD9D4`, 'ACTIVE');
         await myKeyFrame.waitAll('@content-fingerprint');
         await myKeyFrame.notPresent('@action-update-prv');
         await myKeyFrame.notPresent('@action-revoke-certificate');

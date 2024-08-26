@@ -155,6 +155,7 @@ export class BrowserHandle {
         if (target.type() === TargetType.PAGE) {
           if (!resolved++) {
             this.browser.off('targetcreated', listener);
+            // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
             target.page().then(resolve, reject);
           }
         }

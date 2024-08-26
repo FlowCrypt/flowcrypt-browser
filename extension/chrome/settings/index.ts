@@ -509,7 +509,7 @@ View.run(
         const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
         const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
         html += `<div class="row key-content-row">`;
-        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
+        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${KeyUtil.statusHtml(ki.id, prv)}${space}${removeKeyBtn}</div>`;
         html += `</div>`;
       }
       Xss.sanitizeAppend('.key_list', html);
