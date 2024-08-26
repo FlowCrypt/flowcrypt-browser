@@ -20,6 +20,12 @@ import { EmailParts, Str } from '../common.js';
  * all dates are expressed as number of milliseconds since Unix Epoch.
  * This is what `Date.now()` returns and `new Date(x)` accepts.
  */
+
+type KeyStatus = {
+  state: 'active' | 'revoked' | 'expired' | 'sign only' | 'unusable';
+  statusIndicator: 'light-gray' | 'green' | 'orange' | 'yellow' | 'red';
+};
+
 export interface Key extends KeyIdentity {
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
@@ -305,6 +311,30 @@ export class KeyUtil {
       return false;
     }
     return Date.now() > exp;
+  }
+
+  public static status(key: Key | undefined): KeyStatus {
+    if (!key) {
+      return { state: 'unusable', statusIndicator: 'red' };
+    }
+    let keyStatus: KeyStatus;
+    if (key.revoked) {
+      keyStatus = { state: 'revoked', statusIndicator: 'light-gray' };
+    } else if (key.usableForEncryption) {
+      keyStatus = { state: 'active', statusIndicator: 'green' };
+    } else if (key.usableForEncryptionButExpired) {
+      keyStatus = { state: 'expired', statusIndicator: 'orange' };
+    } else if (key.usableForSigning) {
+      keyStatus = { state: 'sign only', statusIndicator: 'yellow' };
+    } else {
+      keyStatus = { state: 'unusable', statusIndicator: 'red' };
+    }
+    return keyStatus;
+  }
+
+  public static statusHtml(keyid: string, key: Key | undefined): string {
+    const keyStatus = KeyUtil.status(key);
+    return `<span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status-${keyid}">${keyStatus.state}</span>`;
   }
 
   public static dateBeforeExpirationIfAlreadyExpired(key: Key): Date | undefined {
