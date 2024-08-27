@@ -140,6 +140,12 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         fullMsg.parts[0]?.parts?.length === 1 &&
         fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
         this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
+      (fullMsg.headers &&
+        'openpgp' in fullMsg.headers &&
+        fullMsg.parts &&
+        fullMsg.parts.length === 1 &&
+        fullMsg.parts[0]?.contentType === 'text/plain' &&
+        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.body?.trim() || '')) ||
       false;
     return isPublicKeyEncrypted;
   };
