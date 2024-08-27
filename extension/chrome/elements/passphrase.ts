@@ -200,6 +200,20 @@ View.run(
       BrowserMsg.send.passphraseEntry({ entered, initiatorFrameId });
     };
 
+    private closeDialogPageOpenedExternally = async () => {
+      if (window.top === window.self) {
+        if (Catch.isThunderbirdMail()) {
+          const currentTab = await messenger.tabs.query({ active: true, currentWindow: true });
+          if (currentTab.length > 0) {
+            const tabId = currentTab[0].id;
+            if (tabId) {
+              await messenger.tabs.remove(tabId);
+            }
+          }
+        }
+      }
+    };
+
     private submitHandler = async () => {
       if (await this.bruteForceProtection.shouldDisablePassphraseCheck()) {
         return;
@@ -237,10 +251,12 @@ View.run(
       }
       if (unlockCount && allPrivateKeys.length > 1) {
         Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
+        await this.closeDialogPageOpenedExternally();
       }
       if (atLeastOneMatched) {
         await this.bruteForceProtection.passphraseCheckSucceed();
         this.closeDialog(true, this.initiatorFrameId);
+        await this.closeDialogPageOpenedExternally();
       } else {
         await this.bruteForceProtection.passphraseCheckFailed();
         this.renderFailedEntryPpPrompt();
