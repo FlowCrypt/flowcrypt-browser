@@ -96,6 +96,7 @@ export namespace Bm {
   export type ReRenderRecipient = { email: string };
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
+  export type ThunderbirdOpenPassphraseDialog = { acctEmail: string; longids: string };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -114,6 +115,7 @@ export namespace Bm {
     export type ExpirationCacheDeleteExpired = Promise<void>;
     export type ThunderbirdGetCurrentUser = string | undefined;
     export type ThunderbirdMsgGet = messenger.messages.MessagePart | undefined;
+    export type ThunderbirdOpenPassphraseDialog = Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -238,6 +240,8 @@ export class BrowserMsg {
         thunderbirdGetCurrentUser: () =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
         thunderbirdMsgGet: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgGet', undefined, true) as Promise<Bm.Res.ThunderbirdMsgGet>,
+        thunderbirdOpenPassphraseDiaglog: (bm: Bm.ThunderbirdOpenPassphraseDialog) =>
+          BrowserMsg.sendAwait(undefined, 'thunderbirdOpenPassphraseDialog', bm, true) as Promise<Bm.Res.ThunderbirdOpenPassphraseDialog>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => {

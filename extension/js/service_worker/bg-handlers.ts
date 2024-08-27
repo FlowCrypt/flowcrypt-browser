@@ -175,4 +175,8 @@ export class BgHandlers {
     }
     return;
   };
+
+  public static thunderbirdOpenPassphraseDialog = async (r: Bm.ThunderbirdOpenPassphraseDialog): Promise<Bm.Res.ThunderbirdOpenPassphraseDialog> => {
+    await BgUtils.openExtensionTab(`chrome/elements/passphrase.htm?type=message&parentTabId=0&acctEmail=${r.acctEmail}&longids=${r.longids}`, true);
+  };
 }

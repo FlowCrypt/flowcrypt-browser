@@ -59,11 +59,11 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const decryptErr = result as DecryptError;
             let decryptionErrorMsg = '';
             if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
-              // workaround here would be -- start thunderbird setup with passphrase remembered upon key recovery or generation
-              // or find viable work around here, such as update the messageDisplay button to work as passphrase unlock
+              const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
+              const longids = decryptErr.longids.needPassphrase.join(',');
               decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;
-            }
-            if (decryptErr.error) {
+              await BrowserMsg.send.bg.await.thunderbirdOpenPassphraseDiaglog({ acctEmail, longids });
+            } else {
               decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
             }
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
@@ -86,7 +86,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
           $('body').html(pgpBlock); // xss-sanitized
         }
-        // else if detached signed message
+        // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
       }
     }
   };

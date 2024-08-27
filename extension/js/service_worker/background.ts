@@ -75,5 +75,6 @@ console.info('background.js service worker starting');
     await BgHandlers.thunderbirdContentScriptRegistration();
     BrowserMsg.bgAddListener('thunderbirdGetCurrentUser', BgHandlers.thunderbirdGetCurrentUserHandler);
     BrowserMsg.bgAddListener('thunderbirdMsgGet', BgHandlers.thunderbirdMsgGetHandler);
+    BrowserMsg.bgAddListener('thunderbirdOpenPassphraseDialog', BgHandlers.thunderbirdOpenPassphraseDialog);
   }
 })().catch(Catch.reportErr);
