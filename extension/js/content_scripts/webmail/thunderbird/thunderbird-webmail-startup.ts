@@ -20,5 +20,10 @@ export class ThunderbirdWebmailStartup {
   private start = async () => {
     this.replacer = new ThunderbirdElementReplacer();
     this.replacer.runIntervalFunctionsPeriodically();
+    // todo: show notification using Thunderbird Notification as contentscript notification or such does not work.
+    // await notifications.showInitial(acctEmail);
+    // notifications.show(
+    //   'FlowCrypt Thunderbird support is still in early development, and not expected to function properly yet. Support will be gradually added in upcoming versions.'
+    // );
   };
 }
