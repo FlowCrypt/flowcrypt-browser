@@ -31,10 +31,10 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       if (!fullMsg) {
         return;
       } else {
+        const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
+        const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
+        const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
         if (this.isPublicKeyEncryptedMsg(fullMsg)) {
-          const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
-          const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
-          const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
           const result = await MsgUtil.decryptMessage({
             kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
             encryptedData: this.emailBodyFromThunderbirdMail,
@@ -70,9 +70,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             $('body').html(pgpBlock); // xss-sanitized
           }
         } else if (this.isCleartextMsg(fullMsg)) {
-          const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
-          const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
-          const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
           let verificationStatus = '';
