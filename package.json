@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@openpgp/web-stream-tools": "^0.0.13",
-    "@types/chai": "4.3.17",
+    "@types/chai": "4.3.19",
     "@types/chai-as-promised": "7.1.8",
     "@types/chrome": "0.0.270",
     "@types/dompurify": "3.0.5",
@@ -32,7 +32,7 @@
     "openpgp": "5.11.2",
     "pdfjs-dist": "4.6.82",
     "prettier": "^3.3.3",
-    "puppeteer": "23.2.1",
+    "puppeteer": "23.2.2",
     "stylelint": "16.9.0",
     "stylelint-config-standard": "36.0.1",
     "typescript": "5.5.4",
