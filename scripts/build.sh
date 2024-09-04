@@ -148,10 +148,10 @@ main() {
   node ./build/tooling/resolve-modules --project ./tsconfig.json
   node ./build/tooling/fill-values
   node ./build/tooling/bundle-content-scripts
-  rsync -r --exclude='thunderbird-content-script.js' $OUTPUT_DIRECTORY/ ./build/chrome-enterprise
-  rsync -r --exclude='thunderbird-content-script.js' $OUTPUT_DIRECTORY/ ./build/chrome-consumer
-  rsync -r --exclude='thunderbird-content-script.js' $OUTPUT_DIRECTORY/ ./build/firefox-consumer
-  rsync -r --exclude='webmail_bundle.js' $OUTPUT_DIRECTORY/ ./build/thunderbird-consumer
+  cp -r $OUTPUT_DIRECTORY ./build/chrome-enterprise
+  cp -r $OUTPUT_DIRECTORY ./build/chrome-consumer
+  cp -r $OUTPUT_DIRECTORY ./build/firefox-consumer
+  cp -r $OUTPUT_DIRECTORY ./build/thunderbird-consumer
   node ./build/tooling/build-types-and-manifests
 }
 

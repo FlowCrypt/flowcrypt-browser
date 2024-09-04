@@ -16,7 +16,7 @@ import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { OauthPageRecipe } from './page-recipe/oauth-page-recipe';
 import { AvaContext } from './tooling';
-import { opgp as openpgp } from '../core/crypto/pgp/openpgpjs-custom';
+import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { expiredPubkey, hasPubKey, protonMailCompatKey, singlePubKeyAttesterConfig, somePubkey } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { prvNoSubmit } from '../mock/key-manager/key-manager-constants';
@@ -812,7 +812,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const warningMsg = 'Your keys are expiring in 18 days. Please import a newer set of keys to use.';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         // Generate key that expires in 20 days
-        const key = await openpgp.generateKey({
+        const key = await opgp.generateKey({
           type: 'ecc',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }],
@@ -845,7 +845,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-paste');
-        const updatedKey = await openpgp.generateKey({
+        const updatedKey = await opgp.generateKey({
           type: 'ecc',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
@@ -872,7 +872,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.notify.expiring.keys.updating.key@key-manager-autogen.flowcrypt.test';
         // Generate negative expiration key and check if it shows correct expiration note
-        const negativeExpirationKey = await openpgp.generateKey({
+        const negativeExpirationKey = await opgp.generateKey({
           format: 'armored',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }],
@@ -903,7 +903,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           'Your local keys are expired.\nTo receive the latest keys, please ensure that you are connected to your corporate network (or through VPN) and have entered your FlowCrypt passphrase. Then reload Gmail.\nIf this notification still shows after that, please contact your Help Desk.';
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
         // Generate expired key(positive expiration) and check if it shows correct note
-        const key = await openpgp.generateKey({
+        const key = await opgp.generateKey({
           type: 'ecc',
           curve: 'curve25519',
           userIDs: [{ email: acctEmail }],

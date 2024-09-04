@@ -348,9 +348,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     completion: () => void
   ) => {
     if (clientConfiguration.usesKeyManager()) {
-      if (Catch.isThunderbirdMail()) {
-        return completion();
-      }
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       if (idToken) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

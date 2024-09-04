@@ -13,7 +13,7 @@ import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
 import { Url, Str } from '../core/common.js';
-import { opgp as openpgp } from '../core/crypto/pgp/openpgpjs-custom.js';
+import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
@@ -135,7 +135,7 @@ export class KeyImportUi {
     );
     $('.input_private_key').change(
       Ui.event.handle(async target => {
-        const prv = await Catch.undefinedOnException(openpgp.readKey({ armoredKey: String($(target).val()) }));
+        const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
         if (!prv?.isPrivate()) {
           $('.line.unprotected_key_create_pass_phrase').hide();
           return;

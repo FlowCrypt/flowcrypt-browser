@@ -5,7 +5,7 @@ import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } f
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
-import { opgp as openpgp } from './openpgpjs-custom.js';
+import { opgp } from './openpgpjs-custom.js';
 import type * as OpenPGP from 'openpgp';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
@@ -127,11 +127,11 @@ export class MsgUtil {
         // 10XX XXXX - potential old pgp packet tag
         tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
       }
-      if (Object.values(openpgp.enums.packet).includes(tagNumber)) {
+      if (Object.values(opgp.enums.packet).includes(tagNumber)) {
         // Indeed a valid OpenPGP packet tag number
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may be
-        const t = openpgp.enums.packet;
+        const t = opgp.enums.packet;
         const msgTypes = [
           t.publicKeyEncryptedSessionKey,
           t.symEncryptedIntegrityProtectedData,
@@ -163,7 +163,7 @@ export class MsgUtil {
   }
 
   public static async verifyDetached({ plaintext, sigText, verificationPubs }: PgpMsgMethod.Arg.VerifyDetached) {
-    const message = await openpgp.createMessage({ text: Str.with(plaintext) });
+    const message = await opgp.createMessage({ text: Str.with(plaintext) });
     try {
       await message.appendSignature(sigText);
     } catch (formatErr) {
@@ -220,8 +220,8 @@ export class MsgUtil {
       // cleartext and PKCS#7 are gone by this line
       const msg = prepared.message;
       const packets = msg.packets;
-      const isSymEncrypted = packets.filter(p => p instanceof openpgp.SymEncryptedSessionKeyPacket).length > 0;
-      const isPubEncrypted = packets.filter(p => p instanceof openpgp.PublicKeyEncryptedSessionKeyPacket).length > 0;
+      const isSymEncrypted = packets.filter(p => p instanceof opgp.SymEncryptedSessionKeyPacket).length > 0;
+      const isPubEncrypted = packets.filter(p => p instanceof opgp.PublicKeyEncryptedSessionKeyPacket).length > 0;
       if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
         return {
           success: false,
@@ -256,7 +256,7 @@ export class MsgUtil {
           isEncrypted,
         };
       }
-      if (msg.packets.filterByTag(openpgp.enums.packet.symmetricallyEncryptedData).length) {
+      if (msg.packets.filterByTag(opgp.enums.packet.symmetricallyEncryptedData).length) {
         const noMdc =
           'Security threat!\n\nMessage is missing integrity checks (MDC). ' +
           ' The sender should update their outdated software.\n\nDisplay the message at your own risk.';
@@ -287,7 +287,7 @@ export class MsgUtil {
   }
 
   public static async diagnosePubkeys({ armoredPubs, message }: PgpMsgMethod.Arg.DiagnosePubkeys) {
-    const m = await openpgp.readMessage({ armoredMessage: Str.with(message) });
+    const m = await opgp.readMessage({ armoredMessage: Str.with(message) });
     const msgKeyIds = m.getEncryptionKeyIDs();
     const localKeyIds: string[] = [];
     for (const k of await Promise.all(armoredPubs.map(pub => KeyUtil.parse(pub)))) {
