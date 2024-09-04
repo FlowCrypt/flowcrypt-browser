@@ -607,7 +607,7 @@ export class BrowserMsg {
   private static async sendAwait(destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
-    const isBackgroundPage = Env.isBackgroundPage();
+    const isBackgroundPage = await Env.isBackgroundPage();
     if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') {
       // calling from bg script to bg script: skip messaging
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
@@ -616,7 +616,7 @@ export class BrowserMsg {
     return await BrowserMsg.sendRaw(destString, name, bm, awaitRes);
   }
 
-  private static sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
+  private static async sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     const msg: Bm.Raw = {
       name,
       data: { bm },
@@ -625,7 +625,7 @@ export class BrowserMsg {
       stack: Catch.stackTrace(),
     };
     // eslint-disable-next-line no-null/no-null
-    if (!Env.isBackgroundPage() && msg.to !== null) {
+    if (!(await Env.isBackgroundPage()) && msg.to !== null) {
       const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
       // send via window messaging in parallel
       Catch.try(async () => {
@@ -672,19 +672,25 @@ export class BrowserMsg {
       };
       try {
         if (chrome.runtime) {
-          if (Env.isBackgroundPage()) {
-            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-              for (const tab of tabs) {
-                chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+          Env.isBackgroundPage()
+            .then(isBackgroundPage => {
+              if (isBackgroundPage) {
+                chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+                  for (const tab of tabs) {
+                    chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+                  }
+                });
+              } else {
+                if (awaitRes) {
+                  chrome.runtime.sendMessage(msg, processRawMsgResponse);
+                } else {
+                  void chrome.runtime.sendMessage(msg);
+                }
               }
+            })
+            .catch((e: unknown) => {
+              throw e;
             });
-          } else {
-            if (awaitRes) {
-              chrome.runtime.sendMessage(msg, processRawMsgResponse);
-            } else {
-              void chrome.runtime.sendMessage(msg);
-            }
-          }
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }
