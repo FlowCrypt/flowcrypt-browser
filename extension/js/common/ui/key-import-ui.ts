@@ -17,6 +17,8 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
+import { Xss } from '../platform/xss.js';
+import { ClientConfiguration } from '../client-configuration.js';
 
 type KeyImportUiCheckResult = {
   normalized: string;
@@ -82,6 +84,19 @@ export class KeyImportUi {
   };
 
   public onBadPassphrase: VoidCallback = () => undefined;
+
+  public shouldSubmitPubkey = (clientConfiguration: ClientConfiguration, checkboxSelector: string) => {
+    if (clientConfiguration.mustSubmitToAttester() && !clientConfiguration.canSubmitPubToAttester()) {
+      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
+    }
+    if (!clientConfiguration.canSubmitPubToAttester()) {
+      return false;
+    }
+    if (clientConfiguration.mustSubmitToAttester()) {
+      return true;
+    }
+    return Boolean($(checkboxSelector).prop('checked'));
+  };
 
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
     $('input[type=radio][name=source]')
@@ -229,6 +244,13 @@ export class KeyImportUi {
     await this.read('publicKey', normalized); // throws on err
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
+  };
+
+  public renderKeyManualCreateView = async (selector: string) => {
+    const htmlUrl = '/chrome/elements/shared/create_key.template.htm';
+    const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
+    Xss.setElementContentDANGEROUSLY($(selector).get(0) as Element, sanitized); // xss-sanitized
+    this.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
   };
 
   public renderPassPhraseStrengthValidationInput = (input: JQuery, submitButton?: JQuery, type: 'passphrase' | 'pwd' = 'passphrase') => {

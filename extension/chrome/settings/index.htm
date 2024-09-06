@@ -196,11 +196,20 @@
         <div class="row my-keys-row" data-test="container-settings-keys-list">
           <div class="settings-border">
             <div class="row abs-row">
-              <div class="col-12" style="padding-left: 0">
+              <div class="col-12 flex" style="padding-left: 0">
                 <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon" />
                 <span class="my-keys-copy">My Keys</span>
                 <span class="text-right keys-link-top-right-container">
-                  <a href="#" class="show_settings_page add_key" data-test="action-open-add-key-page" page="/chrome/settings/modules/add_key.htm">Add Key</a>
+                  <a href="#" class="show_settings_page my_key_link add_key" data-test="action-open-add-key-page" page="/chrome/settings/modules/add_key.htm"
+                    >Add Key</a
+                  >
+                  <a
+                    href="#"
+                    class="show_settings_page my_key_link generate_key"
+                    data-test="action-open-generate-key-page"
+                    page="/chrome/settings/modules/generate_key.htm"
+                    >Generate Key</a
+                  >
                 </span>
               </div>
             </div>

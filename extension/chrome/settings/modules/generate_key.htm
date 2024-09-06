@@ -1,0 +1,46 @@
+<!-- © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com -->
+
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>FlowCrypt</title>
+    <link rel="stylesheet" href="/css/cryptup.css" />
+    <link rel="stylesheet" href="/css/sweetalert2.css" />
+    <link rel="stylesheet" href="/css/open-sans.css" />
+    <link rel="stylesheet" href="/css/animate.css" />
+    <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+    <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+  </head>
+
+  <body id="settings">
+    <div id="content" class="setup page display_none">
+      <div id="add_key_container" class="manual" style="display: block; text-align: left">
+        <div class="line">
+          <h1>Generate Private Key <span id="spinner_container"></span></h1>
+        </div>
+        <div id="generate-key-container"></div>
+      </div>
+      <div id="compatibility_fix" class="compatibility_fix_container"></div>
+      <div id="backup-template-container"></div>
+    </div>
+
+    <script src="/lib/trusted-types.js"></script>
+    <script src="/lib/purify.js"></script>
+    <script src="/lib/fine-uploader.js"></script>
+    <script src="/lib/jquery.min.js"></script>
+    <script src="/lib/sweetalert2.js"></script>
+    <script src="/lib/openpgp.js"></script>
+    <script src="/lib/forge.js"></script>
+    <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/emailjs/punycode.js"></script>
+    <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-types.js"></script>
+    <script src="/lib/emailjs/emailjs-addressparser.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
+    <script src="generate_key.js" type="module"></script>
+  </body>
+</html>
