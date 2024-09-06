@@ -849,7 +849,7 @@ export class OpenPGPKey {
       OpenPGPKey.paramCountByAlgo = {
         // Adjusted for the OpenPGP.js v5.
         // See parsePublicKeyParams() and parsePrivateKeyParams()
-        // in the opgp.js source code for details.
+        // in the openpgp.js source code for details.
         [opgp.enums.publicKey.rsaEncrypt]: { pub: 2, priv: 4 }, // (n, e), (d, p, q, u)
         [opgp.enums.publicKey.rsaEncryptSign]: { pub: 2, priv: 4 }, // (n, e), (d, p, q, u)
         [opgp.enums.publicKey.rsaSign]: { pub: 2, priv: 4 }, // (n, e), (d, p, q, u)
