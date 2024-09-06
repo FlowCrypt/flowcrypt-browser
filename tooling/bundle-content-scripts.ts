@@ -32,6 +32,7 @@ if (existsSync(OUT_DIR)) {
 }
 mkdirSync(OUT_DIR);
 
+// webmail;
 buildContentScript(
   ([] as string[]).concat(
     getFilesInDir(`${sourceDir}/js/common/platform`, /\.js$/, false),
