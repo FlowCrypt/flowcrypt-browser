@@ -150,7 +150,7 @@ export class BgHandlers {
 
   public static thunderbirdContentScriptRegistration = async () => {
     const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
-    const files = contentScriptGroups[0].js?.map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];
+    const files = contentScriptGroups[0].js?.filter(url => !url.includes('sweetalert2')).map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];
     await messenger.messageDisplayScripts.register({
       js: files.map(file => ({ file })),
       css: [{ file: './css/cryptup.css' }],
