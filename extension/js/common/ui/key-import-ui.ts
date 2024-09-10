@@ -101,22 +101,35 @@ export class KeyImportUi {
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
     $('input[type=radio][name=source]')
       .off()
-      .change(function () {
-        if ((this as HTMLInputElement).value === 'file') {
-          $('.input_private_key').val('').change().prop('disabled', true);
-          $('.source_paste_container').css('display', 'none');
-          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-          $('#fineuploader_button > input').trigger('click');
-        } else if ((this as HTMLInputElement).value === 'paste') {
-          $('.input_private_key').val('').change().prop('disabled', false);
-          $('.source_paste_container').css('display', 'block');
-          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-        } else if ((this as HTMLInputElement).value === 'backup') {
-          window.location.href = Url.create('/chrome/settings/setup.htm', {
-            acctEmail,
-            parentTabId,
-            action: 'add_key',
-          });
+      .on('change', function () {
+        const selectedValue = (this as HTMLInputElement).value;
+        switch (selectedValue) {
+          case 'file':
+            $('.input_private_key').val('').change().prop('disabled', true);
+            $('.source_paste_container').css('display', 'none');
+            $('.source_generate_container').hide();
+            $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+            $('#fineuploader_button > input').trigger('click');
+            break;
+          case 'paste':
+            $('.input_private_key').val('').change().prop('disabled', false);
+            $('.source_generate_container').hide();
+            $('.source_paste_container').css('display', 'block');
+            $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+            break;
+          case 'backup':
+            window.location.href = Url.create('/chrome/settings/setup.htm', {
+              acctEmail,
+              parentTabId,
+              action: 'add_key',
+            });
+            break;
+          case 'generate':
+            $('.source_paste_container').hide();
+            $('.source_generate_container').show();
+            break;
+          default:
+            break;
         }
       });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on(
