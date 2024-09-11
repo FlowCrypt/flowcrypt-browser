@@ -132,9 +132,8 @@ export class BgHandlers {
       const messageDetails = await messenger.compose.getComposeDetails(Number(tab.id));
       const composeMethod = messageDetails.type;
       const msgId = Number(messageDetails.relatedMessageId);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const acctEmail = Str.parseEmail(messageDetails.from as string).email!;
-      await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
+      const acctEmail = Str.parseEmail(messageDetails.from as string).email;
+      if (acctEmail) await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
     });
     messenger.messageDisplayAction.onClicked.addListener(async tab => {
       const tabId = Number(tab.id);
@@ -150,6 +149,7 @@ export class BgHandlers {
 
   public static thunderbirdContentScriptRegistration = async () => {
     const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
+    // sweetalert2.js throws error in Thunderbird environment
     const files = contentScriptGroups[0].js?.filter(url => !url.includes('sweetalert2')).map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];
     await messenger.messageDisplayScripts.register({
       js: files.map(file => ({ file })),

@@ -89,7 +89,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private generatePgpBlockTemplate = (encryptionStatus: string, verificationStatus: string, messageToRender: string): string => {
-    const pgpBlockTemplate = `
+    return `
       <div ${encryptionStatus === 'encrypted' ? 'class="pgp_secure"' : 'class="pgp_neutral"'}>
         <div>
           <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${encryptionStatus}</div>
@@ -99,19 +99,18 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         <pre>${Xss.escape(messageToRender)}</pre>
         </div>
       </div>`;
-    return pgpBlockTemplate;
   };
 
   private isCleartextMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
-    const isClearTextMsg =
+    return (
       (fullMsg.headers &&
         'openpgp' in fullMsg.headers &&
         fullMsg.parts &&
         fullMsg.parts[0]?.parts?.length === 1 &&
         fullMsg.parts[0].parts[0].contentType === 'text/plain' &&
         this.resemblesCleartextMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
-      false;
-    return isClearTextMsg;
+      false
+    );
   };
 
   private resemblesCleartextMsg = (body: string) => {
@@ -124,27 +123,19 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private isPublicKeyEncryptedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
-    const isPublicKeyEncrypted =
-      (fullMsg.headers &&
-        'openpgp' in fullMsg.headers &&
-        fullMsg.parts &&
-        fullMsg.parts[0]?.parts?.length === 2 &&
-        fullMsg.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
-        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
-      (fullMsg.headers &&
-        'openpgp' in fullMsg.headers &&
-        fullMsg.parts &&
-        fullMsg.parts[0]?.parts?.length === 1 &&
-        fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
-        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
-      (fullMsg.headers &&
-        'openpgp' in fullMsg.headers &&
-        fullMsg.parts &&
-        fullMsg.parts.length === 1 &&
-        fullMsg.parts[0]?.contentType === 'text/plain' &&
-        this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.body?.trim() || '')) ||
-      false;
-    return isPublicKeyEncrypted;
+    if (fullMsg.headers && 'openpgp' in fullMsg.headers && fullMsg.parts) {
+      return (
+        (fullMsg.parts[0]?.parts?.length === 2 &&
+          fullMsg.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
+          this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
+        (fullMsg.parts[0]?.parts?.length === 1 &&
+          fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
+          this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
+        (fullMsg.parts.length === 1 && fullMsg.parts[0]?.contentType === 'text/plain' && this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.body?.trim() || '')) ||
+        false
+      );
+    }
+    return false;
   };
 
   private resemblesAsciiArmoredMsg = (body: string): boolean => {

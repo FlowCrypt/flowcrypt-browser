@@ -201,14 +201,12 @@ View.run(
     };
 
     private closeDialogPageOpenedExternally = async () => {
-      if (window.top === window.self) {
-        if (Catch.isThunderbirdMail()) {
-          const currentTab = await messenger.tabs.query({ active: true, currentWindow: true });
-          if (currentTab.length > 0) {
-            const tabId = currentTab[0].id;
-            if (tabId) {
-              await messenger.tabs.remove(tabId);
-            }
+      if (Catch.isThunderbirdMail() && window.top === window.self) {
+        const currentTab = await messenger.tabs.query({ active: true, currentWindow: true });
+        if (currentTab.length > 0) {
+          const tabId = currentTab[0].id;
+          if (tabId) {
+            await messenger.tabs.remove(tabId);
           }
         }
       }
