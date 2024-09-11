@@ -61,7 +61,7 @@ export class Env {
   }
 
   public static async webmails(): Promise<WebMailName[]> {
-    return ['gmail']; // async because storage may be involved in the future
+    return ['gmail', 'thunderbird']; // async because storage may be involved in the future
   }
 
   public static getBaseUrl() {

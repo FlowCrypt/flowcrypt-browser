@@ -70,8 +70,11 @@ console.info('background.js service worker starting');
   await BgHandlers.updateUninstallUrl({});
   injectFcIntoWebmail();
 
-  // Thunderbird event handlers
   if (Catch.isThunderbirdMail()) {
-    BrowserMsg.thunderbirdSecureComposeHandler();
+    BgHandlers.thunderbirdSecureComposeHandler();
+    await BgHandlers.thunderbirdContentScriptRegistration();
+    BrowserMsg.bgAddListener('thunderbirdGetCurrentUser', BgHandlers.thunderbirdGetCurrentUserHandler);
+    BrowserMsg.bgAddListener('thunderbirdMsgGet', BgHandlers.thunderbirdMsgGetHandler);
+    BrowserMsg.bgAddListener('thunderbirdOpenPassphraseDialog', BgHandlers.thunderbirdOpenPassphraseDialog);
   }
 })().catch(Catch.reportErr);

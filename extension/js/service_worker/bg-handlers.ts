@@ -12,6 +12,7 @@ import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
+import { Url, Str } from '../common/core/common.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -112,4 +113,72 @@ export class BgHandlers {
         }
       });
     });
+
+  public static thunderbirdSecureComposeHandler = () => {
+    const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: messenger.compose._ComposeDetailsType) => {
+      const accountEmails = await GlobalStore.acctEmailsGet();
+      const useFullScreenSecureCompose = (await messenger.windows.getCurrent()).type === 'messageCompose';
+      composeMethod = composeMethod === 'reply' || composeMethod === 'forward' ? composeMethod : undefined;
+      if (accountEmails.length !== 0) {
+        await BgUtils.openExtensionTab(
+          Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail, useFullScreenSecureCompose, thunderbirdMsgId, composeMethod })
+        );
+        await messenger.tabs.remove(tabId);
+      } else {
+        await BgUtils.openExtensionTab(Url.create('/chrome/settings/initial.htm', {}));
+      }
+    };
+    messenger.composeAction.onClicked.addListener(async tab => {
+      const messageDetails = await messenger.compose.getComposeDetails(Number(tab.id));
+      const composeMethod = messageDetails.type;
+      const msgId = Number(messageDetails.relatedMessageId);
+      const acctEmail = Str.parseEmail(messageDetails.from as string).email;
+      if (acctEmail) await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
+    });
+    messenger.messageDisplayAction.onClicked.addListener(async tab => {
+      const tabId = Number(tab.id);
+      const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
+      if (messageDetails) {
+        const msgId = messageDetails.id;
+        const accountId = messageDetails?.folder?.accountId || '';
+        const acctEmail = (await messenger.accounts.get(accountId))?.name || '';
+        await handleClickEvent(tabId, acctEmail, msgId);
+      }
+    });
+  };
+
+  public static thunderbirdContentScriptRegistration = async () => {
+    const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
+    // sweetalert2.js throws error in Thunderbird environment
+    const files = contentScriptGroups[0].js?.filter(url => !url.includes('sweetalert2')).map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];
+    await messenger.messageDisplayScripts.register({
+      js: files.map(file => ({ file })),
+      css: [{ file: './css/cryptup.css' }],
+    });
+  };
+
+  public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {
+    const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+      const accountId = messageDetails?.folder?.accountId || '';
+      return (await messenger.accounts.get(accountId))?.name;
+    }
+    return;
+  };
+
+  public static thunderbirdMsgGetHandler = async (): Promise<Bm.Res.ThunderbirdMsgGet> => {
+    const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+      if (message?.id) {
+        return await messenger.messages.getFull(Number(message.id));
+      }
+    }
+    return;
+  };
+
+  public static thunderbirdOpenPassphraseDialog = async (r: Bm.ThunderbirdOpenPassphraseDialog): Promise<Bm.Res.ThunderbirdOpenPassphraseDialog> => {
+    await BgUtils.openExtensionTab(`chrome/elements/passphrase.htm?type=message&parentTabId=0&acctEmail=${r.acctEmail}&longids=${r.longids}`, true);
+  };
 }
