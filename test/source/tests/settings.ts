@@ -554,6 +554,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
+        await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
+        await SettingsPageRecipe.ready(settingsPage);
       })
     );
     test(
