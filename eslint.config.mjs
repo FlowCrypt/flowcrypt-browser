@@ -72,6 +72,8 @@ const commonConfig = {
         format: ['camelCase', 'PascalCase'],
       },
     ],
+    // should be enabled in https://github.com/FlowCrypt/flowcrypt-browser/issues/5822
+    '@typescript-eslint/no-deprecated': 'off',
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': ['warn'],
     '@typescript-eslint/no-extraneous-class': 'off',
