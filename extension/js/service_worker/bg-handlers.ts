@@ -172,10 +172,12 @@ export class BgHandlers {
     if (tab.id) {
       const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
       if (message?.id) {
-        return await messenger.messages.getFull(Number(message.id));
+        const attachments = await messenger.messages.listAttachments(message.id);
+        const messagePart = await messenger.messages.getFull(message.id);
+        return { attachments, messagePart };
       }
     }
-    return;
+    return { attachments: [], messagePart: {} as messenger.messages.MessagePart };
   };
 
   public static thunderbirdOpenPassphraseDialog = async (r: Bm.ThunderbirdOpenPassphraseDialog): Promise<Bm.Res.ThunderbirdOpenPassphraseDialog> => {

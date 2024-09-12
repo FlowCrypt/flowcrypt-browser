@@ -114,7 +114,7 @@ export namespace Bm {
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
     export type ThunderbirdGetCurrentUser = string | undefined;
-    export type ThunderbirdMsgGet = messenger.messages.MessagePart | undefined;
+    export type ThunderbirdMsgGet = { attachments: messenger.messages.MessageAttachment[]; messagePart: messenger.messages.MessagePart };
     export type ThunderbirdOpenPassphraseDialog = Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
