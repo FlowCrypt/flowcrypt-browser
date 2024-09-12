@@ -159,7 +159,7 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 
-  private closeDialog() {
+  private closeDialog = () => {
     BrowserMsg.send.reload(this.view.parentTabId, { advanced: true });
-  }
+  };
 }

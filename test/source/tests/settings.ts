@@ -537,6 +537,26 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - my key page - generate key',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.ready(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPopup.waitAndClick('@source-generate');
+        const passphrase = 'long enough to suit requirements';
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
+        // Uncheck backup_inbox to check if backup view correctly displayed
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
+        await SettingsPageRecipe.ready(settingsPage);
+      })
+    );
+    test(
       'settings - my key page - privileged frames and action buttons should be hidden when using key manager test',
       testWithBrowser(async (t, browser) => {
         const acct = 'two.keys@key-manager-autogen.flowcrypt.test';

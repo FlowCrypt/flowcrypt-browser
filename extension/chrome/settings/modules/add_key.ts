@@ -45,7 +45,7 @@ export class AddKeyView extends View {
     await this.addKeyGenerateModule.initGenerateKeyView();
     if (!this.clientConfiguration.forbidStoringPassPhrase()) {
       $('.input_passphrase_save_label').removeClass('hidden');
-      $('.input_passphrase_save').prop('checked', true);
+      $('.import_input_passphrase_save').prop('checked', true);
     }
     if (this.clientConfiguration.usesKeyManager()) {
       Xss.sanitizeRender(
@@ -59,7 +59,7 @@ export class AddKeyView extends View {
     } else {
       $('#content').show();
       if (!this.clientConfiguration.forbidStoringPassPhrase()) {
-        $('.input_passphrase_save').prop('checked', true).prop('disabled', false);
+        $('.import_input_passphrase_save').prop('checked', true).prop('disabled', false);
       }
       await initPassphraseToggle(['input_passphrase']);
       this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
@@ -102,7 +102,7 @@ export class AddKeyView extends View {
     /* eslint-disable @typescript-eslint/naming-convention */
     await setPassphraseForPrvs(this.clientConfiguration, this.acctEmail, [key], {
       passphrase: String($('.input_passphrase').val()),
-      passphrase_save: !!$('.input_passphrase_save').prop('checked'),
+      passphrase_save: !!$('.import_input_passphrase_save').prop('checked'),
       passphrase_ensure_single_copy: false, // we require KeyImportUi to rejectKnown keys
     });
     /* eslint-enable @typescript-eslint/naming-convention */
