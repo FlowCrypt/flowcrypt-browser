@@ -552,6 +552,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // Uncheck backup_inbox to check if backup view correctly displayed
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
         await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
