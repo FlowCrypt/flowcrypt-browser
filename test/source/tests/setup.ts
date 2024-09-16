@@ -861,6 +861,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.notPresent('@webmail-notification-notify_expiring_keys');
         // remove added key and observe warning appears again
         await settingsPage.waitAndClick('@action-remove-key-1');
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with fingerprint');
         await gmailPage.page.reload();
         await Util.sleep(1);
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);

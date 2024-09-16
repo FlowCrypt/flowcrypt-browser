@@ -530,6 +530,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAll('@action-open-add-key-page');
         await settingsPage.waitAndClick('@action-remove-key-0');
+        await settingsPage.waitAndRespondToModal(
+          'confirm',
+          'confirm',
+          'Are you sure you want to remove encryption key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207'
+        );
         await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
         await Util.sleep(1);
         await settingsPage.waitAll('@action-open-add-key-page');
