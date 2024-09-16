@@ -660,7 +660,7 @@ export class ContactStore extends AbstractStore {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
-  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: ((reason?: unknown) => void) | undefined) {
+  public static setReqPipe<T>(req: IDBRequest, pipe: (value?: T) => void, reject?: (reason?: unknown) => void) {
     req.onsuccess = () => {
       try {
         pipe(req.result as T);
@@ -858,7 +858,7 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  private static chainExtraction<T>(store: IDBObjectStore, setup: { keys: IDBValidKey[]; values: T[] }, req?: IDBRequest | undefined): void {
+  private static chainExtraction<T>(store: IDBObjectStore, setup: { keys: IDBValidKey[]; values: T[] }, req?: IDBRequest): void {
     if (req) {
       ContactStore.setReqPipe(req, (value: T) => {
         if (value) {

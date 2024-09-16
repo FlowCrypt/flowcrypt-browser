@@ -205,7 +205,7 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
-  public static async readBinary(key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[]; err: Error[] }> {
+  public static async readBinary(key: Uint8Array, passPhrase?: string): Promise<{ keys: Key[]; err: Error[] }> {
     const allKeys: Key[] = [],
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
@@ -245,7 +245,7 @@ export class KeyUtil {
     return { keys: allKeys, err: allErr };
   }
 
-  public static async parseBinary(key: Uint8Array, passPhrase?: string | undefined): Promise<Key[]> {
+  public static async parseBinary(key: Uint8Array, passPhrase?: string): Promise<Key[]> {
     const { keys, err } = await KeyUtil.readBinary(key, passPhrase);
     if (keys.length > 0) {
       return keys;

@@ -74,8 +74,8 @@ export class ComposePageRecipe extends PageRecipe {
   public static async fillMsg(
     composePageOrFrame: Controllable,
     recipients: Recipients,
-    subject?: string | undefined,
-    body?: string | undefined,
+    subject?: string,
+    body?: string,
     sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {} // undefined means leave default
   ) {
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };

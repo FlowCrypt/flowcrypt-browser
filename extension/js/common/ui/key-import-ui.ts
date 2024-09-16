@@ -83,7 +83,7 @@ export class KeyImportUi {
 
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
     $('input[type=radio][name=source]')
       .off()
       .change(function () {
