@@ -21,8 +21,12 @@
         <div class="line">
           <h1>Add Private Key <span id="spinner_container"></span></h1>
         </div>
-        <div class="line">
+        <div class="line" id="add_key_option_container">
           <ul style="list-style: none; margin-left: 0; padding-left: 0" class="source_selector display_none">
+            <li>
+              <input type="radio" name="source" id="source_generate" data-test="source-generate" value="generate" />
+              <label for="source_generate"> Generate new key </label>
+            </li>
             <li>
               <input type="radio" name="source" id="source_backup" value="backup" />
               <label for="source_backup"> Load from backup </label>
@@ -36,6 +40,10 @@
               <label for="source_paste"> Paste armored key directly </label>
             </li>
           </ul>
+        </div>
+        <div class="source_generate_container display_none">
+          <div id="generate-key-container"></div>
+          <div id="backup-template-container"></div>
         </div>
         <div class="source_file_container display_none">
           <a href="#" id="fineuploader_button" class="display_none">file</a>
@@ -55,7 +63,7 @@
           </div>
           <div class="line">
             <label class="input_passphrase_save_label hidden" data-test="input-save-passphrase-label">
-              <input type="checkbox" value="" name="check" class="input_passphrase_save" data-test="input-save-passphrase" />
+              <input type="checkbox" value="" name="check" class="import_input_passphrase_save" data-test="input-save-passphrase" />
               Remember the pass phrase after closing the browser
             </label>
           </div>
@@ -76,6 +84,13 @@
     <script src="/lib/openpgp.js"></script>
     <script src="/lib/forge.js"></script>
     <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/emailjs/punycode.js"></script>
+    <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-codec.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-types.js"></script>
+    <script src="/lib/emailjs/emailjs-addressparser.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-builder.js"></script>
+    <script src="/lib/emailjs/emailjs-mime-parser.js"></script>
     <script src="add_key.js" type="module"></script>
   </body>
 </html>

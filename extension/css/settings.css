@@ -320,6 +320,7 @@ a.gray_link {
   text-indent: 5px;
   font-weight: 600;
   display: inline-block;
+  flex: 1;
 }
 
 #settings-row h1 {
@@ -405,9 +406,9 @@ a.gray_link {
 }
 
 .abs-row span.keys-link-top-right-container {
-  display: inline-block;
-  position: absolute;
+  display: flex;
   right: 10px;
+  gap: 15px;
 }
 
 .abs-row .key-icon {
