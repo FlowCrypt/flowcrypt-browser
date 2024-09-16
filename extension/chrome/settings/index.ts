@@ -527,7 +527,7 @@ View.run(
           'click',
           this.setHandler(async target => {
             const fingerprint = $(target).data('fingerprint') as string;
-            if (await Ui.modal.confirm(`Are you sure you want to remove encryption key with fingerprint ${Str.spaced(Xss.escape(fingerprint))}`)) {
+            if (await Ui.modal.confirm(Lang.settings.deleteKeyConfirm(Str.spaced(Xss.escape(fingerprint))))) {
               // the UI below only gets rendered when account_email is available
               const family = $(target).data('type') as string;
               const id = $(target).data('id') as string;

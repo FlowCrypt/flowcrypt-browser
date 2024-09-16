@@ -533,7 +533,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.waitAndRespondToModal(
           'confirm',
           'confirm',
-          'Are you sure you want to remove encryption key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207'
+          'Are you sure you want to remove encryption key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207?'
         );
         await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
         await Util.sleep(1);

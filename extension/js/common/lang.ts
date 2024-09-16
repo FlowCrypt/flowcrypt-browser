@@ -150,6 +150,9 @@ export const Lang = {
     updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
     email: 'Enter FlowCrypt pass phrase to read encrypted email',
   },
+  settings: {
+    deleteKeyConfirm: (fingerprint: string) => `Are you sure you want to remove encryption key with fingerprint ${fingerprint}?`,
+  },
   attachment: {
     executableFileWarning: 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?', // xss-escaped
   },
