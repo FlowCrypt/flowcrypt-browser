@@ -22,8 +22,8 @@ export class SetupImportKeyModule {
     /* eslint-disable @typescript-eslint/naming-convention */
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
-      submit_main: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_key'),
-      submit_all: this.view.shouldSubmitPubkey('#step_2b_manual_enter .input_submit_all'),
+      submit_main: this.view.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2b_manual_enter .input_submit_key'),
+      submit_all: this.view.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2b_manual_enter .input_submit_all'),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       passphrase_ensure_single_copy: true,
       recovered: false,

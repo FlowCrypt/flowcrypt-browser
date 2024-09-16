@@ -79,6 +79,7 @@ export class BackupUi {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
+    $('#add_key_option_container').hide();
     if (this.action === 'setup_automatic') {
       $('#button-go-back').css('display', 'none');
       await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
