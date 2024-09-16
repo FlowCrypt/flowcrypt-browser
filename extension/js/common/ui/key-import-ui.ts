@@ -98,7 +98,7 @@ export class KeyImportUi {
     return Boolean($(checkboxSelector).prop('checked'));
   };
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
     $('input[type=radio][name=source]')
       .off()
       .on('change', function () {

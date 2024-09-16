@@ -217,7 +217,7 @@ export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<v
   }
 };
 
-const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: number | undefined): Promise<number> => {
+const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: number): Promise<number> => {
   const entries: ContactV3[] = [];
   {
     const tx = db.transaction(['contacts'], 'readonly');
