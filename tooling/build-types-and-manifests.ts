@@ -26,16 +26,6 @@ addManifest('chrome-consumer', manifest => {
 
 addManifest('firefox-consumer', manifest => {
   manifest.version = version;
-  // We decide to use manifest v2 for firefox and below codes are to make v3 manifest to v2
-  // Read more here: https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2029591323
-  manifest.manifest_version = 2;
-  const manifestV3 = manifest as chrome.runtime.ManifestV3;
-  manifest.web_accessible_resources = manifestV3.web_accessible_resources?.[0].resources;
-  manifest.content_security_policy = manifestV3.content_security_policy?.extension_pages;
-  manifest.permissions = [...(manifestV3.permissions ?? []), ...(manifestV3.host_permissions ?? [])];
-  delete manifest.host_permissions;
-  manifest.browser_action = manifestV3.action;
-  delete manifest.action;
   manifest.browser_specific_settings = {
     gecko: {
       id: 'firefox@cryptup.io',
@@ -57,12 +47,10 @@ addManifest('firefox-consumer', manifest => {
 addManifest(
   'thunderbird-consumer',
   manifest => {
-    const manifestV3 = manifest as messenger._manifest.WebExtensionManifest;
-
-    (manifest.browser_action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
+    (manifest.action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';
-    manifest.permissions = [...(manifestV3.permissions ?? []), 'compose', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
+    manifest.permissions = [...(manifest.permissions ?? []), 'compose', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
     manifest.compose_action = {
       default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention

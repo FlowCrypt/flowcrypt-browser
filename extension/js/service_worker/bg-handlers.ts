@@ -62,7 +62,7 @@ export class BgHandlers {
     const { email } = GoogleOAuth.parseIdToken(r.idToken);
     if (email) {
       const storage = await AcctStore.get(email, ['authentication']);
-      if (storage.authentication) {
+      if (storage.authentication?.oauth) {
         return await ConfiguredIdpOAuth.authHdr(email, true, true);
       }
       return await GoogleOAuth.googleApiAuthHeader(email, true);
