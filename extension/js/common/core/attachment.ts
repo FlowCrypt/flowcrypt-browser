@@ -181,7 +181,7 @@ export class Attachment {
     throw new Error('Attachment has no data set');
   };
 
-  public isAttachmentAnImage = () => {
+  public isImage = () => {
     return this.type.startsWith('image/') || this.type.startsWith('img/');
   };
 
@@ -204,9 +204,9 @@ export class Attachment {
         }
       }
       return 'signature';
-    } else if (this.inline && this.isAttachmentAnImage()) {
+    } else if (this.inline && this.isImage()) {
       return 'inlineImage';
-    } else if (!this.name && !this.isAttachmentAnImage() && this.type !== 'application/octet-stream' && this.type !== 'multipart/mixed') {
+    } else if (!this.name && !this.isImage() && !['application/octet-stream', 'multipart/mixed', 'message/global'].includes(this.type)) {
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
@@ -228,7 +228,7 @@ export class Attachment {
       // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
       const isAmbiguousAscFile = this.name.endsWith('.asc'); // ambiguous .asc name
       const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
-      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isAttachmentAnImage()) {
+      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isImage()) {
         if (isAmbiguousNonameFile && this.type === 'application/octet-stream') {
           return 'plainFile';
         }

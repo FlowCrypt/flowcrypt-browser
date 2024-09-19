@@ -59,7 +59,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
-    numberOfAttachmentsDigit: '.aVW span:first-child',
     attachmentsButtons: '.aZi',
     draftsList: '.ae4',
   };
