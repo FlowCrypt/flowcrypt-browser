@@ -55,6 +55,10 @@ export class MessageRenderer {
     private debug = false
   ) {
     this.downloader = new Downloader(gmail);
+    // Check expired messages every minute and delete them
+    Catch.setHandledInterval(() => {
+      this.deleteExpired();
+    }, 3 * 1000);
   }
 
   public static async newInstance(acctEmail: string, gmail: Gmail, relayManager: RelayManager, factory: XssSafeFactory, debug = false) {
