@@ -151,15 +151,6 @@ export class Attachment {
     );
   };
 
-  public isPrivateKey = (): boolean => {
-    return (
-      Boolean(this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+(?:\-[A-F0-9]{40})?)\.(key|asc)$/g)) ||
-      (/\.(asc|key)$/.test(this.name) &&
-        this.hasData() &&
-        Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PRIVATE KEY BLOCK-----'))
-    );
-  };
-
   public hasData = () => {
     return this.bytes instanceof Uint8Array;
   };
@@ -225,11 +216,10 @@ export class Attachment {
     } else if (this.isPrivateKey()) {
       return 'privateKey';
     } else {
-      // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
       const isAmbiguousAscFile = this.name.endsWith('.asc'); // ambiguous .asc name
       const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
       if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isImage()) {
-        if (isAmbiguousNonameFile && this.type === 'application/octet-stream') {
+        if (isAmbiguousNonameFile && ['application/octet-stream', 'message/global'].includes(this.type)) {
           return 'plainFile';
         }
         return this.hasData() ? 'maybePgp' : 'needChunk';
@@ -240,6 +230,12 @@ export class Attachment {
 
   public isPgpMimeVersion = () => {
     return this.type === 'application/pgp-encrypted' && this.name.length === 0 && this.getData().toUtfStr() === 'Version: 1';
+  };
+
+  public isHidden = () => {
+    return (
+      this.type === 'application/pgp-keys' || this.isPublicKey() || this.inline || Attachment.encryptedMsgNames.some(filename => this.name.includes(filename))
+    );
   };
 
   public isExecutableFile = () => {
@@ -298,5 +294,14 @@ export class Attachment {
       'wsh',
       'xll',
     ].some(exeFileExtension => this.name.endsWith('.' + exeFileExtension));
+  };
+
+  private isPrivateKey = (): boolean => {
+    return (
+      Boolean(this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+(?:\-[A-F0-9]{40})?)\.(key|asc)$/g)) ||
+      (/\.(asc|key)$/.test(this.name) &&
+        this.hasData() &&
+        Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PRIVATE KEY BLOCK-----'))
+    );
   };
 }
