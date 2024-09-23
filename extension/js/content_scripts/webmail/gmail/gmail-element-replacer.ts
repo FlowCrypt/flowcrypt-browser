@@ -151,7 +151,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
     this.renderLocalDrafts().catch(Catch.reportErr);
-    this.messageRenderer.deleteExpired();
   };
 
   private replaceArmoredBlocks = async () => {
