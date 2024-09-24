@@ -418,7 +418,7 @@ export class OpenPGPKey {
   public static fingerprintToLongid(fingerprint: string) {
     if (fingerprint.length === 40) {
       // pgp keys
-      return fingerprint.substring(-16).toUpperCase();
+      return fingerprint.substring(fingerprint.length - 16).toUpperCase();
     }
     throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
   }

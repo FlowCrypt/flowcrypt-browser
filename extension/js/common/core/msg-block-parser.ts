@@ -168,7 +168,7 @@ export class MsgBlockParser {
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
     if (begin !== -1) {
       // found
-      const potentialBeginHeader = origText.substring(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH);
+      const potentialBeginHeader = origText.substring(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH + begin);
       for (const armorHdrType of armorHdrTypes) {
         const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[armorHdrType];
         if (blockHeaderDef.replace) {
@@ -176,7 +176,7 @@ export class MsgBlockParser {
           if (indexOfConfirmedBegin === 0) {
             let potentialTextBeforeBlockBegun = '';
             if (begin > startAt) {
-              potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
+              potentialTextBeforeBlockBegun = origText.substring(startAt, begin + startAt);
               if (!potentialTextBeforeBlockBegun.endsWith('\n')) {
                 // only replace blocks if they begin on their own line
                 // contains deliberate block: `-----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
@@ -209,7 +209,7 @@ export class MsgBlockParser {
               }
               if (endIndex !== -1) {
                 // identified end of the same block
-                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength + begin).trim()));
                 result.continueAt = endIndex + foundBlockEndHeaderLength;
               } else {
                 result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin), true));
