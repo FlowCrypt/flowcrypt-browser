@@ -418,7 +418,7 @@ export class OpenPGPKey {
   public static fingerprintToLongid(fingerprint: string) {
     if (fingerprint.length === 40) {
       // pgp keys
-      return fingerprint.substr(-16).toUpperCase();
+      return fingerprint.substring(-16).toUpperCase();
     }
     throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
   }
@@ -600,7 +600,7 @@ export class OpenPGPKey {
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa),
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsaSign),
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa),
-        opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa),
+        opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsaLegacy),
       ].includes(key.getAlgorithmInfo().algorithm)
     ) {
       return this.noKeyFlags; // disallow encryption for these algorithms
@@ -857,7 +857,7 @@ export class OpenPGPKey {
         [opgp.enums.publicKey.elgamal]: { pub: 3, priv: 1 }, // (p, g, y), (x)
         [opgp.enums.publicKey.ecdsa]: { pub: 2, priv: 1 }, // (oid, Q), (d)
         [opgp.enums.publicKey.ecdh]: { pub: 2, priv: 1 }, // (oid, Q, kdfParams), (d)
-        [opgp.enums.publicKey.eddsa]: { pub: 2, priv: 1 }, // (oid, Q), (seed)
+        [opgp.enums.publicKey.eddsaLegacy]: { pub: 2, priv: 1 }, // (oid, Q), (seed)
       };
     }
     return (

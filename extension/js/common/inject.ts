@@ -129,6 +129,7 @@ export class Injector {
           el.remove();
         })
       )
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       .hover(
         e => {
           $(e.target).css('z-index', 4);

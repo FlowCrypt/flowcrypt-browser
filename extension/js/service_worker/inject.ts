@@ -3,6 +3,7 @@
 'use strict';
 
 export const injectFcIntoWebmail = () => {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
   // one time when extension installed or on browser start - go through all matching tabs and inject
   for (const group of contentScriptGroups) {
@@ -23,12 +24,14 @@ const injectContentScriptIntoTabIfNeeded = (tabId: number, files: string[]) => {
 };
 
 const getContentScriptTabIds = (matches: string[], callback: (tabIds: number[]) => void) => {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   chrome.tabs.query({ url: matches }, result => {
     callback(result.filter(tab => typeof tab.id !== 'undefined').map(tab => tab.id) as number[]);
   });
 };
 
 const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: boolean) => void) => {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   chrome.scripting.executeScript(
     {
       target: { tabId },
@@ -46,6 +49,7 @@ const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: bool
 const injectContentScripts = (tabId: number, files: string[], callback?: () => void) => {
   const filesCopy = files.slice();
   const scriptFile = filesCopy.shift();
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   chrome.scripting.executeScript(
     {
       target: { tabId },

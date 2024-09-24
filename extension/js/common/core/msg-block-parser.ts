@@ -168,7 +168,7 @@ export class MsgBlockParser {
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
     if (begin !== -1) {
       // found
-      const potentialBeginHeader = origText.substr(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH);
+      const potentialBeginHeader = origText.substring(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH);
       for (const armorHdrType of armorHdrTypes) {
         const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[armorHdrType];
         if (blockHeaderDef.replace) {
@@ -212,7 +212,7 @@ export class MsgBlockParser {
                 result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
                 result.continueAt = endIndex + foundBlockEndHeaderLength;
               } else {
-                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin), true));
               }
               break;
             }
@@ -222,7 +222,7 @@ export class MsgBlockParser {
     }
     if (origText && !result.found.length) {
       // didn't find any blocks, but input is non-empty
-      const potentialText = origText.substr(startAt).trim();
+      const potentialText = origText.substring(startAt).trim();
       if (potentialText) {
         result.found.push(MsgBlock.fromContent('plainText', potentialText));
       }

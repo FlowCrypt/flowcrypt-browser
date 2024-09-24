@@ -30,12 +30,15 @@ export class OAuth2 {
       // need to use chrome.runtime.onMessage because BrowserMsg.addListener doesn't work
       // In gmail page reconnect auth popup, it sends event to background page (BrowserMsg.send.bg.await.reconnectAcctAuthPopup)
       // thefore BrowserMsg.addListener doesn't work
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.runtime.onMessage.addListener((message: Bm.Raw) => {
         if (message.name === 'auth_window_result') {
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           void chrome.tabs.remove(tabId!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
           resolve(message.data.bm as Bm.AuthWindowResult);
         }
       });
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.tabs.onRemoved.addListener(removedTabId => {
         // Only reject error when auth result not successful
         if (removedTabId === tabId) {

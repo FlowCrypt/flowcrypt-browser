@@ -410,6 +410,7 @@ export class Api {
       // as of October 2023 fetch upload progress (through ReadableStream)
       // is supported only by Chrome and requires HTTP/2 on backend
       // as temporary solution we use XMLHTTPRequest for such requests
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const result = await Api.ajaxWithJquery(req, resFmt, formattedData);
       return result as FetchResult<T, RT>;
     } else {

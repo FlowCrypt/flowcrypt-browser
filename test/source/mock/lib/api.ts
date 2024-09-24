@@ -306,7 +306,7 @@ export class Api<REQ, RES> {
     } else {
       const chunkSize = 100 * 1024;
       for (let i = 0; i < data.length; i += chunkSize) {
-        const chunk = data.slice(i, i + chunkSize);
+        const chunk = data.subarray(i, i + chunkSize);
         response.write(chunk);
         if (i > 0) {
           await Util.sleep(this.throttleChunkMsDownload / 1000);
