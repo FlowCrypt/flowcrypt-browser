@@ -351,7 +351,7 @@ export class SetupView extends View {
     }
     let notePp = String(password1.val());
     if (await shouldPassPhraseBeHidden()) {
-      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
+      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
     }
     if (!this.clientConfiguration.usesKeyManager()) {
       const paperPassPhraseStickyNote = `

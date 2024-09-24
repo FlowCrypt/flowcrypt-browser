@@ -176,7 +176,7 @@ export class MsgBlockParser {
           if (indexOfConfirmedBegin === 0) {
             let potentialTextBeforeBlockBegun = '';
             if (begin > startAt) {
-              potentialTextBeforeBlockBegun = origText.substring(startAt, begin + startAt);
+              potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
               if (!potentialTextBeforeBlockBegun.endsWith('\n')) {
                 // only replace blocks if they begin on their own line
                 // contains deliberate block: `-----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
@@ -209,7 +209,7 @@ export class MsgBlockParser {
               }
               if (endIndex !== -1) {
                 // identified end of the same block
-                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength + begin).trim()));
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
                 result.continueAt = endIndex + foundBlockEndHeaderLength;
               } else {
                 result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin), true));
