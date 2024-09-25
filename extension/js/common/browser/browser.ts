@@ -22,11 +22,10 @@ export class Browser {
       a.click();
     } else {
       // safari
-      const ev = document.createEvent('MouseEvents');
-
-      // @ts-expect-error - safari only. expected 15 arguments, but works well with 4
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      ev.initMouseEvent('click', true, true, window);
+      const ev = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+      });
       a.dispatchEvent(ev);
     }
     if (Catch.isFirefox()) {

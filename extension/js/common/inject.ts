@@ -129,15 +129,12 @@ export class Injector {
           el.remove();
         })
       )
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      .hover(
-        e => {
-          $(e.target).css('z-index', 4);
-        },
-        e => {
-          $(e.target).css('z-index', '');
-        }
-      );
+      .on('mouseenter', e => {
+        $(e.target).css('z-index', 4);
+      })
+      .on('mouseleave', e => {
+        $(e.target).css('z-index', '');
+      });
   };
 
   private determineWebmailVersion = (): WebMailVersion => {
