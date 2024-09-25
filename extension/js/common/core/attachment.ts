@@ -136,9 +136,6 @@ export class Attachment {
     );
   };
 
-  /** @deprecated should be made private
-   *
-   */
   public isPublicKey = (): boolean => {
     if (this.treatAsValue) {
       return this.treatAsValue === 'publicKey';

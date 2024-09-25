@@ -256,7 +256,7 @@ export class Str {
   };
 
   public static datetimeToDate = (date: string) => {
-    return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    return date.substring(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
   };
 
   public static fromDate = (date: Date) => {

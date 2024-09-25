@@ -131,7 +131,7 @@ export class GmailWebmailStartup {
   private hijackGmailHotkeys = () => {
     const keys = Env.keyCodes();
     const unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
-    $(document).keypress(e => {
+    $(document).on('keypress', e => {
       Catch.try(() => {
         const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
         if (

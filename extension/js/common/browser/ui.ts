@@ -132,6 +132,7 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           const r = cb.bind(originalThis)(el, event, cbResetTimer);
           if (typeof r === 'object' && typeof r.catch === 'function') {
             // eslint-disable-next-line no-underscore-dangle
@@ -290,7 +291,7 @@ export class Ui {
       return await Ui.swal().fire({
         didOpen: () => {
           $(Swal.getPopup()!).attr('data-test', dataTest || 'dialog');
-          $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
+          $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').trigger('blur');
         },
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         willClose: () => {
@@ -402,6 +403,7 @@ export class Ui {
 
   public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const url = typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
@@ -496,6 +498,7 @@ export class Ui {
       // returns a function
       if (
         (e.metaKey || e.ctrlKey) &&
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         (e.key === 'Enter' || e.keyCode === 10) // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
       ) {
         callback();

@@ -314,6 +314,7 @@ export class XssSafeFactory {
   };
 
   private extUrl = (s: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     return chrome.runtime.getURL(s);
   };
 

@@ -17,7 +17,7 @@ export class ComposeAttachmentsModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = () => {
-    this.view.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
+    this.view.S.cached('body').on({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to interfere
     this.attachment.initAttachmentDialog('fineuploader', 'fineuploader_button', {
       uiChanged: () => {
         this.view.sizeModule.setInputTextHeightManuallyIfNeeded();

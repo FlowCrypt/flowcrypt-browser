@@ -69,7 +69,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     if (replyContainer.hasClass('popover-opened')) {
       $('body').on('click', popoverClickHandler);
       const replyOptions = this.view.S.cached('reply_options_container').find('.reply-option');
-      replyOptions.hover(function () {
+      replyOptions.on('hover', function () {
         replyOptions.removeClass('active');
         $(this).addClass('active');
       });
