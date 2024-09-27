@@ -94,6 +94,7 @@ export class Settings {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
     await new Promise<void>((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.storage.local.get(async storage => {
         try {
           for (const storageIndex of Object.keys(storage)) {
@@ -151,13 +152,13 @@ export class Settings {
     const storage = await storageGetAll('local');
     for (const acctKey of Object.keys(storage)) {
       if (acctKey.startsWith(oldAcctEmailIndexPrefix)) {
-        const key = acctKey.substr(oldAcctEmailIndexPrefix.length);
+        const key = acctKey.substring(oldAcctEmailIndexPrefix.length);
         const mode = Settings.getOverwriteMode(key);
         if (mode !== 'forget') {
           storageIndexesToKeepOld.push(key);
         }
       } else if (acctKey.startsWith(newAcctEmailIndexPrefix)) {
-        const key = acctKey.substr(newAcctEmailIndexPrefix.length);
+        const key = acctKey.substring(newAcctEmailIndexPrefix.length);
         const mode = Settings.getOverwriteMode(key);
         if (mode !== 'keep') {
           storageIndexesToKeepNew.push(key);
@@ -226,7 +227,8 @@ export class Settings {
         '</div>',
       ].join('\n')
     );
-    container.find('select.input_fix_expire_years').change(
+    container.find('select.input_fix_expire_years').on(
+      'change',
       Ui.event.handle(target => {
         if ($(target).val()) {
           container.find('.action_fix_compatibility').removeClass('gray').addClass('green');
@@ -438,8 +440,10 @@ export class Settings {
   }
 
   public static async loginWithPopupShowModalOnErr(acctEmail: string, isCustomIDP: boolean, then: () => void = () => undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (window !== window.top && !chrome.windows) {
       // Firefox, chrome.windows isn't available in iframes
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       await Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
       window.location.reload();

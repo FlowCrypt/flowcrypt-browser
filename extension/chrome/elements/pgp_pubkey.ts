@@ -127,7 +127,10 @@ View.run(
         'click',
         this.setHandler(btn => this.addContactHandler(btn))
       );
-      $('.input_email').keyup(this.setHandler(() => this.setBtnText()));
+      $('.input_email').on(
+        'keyup',
+        this.setHandler(() => this.setBtnText())
+      );
       $('.action_show_full').on(
         'click',
         this.setHandler(btn => this.showFullKeyHandler(btn))

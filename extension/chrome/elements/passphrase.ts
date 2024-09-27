@@ -119,7 +119,10 @@ View.run(
     };
 
     public setHandlers = () => {
-      $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
+      $('#passphrase').on(
+        'keyup',
+        this.setHandler(() => this.renderNormalPpPrompt())
+      );
       $('.action_close').on(
         'click',
         this.setHandler(() => this.closeDialog())
@@ -165,7 +168,8 @@ View.run(
           );
         })
       );
-      $('#passphrase').keydown(
+      $('#passphrase').on(
+        'keydown',
         this.setHandler((el, ev) => {
           if (ev.key === 'Enter') {
             $('.action_ok').trigger('click');

@@ -22,10 +22,10 @@ export class Browser {
       a.click();
     } else {
       // safari
-      const ev = document.createEvent('MouseEvents');
-
-      // @ts-expect-error - safari only. expected 15 arguments, but works well with 4
-      ev.initMouseEvent('click', true, true, window);
+      const ev = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+      });
       a.dispatchEvent(ev);
     }
     if (Catch.isFirefox()) {
@@ -51,6 +51,7 @@ export class Browser {
   };
 
   public static openSettingsPage = async (path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {

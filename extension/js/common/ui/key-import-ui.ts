@@ -105,14 +105,14 @@ export class KeyImportUi {
         const selectedValue = (this as HTMLInputElement).value;
         switch (selectedValue) {
           case 'file':
-            $('.input_private_key').val('').change().prop('disabled', true);
+            $('.input_private_key').val('').trigger('change').prop('disabled', true);
             $('.source_paste_container').css('display', 'none');
             $('.source_generate_container').hide();
             $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
             $('#fineuploader_button > input').trigger('click');
             break;
           case 'paste':
-            $('.input_private_key').val('').change().prop('disabled', false);
+            $('.input_private_key').val('').trigger('change').prop('disabled', false);
             $('.source_generate_container').hide();
             $('.source_paste_container').css('display', 'block');
             $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
@@ -161,7 +161,8 @@ export class KeyImportUi {
         }
       })
     );
-    $('.input_private_key').change(
+    $('.input_private_key').on(
+      'change',
       Ui.event.handle(async target => {
         const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
         if (!prv?.isPrivate()) {
@@ -179,7 +180,7 @@ export class KeyImportUi {
             removeValidationElements();
             $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
           });
-          $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
+          $('.input_private_key').on('change', removeValidationElementsWhenKeyChanged);
         } else if (OpenPGPKey.isFullyEncrypted(prv)) {
           $('.line.unprotected_key_create_pass_phrase').hide();
         } else {
@@ -209,10 +210,10 @@ export class KeyImportUi {
           }
         }
         if (typeof prv !== 'undefined') {
-          $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);
+          $('.input_private_key').val(KeyUtil.armor(prv)).trigger('change').prop('disabled', true);
           $('.source_paste_container').css('display', 'block');
         } else {
-          $('.input_private_key').val('').change().prop('disabled', false);
+          $('.input_private_key').val('').trigger('change').prop('disabled', false);
           await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.getTestCompatibilityLink(acctEmail));
           KeyImportUi.allowReselect();
         }

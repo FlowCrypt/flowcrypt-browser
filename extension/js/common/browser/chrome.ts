@@ -17,10 +17,12 @@ const handleFatalErr = async (reason: 'storage_undefined', error: Error) => {
       throw error;
     } else if (Env.isContentScript()) {
       console.error('Incomplete extension environment in content script', error);
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
     } else if (!chrome.runtime) {
       console.error('Chrome.runtime missing, cannot continue', error);
     } else {
       // extension pages
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       window.location.href = chrome.runtime.getURL(Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
     }
   } catch (e) {
@@ -32,10 +34,12 @@ const handleFatalErr = async (reason: 'storage_undefined', error: Error) => {
     }
   }
 };
-
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 export const windowsCreate = async (q: chrome.windows.CreateData): Promise<chrome.windows.Window | undefined> => {
   return await new Promise(resolve => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (typeof chrome.windows !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.windows.create(q, resolve);
     } else {
       Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.reportErr);
@@ -45,14 +49,18 @@ export const windowsCreate = async (q: chrome.windows.CreateData): Promise<chrom
 
 export const storageGet = async (storageType: ChromeStorageType, keys: string[]): Promise<Dict<unknown>> => {
   return await new Promise((resolve, reject) => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (typeof chrome.storage === 'undefined') {
       void handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const storage = chrome.storage[storageType];
       storage.get(keys, result => {
         if (typeof result !== 'undefined') {
           resolve(result);
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
         } else if (chrome.runtime.lastError) {
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           reject(AbstractStore.errCategorize(chrome.runtime.lastError));
         } else {
           reject(new Error(`storageGet(${storageType}, ${keys.join(',')}) produced undefined result without an error`));
@@ -64,9 +72,11 @@ export const storageGet = async (storageType: ChromeStorageType, keys: string[])
 
 export const storageGetAll = async (storageType: ChromeStorageType): Promise<{ [key: string]: unknown }> => {
   return await new Promise(resolve => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (typeof chrome.storage === 'undefined') {
       void handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const storage = chrome.storage[storageType];
       storage.get(resolve);
     }
@@ -75,9 +85,11 @@ export const storageGetAll = async (storageType: ChromeStorageType): Promise<{ [
 
 export const storageSet = async (storageType: ChromeStorageType, values: Dict<unknown>): Promise<void> => {
   return await new Promise(resolve => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (typeof chrome.storage === 'undefined') {
       void handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const storage = chrome.storage[storageType];
       storage.set(values, resolve);
     }
@@ -86,9 +98,11 @@ export const storageSet = async (storageType: ChromeStorageType, values: Dict<un
 
 export const storageRemove = async (storageType: ChromeStorageType, keys: string[]): Promise<void> => {
   return await new Promise(resolve => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (typeof chrome.storage === 'undefined') {
       void handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const storage = chrome.storage[storageType];
       storage.remove(keys, resolve);
     }

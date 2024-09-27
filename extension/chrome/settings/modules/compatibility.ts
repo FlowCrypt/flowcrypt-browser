@@ -34,7 +34,7 @@ View.run(
     public setHandlers = () => {
       $('.action_load_public_key').on('click', this.setHandlerPrevent('double', this.actionLoadPublicKey));
       $('.action_test_key').on('click', this.setHandlerPrevent('double', this.actionTestKeyHandler));
-      $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_test_key'));
+      $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_test_key'));
     };
 
     private performKeyCompatibilityTests = async (keyString: string) => {

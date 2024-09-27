@@ -37,7 +37,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   public setHandlers = (): void => {
     const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
-    this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
+    this.view.S.cached('subject').add(this.view.S.cached('compose')).on('keydown', ctrlEnterHandler);
     this.view.S.cached('send_btn').on(
       'click',
       this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg())

@@ -1266,7 +1266,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
         // backing up to file when two keys are checked
         const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
-        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
+        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toUtfStr()));
         expect(keys2.length).to.equal(2);
         await backupPage.close();
       })
@@ -1457,7 +1457,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await ppFrame.waitAndType('@input-pass-phrase', key.passphrase);
         await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry');
         await Util.sleep(2);
-        expect(ppFrame.frame.isDetached()).to.equal(true);
+        expect(ppFrame.frame.detached).to.equal(true);
         // todo: #4059 we would expect further iteraction with backupFrame here but it is actually wiped out
         await settingsPage.close();
       })

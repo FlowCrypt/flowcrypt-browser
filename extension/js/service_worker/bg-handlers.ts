@@ -72,18 +72,22 @@ export class BgHandlers {
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
     const acctEmails = await GlobalStore.acctEmailsGet();
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       const email = acctEmails?.length ? acctEmails[0] : undefined;
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // eslint-disable-line no-null/no-null
     }
   };
 
   public static getActiveTabInfo: Bm.AsyncRespondingHandler = () =>
     new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.tabs.query({ active: true, currentWindow: true, url: ['*://mail.google.com/*', '*://inbox.google.com/*'] }, activeTabs => {
         if (activeTabs.length) {
           if (activeTabs[0].id !== undefined) {
             type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined };
+            // eslint-disable-next-line @typescript-eslint/no-deprecated
             chrome.scripting.executeScript(
               {
                 target: { tabId: activeTabs[0].id },
@@ -148,6 +152,7 @@ export class BgHandlers {
   };
 
   public static thunderbirdContentScriptRegistration = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
     // sweetalert2.js throws error in Thunderbird environment
     const files = contentScriptGroups[0].js?.filter(url => !url.includes('sweetalert2')).map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];

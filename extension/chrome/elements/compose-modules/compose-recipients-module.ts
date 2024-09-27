@@ -108,9 +108,18 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.S.cached('input_to').trigger('focus');
       })
     );
-    this.view.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));
-    this.view.S.cached('cc').focus(this.view.setHandler(() => this.focusRecipients()));
-    this.view.S.cached('bcc').focus(this.view.setHandler(() => this.focusRecipients()));
+    this.view.S.cached('input_to').on(
+      'focus',
+      this.view.setHandler(() => this.focusRecipients())
+    );
+    this.view.S.cached('cc').on(
+      'focus',
+      this.view.setHandler(() => this.focusRecipients())
+    );
+    this.view.S.cached('bcc').on(
+      'focus',
+      this.view.setHandler(() => this.focusRecipients())
+    );
     this.view.S.cached('compose_table').on(
       'click',
       this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`))
@@ -568,7 +577,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
       }
       return false;
-    } else if (e.keyCode === 32) {
+    } else if (e.key === 'Space') {
       // Handle 'Space' key
       const target = $(e.target);
       const emails = String(target.val())
@@ -808,7 +817,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           displayEmail = contact.email;
         } else {
           const parts = contact.email.split('@');
-          displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
+          displayEmail = parts[0].replace(/<\/?b>/g, '').substring(0, 10) + '...@' + parts[1];
         }
         displayEmail = '<div class="select_contact_email" data-test="action-select-contact-email">' + Xss.escape(displayEmail) + '</div>';
         if (contact.name) {
@@ -835,7 +844,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           this.view.errModule.handle(`select contact`)
         )
       );
-      contactItems.hover(function () {
+      contactItems.on('hover', function () {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });

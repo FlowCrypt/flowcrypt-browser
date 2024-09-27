@@ -70,6 +70,7 @@ View.run(
     }
 
     public render = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const isDevMode = !('update_url' in chrome.runtime.getManifest());
       $('#status-row #status_version').text(`v:${VERSION}${isDevMode ? '-dev' : ''}`);
       for (const webmailLName of await Env.webmails()) {
@@ -222,7 +223,8 @@ View.run(
           }, 500);
         })
       );
-      this.altAccounts.keydown(
+      this.altAccounts.on(
+        'keydown',
         this.setHandler((el, ev) => {
           this.accountsMenuKeydownHandler(ev);
         })

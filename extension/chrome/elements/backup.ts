@@ -70,7 +70,7 @@ View.run(
         'click',
         this.setHandler(async () => this.testPassphraseHandler())
       );
-      $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));
+      $('#pass_phrase').on('keydown', this.setEnterHandlerThatClicks('.action_test_pass'));
     };
 
     private sendResizeMsg = () => {
