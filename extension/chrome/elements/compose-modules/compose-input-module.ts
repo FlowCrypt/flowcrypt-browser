@@ -54,7 +54,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   public removeRichTextFormatting = () => {
-    if (this.view.inputModule.isRichText()) {
+    if (this.isRichText()) {
       this.initSquire(false, true);
     }
   };
