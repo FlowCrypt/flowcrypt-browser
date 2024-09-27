@@ -36,13 +36,11 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = () => {
+    this.toggleRichTextFormatting();
     this.view.S.cached('add_intro').on(
       'click',
       this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`))
     );
-    if (this.isRichText()) {
-      this.initSquire(true);
-    }
     // Set lastDraftBody to current empty squire content ex: <div><br></div>)
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5184
     this.view.draftModule.setLastDraftBody(this.squire.getHTML());
@@ -105,6 +103,14 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const currentLength = targetInputField.innerText.trim().length;
     const isInputLimitExceeded = currentLength - toBeRemoved + textToPaste.length > limit;
     return isInputLimitExceeded;
+  };
+
+  private toggleRichTextFormatting = () => {
+    if (this.isRichText()) {
+      this.addRichTextFormatting();
+    } else {
+      this.removeRichTextFormatting();
+    }
   };
 
   private initSquire = (addLinks: boolean, removeExistingLinks = false) => {
