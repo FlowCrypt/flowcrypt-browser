@@ -36,7 +36,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   }
 
   public setHandlers = () => {
-    this.toggleRichTextFormatting();
+    this.configureRichTextFormatting();
     this.view.S.cached('add_intro').on(
       'click',
       this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`))
@@ -105,7 +105,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return isInputLimitExceeded;
   };
 
-  private toggleRichTextFormatting = () => {
+  private configureRichTextFormatting = () => {
     if (this.isRichText()) {
       this.addRichTextFormatting();
     } else {
