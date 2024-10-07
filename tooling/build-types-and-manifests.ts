@@ -50,7 +50,7 @@ addManifest(
     (manifest.action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';
-    manifest.permissions = [...(manifest.permissions ?? []), 'compose', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
+    manifest.permissions = [...(manifest.permissions ?? []), 'compose', 'downloads', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
     manifest.compose_action = {
       default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention

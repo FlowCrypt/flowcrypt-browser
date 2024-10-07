@@ -27,14 +27,14 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
-      const fullMsg = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
-      if (!fullMsg) {
+      const { messagePart, attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
+      if (!messagePart) {
         return;
       } else {
         const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
         const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
         const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-        if (this.isPublicKeyEncryptedMsg(fullMsg)) {
+        if (this.isPublicKeyEncryptedMsg(messagePart)) {
           const result = await MsgUtil.decryptMessage({
             kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
             encryptedData: this.emailBodyFromThunderbirdMail,
@@ -69,7 +69,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
             $('body').html(pgpBlock); // xss-sanitized
           }
-        } else if (this.isCleartextMsg(fullMsg)) {
+        } else if (this.isCleartextMsg(messagePart)) {
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
           let verificationStatus = '';
@@ -83,7 +83,17 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
           $('body').html(pgpBlock); // xss-sanitized
         }
-        // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
+      }
+      if (!attachments.length) {
+        return;
+      } else {
+        for (const attachment of attachments) {
+          const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment.name);
+          const pgpAttachmentHtml = $('<div>');
+          pgpAttachmentHtml.html(generatedPgpTemplate); // xss-sanitized
+          $('.pgp_attachments_block').append(pgpAttachmentHtml); // xss-sanitized
+          // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
+        }
       }
     }
   };
@@ -98,17 +108,26 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         <div class="pgp_block">
         <pre>${Xss.escape(messageToRender)}</pre>
         </div>
+        <div class="pgp_attachments_block">
+        </div>
       </div>`;
   };
 
-  private isCleartextMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
+  private generatePgpAttachmentTemplate = (attachmentName: string): string => {
+    return `<div>
+    <div class="attachment_name">${Xss.escape(attachmentName)}</div>
+    </div>
+    `;
+  };
+
+  private isCleartextMsg = (messagePart: messenger.messages.MessagePart): boolean => {
     return (
-      (fullMsg.headers &&
-        'openpgp' in fullMsg.headers &&
-        fullMsg.parts &&
-        fullMsg.parts[0]?.parts?.length === 1 &&
-        fullMsg.parts[0].parts[0].contentType === 'text/plain' &&
-        this.resemblesCleartextMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
+      (messagePart.headers &&
+        'openpgp' in messagePart.headers &&
+        messagePart.parts &&
+        messagePart.parts[0]?.parts?.length === 1 &&
+        messagePart.parts[0].parts[0].contentType === 'text/plain' &&
+        this.resemblesCleartextMsg(messagePart.parts[0].parts[0].body?.trim() || '')) ||
       false
     );
   };
@@ -122,16 +141,18 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     );
   };
 
-  private isPublicKeyEncryptedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
-    if (fullMsg.headers && 'openpgp' in fullMsg.headers && fullMsg.parts) {
+  private isPublicKeyEncryptedMsg = (messagePart: messenger.messages.MessagePart): boolean => {
+    if (messagePart.headers && 'openpgp' in messagePart.headers && messagePart.parts) {
       return (
-        (fullMsg.parts[0]?.parts?.length === 2 &&
-          fullMsg.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
-          this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
-        (fullMsg.parts[0]?.parts?.length === 1 &&
-          fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
-          this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
-        (fullMsg.parts.length === 1 && fullMsg.parts[0]?.contentType === 'text/plain' && this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.body?.trim() || '')) ||
+        (messagePart.parts[0]?.parts?.length === 2 &&
+          messagePart.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
+          this.resemblesAsciiArmoredMsg(messagePart.parts[0]?.parts[0].body?.trim() || '')) ||
+        (messagePart.parts[0]?.parts?.length === 1 &&
+          messagePart.parts[0]?.contentType === 'multipart/mixed' &&
+          this.resemblesAsciiArmoredMsg(messagePart.parts[0]?.parts[0].body?.trim() || '')) ||
+        (messagePart.parts.length === 1 &&
+          messagePart.parts[0]?.contentType === 'text/plain' &&
+          this.resemblesAsciiArmoredMsg(messagePart.parts[0]?.body?.trim() || '')) ||
         false
       );
     }
