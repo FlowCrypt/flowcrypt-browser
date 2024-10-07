@@ -152,7 +152,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
     this.renderLocalDrafts().catch(Catch.reportErr);
-    this.messageRenderer.deleteExpired();
   };
 
   private replaceArmoredBlocks = async () => {
@@ -325,7 +324,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
           'click',
           Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
         );
-        secureReplyBtn.keydown(event => {
+        secureReplyBtn.on('keydown', event => {
           if (event.key === 'Enter') {
             event.stopImmediatePropagation();
             $(secureReplyBtn).trigger('click');
@@ -386,8 +385,10 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       if (draftId) {
         // close original draft window
         const closeGmailComposeWindow = (target: JQuery) => {
-          const mouseUpEvent = document.createEvent('Event');
-          mouseUpEvent.initEvent('mouseup', true, true); // Gmail listens for the mouseup event, not click
+          const mouseUpEvent = new MouseEvent('mouseup', {
+            bubbles: true,
+            cancelable: true,
+          });
           target.closest('.nH.Hd').find('.Ha')[0].dispatchEvent(mouseUpEvent); // jquery's trigger('mouseup') doesn't work for some reason
         };
         if (this.injector.openComposeWin(draftId)) {

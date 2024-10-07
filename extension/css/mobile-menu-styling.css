@@ -1,5 +1,5 @@
-@media (max-width: 992px) {
-  .show_settings_page {
+@media (width <= 992px) {
+  .show_settings_page:not(.my_key_link) {
     display: block;
     margin-bottom: 20px;
     text-align: center;
@@ -12,7 +12,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (width <= 767px) {
   body {
     overflow-x: hidden;
   }
@@ -76,7 +76,7 @@
   }
 }
 
-@media (max-width: 450px) {
+@media (width <= 450px) {
   .logo-row {
     margin-top: 0;
   }

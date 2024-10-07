@@ -96,8 +96,8 @@ export class AjaxErr extends ApiCallErr {
     const status = resCode || (typeof xhr.status === 'number' ? xhr.status : -1);
     if (status === 400 || status === 403 || (status === 200 && responseText && !responseText.startsWith('{'))) {
       // RawAjaxErr with status 200 can happen when it fails to parse response - eg non-json result
-      const redactedRes = AjaxErr.redactSensitiveData(responseText.substr(0, 1000));
-      const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substr(0, 1000));
+      const redactedRes = AjaxErr.redactSensitiveData(responseText.substring(0, 1000));
+      const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substring(0, 1000));
       stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
     }
     const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${

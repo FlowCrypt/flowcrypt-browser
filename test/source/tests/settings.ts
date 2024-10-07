@@ -530,10 +530,38 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAll('@action-open-add-key-page');
         await settingsPage.waitAndClick('@action-remove-key-0');
+        await settingsPage.waitAndRespondToModal(
+          'confirm',
+          'confirm',
+          'Are you sure you want to remove encryption key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207?'
+        );
         await settingsPage.page.waitForNavigation({ waitUntil: 'networkidle0' });
         await Util.sleep(1);
         await settingsPage.waitAll('@action-open-add-key-page');
         await settingsPage.notPresent('@action-remove-key-0');
+      })
+    );
+    test(
+      'settings - my key page - generate key',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.ready(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPopup.waitAndClick('@source-generate');
+        const passphrase = 'long enough to suit requirements';
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
+        // Uncheck backup_inbox to check if backup view correctly displayed
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
+        await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
+        await SettingsPageRecipe.ready(settingsPage);
+        await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
+        await SettingsPageRecipe.ready(settingsPage);
       })
     );
     test(
@@ -1238,7 +1266,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
         // backing up to file when two keys are checked
         const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
-        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
+        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toUtfStr()));
         expect(keys2.length).to.equal(2);
         await backupPage.close();
       })
@@ -1429,7 +1457,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await ppFrame.waitAndType('@input-pass-phrase', key.passphrase);
         await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry');
         await Util.sleep(2);
-        expect(ppFrame.frame.isDetached()).to.equal(true);
+        expect(ppFrame.frame.detached).to.equal(true);
         // todo: #4059 we would expect further iteraction with backupFrame here but it is actually wiped out
         await settingsPage.close();
       })

@@ -268,6 +268,7 @@ export class Xss {
   private static sanitizeHrefRegexp = () => {
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
       Xss.HREF_REGEX_CACHE = new RegExp(
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         `^(?:(http|https|cid):|data:image/|${Str.regexEscape(chrome.runtime.getURL('/'))}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
         'i'
       );

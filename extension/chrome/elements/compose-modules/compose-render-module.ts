@@ -371,12 +371,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private addComposeTableHandlers = async () => {
-    this.view.S.cached('body').keydown(
+    this.view.S.cached('body').on(
+      'keydown',
       this.view.setHandler((el, ev) => {
         this.onBodyKeydownHandler(el, ev);
       })
     );
-    this.view.S.cached('input_to').bind(
+    this.view.S.cached('input_to').on(
       'paste',
       this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev))
     );
@@ -391,7 +392,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       .children()
       .on('click', () => false);
     this.view.S.cached('input_subject')
-      .bind(
+      .on(
         'input',
         this.view.setHandler((el: HTMLInputElement) => {
           this.subjectRTLHandler(el);

@@ -20,7 +20,7 @@ export class TestUrls {
     return `chrome-extension://${this.extensionId}/${path}`;
   };
 
-  public extensionSettings = (acctEmail?: string | undefined) => {
+  public extensionSettings = (acctEmail?: string) => {
     return this.extension(`chrome/settings/index.htm?account_email=${acctEmail || ''}`);
   };
 

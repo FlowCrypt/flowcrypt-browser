@@ -70,6 +70,7 @@ View.run(
     }
 
     public render = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const isDevMode = !('update_url' in chrome.runtime.getManifest());
       $('#status-row #status_version').text(`v:${VERSION}${isDevMode ? '-dev' : ''}`);
       for (const webmailLName of await Env.webmails()) {
@@ -222,7 +223,8 @@ View.run(
           }, 500);
         })
       );
-      this.altAccounts.keydown(
+      this.altAccounts.on(
+        'keydown',
         this.setHandler((el, ev) => {
           this.accountsMenuKeydownHandler(ev);
         })
@@ -502,7 +504,7 @@ View.run(
         const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
         let removeKeyBtn = '';
         if (canRemoveKey && privateKeys.length > 1) {
-          removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+          removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-fingerprint=${ki.fingerprints[0]} data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
         }
         const escapedEmail = Xss.escape(prv.emails[0] || '');
         const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
@@ -526,19 +528,22 @@ View.run(
         $('.action_remove_key').on(
           'click',
           this.setHandler(async target => {
-            // the UI below only gets rendered when account_email is available
-            const family = $(target).data('type') as string;
-            const id = $(target).data('id') as string;
-            const longid = $(target).data('longid') as string;
-            if (family === 'openpgp' || family === 'x509') {
-              /* eslint-disable @typescript-eslint/no-non-null-assertion */
-              await KeyStore.remove(this.acctEmail!, { family, id });
-              await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
-              await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
-              /* eslint-enable @typescript-eslint/no-non-null-assertion */
-              this.reload(true);
-            } else {
-              Catch.report(`unexpected key family: ${family}`);
+            const fingerprint = $(target).data('fingerprint') as string;
+            if (await Ui.modal.confirm(Lang.settings.deleteKeyConfirm(Str.spaced(Xss.escape(fingerprint))))) {
+              // the UI below only gets rendered when account_email is available
+              const family = $(target).data('type') as string;
+              const id = $(target).data('id') as string;
+              const longid = $(target).data('longid') as string;
+              if (family === 'openpgp' || family === 'x509') {
+                /* eslint-disable @typescript-eslint/no-non-null-assertion */
+                await KeyStore.remove(this.acctEmail!, { family, id });
+                await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
+                await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
+                /* eslint-enable @typescript-eslint/no-non-null-assertion */
+                this.reload(true);
+              } else {
+                Catch.report(`unexpected key family: ${family}`);
+              }
             }
           })
         );

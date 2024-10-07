@@ -17,6 +17,8 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
+import { Xss } from '../platform/xss.js';
+import { ClientConfiguration } from '../client-configuration.js';
 
 type KeyImportUiCheckResult = {
   normalized: string;
@@ -83,25 +85,51 @@ export class KeyImportUi {
 
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
+  public shouldSubmitPubkey = (clientConfiguration: ClientConfiguration, checkboxSelector: string) => {
+    if (clientConfiguration.mustSubmitToAttester() && !clientConfiguration.canSubmitPubToAttester()) {
+      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
+    }
+    if (!clientConfiguration.canSubmitPubToAttester()) {
+      return false;
+    }
+    if (clientConfiguration.mustSubmitToAttester()) {
+      return true;
+    }
+    return Boolean($(checkboxSelector).prop('checked'));
+  };
+
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
     $('input[type=radio][name=source]')
       .off()
-      .change(function () {
-        if ((this as HTMLInputElement).value === 'file') {
-          $('.input_private_key').val('').change().prop('disabled', true);
-          $('.source_paste_container').css('display', 'none');
-          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-          $('#fineuploader_button > input').trigger('click');
-        } else if ((this as HTMLInputElement).value === 'paste') {
-          $('.input_private_key').val('').change().prop('disabled', false);
-          $('.source_paste_container').css('display', 'block');
-          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-        } else if ((this as HTMLInputElement).value === 'backup') {
-          window.location.href = Url.create('/chrome/settings/setup.htm', {
-            acctEmail,
-            parentTabId,
-            action: 'add_key',
-          });
+      .on('change', function () {
+        const selectedValue = (this as HTMLInputElement).value;
+        switch (selectedValue) {
+          case 'file':
+            $('.input_private_key').val('').trigger('change').prop('disabled', true);
+            $('.source_paste_container').css('display', 'none');
+            $('.source_generate_container').hide();
+            $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+            $('#fineuploader_button > input').trigger('click');
+            break;
+          case 'paste':
+            $('.input_private_key').val('').trigger('change').prop('disabled', false);
+            $('.source_generate_container').hide();
+            $('.source_paste_container').css('display', 'block');
+            $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+            break;
+          case 'backup':
+            window.location.href = Url.create('/chrome/settings/setup.htm', {
+              acctEmail,
+              parentTabId,
+              action: 'add_key',
+            });
+            break;
+          case 'generate':
+            $('.source_paste_container').hide();
+            $('.source_generate_container').show();
+            break;
+          default:
+            break;
         }
       });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on(
@@ -133,7 +161,8 @@ export class KeyImportUi {
         }
       })
     );
-    $('.input_private_key').change(
+    $('.input_private_key').on(
+      'change',
       Ui.event.handle(async target => {
         const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
         if (!prv?.isPrivate()) {
@@ -151,7 +180,7 @@ export class KeyImportUi {
             removeValidationElements();
             $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
           });
-          $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
+          $('.input_private_key').on('change', removeValidationElementsWhenKeyChanged);
         } else if (OpenPGPKey.isFullyEncrypted(prv)) {
           $('.line.unprotected_key_create_pass_phrase').hide();
         } else {
@@ -181,10 +210,10 @@ export class KeyImportUi {
           }
         }
         if (typeof prv !== 'undefined') {
-          $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);
+          $('.input_private_key').val(KeyUtil.armor(prv)).trigger('change').prop('disabled', true);
           $('.source_paste_container').css('display', 'block');
         } else {
-          $('.input_private_key').val('').change().prop('disabled', false);
+          $('.input_private_key').val('').trigger('change').prop('disabled', false);
           await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.getTestCompatibilityLink(acctEmail));
           KeyImportUi.allowReselect();
         }
@@ -229,6 +258,13 @@ export class KeyImportUi {
     await this.read('publicKey', normalized); // throws on err
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
+  };
+
+  public renderKeyManualCreateView = async (selector: string) => {
+    const htmlUrl = '/chrome/elements/shared/create_key.template.htm';
+    const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
+    Xss.setElementContentDANGEROUSLY($(selector).get(0) as Element, sanitized); // xss-sanitized
+    this.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
   };
 
   public renderPassPhraseStrengthValidationInput = (input: JQuery, submitButton?: JQuery, type: 'passphrase' | 'pwd' = 'passphrase') => {

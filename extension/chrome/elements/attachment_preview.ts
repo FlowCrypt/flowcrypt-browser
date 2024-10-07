@@ -17,6 +17,8 @@ import { AttachmentWarnings } from './shared/attachment_warnings.js';
 import * as pdfjsLib from 'pdfjs';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 
+// https://github.com/FlowCrypt/flowcrypt-browser/issues/5822#issuecomment-2362529197
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(`lib/pdf.worker.min.mjs`);
 type AttachmentType = 'img' | 'txt' | 'pdf';
 

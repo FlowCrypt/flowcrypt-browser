@@ -82,7 +82,7 @@ View.run(
         'click',
         this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler())
       );
-      $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
+      $('.input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_update_private_key'));
     };
 
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {

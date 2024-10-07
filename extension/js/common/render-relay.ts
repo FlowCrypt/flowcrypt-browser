@@ -66,7 +66,7 @@ export class RenderRelay implements RenderInterface {
       .finally(() => this.relay({ done: true }));
   };
 
-  public renderErr = (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string | undefined) => {
+  public renderErr = (errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string) => {
     this.relay({ renderErr: { errBoxContent, renderRawMsg, errMsg } });
   };
 

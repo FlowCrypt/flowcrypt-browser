@@ -835,7 +835,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           });
           await composeFrame.waitAndClick('@action-send', { delay: 2 });
           const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-          expect(passphraseDialog.frame.isDetached()).to.equal(false);
+          expect(passphraseDialog.frame.detached).to.equal(false);
           await Util.sleep(0.5);
           expect(await composeFrame.read('@action-send')).to.eq('Signing...');
           await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
@@ -866,7 +866,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           );
           await composeFrame.waitAndClick('@action-send', { delay: 2 });
           const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-          expect(passphraseDialog.frame.isDetached()).to.equal(false);
+          expect(passphraseDialog.frame.detached).to.equal(false);
           await composeFrame.waitForContent('@action-send', 'Loading...');
           await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
           await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
@@ -897,7 +897,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-        expect(passphraseDialog.frame.isDetached()).to.equal(false);
+        expect(passphraseDialog.frame.detached).to.equal(false);
         await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
         await passphraseDialog.waitAndType('@input-pass-phrase', forgottenPassphrase);
@@ -1686,7 +1686,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
         const footer = await composePage.read('@input-body');
-        expect(footer).to.eq('\n\n\n\n--\n\nflowcrypt.compatibility test footer with an img\n\nand second line\n');
+        expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img\nand second line');
         await composePage.waitAndClick(`@action-send`);
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
@@ -1783,7 +1783,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           richtext: true,
         });
         await composePage.page.evaluate((src: string) => {
-          $('[data-test=action-insert-image]').val(src).click();
+          $('[data-test=action-insert-image]').val(src).trigger('click');
         }, imgBase64);
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
@@ -3354,7 +3354,7 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // the following is a temporary hack - currently not able to directly paste an image with puppeteer
   // instead we should find a way to load the image into clipboard, and paste it into textbox
   await composePage.page.evaluate((src: string) => {
-    $('[data-test=action-insert-image]').val(src).click();
+    $('[data-test=action-insert-image]').val(src).trigger('click');
   }, imgBase64);
   const acctEmail = 'flowcrypt.compatibility@gmail.com';
   const accessToken = await BrowserRecipe.getGoogleAccessToken(composePage, acctEmail);

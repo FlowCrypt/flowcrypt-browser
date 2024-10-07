@@ -9,6 +9,7 @@ import { GlobalStore } from '../common/platform/store/global-store.js';
 
 export class BgUtils {
   public static async openSettingsPage(path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
@@ -24,15 +25,19 @@ export class BgUtils {
   public static async openExtensionTab(url: string, openInNewTab = false) {
     const openedTab = await BgUtils.getFcSettingsTabIdIfOpen();
     if (!openedTab || openInNewTab) {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       await chrome.tabs.create({ url });
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       await chrome.tabs.update(openedTab, { url, active: true });
     }
   }
 
   public static async getFcSettingsTabIdIfOpen(): Promise<number | undefined> {
     return await new Promise(resolve => {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.tabs.query({ currentWindow: true }, tabs => {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         const extensionUrl = chrome.runtime.getURL('/');
         for (const tab of tabs) {
           if (tab.url?.includes(extensionUrl)) {

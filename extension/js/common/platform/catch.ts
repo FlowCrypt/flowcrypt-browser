@@ -23,6 +23,7 @@ export type ErrorReport = {
   buildType: string;
 };
 
+type BrowserType = 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
 export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = onerror;
@@ -149,25 +150,27 @@ export class Catch {
   }
 
   public static browser(): {
-    name: 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
+    name: BrowserType;
     v: number | undefined;
   } {
-    // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
-    if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'firefox', v: Number(RegExp.$1) };
-    } else if (/Thunderbird[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'thunderbird', v: Number(RegExp.$1) };
-    } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
-      return { name: 'ie', v: Number(RegExp.$1) };
-    } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'chrome', v: Number(RegExp.$1) };
-    } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'opera', v: Number(RegExp.$1) };
-    } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'safari', v: Number(RegExp.$1) };
-    } else {
-      return { name: 'unknown', v: undefined };
+    const userAgent = navigator.userAgent;
+    const browsers = [
+      { name: 'firefox', regex: /Firefox[\/\s](\d+\.\d+)/ },
+      { name: 'thunderbird', regex: /Thunderbird[\/\s](\d+\.\d+)/ },
+      { name: 'ie', regex: /MSIE (\d+\.\d+);/ },
+      { name: 'chrome', regex: /Chrome[\/\s](\d+\.\d+)/ },
+      { name: 'opera', regex: /Opera[\/\s](\d+\.\d+)/ },
+      { name: 'safari', regex: /Safari[\/\s](\d+\.\d+)/ },
+    ];
+
+    for (const browser of browsers) {
+      const match = browser.regex.exec(userAgent);
+      if (match?.[1]) {
+        return { name: browser.name as BrowserType, v: Number(match[1]) };
+      }
     }
+
+    return { name: 'unknown', v: undefined };
   }
 
   public static isFirefox(): boolean {
