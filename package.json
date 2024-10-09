@@ -78,6 +78,7 @@
     "test_eslint": "export NODE_OPTIONS=\"--max-old-space-size=4096\"; eslint .",
     "test_eslint_ci": "npm run test_eslint -- --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif",
     "test_patterns": "node build/test/test/source/patterns.js",
+    "test_thunderbird": "npm run pretest && node build/test/test/source/thunderbird-manifest-v2-test.js",
     "test_async_stack": "node build/test/test/source/async-stack.js",
     "test_buf": "npx ava --timeout=3m --verbose --concurrency=10 build/test/test/source/buf.js",
     "test_ci_chrome_consumer_live_gmail": "npx ava --timeout=45m --verbose --tap --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL STANDARD-GROUP | npx tap-xunit > report.xml",

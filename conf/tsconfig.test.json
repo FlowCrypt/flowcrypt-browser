@@ -19,6 +19,7 @@
     "../extension/types/node-forge.d.ts",
     "../test/source/test.ts",
     "../test/source/patterns.ts",
+    "../test/source/thunderbird-manifest-v2-test.ts",
     "../test/source/async-stack.ts",
     "../test/source/buf.ts"
   ]

@@ -43,6 +43,9 @@ blocks:
         - name: enterprise mock - standard test group
           commands:
             - npm run-script test_ci_chrome_enterprise
+        - name: thunderbird test
+          commands:
+            - npm run-script test_thunderbird
       epilogue:
         always:
           commands:
