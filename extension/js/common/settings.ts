@@ -88,7 +88,7 @@ export class Settings {
     if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     } else {
-      await GlobalStore.acctEmailsRemove(acctEmail, true);
+      await GlobalStore.acctEmailsRemove(acctEmail, false);
     }
     const storageIndexesToRemove: AccountIndex[] = [];
     const filter = AbstractStore.singleScopeRawIndex(acctEmail, '');
