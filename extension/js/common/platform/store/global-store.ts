@@ -94,12 +94,10 @@ export class GlobalStore extends AbstractStore {
     }
   }
 
-  public static async acctEmailsRemove(acctEmail: string, openUninstallUrl = true): Promise<void> {
+  public static async acctEmailsRemove(acctEmail: string): Promise<void> {
     // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await GlobalStore.acctEmailsGet();
     await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) }); // eslint-disable-line @typescript-eslint/naming-convention
-    if (openUninstallUrl) {
-      BrowserMsg.send.bg.updateUninstallUrl();
-    }
+    BrowserMsg.send.bg.updateUninstallUrl();
   }
 }
