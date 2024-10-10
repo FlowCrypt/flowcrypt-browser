@@ -88,6 +88,7 @@ export class Settings {
     if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
+    await GlobalStore.acctEmailsRemove(acctEmail);
     const storageIndexesToRemove: AccountIndex[] = [];
     const filter = AbstractStore.singleScopeRawIndex(acctEmail, '');
     if (!filter) {
@@ -190,7 +191,6 @@ export class Settings {
       }
     }
     await Settings.acctStorageReset(oldAcctEmail);
-    await GlobalStore.acctEmailsRemove(oldAcctEmail);
   }
 
   public static async renderPrvCompatFixUiAndWaitTilSubmittedByUser(
