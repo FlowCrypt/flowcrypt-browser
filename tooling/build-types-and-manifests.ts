@@ -74,6 +74,7 @@ addManifest(
       type: 'module',
       scripts: ['/js/service_worker/background.js'],
     };
+    manifest.content_scripts?.splice(0, 1);
   },
   'firefox-consumer'
 );
