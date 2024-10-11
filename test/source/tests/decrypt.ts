@@ -2044,7 +2044,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await inboxPage2.close();
         const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
         await inboxPage3.notPresent('iframe.pgp_block');
-        expect(await inboxPage3.isElementPresent('@container-attachments')).to.be.true;
+        const attachmentsContainer = await inboxPage3.waitAny('@container-attachments');
+        const attachments = await attachmentsContainer.$$('.pgp_attachment');
+        expect(attachments.length).to.equal(1);
         await inboxPage3.close();
         const inboxPage4 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
         const pgpBlock = await inboxPage4.getFrame(['pgp_block.htm']);
