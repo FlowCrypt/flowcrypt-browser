@@ -83,10 +83,10 @@ const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.
 const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-consumer', 'firefox-consumer']) {
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString()) as chrome.runtime.Manifest;
-  const webBrowserBuilds = buildType.includes('chrome') || buildType.includes('firefox');
+  const isManifestV3Build = buildType.includes('chrome') || buildType.includes('firefox');
   const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
   for (const expectedHostPermission of expectedHostPermissions) {
-    if (webBrowserBuilds && !manifest.host_permissions.includes(expectedHostPermission)) {
+    if (isManifestV3Build && !manifest.host_permissions.includes(expectedHostPermission)) {
       console.error(`Missing host permission '${expectedHostPermission}' in ${buildType}/manifest.json`);
       errsFound++;
     }
@@ -101,24 +101,50 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-co
   }
   if (buildType === 'thunderbird-consumer') {
     if (manifest.manifest_version !== 2) {
-      console.error(`${buildType} - Manifest version is not 2`);
+      console.error(`${buildType} - The manifest version is not 2`);
       errsFound++;
     }
     if (!Array.isArray(manifest.web_accessible_resources)) {
-      console.error(`${buildType} - web_accessible_resources should be an array`);
+      console.error(`${buildType} - The web_accessible_resources should be an array`);
       errsFound++;
     }
     if (typeof manifest.content_security_policy !== 'string') {
-      console.error(`${buildType} - content_security_policy should be a string`);
+      console.error(`${buildType} - The content_security_policy should be a string`);
       errsFound++;
+    }
+    const expectedHostPermissions = [
+      'alarms',
+      'storage',
+      'tabs',
+      'scripting',
+      'unlimitedStorage',
+      'identity',
+      'compose',
+      'messagesRead',
+      'messagesUpdate',
+      'messagesModify',
+      'accountsRead',
+      'https://flowcrypt.com/*',
+      'https://*.google.com/*',
+      'https://outlook.live.com/*',
+      'https://outlook.office365.com/*',
+      'https://outlook.office.com/*',
+      'https://graph.microsoft.com/*',
+      'https://login.microsoftonline.com/*',
+      'https://www.googleapis.com/*',
+    ];
+    const buildHostPermissions = isManifestV3Build ? manifest.host_permissions : manifest.permissions;
+    for (const expectedHostPermission of expectedHostPermissions) {
+      if (!buildHostPermissions?.includes(expectedHostPermission)) {
+        console.error(`${buildType} - Missing permission ${expectedHostPermission} in ${buildType}/manifest.json`);
+        errsFound++;
+      }
     }
   }
-  if (webBrowserBuilds) {
-    const gmailCs = manifest.content_scripts?.find(cs => cs.matches?.includes('https://mail.google.com/*'));
-    if (!gmailCs?.css?.length || !gmailCs.js?.length) {
-      console.error(`Missing content_scripts declaration for Gmail in ${buildType}/manifest.json`);
-      errsFound++;
-    }
+  const extensionContentScript = manifest.content_scripts?.find(cs => cs.matches?.includes('https://mail.google.com/*'));
+  if (!extensionContentScript?.css?.length || !extensionContentScript.js?.length) {
+    console.error(`Missing content_scripts declaration for the extension in ${buildType}/manifest.json`);
+    errsFound++;
   }
 }
 
