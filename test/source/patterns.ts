@@ -112,29 +112,9 @@ for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-co
       console.error(`${buildType} - The content_security_policy should be a string`);
       errsFound++;
     }
-    const expectedHostPermissions = [
-      'alarms',
-      'storage',
-      'tabs',
-      'scripting',
-      'unlimitedStorage',
-      'identity',
-      'compose',
-      'messagesRead',
-      'messagesUpdate',
-      'messagesModify',
-      'accountsRead',
-      'https://flowcrypt.com/*',
-      'https://*.google.com/*',
-      'https://outlook.live.com/*',
-      'https://outlook.office365.com/*',
-      'https://outlook.office.com/*',
-      'https://graph.microsoft.com/*',
-      'https://login.microsoftonline.com/*',
-      'https://www.googleapis.com/*',
-    ];
+    const thunderbirdExpectedPermissions = ['compose', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
     const buildHostPermissions = isManifestV3Build ? manifest.host_permissions : manifest.permissions;
-    for (const expectedHostPermission of expectedHostPermissions) {
+    for (const expectedHostPermission of thunderbirdExpectedPermissions) {
       if (!buildHostPermissions?.includes(expectedHostPermission)) {
         console.error(`${buildType} - Missing permission ${expectedHostPermission} in ${buildType}/manifest.json`);
         errsFound++;
