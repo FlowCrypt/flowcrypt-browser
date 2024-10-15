@@ -159,16 +159,17 @@ export class GmailParser {
       GmailParser.findAttachments(msgOrPayloadOrPart.payload, internalMsgId, internalResults);
     }
     if ('parts' in msgOrPayloadOrPart) {
-      const contentType = msgOrPayloadOrPart.headers?.find(x => x.name.toLowerCase() === 'content-type');
+      const contentType = msgOrPayloadOrPart.headers?.find(header => header.name.toLowerCase() === 'content-type');
       const parts = msgOrPayloadOrPart.parts ?? [];
-      // are we dealing with a PGP/MIME encrypted message?
-      const pgpEncrypted = Boolean(
-        parts.length === 2 &&
-          contentType?.value.startsWith('multipart/encrypted') &&
-          (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
-      );
+      const containsMultipartAlternative = parts.find(part => part.mimeType === 'multipart/alternative');
       // ignore plain inline attachments
-      if (msgOrPayloadOrPart.mimeType !== 'multipart/related' || parts.length !== 2) {
+      if (!contentType?.value.startsWith('multipart/related') || !containsMultipartAlternative) {
+        // are we dealing with a PGP/MIME encrypted message?
+        const pgpEncrypted = Boolean(
+          parts.length === 2 &&
+            contentType?.value.startsWith('multipart/encrypted') &&
+            (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
+        );
         for (const [i, part] of parts.entries()) {
           GmailParser.findAttachments(part, internalMsgId, internalResults, {
             pgpEncryptedIndex: pgpEncrypted ? i : undefined,
