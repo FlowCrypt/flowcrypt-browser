@@ -167,10 +167,13 @@ export class GmailParser {
           contentType?.value.startsWith('multipart/encrypted') &&
           (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
       );
-      for (const [i, part] of parts.entries()) {
-        GmailParser.findAttachments(part, internalMsgId, internalResults, {
-          pgpEncryptedIndex: pgpEncrypted ? i : undefined,
-        });
+      // ignore plain inline attachments
+      if (msgOrPayloadOrPart.mimeType !== 'multipart/related' || parts.length !== 2) {
+        for (const [i, part] of parts.entries()) {
+          GmailParser.findAttachments(part, internalMsgId, internalResults, {
+            pgpEncryptedIndex: pgpEncrypted ? i : undefined,
+          });
+        }
       }
     }
     if ('body' in msgOrPayloadOrPart && msgOrPayloadOrPart.body?.hasOwnProperty('attachmentId')) {
