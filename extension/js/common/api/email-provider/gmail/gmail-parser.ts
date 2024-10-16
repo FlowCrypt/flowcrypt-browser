@@ -161,9 +161,9 @@ export class GmailParser {
     if ('parts' in msgOrPayloadOrPart) {
       const contentType = msgOrPayloadOrPart.headers?.find(header => header.name.toLowerCase() === 'content-type');
       const parts = msgOrPayloadOrPart.parts ?? [];
-      const containsMultipartAlternative = parts.find(part => part.mimeType === 'multipart/alternative');
+      const hasMultipartAlternativePart = parts.find(part => part.mimeType === 'multipart/alternative');
       // ignore plain inline attachments
-      if (!contentType?.value.startsWith('multipart/related') || !containsMultipartAlternative) {
+      if (!contentType?.value.startsWith('multipart/related') || !hasMultipartAlternativePart) {
         // are we dealing with a PGP/MIME encrypted message?
         const pgpEncrypted = Boolean(
           parts.length === 2 &&
