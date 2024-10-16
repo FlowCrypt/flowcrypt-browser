@@ -20,6 +20,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public scrollToReplyBox: (replyMsgId: string) => void;
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
   private emailBodyFromThunderbirdMail: string;
+  private thunderbirdEmailSelector = $('div.moz-text-plain');
 
   public getIntervalFunctions = (): IntervalFunction[] => {
     return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
@@ -34,7 +35,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
         const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
         const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-        if (this.isPublicKeyEncryptedMsg(messagePart)) {
+        if (this.isPublicKeyEncryptedMsg()) {
           const result = await MsgUtil.decryptMessage({
             kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
             encryptedData: this.emailBodyFromThunderbirdMail,
@@ -69,7 +70,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
             $('body').html(pgpBlock); // xss-sanitized
           }
-        } else if (this.isCleartextMsg(messagePart)) {
+        } else if (this.isCleartextMsg()) {
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
           let verificationStatus = '';
@@ -120,16 +121,9 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     `;
   };
 
-  private isCleartextMsg = (messagePart: messenger.messages.MessagePart): boolean => {
-    return (
-      (messagePart.headers &&
-        'openpgp' in messagePart.headers &&
-        messagePart.parts &&
-        messagePart.parts[0]?.parts?.length === 1 &&
-        messagePart.parts[0].parts[0].contentType === 'text/plain' &&
-        this.resemblesCleartextMsg(messagePart.parts[0].parts[0].body?.trim() || '')) ||
-      false
-    );
+  private isCleartextMsg = (): boolean => {
+    const emailBody = this.thunderbirdEmailSelector.text().trim();
+    return this.resemblesCleartextMsg(emailBody);
   };
 
   private resemblesCleartextMsg = (body: string) => {
@@ -141,22 +135,9 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     );
   };
 
-  private isPublicKeyEncryptedMsg = (messagePart: messenger.messages.MessagePart): boolean => {
-    if (messagePart.headers && 'openpgp' in messagePart.headers && messagePart.parts) {
-      return (
-        (messagePart.parts[0]?.parts?.length === 2 &&
-          messagePart.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
-          this.resemblesAsciiArmoredMsg(messagePart.parts[0]?.parts[0].body?.trim() || '')) ||
-        (messagePart.parts[0]?.parts?.length === 1 &&
-          messagePart.parts[0]?.contentType === 'multipart/mixed' &&
-          this.resemblesAsciiArmoredMsg(messagePart.parts[0]?.parts[0].body?.trim() || '')) ||
-        (messagePart.parts.length === 1 &&
-          messagePart.parts[0]?.contentType === 'text/plain' &&
-          this.resemblesAsciiArmoredMsg(messagePart.parts[0]?.body?.trim() || '')) ||
-        false
-      );
-    }
-    return false;
+  private isPublicKeyEncryptedMsg = (): boolean => {
+    const emailBody = this.thunderbirdEmailSelector.text().trim();
+    return this.resemblesAsciiArmoredMsg(emailBody);
   };
 
   private resemblesAsciiArmoredMsg = (body: string): boolean => {

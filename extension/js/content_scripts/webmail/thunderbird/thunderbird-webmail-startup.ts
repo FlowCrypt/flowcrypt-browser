@@ -19,7 +19,7 @@ export class ThunderbirdWebmailStartup {
 
   private start = async () => {
     this.replacer = new ThunderbirdElementReplacer();
-    this.replacer.runIntervalFunctionsPeriodically();
+    await this.replacer.replaceThunderbirdMsgPane();
     // todo: show notification using Thunderbird Notification as contentscript notification or such does not work.
     // await notifications.showInitial(acctEmail);
     // notifications.show(
