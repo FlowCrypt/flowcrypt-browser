@@ -120,16 +120,18 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     attachmentDownloadBtn
       .addClass('attachment_download')
       .text('download')
-      .on('click', () => {
-        this.downloadThunderbirdAttachmentHandler(attachment);
+      .on('click', async () => {
+        await this.downloadThunderbirdAttachmentHandler(attachment);
       });
     attachmentHtmlRoot.append(attachmentFilename); // xss-escaped
     attachmentHtmlRoot.append(attachmentDownloadBtn); // xss-escaped
     return attachmentHtmlRoot;
   };
 
-  private downloadThunderbirdAttachmentHandler = (attachment: messenger.messages.MessageAttachment) => {
+  private downloadThunderbirdAttachmentHandler = async (attachment: messenger.messages.MessageAttachment) => {
     console.log('debug:', attachment);
+    const messageId = await BrowserMsg.send.bg.await.thunderbirdGetActiveTabInfo();
+    console.log(messageId);
   };
 
   private isCleartextMsg = (): boolean => {

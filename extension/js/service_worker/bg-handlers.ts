@@ -162,6 +162,11 @@ export class BgHandlers {
     });
   };
 
+  public static thunderbirdGetActiveTabInfo = async (): Promise<Bm.Res.ThunderbirdGetActiveTabInfo> => {
+    const tabs = await messenger.tabs.query({ active: true, currentWindow: true });
+    return tabs[0].id;
+  };
+
   public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {
     const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
     if (tab.id) {
