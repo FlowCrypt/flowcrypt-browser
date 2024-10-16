@@ -98,10 +98,8 @@ View.run(
       const extension = nameSplit[nameSplit.length - 1].toLowerCase();
       if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
         return 'img';
-      } else if (extension === 'txt') {
-        return 'txt';
-      } else if (extension === 'pdf') {
-        return 'pdf';
+      } else if (['txt', 'pdf'].includes(extension)) {
+        return extension as AttachmentType;
       }
       return undefined;
     };
