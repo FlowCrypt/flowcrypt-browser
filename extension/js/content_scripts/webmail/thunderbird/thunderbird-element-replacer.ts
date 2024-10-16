@@ -89,10 +89,8 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         return;
       } else {
         for (const attachment of attachments) {
-          const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment.name);
-          const pgpAttachmentHtml = $('<div>');
-          pgpAttachmentHtml.html(generatedPgpTemplate); // xss-sanitized
-          $('.pgp_attachments_block').append(pgpAttachmentHtml); // xss-sanitized
+          const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
+          $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
           // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         }
       }
@@ -114,11 +112,24 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       </div>`;
   };
 
-  private generatePgpAttachmentTemplate = (attachmentName: string): string => {
-    return `<div>
-    <div class="attachment_name">${Xss.escape(attachmentName)}</div>
-    </div>
-    `;
+  private generatePgpAttachmentTemplate = (attachment: messenger.messages.MessageAttachment) => {
+    const attachmentHtmlRoot = $('<div>');
+    const attachmentFilename = $('<div>');
+    attachmentFilename.addClass('attachment_name').text(Xss.escape(attachment.name));
+    const attachmentDownloadBtn = $('<div>');
+    attachmentDownloadBtn
+      .addClass('attachment_download')
+      .text('download')
+      .on('click', () => {
+        this.downloadThunderbirdAttachmentHandler(attachment);
+      });
+    attachmentHtmlRoot.append(attachmentFilename); // xss-escaped
+    attachmentHtmlRoot.append(attachmentDownloadBtn); // xss-escaped
+    return attachmentHtmlRoot;
+  };
+
+  private downloadThunderbirdAttachmentHandler = (attachment: messenger.messages.MessageAttachment) => {
+    console.log('debug:', attachment);
   };
 
   private isCleartextMsg = (): boolean => {
