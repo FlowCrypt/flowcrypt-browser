@@ -162,9 +162,18 @@ export class BgHandlers {
     });
   };
 
-  public static thunderbirdGetActiveTabInfo = async (): Promise<Bm.Res.ThunderbirdGetActiveTabInfo> => {
-    const tabs = await messenger.tabs.query({ active: true, currentWindow: true });
-    return tabs[0].id;
+  public static thunderbirdAttachmentDownload = async (r: Bm.ThunderbirdAttachmentDownload): Promise<Bm.Res.ThunderbirdAttachmentDownload> => {
+    const [tab] = await messenger.mailTabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      const downloadableAttachment = await messenger.messages.getAttachmentFile(tab.id, r.attachment.partName);
+      const fileUrl = URL.createObjectURL(downloadableAttachment);
+      await browser.downloads.download({
+        url: fileUrl,
+        filename: r.attachment.name,
+        saveAs: true,
+      });
+      URL.revokeObjectURL(fileUrl);
+    }
   };
 
   public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {

@@ -98,6 +98,7 @@ export namespace Bm {
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
   export type ThunderbirdOpenPassphraseDialog = { acctEmail: string; longids: string };
+  export type ThunderbirdAttachmentDownload = { attachment: messenger.messages.MessageAttachment };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -114,7 +115,7 @@ export namespace Bm {
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
-    export type ThunderbirdGetActiveTabInfo = number | undefined;
+    export type ThunderbirdAttachmentDownload = Promise<void>;
     export type ThunderbirdGetCurrentUser = string | undefined;
     export type ThunderbirdMsgGet = { attachments: messenger.messages.MessageAttachment[]; messagePart: messenger.messages.MessagePart };
     export type ThunderbirdOpenPassphraseDialog = Promise<void>;
@@ -135,7 +136,7 @@ export namespace Bm {
       | ExpirationCacheDeleteExpired
       | AjaxGmailAttachmentGetChunk
       | ConfirmationResult
-      | ThunderbirdGetActiveTabInfo
+      | ThunderbirdAttachmentDownload
       | ThunderbirdMsgGet;
   }
 
@@ -177,6 +178,7 @@ export namespace Bm {
     | PgpBlockReady
     | PgpBlockRetry
     | ConfirmationResult
+    | ThunderbirdAttachmentDownload
     | ThunderbirdOpenPassphraseDialog
     | Ajax;
 
@@ -241,8 +243,8 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'expirationCacheSet', bm, true) as Promise<Bm.Res.ExpirationCacheSet>,
         expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
-        thunderbirdGetActiveTabInfo: () =>
-          BrowserMsg.sendAwait(undefined, 'thunderbirdGetActiveTabInfo', undefined, true) as Promise<Bm.Res.ThunderbirdGetActiveTabInfo>,
+        thunderbirdAttachmentDownload: (bm: Bm.ThunderbirdAttachmentDownload) =>
+          BrowserMsg.sendAwait(undefined, 'thunderbirdAttachmentDownload', bm, true) as Promise<Bm.Res.ThunderbirdAttachmentDownload>,
         thunderbirdGetCurrentUser: () =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
         thunderbirdMsgGet: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgGet', undefined, true) as Promise<Bm.Res.ThunderbirdMsgGet>,

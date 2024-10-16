@@ -129,9 +129,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private downloadThunderbirdAttachmentHandler = async (attachment: messenger.messages.MessageAttachment) => {
-    console.log('debug:', attachment);
-    const messageId = await BrowserMsg.send.bg.await.thunderbirdGetActiveTabInfo();
-    console.log(messageId);
+    await BrowserMsg.send.bg.await.thunderbirdAttachmentDownload({ attachment });
   };
 
   private isCleartextMsg = (): boolean => {
