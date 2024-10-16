@@ -47,10 +47,19 @@ addManifest('firefox-consumer', manifest => {
 addManifest(
   'thunderbird-consumer',
   manifest => {
-    (manifest.action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
+    // we can continue using Manifest V2 for Thunderbird MailExtension - https://github.com/FlowCrypt/flowcrypt-browser/issues/5848
+    manifest.manifest_version = 2;
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';
-    manifest.permissions = [...(manifest.permissions ?? []), 'compose', 'downloads', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
+    manifest.permissions = [...(manifest.permissions ?? []), 'compose', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
+    const manifestV3 = manifest as chrome.runtime.ManifestV3;
+    manifest.web_accessible_resources = manifestV3.web_accessible_resources?.[0].resources;
+    manifest.content_security_policy = manifestV3.content_security_policy?.extension_pages;
+    manifest.permissions = [...(manifestV3.permissions ?? []), ...(manifestV3.host_permissions ?? [])];
+    delete manifest.host_permissions;
+    manifest.browser_action = manifestV3.action;
+    (manifest.browser_action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
+    delete manifest.action;
     manifest.compose_action = {
       default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
@@ -59,6 +68,7 @@ addManifest(
       default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
     };
+    delete manifest.minimum_chrome_version;
     (manifest.browser_specific_settings as messenger._manifest.FirefoxSpecificProperties).strict_min_version = '102.0';
     manifest.background = {
       type: 'module',
