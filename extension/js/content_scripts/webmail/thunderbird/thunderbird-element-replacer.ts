@@ -136,6 +136,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private isPublicKeyEncryptedMsg = (): boolean => {
+    // todo - recognized email sent via FlowCrypt encrypted contact pages
     const emailBody = this.thunderbirdEmailSelector.text().trim();
     return this.resemblesAsciiArmoredMsg(emailBody);
   };
