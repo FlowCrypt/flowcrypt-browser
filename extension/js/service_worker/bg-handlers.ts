@@ -13,6 +13,7 @@ import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 import { Url, Str } from '../common/core/common.js';
+import { Attachment } from '../common/core/attachment.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -162,18 +163,16 @@ export class BgHandlers {
     });
   };
 
-  public static thunderbirdAttachmentDownload = async (r: Bm.ThunderbirdAttachmentDownload): Promise<Bm.Res.ThunderbirdAttachmentDownload> => {
+  public static thunderbirdGetDownloadableAttachment = async (
+    r: Bm.ThunderbirdGetDownloadableAttachment
+  ): Promise<Bm.Res.ThunderbirdGetDownloadableAttachment> => {
     const [tab] = await messenger.mailTabs.query({ active: true, currentWindow: true });
     if (tab.id) {
-      const downloadableAttachment = await messenger.messages.getAttachmentFile(tab.id, r.attachment.partName);
-      const fileUrl = URL.createObjectURL(downloadableAttachment);
-      await browser.downloads.download({
-        url: fileUrl,
-        filename: r.attachment.name,
-        saveAs: true,
-      });
-      URL.revokeObjectURL(fileUrl);
+      const rawAttachment = await messenger.messages.getAttachmentFile(tab.id, r.attachment.partName);
+      const data = new Uint8Array(await rawAttachment.arrayBuffer());
+      return new Attachment({ data });
     }
+    return;
   };
 
   public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {

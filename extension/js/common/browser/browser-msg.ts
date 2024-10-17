@@ -20,6 +20,7 @@ import { Ui } from './ui.js';
 import { AuthRes } from '../api/authentication/generic/oauth.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
+import { Attachment } from '../core/attachment.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -98,7 +99,7 @@ export namespace Bm {
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
   export type ThunderbirdOpenPassphraseDialog = { acctEmail: string; longids: string };
-  export type ThunderbirdAttachmentDownload = { attachment: messenger.messages.MessageAttachment };
+  export type ThunderbirdGetDownloadableAttachment = { attachment: messenger.messages.MessageAttachment };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -115,7 +116,7 @@ export namespace Bm {
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
-    export type ThunderbirdAttachmentDownload = Promise<void>;
+    export type ThunderbirdGetDownloadableAttachment = Attachment | undefined;
     export type ThunderbirdGetCurrentUser = string | undefined;
     export type ThunderbirdMsgGet = { attachments: messenger.messages.MessageAttachment[]; messagePart: messenger.messages.MessagePart };
     export type ThunderbirdOpenPassphraseDialog = Promise<void>;
@@ -136,7 +137,7 @@ export namespace Bm {
       | ExpirationCacheDeleteExpired
       | AjaxGmailAttachmentGetChunk
       | ConfirmationResult
-      | ThunderbirdAttachmentDownload
+      | ThunderbirdGetDownloadableAttachment
       | ThunderbirdMsgGet;
   }
 
@@ -178,7 +179,7 @@ export namespace Bm {
     | PgpBlockReady
     | PgpBlockRetry
     | ConfirmationResult
-    | ThunderbirdAttachmentDownload
+    | ThunderbirdGetDownloadableAttachment
     | ThunderbirdOpenPassphraseDialog
     | Ajax;
 
@@ -243,8 +244,8 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'expirationCacheSet', bm, true) as Promise<Bm.Res.ExpirationCacheSet>,
         expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
-        thunderbirdAttachmentDownload: (bm: Bm.ThunderbirdAttachmentDownload) =>
-          BrowserMsg.sendAwait(undefined, 'thunderbirdAttachmentDownload', bm, true) as Promise<Bm.Res.ThunderbirdAttachmentDownload>,
+        thunderbirdGetDownloadableAttachment: (bm: Bm.ThunderbirdGetDownloadableAttachment) =>
+          BrowserMsg.sendAwait(undefined, 'thunderbirdGetDownloadableAttachment', bm, true) as Promise<Bm.Res.ThunderbirdGetDownloadableAttachment>,
         thunderbirdGetCurrentUser: () =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
         thunderbirdMsgGet: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgGet', undefined, true) as Promise<Bm.Res.ThunderbirdMsgGet>,

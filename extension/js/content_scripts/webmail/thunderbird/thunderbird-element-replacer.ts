@@ -19,6 +19,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public reinsertReplyBox: (replyMsgId: string) => void;
   public scrollToReplyBox: (replyMsgId: string) => void;
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
+  private acctEmail: string;
   private emailBodyFromThunderbirdMail: string;
   private thunderbirdEmailSelector = $('div.moz-text-plain');
 
@@ -32,12 +33,13 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       if (!messagePart) {
         return;
       } else {
-        const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
-        const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
+        const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
         const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
         if (this.isPublicKeyEncryptedMsg()) {
           const result = await MsgUtil.decryptMessage({
-            kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
+            kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
             encryptedData: this.emailBodyFromThunderbirdMail,
             verificationPubs: signerKeys,
           });
@@ -70,6 +72,15 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
             $('body').html(pgpBlock); // xss-sanitized
           }
+          if (!attachments.length) {
+            return;
+          } else {
+            for (const attachment of attachments) {
+              const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
+              $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+              // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
+            }
+          }
         } else if (this.isCleartextMsg()) {
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
@@ -83,15 +94,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           }
           const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
           $('body').html(pgpBlock); // xss-sanitized
-        }
-      }
-      if (!attachments.length) {
-        return;
-      } else {
-        for (const attachment of attachments) {
-          const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
-          $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
-          // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         }
       }
     }
@@ -129,7 +131,25 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private downloadThunderbirdAttachmentHandler = async (attachment: messenger.messages.MessageAttachment) => {
-    await BrowserMsg.send.bg.await.thunderbirdAttachmentDownload({ attachment });
+    const flowCryptAttachment = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+    if (flowCryptAttachment) {
+      const result = await MsgUtil.decryptMessage({
+        kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+        encryptedData: this.emailBodyFromThunderbirdMail,
+        verificationPubs: [], // todo: #4158 signature verification of attachments
+      });
+      if (result.success && result.content) {
+        console.log('debug: download me');
+        // todo - create separate background message for download prompt and file download
+        // const fileUrl = URL.createObjectURL(rawAttachment);
+        // await browser.downloads.download({
+        //   url: fileUrl,
+        //   filename: r.attachment.name,
+        //   saveAs: true,
+        // });
+        // URL.revokeObjectURL(fileUrl);
+      }
+    }
   };
 
   private isCleartextMsg = (): boolean => {
