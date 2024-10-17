@@ -76,6 +76,7 @@ console.info('background.js service worker starting');
     BrowserMsg.bgAddListener('thunderbirdGetCurrentUser', BgHandlers.thunderbirdGetCurrentUserHandler);
     BrowserMsg.bgAddListener('thunderbirdMsgGet', BgHandlers.thunderbirdMsgGetHandler);
     BrowserMsg.bgAddListener('thunderbirdGetDownloadableAttachment', BgHandlers.thunderbirdGetDownloadableAttachment);
+    BrowserMsg.bgAddListener('thunderbirdInitiateAttachmentDownload', BgHandlers.thunderbirdInitiateAttachmentDownload);
     BrowserMsg.bgAddListener('thunderbirdOpenPassphraseDialog', BgHandlers.thunderbirdOpenPassphraseDialog);
   }
 })().catch(Catch.reportErr);

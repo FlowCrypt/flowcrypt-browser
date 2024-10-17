@@ -76,8 +76,11 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             return;
           } else {
             for (const attachment of attachments) {
-              const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
-              $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+              if (attachment.name.endsWith('.pgp')) {
+                const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
+                $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+              }
+              // todo: detect encrypted message send as attachment and render it when email body is empty
               // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
             }
           }
@@ -131,23 +134,17 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private downloadThunderbirdAttachmentHandler = async (attachment: messenger.messages.MessageAttachment) => {
-    const flowCryptAttachment = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
-    if (flowCryptAttachment) {
+    const encryptedData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+    if (encryptedData) {
       const result = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-        encryptedData: this.emailBodyFromThunderbirdMail,
+        encryptedData,
         verificationPubs: [], // todo: #4158 signature verification of attachments
       });
       if (result.success && result.content) {
-        console.log('debug: download me');
-        // todo - create separate background message for download prompt and file download
-        // const fileUrl = URL.createObjectURL(rawAttachment);
-        // await browser.downloads.download({
-        //   url: fileUrl,
-        //   filename: r.attachment.name,
-        //   saveAs: true,
-        // });
-        // URL.revokeObjectURL(fileUrl);
+        const decryptedFileName = attachment.name.replace(/\.(pgp|gpg|asc)$/i, '');
+        const decryptedContent = result.content;
+        await BrowserMsg.send.bg.await.thunderbirdInitiateAttachmentDownload({ decryptedFileName, decryptedContent });
       }
     }
   };

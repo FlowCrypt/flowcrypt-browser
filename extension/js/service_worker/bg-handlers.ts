@@ -170,9 +170,23 @@ export class BgHandlers {
     if (tab.id) {
       const rawAttachment = await messenger.messages.getAttachmentFile(tab.id, r.attachment.partName);
       const data = new Uint8Array(await rawAttachment.arrayBuffer());
-      return new Attachment({ data });
+      return new Attachment({ data }).getData();
     }
     return;
+  };
+
+  public static thunderbirdInitiateAttachmentDownload = async (
+    r: Bm.ThunderbirdInitiateAttachmentDownload
+  ): Promise<Bm.Res.ThunderbirdInitiateAttachmentDownload> => {
+    // todo - add prompt  using messenger.notifications.create. requires `notifications` permission;
+    const blob = new Blob([r.decryptedContent]);
+    const fileUrl = URL.createObjectURL(blob);
+    await browser.downloads.download({
+      url: fileUrl,
+      filename: r.decryptedFileName,
+      saveAs: true,
+    });
+    URL.revokeObjectURL(fileUrl);
   };
 
   public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {
