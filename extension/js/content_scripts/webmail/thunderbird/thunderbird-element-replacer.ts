@@ -30,9 +30,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
       const { messagePart, attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
-      if (!messagePart) {
-        return;
-      } else {
+      if (messagePart) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
         const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
@@ -72,18 +70,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
             $('body').html(pgpBlock); // xss-sanitized
           }
-          if (!attachments.length) {
-            return;
-          } else {
-            for (const attachment of attachments) {
-              if (attachment.name.endsWith('.pgp')) {
-                const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
-                $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
-              }
-              // todo: detect encrypted message send as attachment and render it when email body is empty
-              // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
-            }
-          }
         } else if (this.isCleartextMsg()) {
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
@@ -97,6 +83,16 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           }
           const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
           $('body').html(pgpBlock); // xss-sanitized
+        }
+      }
+      if (attachments.length) {
+        for (const attachment of attachments) {
+          if (attachment.name.endsWith('.pgp')) {
+            const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
+            $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+          }
+          // todo: detect encrypted message send as attachment and render it when email body is empty
+          // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         }
       }
     }
