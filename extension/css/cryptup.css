@@ -3502,6 +3502,41 @@ body#settings div.webmail_notifications div.webmail_notification a:hover {
   text-decoration: none;
 }
 
+/* thunderbird ui css */
+
+.thunderbird_attachment_root {
+  display: inline-flex;
+  margin: 0 7px 7px 0;
+  background: #fff;
+  align-items: center;
+  align-content: center;
+  border: 1px solid gray;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.thunderbird_attachment_root div {
+  display: inline-block;
+}
+
+.thunderbird_attachment_root .thunderbird_attachment_name {
+  margin: 0 2px;
+}
+
+.thunderbird_attachment_root .thunderbird_attachment_icon {
+  height: 40px;
+  width: 40px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.thunderbird_attachment_root .thunderbird_attachment_download {
+  background: url('/img/svgs/download-link.svg') center / auto no-repeat;
+  padding: 2px;
+  height: 40px;
+  width: 40px;
+}
+
 /* print class */
 @media screen {
   .printable {

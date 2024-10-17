@@ -13,6 +13,7 @@ import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js
 import { AcctStore } from '../common/platform/store/acct-store.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 import { Url, Str } from '../common/core/common.js';
+import { Attachment } from '../common/core/attachment.js';
 
 export class BgHandlers {
   public static openSettingsPageHandler: Bm.AsyncResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
@@ -162,6 +163,32 @@ export class BgHandlers {
     });
   };
 
+  public static thunderbirdGetDownloadableAttachment = async (
+    r: Bm.ThunderbirdGetDownloadableAttachment
+  ): Promise<Bm.Res.ThunderbirdGetDownloadableAttachment> => {
+    const [tab] = await messenger.mailTabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      const rawAttachment = await messenger.messages.getAttachmentFile(tab.id, r.attachment.partName);
+      const data = new Uint8Array(await rawAttachment.arrayBuffer());
+      return new Attachment({ data }).getData();
+    }
+    return;
+  };
+
+  public static thunderbirdInitiateAttachmentDownload = async (
+    r: Bm.ThunderbirdInitiateAttachmentDownload
+  ): Promise<Bm.Res.ThunderbirdInitiateAttachmentDownload> => {
+    // todo - add prompt  using messenger.notifications.create. requires `notifications` permission;
+    const blob = new Blob([r.decryptedContent]);
+    const fileUrl = URL.createObjectURL(blob);
+    await browser.downloads.download({
+      url: fileUrl,
+      filename: r.decryptedFileName,
+      saveAs: true,
+    });
+    URL.revokeObjectURL(fileUrl);
+  };
+
   public static thunderbirdGetCurrentUserHandler = async (): Promise<Bm.Res.ThunderbirdGetCurrentUser> => {
     const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
     if (tab.id) {
@@ -177,10 +204,12 @@ export class BgHandlers {
     if (tab.id) {
       const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
       if (message?.id) {
-        return await messenger.messages.getFull(Number(message.id));
+        const attachments = await messenger.messages.listAttachments(message.id);
+        const messagePart = await messenger.messages.getFull(message.id);
+        return { attachments, messagePart };
       }
     }
-    return;
+    return { attachments: [], messagePart: {} as messenger.messages.MessagePart };
   };
 
   public static thunderbirdOpenPassphraseDialog = async (r: Bm.ThunderbirdOpenPassphraseDialog): Promise<Bm.Res.ThunderbirdOpenPassphraseDialog> => {

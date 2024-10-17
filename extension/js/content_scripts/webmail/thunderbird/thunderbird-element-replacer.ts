@@ -19,7 +19,9 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public reinsertReplyBox: (replyMsgId: string) => void;
   public scrollToReplyBox: (replyMsgId: string) => void;
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
+  private acctEmail: string;
   private emailBodyFromThunderbirdMail: string;
+  private thunderbirdEmailSelector = $('div.moz-text-plain');
 
   public getIntervalFunctions = (): IntervalFunction[] => {
     return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
@@ -27,16 +29,15 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
-      const fullMsg = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
-      if (!fullMsg) {
-        return;
-      } else {
-        const acctEmail = await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser();
-        const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, String(acctEmail)))?.sortedPubkeys ?? [];
+      const { messagePart, attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
+      if (messagePart) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
+        const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
         const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-        if (this.isPublicKeyEncryptedMsg(fullMsg)) {
+        if (this.isPublicKeyEncryptedMsg()) {
           const result = await MsgUtil.decryptMessage({
-            kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(String(acctEmail)),
+            kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
             encryptedData: this.emailBodyFromThunderbirdMail,
             verificationPubs: signerKeys,
           });
@@ -69,7 +70,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
             $('body').html(pgpBlock); // xss-sanitized
           }
-        } else if (this.isCleartextMsg(fullMsg)) {
+        } else if (this.isCleartextMsg()) {
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
           const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
           let verificationStatus = '';
@@ -83,7 +84,16 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
           $('body').html(pgpBlock); // xss-sanitized
         }
-        // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
+      }
+      if (attachments.length) {
+        for (const attachment of attachments) {
+          if (attachment.name.endsWith('.pgp')) {
+            const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
+            $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+          }
+          // todo: detect encrypted message send as attachment and render it when email body is empty
+          // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
+        }
       }
     }
   };
@@ -98,19 +108,47 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         <div class="pgp_block">
         <pre>${Xss.escape(messageToRender)}</pre>
         </div>
+        <div class="pgp_attachments_block">
+        </div>
       </div>`;
   };
 
-  private isCleartextMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
-    return (
-      (fullMsg.headers &&
-        'openpgp' in fullMsg.headers &&
-        fullMsg.parts &&
-        fullMsg.parts[0]?.parts?.length === 1 &&
-        fullMsg.parts[0].parts[0].contentType === 'text/plain' &&
-        this.resemblesCleartextMsg(fullMsg.parts[0].parts[0].body?.trim() || '')) ||
-      false
-    );
+  private generatePgpAttachmentTemplate = (attachment: messenger.messages.MessageAttachment) => {
+    const attachmentHtmlRoot = $('<div>').addClass('thunderbird_attachment_root');
+    const attachmentFileTypeIcon = $('<img>').addClass('thunderbird_attachment_icon');
+    attachmentFileTypeIcon.attr('alt', Xss.escape(attachment.name));
+    attachmentFileTypeIcon.attr('src', '/image/fileformat/generic.png');
+    const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(Xss.escape(attachment.name));
+    const attachmentDownloadBtn = $('<div>')
+      .addClass('thunderbird_attachment_download')
+      .on('click', async () => {
+        await this.downloadThunderbirdAttachmentHandler(attachment);
+      });
+    attachmentHtmlRoot.append(attachmentFileTypeIcon); // xss-escaped
+    attachmentHtmlRoot.append(attachmentFilename); // xss-escaped
+    attachmentHtmlRoot.append(attachmentDownloadBtn); // xss-escaped
+    return attachmentHtmlRoot;
+  };
+
+  private downloadThunderbirdAttachmentHandler = async (attachment: messenger.messages.MessageAttachment) => {
+    const encryptedData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+    if (encryptedData) {
+      const result = await MsgUtil.decryptMessage({
+        kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+        encryptedData,
+        verificationPubs: [], // todo: #4158 signature verification of attachments
+      });
+      if (result.success && result.content) {
+        const decryptedFileName = attachment.name.replace(/\.(pgp|gpg|asc)$/i, '');
+        const decryptedContent = result.content;
+        await BrowserMsg.send.bg.await.thunderbirdInitiateAttachmentDownload({ decryptedFileName, decryptedContent });
+      }
+    }
+  };
+
+  private isCleartextMsg = (): boolean => {
+    const emailBody = this.thunderbirdEmailSelector.text().trim();
+    return this.resemblesCleartextMsg(emailBody);
   };
 
   private resemblesCleartextMsg = (body: string) => {
@@ -122,20 +160,10 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     );
   };
 
-  private isPublicKeyEncryptedMsg = (fullMsg: messenger.messages.MessagePart): boolean => {
-    if (fullMsg.headers && 'openpgp' in fullMsg.headers && fullMsg.parts) {
-      return (
-        (fullMsg.parts[0]?.parts?.length === 2 &&
-          fullMsg.parts[0]?.parts[1].contentType === 'application/pgp-encrypted' &&
-          this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
-        (fullMsg.parts[0]?.parts?.length === 1 &&
-          fullMsg.parts[0]?.contentType === 'multipart/mixed' &&
-          this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.parts[0].body?.trim() || '')) ||
-        (fullMsg.parts.length === 1 && fullMsg.parts[0]?.contentType === 'text/plain' && this.resemblesAsciiArmoredMsg(fullMsg.parts[0]?.body?.trim() || '')) ||
-        false
-      );
-    }
-    return false;
+  private isPublicKeyEncryptedMsg = (): boolean => {
+    // todo - recognized email sent via FlowCrypt encrypted contact pages
+    const emailBody = this.thunderbirdEmailSelector.text().trim();
+    return this.resemblesAsciiArmoredMsg(emailBody);
   };
 
   private resemblesAsciiArmoredMsg = (body: string): boolean => {
