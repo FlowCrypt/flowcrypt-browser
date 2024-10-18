@@ -129,7 +129,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       .on('click', async () => {
         await this.downloadThunderbirdAttachmentHandler(attachment);
       })
-      .prepend($('<img>').attr('src', messenger.runtime.getURL('/img/svgs/download-link.svg'))); // xss-safe-value
+      .append($('<img>').attr('src', messenger.runtime.getURL('/img/svgs/download-link.svg'))); // xss-safe-value
     attachmentHtmlRoot.append(attachmentFileTypeIcon); // xss-escaped
     attachmentHtmlRoot.append(attachmentFilename); // xss-safe-value
     attachmentHtmlRoot.append(attachmentDownloadBtn); // xss-safe-value
