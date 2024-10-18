@@ -114,19 +114,25 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private generatePgpAttachmentTemplate = (attachment: messenger.messages.MessageAttachment) => {
+    const uiFileExtensions = ['excel', 'word', 'png', 'jpg', 'generic'];
     const attachmentHtmlRoot = $('<div>').addClass('thunderbird_attachment_root');
     const attachmentFileTypeIcon = $('<img>').addClass('thunderbird_attachment_icon');
     attachmentFileTypeIcon.attr('alt', Xss.escape(attachment.name));
-    attachmentFileTypeIcon.attr('src', '/image/fileformat/generic.png');
-    const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(Xss.escape(attachment.name));
+    uiFileExtensions.some(fileExtension => {
+      if (attachment.name.replace(/\.(pgp|gpg|asc)$/i, '').endsWith(fileExtension)) {
+        attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/${fileExtension}.png`));
+      }
+    });
+    const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(attachment.name);
     const attachmentDownloadBtn = $('<div>')
       .addClass('thunderbird_attachment_download')
       .on('click', async () => {
         await this.downloadThunderbirdAttachmentHandler(attachment);
-      });
+      })
+      .prepend($('<img>').attr('src', messenger.runtime.getURL('/img/svgs/download-link.svg'))); // xss-safe-value
     attachmentHtmlRoot.append(attachmentFileTypeIcon); // xss-escaped
-    attachmentHtmlRoot.append(attachmentFilename); // xss-escaped
-    attachmentHtmlRoot.append(attachmentDownloadBtn); // xss-escaped
+    attachmentHtmlRoot.append(attachmentFilename); // xss-safe-value
+    attachmentHtmlRoot.append(attachmentDownloadBtn); // xss-safe-value
     return attachmentHtmlRoot;
   };
 
