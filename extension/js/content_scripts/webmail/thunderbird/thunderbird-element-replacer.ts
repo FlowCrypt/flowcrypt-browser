@@ -91,7 +91,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
             $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
           }
-          // todo: detect encrypted message send as attachment and render it when email body is empty
           // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         }
       }
