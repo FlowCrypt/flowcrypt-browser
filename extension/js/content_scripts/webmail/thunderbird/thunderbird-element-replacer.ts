@@ -21,7 +21,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
   private acctEmail: string;
   private emailBodyFromThunderbirdMail: string;
-  private thunderbirdEmailSelector = $('div.moz-text-plain');
+  private emailBodyToParse = $('div.moz-text-plain').text().trim();
 
   public getIntervalFunctions = (): IntervalFunction[] => {
     return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
@@ -29,61 +29,61 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   public replaceThunderbirdMsgPane = async () => {
     if (Catch.isThunderbirdMail()) {
-      const { messagePart, attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
-      if (messagePart) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
-        const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
-        const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-        if (this.isPublicKeyEncryptedMsg()) {
-          const result = await MsgUtil.decryptMessage({
-            kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-            encryptedData: this.emailBodyFromThunderbirdMail,
-            verificationPubs: signerKeys,
-          });
-          if (result.success && result.content) {
-            const decryptedMsg = result.content.toUtfStr();
-            const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
-            let verificationStatus = '';
-            if (result?.signature) {
-              if (result.signature.match) {
-                verificationStatus = 'signed';
-              } else if (result.signature.error) {
-                verificationStatus = `could not verify signature: ${result.signature.error}`;
-              } else {
-                verificationStatus = 'not signed';
-              }
-            }
-            const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
-            $('body').html(pgpBlock); // xss-sanitized
-          } else {
-            const decryptErr = result as DecryptError;
-            let decryptionErrorMsg = '';
-            if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
-              const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
-              const longids = decryptErr.longids.needPassphrase.join(',');
-              decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;
-              await BrowserMsg.send.bg.await.thunderbirdOpenPassphraseDiaglog({ acctEmail, longids });
-            } else {
-              decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
-            }
-            const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
-            $('body').html(pgpBlock); // xss-sanitized
-          }
-        } else if (this.isCleartextMsg()) {
-          const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
-          const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
+      const { attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
+      const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
+      const pgpRegexMatch = new RegExp(pgpRegex).exec(this.emailBodyToParse);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
+      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
+      const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+      if (pgpRegexMatch && this.resemblesAsciiArmoredMsg(pgpRegexMatch[0])) {
+        const result = await MsgUtil.decryptMessage({
+          kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+          encryptedData: this.emailBodyFromThunderbirdMail,
+          verificationPubs: signerKeys,
+        });
+        if (result.success && result.content) {
+          const decryptedMsg = result.content.toUtfStr();
+          const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
           let verificationStatus = '';
-          let signedMessage = '';
-          if (result.match && result.content) {
-            verificationStatus = 'signed';
-            signedMessage = result.content.toUtfStr();
-          } else if (result.error) {
-            verificationStatus = `could not verify signature: ${result.error}`;
+          if (result?.signature) {
+            if (result.signature.match) {
+              verificationStatus = 'signed';
+            } else if (result.signature.error) {
+              verificationStatus = `could not verify signature: ${result.signature.error}`;
+            } else {
+              verificationStatus = 'not signed';
+            }
           }
-          const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
+          const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
+          $('body').html(pgpBlock); // xss-sanitized
+        } else {
+          const decryptErr = result as DecryptError;
+          let decryptionErrorMsg = '';
+          if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
+            const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
+            const longids = decryptErr.longids.needPassphrase.join(',');
+            decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;
+            await BrowserMsg.send.bg.await.thunderbirdOpenPassphraseDiaglog({ acctEmail, longids });
+          } else {
+            decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
+          }
+          const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
           $('body').html(pgpBlock); // xss-sanitized
         }
+      } else if (this.resemblesCleartextMsg(this.emailBodyToParse)) {
+        const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
+        const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
+        let verificationStatus = '';
+        let signedMessage = '';
+        if (result.match && result.content) {
+          verificationStatus = 'signed';
+          signedMessage = result.content.toUtfStr();
+        } else if (result.error) {
+          verificationStatus = `could not verify signature: ${result.error}`;
+        }
+        const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
+        $('body').html(pgpBlock); // xss-sanitized
       }
       if (attachments.length) {
         for (const attachment of attachments) {
@@ -152,11 +152,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private isCleartextMsg = (): boolean => {
-    const emailBody = this.thunderbirdEmailSelector.text().trim();
-    return this.resemblesCleartextMsg(emailBody);
-  };
-
   private resemblesCleartextMsg = (body: string) => {
     this.emailBodyFromThunderbirdMail = body;
     return (
@@ -164,12 +159,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
       body.endsWith(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.end))
     );
-  };
-
-  private isPublicKeyEncryptedMsg = (): boolean => {
-    // todo - recognized email sent via FlowCrypt encrypted contact pages
-    const emailBody = this.thunderbirdEmailSelector.text().trim();
-    return this.resemblesAsciiArmoredMsg(emailBody);
   };
 
   private resemblesAsciiArmoredMsg = (body: string): boolean => {
