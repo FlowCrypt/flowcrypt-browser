@@ -30,7 +30,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
 
   public replaceThunderbirdMsgPane = async () => {
     const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
-    console.log(emailBodyToParse);
     if (Catch.isThunderbirdMail()) {
       const { attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
       const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
@@ -46,21 +45,19 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       }
       if (emailBodyToParse && attachments.length) {
         for (const attachment of attachments) {
-          console.log(attachment.name);
-          if (attachment.name.endsWith('.pgp')) {
-            const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
-            $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
-          } else if (Attachment.encryptedMsgNames.some(a => attachment.name.includes(a)) && !this.emailBodyFromThunderbirdMail) {
-            const attachmentData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
-            if (attachmentData) {
-              await this.messageDecrypt(signerKeys, attachmentData);
-            }
-          } else if (attachment.name.endsWith('.asc')) {
-            const attachmentData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
-            const sigText = new TextDecoder('utf-8').decode(attachmentData).trim();
-            if (attachmentData && this.resemblesSignedMsg(sigText)) {
-              const plaintext = emailBodyToParse;
-              await this.messageVerify(signerKeys, { plaintext, sigText });
+          const fcAttachment = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+          if (fcAttachment) {
+            if (attachment.name.endsWith('.pgp')) {
+              const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment.name, fcAttachment);
+              $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+            } else if (Attachment.encryptedMsgNames.some(a => attachment.name.includes(a)) && !this.emailBodyFromThunderbirdMail) {
+              await this.messageDecrypt(signerKeys, fcAttachment);
+            } else if (attachment.name.endsWith('.asc')) {
+              const sigText = new TextDecoder('utf-8').decode(fcAttachment).trim();
+              if (this.resemblesSignedMsg(sigText)) {
+                const plaintext = emailBodyToParse;
+                await this.messageVerify(signerKeys, { plaintext, sigText });
+              }
             }
           }
         }
@@ -141,21 +138,21 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       </div>`;
   };
 
-  private generatePgpAttachmentTemplate = (attachment: messenger.messages.MessageAttachment) => {
+  private generatePgpAttachmentTemplate = (originalFilename: string, attachmentData: Buf) => {
     const uiFileExtensions = ['excel', 'word', 'png', 'jpg', 'generic'];
     const attachmentHtmlRoot = $('<div>').addClass('thunderbird_attachment_root');
     const attachmentFileTypeIcon = $('<img>').addClass('thunderbird_attachment_icon');
-    attachmentFileTypeIcon.attr('alt', Xss.escape(attachment.name));
+    attachmentFileTypeIcon.attr('alt', Xss.escape(originalFilename));
     uiFileExtensions.some(fileExtension => {
-      if (attachment.name.replace(/\.(pgp|gpg|asc)$/i, '').endsWith(fileExtension)) {
+      if (originalFilename.replace(/\.(pgp|gpg|asc)$/i, '').endsWith(fileExtension)) {
         attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/${fileExtension}.png`));
       }
     });
-    const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(attachment.name);
+    const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(originalFilename);
     const attachmentDownloadBtn = $('<div>')
       .addClass('thunderbird_attachment_download')
       .on('click', async () => {
-        await this.downloadThunderbirdAttachmentHandler(attachment);
+        await this.downloadThunderbirdAttachmentHandler(originalFilename, attachmentData);
       })
       .append($('<img>').attr('src', messenger.runtime.getURL('/img/svgs/download-link.svg'))); // xss-safe-value
     attachmentHtmlRoot.append(attachmentFileTypeIcon); // xss-escaped
@@ -164,8 +161,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     return attachmentHtmlRoot;
   };
 
-  private downloadThunderbirdAttachmentHandler = async (attachment: messenger.messages.MessageAttachment) => {
-    const encryptedData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+  private downloadThunderbirdAttachmentHandler = async (originalFilename: string, encryptedData: Buf) => {
     if (encryptedData) {
       const result = await MsgUtil.decryptMessage({
         kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
@@ -173,7 +169,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         verificationPubs: [], // todo: #4158 signature verification of attachments
       });
       if (result.success && result.content) {
-        const decryptedFileName = attachment.name.replace(/\.(pgp|gpg|asc)$/i, '');
+        const decryptedFileName = originalFilename.replace(/\.(pgp|gpg|asc)$/i, '');
         const decryptedContent = result.content;
         await BrowserMsg.send.bg.await.thunderbirdInitiateAttachmentDownload({ decryptedFileName, decryptedContent });
       }
