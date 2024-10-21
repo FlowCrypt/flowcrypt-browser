@@ -59,7 +59,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     settingsBtnContainer: 'div.aeH > div > .fY',
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
-    numberOfAttachmentsDigit: '.aVW span:first-child',
+    numberOfAttachmentsLabel: '.aVW span:first-child',
     attachmentsButtons: '.aZi',
     draftsList: '.ae4',
   };
@@ -475,16 +475,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private isAttachmentHideable = (attachment: Attachment, renderStatus: string) => {
-    return (
-      renderStatus === 'hidden' ||
-      attachment.type === 'application/pgp-keys' ||
-      attachment.isPublicKey() ||
-      attachment.inline ||
-      Attachment.encryptedMsgNames.some(filename => attachment.name.includes(filename))
-    );
-  };
-
   private processAttachments = async (
     msgId: string,
     attachments: Attachment[],
@@ -519,7 +509,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         messageInfo,
         skipGoogleDrive
       );
-      if (this.isAttachmentHideable(a, renderStatus)) {
+      if (renderStatus === 'hidden' || a.shouldBeHidden()) {
         nRenderedAttachments--;
       }
     }
@@ -528,22 +518,14 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       $(this.sel.attachmentsButtons).hide();
     }
     if (nRenderedAttachments === 0) {
+      attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
       $(this.sel.attachmentsContainerOuter).children('.hp').hide();
       if ($('.pgp_block').length === 0) {
         attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
       }
     } else {
-      const elementsToClone = ['span.a2H', 'div.a2b'];
-      const scannedByGmailLabel = $(elementsToClone[0]).first().clone();
-      const scannedByGmailPopover = $(elementsToClone[1]).first().clone(true);
-      // for uniformity reasons especially when Google used "One" for single attachment and numeric representation for multiple.
-      const gmailAttachmentLabelReplacement = $(
-        `<span>${nRenderedAttachments}</span>&nbsp;<span>${nRenderedAttachments > 1 ? 'Attachments' : 'Attachment'}</span>`
-      );
-      attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).empty();
-      gmailAttachmentLabelReplacement.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
-      scannedByGmailLabel.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
-      scannedByGmailPopover.appendTo(attachmentsContainerInner.parent().find(this.sel.numberOfAttachments));
+      const attachmentsLabel = nRenderedAttachments > 1 ? `${nRenderedAttachments} Attachments` : 'One Attachment';
+      attachmentsContainerInner.parent().find(this.sel.numberOfAttachmentsLabel).text(attachmentsLabel);
       attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).show();
     }
     if (!skipGoogleDrive) {
