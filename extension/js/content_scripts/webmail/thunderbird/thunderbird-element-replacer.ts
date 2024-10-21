@@ -3,8 +3,10 @@
 'use strict';
 
 import { BrowserMsg } from '../../../common/browser/browser-msg.js';
+import { Attachment } from '../../../common/core/attachment.js';
+import { Buf } from '../../../common/core/buf.js';
 import { KeyUtil } from '../../../common/core/crypto/key.js';
-import { DecryptError, DecryptErrTypes, MsgUtil } from '../../../common/core/crypto/pgp/msg-util.js';
+import { DecryptError, DecryptErrTypes, MsgUtil, VerifyRes } from '../../../common/core/crypto/pgp/msg-util.js';
 import { OpenPGPKey } from '../../../common/core/crypto/pgp/openpgp-key.js';
 import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
 import { Catch } from '../../../common/platform/catch';
@@ -21,80 +23,107 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
   private acctEmail: string;
   private emailBodyFromThunderbirdMail: string;
-  private emailBodyToParse = $('div.moz-text-plain').text().trim();
 
   public getIntervalFunctions = (): IntervalFunction[] => {
     return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
   };
 
   public replaceThunderbirdMsgPane = async () => {
+    const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
+    console.log(emailBodyToParse);
     if (Catch.isThunderbirdMail()) {
       const { attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
       const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
-      const pgpRegexMatch = new RegExp(pgpRegex).exec(this.emailBodyToParse);
+      const pgpRegexMatch = new RegExp(pgpRegex).exec(emailBodyToParse);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
       const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
       if (pgpRegexMatch && this.resemblesAsciiArmoredMsg(pgpRegexMatch[0])) {
-        const result = await MsgUtil.decryptMessage({
-          kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-          encryptedData: this.emailBodyFromThunderbirdMail,
-          verificationPubs: signerKeys,
-        });
-        if (result.success && result.content) {
-          const decryptedMsg = result.content.toUtfStr();
-          const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
-          let verificationStatus = '';
-          if (result?.signature) {
-            if (result.signature.match) {
-              verificationStatus = 'signed';
-            } else if (result.signature.error) {
-              verificationStatus = `could not verify signature: ${result.signature.error}`;
-            } else {
-              verificationStatus = 'not signed';
-            }
-          }
-          const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
-          $('body').html(pgpBlock); // xss-sanitized
-        } else {
-          const decryptErr = result as DecryptError;
-          let decryptionErrorMsg = '';
-          if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
-            const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
-            const longids = decryptErr.longids.needPassphrase.join(',');
-            decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;
-            await BrowserMsg.send.bg.await.thunderbirdOpenPassphraseDiaglog({ acctEmail, longids });
-          } else {
-            decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
-          }
-          const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
-          $('body').html(pgpBlock); // xss-sanitized
-        }
-      } else if (this.resemblesCleartextMsg(this.emailBodyToParse)) {
-        const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
-        const result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, signerKeys));
-        let verificationStatus = '';
-        let signedMessage = '';
-        if (result.match && result.content) {
-          verificationStatus = 'signed';
-          signedMessage = result.content.toUtfStr();
-        } else if (result.error) {
-          verificationStatus = `could not verify signature: ${result.error}`;
-        }
-        const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
-        $('body').html(pgpBlock); // xss-sanitized
+        await this.messageDecrypt(signerKeys, this.emailBodyFromThunderbirdMail);
+      } else if (this.resemblesSignedMsg(emailBodyToParse)) {
+        await this.messageVerify(signerKeys);
       }
-      if (attachments.length) {
+      if (emailBodyToParse && attachments.length) {
         for (const attachment of attachments) {
+          console.log(attachment.name);
           if (attachment.name.endsWith('.pgp')) {
             const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachment);
             $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
+          } else if (Attachment.encryptedMsgNames.some(a => attachment.name.includes(a)) && !this.emailBodyFromThunderbirdMail) {
+            const attachmentData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+            if (attachmentData) {
+              await this.messageDecrypt(signerKeys, attachmentData);
+            }
+          } else if (attachment.name.endsWith('.asc')) {
+            const attachmentData = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
+            const sigText = new TextDecoder('utf-8').decode(attachmentData).trim();
+            if (attachmentData && this.resemblesSignedMsg(sigText)) {
+              const plaintext = emailBodyToParse;
+              await this.messageVerify(signerKeys, { plaintext, sigText });
+            }
           }
-          // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
         }
       }
     }
+  };
+
+  private messageDecrypt = async (verificationPubs: string[], encryptedData: string | Buf) => {
+    const result = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+      encryptedData,
+      verificationPubs,
+    });
+    if (result.success && result.content) {
+      const decryptedMsg = result.content.toUtfStr();
+      const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
+      let verificationStatus = '';
+      if (result?.signature) {
+        if (result.signature.match) {
+          verificationStatus = 'signed';
+        } else if (result.signature.error) {
+          verificationStatus = `could not verify signature: ${result.signature.error}`;
+        } else {
+          verificationStatus = 'not signed';
+        }
+      }
+      const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
+      $('body').html(pgpBlock); // xss-sanitized
+    } else {
+      const decryptErr = result as DecryptError;
+      let decryptionErrorMsg = '';
+      if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
+        const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
+        const longids = decryptErr.longids.needPassphrase.join(',');
+        decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;
+        await BrowserMsg.send.bg.await.thunderbirdOpenPassphraseDiaglog({ acctEmail, longids });
+      } else {
+        decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
+      }
+      const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
+      $('body').html(pgpBlock); // xss-sanitized
+    }
+  };
+
+  private messageVerify = async (verificationPubs: string[], detachedSignatureParams?: { plaintext: string; sigText: string }) => {
+    let result: VerifyRes;
+    if (!detachedSignatureParams) {
+      const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
+      result = await OpenPGPKey.verify(message, await ContactStore.getPubkeyInfos(undefined, verificationPubs));
+    } else {
+      result = await MsgUtil.verifyDetached({ plaintext: detachedSignatureParams.plaintext, sigText: detachedSignatureParams.sigText, verificationPubs });
+    }
+    let verificationStatus = '';
+    let signedMessage = '';
+    if (result.match && result.content) {
+      verificationStatus = 'signed';
+      signedMessage = result.content.toUtfStr();
+    } else if (result.error) {
+      verificationStatus = `could not verify signature: ${result.error}`;
+      signedMessage = detachedSignatureParams?.plaintext || '';
+    }
+    const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
+    $('body').html(pgpBlock); // xss-sanitized
   };
 
   private generatePgpBlockTemplate = (encryptionStatus: string, verificationStatus: string, messageToRender: string): string => {
@@ -151,12 +180,13 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private resemblesCleartextMsg = (body: string) => {
+  private resemblesSignedMsg = (body: string) => {
     this.emailBodyFromThunderbirdMail = body;
     return (
-      body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signedMsg.begin) &&
-      body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
-      body.endsWith(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.end))
+      (body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signedMsg.begin) &&
+        body.includes(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.middle)) &&
+        body.endsWith(String(PgpArmor.ARMOR_HEADER_DICT.signedMsg.end))) ||
+      (body.startsWith(PgpArmor.ARMOR_HEADER_DICT.signature.begin) && body.endsWith(String(PgpArmor.ARMOR_HEADER_DICT.signature.end)))
     );
   };
 
