@@ -229,7 +229,7 @@ export class Attachment {
     return this.type === 'application/pgp-encrypted' && this.name.length === 0 && this.getData().toUtfStr() === 'Version: 1';
   };
 
-  public isHidden = () => {
+  public shouldBeHidden = () => {
     return (
       this.type === 'application/pgp-keys' || this.isPublicKey() || this.inline || Attachment.encryptedMsgNames.some(filename => this.name.includes(filename))
     );

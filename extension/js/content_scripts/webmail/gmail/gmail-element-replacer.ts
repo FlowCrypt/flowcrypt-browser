@@ -509,7 +509,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         messageInfo,
         skipGoogleDrive
       );
-      if (renderStatus === 'hidden' || a.isHidden()) {
+      if (renderStatus === 'hidden' || a.shouldBeHidden()) {
         nRenderedAttachments--;
       }
     }
