@@ -168,11 +168,12 @@ export class BgHandlers {
   ): Promise<Bm.Res.ThunderbirdGetDownloadableAttachment> => {
     const processableAttachments: Bm.Res.ThunderbirdGetDownloadableAttachment = [];
     const [tab] = await messenger.mailTabs.query({ active: true, currentWindow: true });
-    if (tab.id) {
+    const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
+    if (tab.id && message?.id) {
       const fcAttachments: Attachment[] = [];
       // convert Thunderbird Attachments to FlowCrypt recognizable Attachments
       for (const tbAttachment of r.attachments) {
-        const rawAttachment = await messenger.messages.getAttachmentFile(tab.id, tbAttachment.partName);
+        const rawAttachment = await messenger.messages.getAttachmentFile(message.id, tbAttachment.partName);
         fcAttachments.push(
           new Attachment({
             data: new Uint8Array(await rawAttachment.arrayBuffer()),
