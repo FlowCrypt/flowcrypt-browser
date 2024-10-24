@@ -25,10 +25,10 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   private emailBodyFromThunderbirdMail: string;
 
   public getIntervalFunctions = (): IntervalFunction[] => {
-    return [{ interval: 2000, handler: () => this.replaceThunderbirdMsgPane() }];
+    return [{ interval: 2000, handler: () => this.handleThunderbirdMessageParsing() }];
   };
 
-  public replaceThunderbirdMsgPane = async () => {
+  public handleThunderbirdMessageParsing = async () => {
     const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
     if (Catch.isThunderbirdMail()) {
       const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
