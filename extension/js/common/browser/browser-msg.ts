@@ -118,7 +118,6 @@ export namespace Bm {
     export type ExpirationCacheDeleteExpired = Promise<void>;
     export type ThunderbirdGetDownloadableAttachment = ThunderbirdAttachment[];
     export type ThunderbirdGetCurrentUser = string | undefined;
-    export type ThunderbirdMsgGet = { attachments: messenger.messages.MessageAttachment[]; messagePart: messenger.messages.MessagePart };
     export type ThunderbirdOpenPassphraseDialog = Promise<void>;
     export type ThunderbirdInitiateAttachmentDownload = Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,8 +137,7 @@ export namespace Bm {
       | ExpirationCacheDeleteExpired
       | AjaxGmailAttachmentGetChunk
       | ConfirmationResult
-      | ThunderbirdGetDownloadableAttachment
-      | ThunderbirdMsgGet;
+      | ThunderbirdGetDownloadableAttachment;
   }
 
   export type AnyRequest =
@@ -251,7 +249,6 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'thunderbirdInitiateAttachmentDownload', bm, true) as Promise<Bm.Res.ThunderbirdInitiateAttachmentDownload>,
         thunderbirdGetCurrentUser: () =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
-        thunderbirdMsgGet: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgGet', undefined, true) as Promise<Bm.Res.ThunderbirdMsgGet>,
         thunderbirdOpenPassphraseDiaglog: (bm: Bm.ThunderbirdOpenPassphraseDialog) =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdOpenPassphraseDialog', bm, true) as Promise<Bm.Res.ThunderbirdOpenPassphraseDialog>,
       },

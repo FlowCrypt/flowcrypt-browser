@@ -218,19 +218,6 @@ export class BgHandlers {
     return;
   };
 
-  public static thunderbirdMsgGetHandler = async (): Promise<Bm.Res.ThunderbirdMsgGet> => {
-    const [tab] = await messenger.tabs.query({ active: true, currentWindow: true });
-    if (tab.id) {
-      const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
-      if (message?.id) {
-        const attachments = await messenger.messages.listAttachments(message.id);
-        const messagePart = await messenger.messages.getFull(message.id);
-        return { attachments, messagePart };
-      }
-    }
-    return { attachments: [], messagePart: {} as messenger.messages.MessagePart };
-  };
-
   public static thunderbirdOpenPassphraseDialog = async (r: Bm.ThunderbirdOpenPassphraseDialog): Promise<Bm.Res.ThunderbirdOpenPassphraseDialog> => {
     await BgUtils.openExtensionTab(`chrome/elements/passphrase.htm?type=message&parentTabId=0&acctEmail=${r.acctEmail}&longids=${r.longids}`, true);
   };
