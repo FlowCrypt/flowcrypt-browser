@@ -58,7 +58,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       verificationPubs,
     });
     if (result.success && result.content) {
-      const decryptedContent = result.content.toUtfStr();
+      const pgpBlockContent = result.content.toUtfStr();
       const encryptionStatus = result.isEncrypted ? 'encrypted' : 'not encrypted';
       let verificationStatus = '';
       if (result?.signature) {
@@ -70,7 +70,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           verificationStatus = 'not signed';
         }
       }
-      const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedContent);
+      const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, pgpBlockContent);
       $('body').html(pgpBlock); // xss-sanitized
     } else {
       const decryptErr = result as DecryptError;
@@ -98,15 +98,18 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       result = await MsgUtil.verifyDetached({ plaintext: detachedSignatureParams.plaintext, sigText: detachedSignatureParams.sigText, verificationPubs });
     }
     let verificationStatus = '';
-    let signedMessage = '';
-    if (result.match && result.content) {
-      verificationStatus = 'signed';
-      signedMessage = result.content.toUtfStr();
+    let pgpBlockContent = '';
+    if (result.content) {
+      verificationStatus = result.match ? 'signed' : 'not signed';
+      if (result.signerLongids) {
+        verificationStatus = `could not verify signature: missing pubkey ${result.signerLongids}`;
+      }
+      pgpBlockContent = result.content.toUtfStr();
     } else if (result.error) {
       verificationStatus = `could not verify signature: ${result.error}`;
-      signedMessage = detachedSignatureParams?.plaintext || '';
+      pgpBlockContent = detachedSignatureParams?.plaintext || '';
     }
-    const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
+    const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, pgpBlockContent);
     $('body').html(pgpBlock); // xss-sanitized
   };
 
