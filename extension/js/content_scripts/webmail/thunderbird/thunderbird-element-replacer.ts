@@ -143,15 +143,16 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private generatePgpAttachmentTemplate = (originalFilename: string, attachmentData: Buf) => {
-    const uiFileExtensions = ['excel', 'word', 'png', 'jpg', 'generic'];
     const attachmentHtmlRoot = $('<div>').addClass('thunderbird_attachment_root');
     const attachmentFileTypeIcon = $('<img>').addClass('thunderbird_attachment_icon');
     const decryptedFileName = originalFilename.replace(/\.(pgp|gpg|asc)$/i, '');
-    uiFileExtensions.some(fileExtension => {
-      if (decryptedFileName.endsWith(fileExtension)) {
-        attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/${fileExtension}.png`));
-      }
-    });
+    const uiFileExtensions = ['excel', 'word', 'png', 'jpg'];
+    const matchedExtension = uiFileExtensions.find(fileExtension => decryptedFileName.endsWith(fileExtension));
+    if (matchedExtension) {
+      attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/${matchedExtension}.png`));
+    } else {
+      attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/generic.png`));
+    }
     const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(originalFilename);
     const attachmentDownloadBtn = $('<div>')
       .addClass('thunderbird_attachment_download')
