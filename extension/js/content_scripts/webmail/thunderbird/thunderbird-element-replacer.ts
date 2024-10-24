@@ -3,7 +3,7 @@
 'use strict';
 
 import { BrowserMsg } from '../../../common/browser/browser-msg.js';
-import { Attachment } from '../../../common/core/attachment.js';
+import { Attachment, ThunderbirdAttachment } from '../../../common/core/attachment.js';
 import { Buf } from '../../../common/core/buf.js';
 import { KeyUtil } from '../../../common/core/crypto/key.js';
 import { DecryptError, DecryptErrTypes, MsgUtil, VerifyRes } from '../../../common/core/crypto/pgp/msg-util.js';
@@ -44,11 +44,9 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
         await this.messageVerify(signerKeys);
       }
       if (emailBodyToParse && attachments.length) {
-        for (const attachment of attachments) {
-          const fcAttachment = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachment });
-          if (fcAttachment) {
-            await this.attachmentUiRenderer(attachment.name, fcAttachment, signerKeys, emailBodyToParse);
-          }
+        const fcAttachments = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachments });
+        for (const fcAttachment of fcAttachments) {
+          await this.attachmentUiRenderer(fcAttachment, signerKeys, emailBodyToParse);
         }
       }
     }
@@ -112,14 +110,17 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     $('body').html(pgpBlock); // xss-sanitized
   };
 
-  private attachmentUiRenderer = async (attachmentName: string, fcAttachment: Buf, verificationPubs: string[], plaintext: string) => {
-    if (attachmentName.endsWith('.pgp')) {
-      const generatedPgpTemplate = this.generatePgpAttachmentTemplate(attachmentName, fcAttachment);
+  private attachmentUiRenderer = async (fcAttachment: ThunderbirdAttachment, verificationPubs: string[], plaintext: string) => {
+    if (fcAttachment.treatAs === 'encryptedFile') {
+      const generatedPgpTemplate = this.generatePgpAttachmentTemplate(fcAttachment.name, fcAttachment.data);
       $('.pgp_attachments_block').append(generatedPgpTemplate); // xss-sanitized
-    } else if (Attachment.encryptedMsgNames.some(a => attachmentName.includes(a)) && !this.emailBodyFromThunderbirdMail) {
-      await this.messageDecrypt(verificationPubs, fcAttachment);
-    } else if (attachmentName.endsWith('.asc')) {
-      const sigText = new TextDecoder('utf-8').decode(fcAttachment).trim();
+    } else if (
+      (fcAttachment.treatAs === 'encryptedMsg' || Attachment.encryptedMsgNames.some(a => fcAttachment.name.includes(a))) &&
+      !this.emailBodyFromThunderbirdMail
+    ) {
+      await this.messageDecrypt(verificationPubs, fcAttachment.data);
+    } else if (fcAttachment.treatAs === 'signature') {
+      const sigText = new TextDecoder('utf-8').decode(fcAttachment.data).trim();
       if (this.resemblesSignedMsg(sigText)) {
         await this.messageVerify(verificationPubs, { plaintext, sigText });
       }

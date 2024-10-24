@@ -20,6 +20,7 @@ import { Ui } from './ui.js';
 import { AuthRes } from '../api/authentication/generic/oauth.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
+import { ThunderbirdAttachment } from '../core/attachment.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -98,7 +99,7 @@ export namespace Bm {
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
   export type ThunderbirdOpenPassphraseDialog = { acctEmail: string; longids: string };
-  export type ThunderbirdGetDownloadableAttachment = { attachment: messenger.messages.MessageAttachment };
+  export type ThunderbirdGetDownloadableAttachment = { attachments: messenger.messages.MessageAttachment[] };
   export type ThunderbirdInitiateAttachmentDownload = { decryptedFileName: string; decryptedContent: Buf };
 
   export namespace Res {
@@ -116,7 +117,7 @@ export namespace Bm {
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
-    export type ThunderbirdGetDownloadableAttachment = Buf | undefined;
+    export type ThunderbirdGetDownloadableAttachment = ThunderbirdAttachment[];
     export type ThunderbirdGetCurrentUser = string | undefined;
     export type ThunderbirdMsgGet = { attachments: messenger.messages.MessageAttachment[]; messagePart: messenger.messages.MessagePart };
     export type ThunderbirdOpenPassphraseDialog = Promise<void>;

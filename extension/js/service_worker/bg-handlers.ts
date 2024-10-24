@@ -166,13 +166,32 @@ export class BgHandlers {
   public static thunderbirdGetDownloadableAttachment = async (
     r: Bm.ThunderbirdGetDownloadableAttachment
   ): Promise<Bm.Res.ThunderbirdGetDownloadableAttachment> => {
+    const processableAttachments: Bm.Res.ThunderbirdGetDownloadableAttachment = [];
     const [tab] = await messenger.mailTabs.query({ active: true, currentWindow: true });
     if (tab.id) {
-      const rawAttachment = await messenger.messages.getAttachmentFile(tab.id, r.attachment.partName);
-      const data = new Uint8Array(await rawAttachment.arrayBuffer());
-      return new Attachment({ data }).getData();
+      const fcAttachments: Attachment[] = [];
+      // convert Thunderbird Attachments to FlowCrypt recognizable Attachments
+      for (const tbAttachment of r.attachments) {
+        const rawAttachment = await messenger.messages.getAttachmentFile(tab.id, tbAttachment.partName);
+        fcAttachments.push(
+          new Attachment({
+            data: new Uint8Array(await rawAttachment.arrayBuffer()),
+            type: tbAttachment.contentType,
+            name: tbAttachment.name,
+            length: tbAttachment.size,
+          })
+        );
+      }
+      for (const fcAttachment of fcAttachments) {
+        processableAttachments.push({
+          name: fcAttachment.name,
+          contentType: fcAttachment.type,
+          data: fcAttachment.getData(),
+          treatAs: fcAttachment.treatAs(fcAttachments),
+        });
+      }
     }
-    return;
+    return processableAttachments;
   };
 
   public static thunderbirdInitiateAttachmentDownload = async (
