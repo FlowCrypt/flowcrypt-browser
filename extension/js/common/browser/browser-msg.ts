@@ -99,7 +99,6 @@ export namespace Bm {
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
   export type ThunderbirdOpenPassphraseDialog = { acctEmail: string; longids: string };
-  export type ThunderbirdGetDownloadableAttachment = { attachments: messenger.messages.MessageAttachment[] };
   export type ThunderbirdInitiateAttachmentDownload = { decryptedFileName: string; decryptedContent: Buf };
 
   export namespace Res {
@@ -181,7 +180,6 @@ export namespace Bm {
     | PgpBlockReady
     | PgpBlockRetry
     | ConfirmationResult
-    | ThunderbirdGetDownloadableAttachment
     | ThunderbirdOpenPassphraseDialog
     | ThunderbirdInitiateAttachmentDownload
     | Ajax;
@@ -247,8 +245,8 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'expirationCacheSet', bm, true) as Promise<Bm.Res.ExpirationCacheSet>,
         expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
-        thunderbirdGetDownloadableAttachment: (bm: Bm.ThunderbirdGetDownloadableAttachment) =>
-          BrowserMsg.sendAwait(undefined, 'thunderbirdGetDownloadableAttachment', bm, true) as Promise<Bm.Res.ThunderbirdGetDownloadableAttachment>,
+        thunderbirdGetDownloadableAttachment: () =>
+          BrowserMsg.sendAwait(undefined, 'thunderbirdGetDownloadableAttachment', undefined, true) as Promise<Bm.Res.ThunderbirdGetDownloadableAttachment>,
         thunderbirdInitiateAttachmentDownload: (bm: Bm.ThunderbirdInitiateAttachmentDownload) =>
           BrowserMsg.sendAwait(undefined, 'thunderbirdInitiateAttachmentDownload', bm, true) as Promise<Bm.Res.ThunderbirdInitiateAttachmentDownload>,
         thunderbirdGetCurrentUser: () =>

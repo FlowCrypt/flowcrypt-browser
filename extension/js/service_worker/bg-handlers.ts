@@ -163,23 +163,22 @@ export class BgHandlers {
     });
   };
 
-  public static thunderbirdGetDownloadableAttachment = async (
-    r: Bm.ThunderbirdGetDownloadableAttachment
-  ): Promise<Bm.Res.ThunderbirdGetDownloadableAttachment> => {
+  public static thunderbirdGetDownloadableAttachment = async (): Promise<Bm.Res.ThunderbirdGetDownloadableAttachment> => {
     const processableAttachments: Bm.Res.ThunderbirdGetDownloadableAttachment = [];
     const [tab] = await messenger.mailTabs.query({ active: true, currentWindow: true });
     const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
     if (tab.id && message?.id) {
+      const attachments = await messenger.messages.listAttachments(message.id);
       const fcAttachments: Attachment[] = [];
       // convert Thunderbird Attachments to FlowCrypt recognizable Attachments
-      for (const tbAttachment of r.attachments) {
-        const rawAttachment = await messenger.messages.getAttachmentFile(message.id, tbAttachment.partName);
+      for (const attachment of attachments) {
+        const file = await messenger.messages.getAttachmentFile(message.id, attachment.partName);
         fcAttachments.push(
           new Attachment({
-            data: new Uint8Array(await rawAttachment.arrayBuffer()),
-            type: tbAttachment.contentType,
-            name: tbAttachment.name,
-            length: tbAttachment.size,
+            data: new Uint8Array(await file.arrayBuffer()),
+            type: attachment.contentType,
+            name: attachment.name,
+            length: attachment.size,
           })
         );
       }

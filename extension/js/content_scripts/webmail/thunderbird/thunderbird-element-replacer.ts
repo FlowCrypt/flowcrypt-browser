@@ -31,7 +31,6 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public replaceThunderbirdMsgPane = async () => {
     const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
     if (Catch.isThunderbirdMail()) {
-      const { attachments } = await BrowserMsg.send.bg.await.thunderbirdMsgGet();
       const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
       const pgpRegexMatch = new RegExp(pgpRegex).exec(emailBodyToParse);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -43,11 +42,9 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       } else if (this.resemblesSignedMsg(emailBodyToParse)) {
         await this.messageVerify(signerKeys);
       }
-      if (attachments.length) {
-        const fcAttachments = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment({ attachments });
-        for (const fcAttachment of fcAttachments) {
-          await this.attachmentUiRenderer(fcAttachment, signerKeys, emailBodyToParse);
-        }
+      const fcAttachments = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
+      for (const fcAttachment of fcAttachments) {
+        await this.attachmentUiRenderer(fcAttachment, signerKeys, emailBodyToParse);
       }
     }
   };
