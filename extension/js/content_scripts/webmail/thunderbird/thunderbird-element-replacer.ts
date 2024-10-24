@@ -31,25 +31,27 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public handleThunderbirdMessageParsing = async () => {
     const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
     if (Catch.isThunderbirdMail()) {
-      const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
-      const pgpRegexMatch = new RegExp(pgpRegex).exec(emailBodyToParse);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
       const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
       const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-      if (pgpRegexMatch && this.resemblesAsciiArmoredMsg(pgpRegexMatch[0])) {
+      if (this.resemblesAsciiArmoredMsg(emailBodyToParse)) {
         await this.messageDecrypt(signerKeys, this.emailBodyFromThunderbirdMail);
       } else if (this.resemblesSignedMsg(emailBodyToParse)) {
         await this.messageVerify(signerKeys);
       }
       const fcAttachments = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
-      for (const fcAttachment of fcAttachments) {
-        await this.attachmentUiRenderer(fcAttachment, signerKeys, emailBodyToParse);
+      if (fcAttachments.length) {
+        for (const fcAttachment of fcAttachments) {
+          await this.attachmentUiRenderer(fcAttachment, signerKeys, emailBodyToParse);
+        }
       }
+      $('body').show();
     }
   };
 
   private messageDecrypt = async (verificationPubs: string[], encryptedData: string | Buf) => {
+    $('body').hide();
     const result = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
       encryptedData,
@@ -87,6 +89,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private messageVerify = async (verificationPubs: string[], detachedSignatureParams?: { plaintext: string; sigText: string }) => {
+    $('body').hide();
     let result: VerifyRes;
     if (!detachedSignatureParams) {
       const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
@@ -188,7 +191,12 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private resemblesAsciiArmoredMsg = (body: string): boolean => {
-    this.emailBodyFromThunderbirdMail = body;
-    return body.startsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin) && body.endsWith(PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end as string);
+    const pgpRegex = /-----BEGIN PGP MESSAGE-----(.*?)-----END PGP MESSAGE-----/s;
+    const pgpRegexMatch = new RegExp(pgpRegex).exec(body);
+    if (pgpRegexMatch?.[0]) {
+      this.emailBodyFromThunderbirdMail = pgpRegexMatch[0];
+      return true;
+    }
+    return false;
   };
 }
