@@ -170,8 +170,12 @@ export class BgHandlers {
     let from = '';
     if (tab.id && message?.id) {
       from = Str.parseEmail(message.author).email || '';
-      const attachments = await messenger.messages.listAttachments(message.id);
+      const mimeMsg = await messenger.messages.getFull(message.id);
+      let attachments = await messenger.messages.listAttachments(message.id);
       const fcAttachments: Attachment[] = [];
+      if (mimeMsg.parts?.[0].contentType === 'multipart/signed' && mimeMsg.parts?.[0].parts?.length === 2) {
+        attachments = attachments.filter(file => file.contentType === 'application/pgp-signature');
+      }
       // convert Thunderbird Attachments to FlowCrypt recognizable Attachments
       for (const attachment of attachments) {
         const file = await messenger.messages.getAttachmentFile(message.id, attachment.partName);

@@ -31,10 +31,10 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public handleThunderbirdMessageParsing = async () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
-    const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
-    const { processableAttachments: fcAttachments, from: from } = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
+    const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim() || $('div.moz-text-flowed').text().trim();
+    const { processableAttachments: fcAttachments, from: signerEmail } = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
     if (Catch.isThunderbirdMail()) {
-      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, from))?.sortedPubkeys ?? [];
+      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, signerEmail))?.sortedPubkeys ?? [];
       const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
       if (this.resemblesAsciiArmoredMsg(emailBodyToParse)) {
         await this.messageDecrypt(verificationPubs, this.emailBodyFromThunderbirdMail);
@@ -101,13 +101,13 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     let pgpBlockContent = '';
     if (result.content) {
       verificationStatus = result.match ? 'signed' : 'not signed';
-      if (result.signerLongids) {
+      if (!result.signerLongids.length) {
         verificationStatus = `could not verify signature: missing pubkey ${result.signerLongids}`;
       }
       pgpBlockContent = result.content.toUtfStr();
     } else if (result.error) {
       verificationStatus = `could not verify signature: ${result.error}`;
-      pgpBlockContent = detachedSignatureParams?.plaintext || '';
+      pgpBlockContent = detachedSignatureParams?.plaintext || this.emailBodyFromThunderbirdMail;
     }
     const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, pgpBlockContent);
     $('body').html(pgpBlock); // xss-sanitized
@@ -122,10 +122,11 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
       !this.emailBodyFromThunderbirdMail
     ) {
       await this.messageDecrypt(verificationPubs, fcAttachment.data);
+      // detached signature verification
     } else if (fcAttachment.treatAs === 'signature') {
       const sigText = new TextDecoder('utf-8').decode(fcAttachment.data).trim();
       if (this.resemblesSignedMsg(sigText)) {
-        await this.messageVerify(verificationPubs, { plaintext: emailBodyToParse, sigText });
+        await this.messageVerify(verificationPubs, { plaintext: emailBodyToParse, sigText: sigText.replace('\n=3D', '\n=') });
       }
     }
   };
