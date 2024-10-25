@@ -29,21 +29,21 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   public handleThunderbirdMessageParsing = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
     const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim();
+    const { processableAttachments: fcAttachments, from: from } = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
     if (Catch.isThunderbirdMail()) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
-      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, this.acctEmail))?.sortedPubkeys ?? [];
-      const signerKeys = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, from))?.sortedPubkeys ?? [];
+      const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
       if (this.resemblesAsciiArmoredMsg(emailBodyToParse)) {
-        await this.messageDecrypt(signerKeys, this.emailBodyFromThunderbirdMail);
+        await this.messageDecrypt(verificationPubs, this.emailBodyFromThunderbirdMail);
       } else if (this.resemblesSignedMsg(emailBodyToParse)) {
-        await this.messageVerify(signerKeys);
+        await this.messageVerify(verificationPubs);
       }
-      const fcAttachments = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
       if (fcAttachments.length) {
         for (const fcAttachment of fcAttachments) {
-          await this.attachmentUiRenderer(fcAttachment, signerKeys, emailBodyToParse);
+          await this.attachmentUiRenderer(fcAttachment, verificationPubs, emailBodyToParse);
         }
       }
       $('body').show();

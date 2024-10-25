@@ -116,7 +116,7 @@ export namespace Bm {
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
-    export type ThunderbirdGetDownloadableAttachment = ThunderbirdAttachment[];
+    export type ThunderbirdGetDownloadableAttachment = { from: string; processableAttachments: ThunderbirdAttachment[] };
     export type ThunderbirdGetCurrentUser = string | undefined;
     export type ThunderbirdOpenPassphraseDialog = Promise<void>;
     export type ThunderbirdInitiateAttachmentDownload = Promise<void>;
