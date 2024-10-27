@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { TrustedHTML, TrustedTypesWindow } from 'types/trusted-types.js';
 import { Time } from '../../../js/common/browser/time.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Xss } from '../../../js/common/platform/xss.js';
@@ -15,7 +16,7 @@ export class PgpBlockViewPrintModule {
       return;
     }
     const w = window.open();
-    let html = `
+    const html = `
       <!DOCTYPE html>
       <html lang="en-us">
       <head>
@@ -81,16 +82,19 @@ export class PgpBlockViewPrintModule {
       </body>
       </html>
     `;
+    let trustedHtml: TrustedHTML | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const trustedTypes = (w as unknown as TrustedTypesWindow).trustedTypes;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (w?.trustedTypes?.createPolicy) {
+    if (trustedTypes?.createPolicy) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const policy = w?.trustedTypes.createPolicy('print-policy', {
+      const policy = trustedTypes.createPolicy('print-policy', {
         createHTML: (string: string) => string,
       });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      html = policy.createHTML(html);
+      trustedHtml = policy.createHTML(html);
     }
-    w?.document.write(html);
+    w?.document.write(html || (trustedHtml as unknown as string));
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
     await Time.sleep(250);

@@ -82,13 +82,15 @@ export class Xss {
   public static htmlSanitize = (dirtyHtml: string, tagCheck = false): string => {
     Xss.throwIfNotSupported();
     /* eslint-disable @typescript-eslint/naming-convention */
-    return DOMPurify.sanitize(dirtyHtml, {
+    const sanitized = DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
+      RETURN_TRUSTED_TYPE: true,
       FORBID_ATTR: Xss.FORBID_ATTR,
       ...(tagCheck && { ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS }),
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
+    return sanitized as unknown as string;
   };
 
   /**

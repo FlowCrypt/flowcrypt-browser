@@ -1,4 +1,4 @@
-/// <reference types="trusted-types"/>
+import { TrustedHTML } from 'trusted-types';
 
 export as namespace DOMPurify;
 export = DOMPurify;
@@ -24,7 +24,7 @@ interface createDOMPurifyI extends DOMPurify.DOMPurifyI {
 declare namespace DOMPurify {
     interface DOMPurifyI {
         sanitize(source: string | Node): string;
-        // sanitize(source: string | Node, config: Config & { RETURN_TRUSTED_TYPE: true }): TrustedHTML;
+        sanitize(source: string | Node, config: Config & { RETURN_TRUSTED_TYPE: true }): TrustedHTML;
         sanitize(
             source: string | Node,
             config: Config & { RETURN_DOM_FRAGMENT?: false | undefined; RETURN_DOM?: false | undefined },
