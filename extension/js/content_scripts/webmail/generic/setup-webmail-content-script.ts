@@ -463,7 +463,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await webmailSpecific.start(acctEmail, clientConfiguration, inject, notifications, factory, relayManager);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
-        console.error(`FlowCrypt cannot start: ${String(e)}`);
+        console.error(`FlowCrypt cannot start: ${String(e.message)}`);
       } else if (e instanceof Error && e.message === 'Extension context invalidated.') {
         console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
         win.destroy();
