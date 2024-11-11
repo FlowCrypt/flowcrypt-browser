@@ -34,5 +34,7 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "chai-as-promised"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "openpgp"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "filesize"
         versions: [ ">= 10.1.3" ]
