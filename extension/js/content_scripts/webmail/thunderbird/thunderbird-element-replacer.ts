@@ -149,11 +149,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     const decryptedFileName = originalFilename.replace(/\.(pgp|gpg|asc)$/i, '');
     const uiFileExtensions = ['excel', 'word', 'png', 'jpg'];
     const matchedExtension = uiFileExtensions.find(fileExtension => decryptedFileName.endsWith(fileExtension));
-    if (matchedExtension) {
-      attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/${matchedExtension}.png`));
-    } else {
-      attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/generic.png`));
-    }
+    attachmentFileTypeIcon.attr('src', messenger.runtime.getURL(`/img/fileformat/${matchedExtension || 'generic'}.png`));
     const attachmentFilename = $('<div>').addClass('thunderbird_attachment_name').text(originalFilename);
     const attachmentDownloadBtn = $('<div>')
       .addClass('thunderbird_attachment_download')
