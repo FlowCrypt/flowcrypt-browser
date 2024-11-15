@@ -9,7 +9,6 @@ import { KeyUtil } from '../../../common/core/crypto/key.js';
 import { DecryptError, DecryptErrTypes, MsgUtil, VerifyRes } from '../../../common/core/crypto/pgp/msg-util.js';
 import { OpenPGPKey } from '../../../common/core/crypto/pgp/openpgp-key.js';
 import { PgpArmor } from '../../../common/core/crypto/pgp/pgp-armor';
-import { Catch } from '../../../common/platform/catch';
 import { ContactStore } from '../../../common/platform/store/contact-store.js';
 import { KeyStore } from '../../../common/platform/store/key-store.js';
 import { Xss } from '../../../common/platform/xss.js';
@@ -33,21 +32,19 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     this.acctEmail = (await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser())!;
     const emailBodyToParse = $('div.moz-text-plain').text().trim() || $('div.moz-text-html').text().trim() || $('div.moz-text-flowed').text().trim();
     const { processableAttachments: fcAttachments, from: signerEmail } = await BrowserMsg.send.bg.await.thunderbirdGetDownloadableAttachment();
-    if (Catch.isThunderbirdMail()) {
-      const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, signerEmail))?.sortedPubkeys ?? [];
-      const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
-      if (this.resemblesAsciiArmoredMsg(emailBodyToParse)) {
-        await this.messageDecrypt(verificationPubs, this.emailBodyFromThunderbirdMail);
-      } else if (this.resemblesSignedMsg(emailBodyToParse)) {
-        await this.messageVerify(verificationPubs);
-      }
-      if (fcAttachments.length) {
-        for (const fcAttachment of fcAttachments) {
-          await this.attachmentUiRenderer(fcAttachment, verificationPubs, emailBodyToParse);
-        }
-      }
-      $('body').show();
+    const parsedPubs = (await ContactStore.getOneWithAllPubkeys(undefined, signerEmail))?.sortedPubkeys ?? [];
+    const verificationPubs = parsedPubs.map(key => KeyUtil.armor(key.pubkey));
+    if (this.resemblesAsciiArmoredMsg(emailBodyToParse)) {
+      await this.messageDecrypt(verificationPubs, this.emailBodyFromThunderbirdMail);
+    } else if (this.resemblesSignedMsg(emailBodyToParse)) {
+      await this.messageVerify(verificationPubs);
     }
+    if (fcAttachments.length) {
+      for (const fcAttachment of fcAttachments) {
+        await this.attachmentUiRenderer(fcAttachment, verificationPubs, emailBodyToParse);
+      }
+    }
+    $('body').show();
   };
 
   private messageDecrypt = async (verificationPubs: string[], encryptedData: string | Buf) => {
