@@ -164,17 +164,15 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   };
 
   private downloadThunderbirdAttachmentHandler = async (decryptedFileName: string, encryptedData: Buf) => {
-    if (encryptedData) {
-      const result = await MsgUtil.decryptMessage({
-        kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
-        encryptedData,
-        verificationPubs: [], // todo: #4158 signature verification of attachments
-      });
-      if (result.success && result.content) {
-        await BrowserMsg.send.bg.await.thunderbirdInitiateAttachmentDownload({ decryptedFileName, decryptedContent: result.content });
-      }
-      // no need to handle DecryptErrTypes.needPassphrase it was already handled by this.messageDecrypt()
+    const result = await MsgUtil.decryptMessage({
+      kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.acctEmail),
+      encryptedData,
+      verificationPubs: [], // todo: #4158 signature verification of attachments
+    });
+    if (result.success && result.content) {
+      await BrowserMsg.send.bg.await.thunderbirdInitiateAttachmentDownload({ decryptedFileName, decryptedContent: result.content });
     }
+    // no need to handle DecryptErrTypes.needPassphrase it was already handled by this.messageDecrypt()
   };
 
   private resemblesSignedMsg = (body: string) => {
