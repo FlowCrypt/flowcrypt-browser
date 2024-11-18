@@ -6,7 +6,7 @@ import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
 import type * as OpenPGP from 'openpgp';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
-import { readToEnd } from '@openpgp/web-stream-tools';
+import * as Stream from '@openpgp/web-stream-tools';
 
 type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGP.Data> | OpenPGP.CleartextMessage;
 interface KeyWithPrivateFields extends Key {
@@ -285,7 +285,7 @@ export class OpenPGPKey {
     if (!certificate) {
       return undefined;
     } else {
-      return await readToEnd(certificate);
+      return await Stream.readToEnd(certificate);
     }
   }
 
