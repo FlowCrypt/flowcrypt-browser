@@ -165,6 +165,6 @@ export class PgpArmor {
   }
 
   public static armor(messagetype: OpenPGP.enums.armor, body: object): string {
-    return opgp.armor(messagetype, body, undefined, undefined, undefined, opgp.config);
+    return opgp.armor(messagetype, body, undefined, undefined, undefined, false, opgp.config);
   }
 }
