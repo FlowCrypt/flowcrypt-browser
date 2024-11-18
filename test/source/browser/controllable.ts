@@ -867,6 +867,7 @@ export class ControllablePage extends ControllableBase {
     const result = await this.target.evaluate(
       async keys =>
         await new Promise(resolve => {
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           chrome.storage.local.get(keys, resolve);
         }),
       keys
@@ -875,6 +876,7 @@ export class ControllablePage extends ControllableBase {
   };
 
   public setLocalStorage = async (key: string, value: string | null): Promise<void> => {
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     await this.target.evaluate(async (key, value) => await chrome.storage.local.set({ [key]: value }), key, value);
   };
 
