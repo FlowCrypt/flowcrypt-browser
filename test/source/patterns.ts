@@ -78,10 +78,12 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * check for problems in manifest file (because dynamically generated)
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 const expectedPermissions: chrome.runtime.ManifestPermissions[] = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
 const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
 const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-consumer', 'firefox-consumer']) {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   const manifest = JSON.parse(readFileSync(`./build/${buildType}/manifest.json`).toString()) as chrome.runtime.Manifest;
   const isManifestV3Build = buildType.includes('chrome') || buildType.includes('firefox');
   const expectedHostPermissions = buildType.includes('consumer') ? expectedConsumerHostPermissions : expectedEnterpriseHostPermissions;
