@@ -56,6 +56,7 @@ export abstract class PageRecipe {
     return await controllable.target.evaluate(
       async msg =>
         await new Promise(resolve => {
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
           chrome.runtime.sendMessage(msg, resolve);
         }),
       msg
