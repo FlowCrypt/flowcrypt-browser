@@ -261,11 +261,10 @@ export class XssSafeFactory {
     }
   };
 
-  public btnSecureReply = () => {
-    return `<div class="${
-      this.destroyableCls
-    } reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
-      <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
+  public btnSecureReply = (placement: 'menu' | 'toolbar' = 'toolbar') => {
+    const msgBtnClassName = placement === 'toolbar' ? 'reply_message_button' : 'menu_reply_message_button';
+    return `<div class="${this.destroyableCls} ${msgBtnClassName}" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
+    <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />${placement === 'menu' ? '<span>Secure Reply</span>' : ''}
     </div>`;
   };
 

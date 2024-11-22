@@ -51,6 +51,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     msgInner: 'div.a3s:visible:not(.undefined), .message_inner_body:visible',
     msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
+    msgActionsBtn: '.J-J5-Ji.aap',
+    msgActionsMenu: '.b7.J-M',
     attachmentsContainerOuter: 'div.hq.gt',
     attachmentsContainerInner: 'div.aQH',
     translatePrompt: '.adI, .wl4W9b',
@@ -147,6 +149,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     this.replaceArmoredBlocks().catch(Catch.reportErr);
     this.replaceAttachments().catch(Catch.reportErr);
     this.replaceComposeDraftLinks();
+    this.replaceActionsMenu();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
@@ -276,6 +279,17 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return !!$('iframe.pgp_block').filter(':visible').length;
   };
 
+  private replaceActionsMenu = () => {
+    const gmailReplyMenuBtn = $(this.sel.msgActionsMenu);
+    if ($('.menu_reply_message_button').length <= 0) {
+      const menuSecureReplyBtn = $(this.factory.btnSecureReply('menu')).prependTo(gmailReplyMenuBtn); // xss-safe-factory
+      menuSecureReplyBtn.on(
+        'click',
+        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
+      );
+    }
+  };
+
   private replaceConvoBtns = (force = false) => {
     const convoUpperIconsContainer = $('div.hj:visible');
     const convoUpperIcons = $('span.pYTkkf-JX-ank-Rtc0Jf');
@@ -293,7 +307,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const gmailReplyBtn = $(elem).find('.aaq.L3');
-        const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn); // xss-safe-factory
+        const secureReplyBtn = $(this.factory.btnSecureReply('toolbar')).insertAfter(gmailReplyBtn); // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
         secureReplyBtn.on(
@@ -346,12 +360,13 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
+    const secureReplyInvokedFromMenu = btn.className.includes('menu_reply_message_button');
     if ($('#switch_to_encrypted_reply').length) {
       $('#switch_to_encrypted_reply').trigger('click');
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const messageContainer = $(btn.closest('.h7')!);
+    const messageContainer = secureReplyInvokedFromMenu ? $('.T-I-JO.T-I-Kq').closest('.h7') : $(btn.closest('.h7')!);
     if (messageContainer.is(':last-child')) {
       if (this.isEncrypted()) {
         await this.setReplyBoxEditable();
@@ -360,6 +375,10 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       }
     } else {
       this.insertEncryptedReplyBox(messageContainer);
+    }
+    if (secureReplyInvokedFromMenu) {
+      $(this.sel.msgActionsBtn).removeClass('T-I-JO T-I-Kq');
+      $(this.sel.msgActionsMenu).hide();
     }
   };
 

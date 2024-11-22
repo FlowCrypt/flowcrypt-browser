@@ -202,6 +202,23 @@ body.cryptup_gmail .inserted div.reply_message_button {
   }
 }
 
+body.cryptup_gmail div.menu_reply_message_button {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  padding: 4px;
+}
+
+body.cryptup_gmail div.menu_reply_message_button:hover {
+  background-color: #eee; /* mimic Gmail hover. uses exact color pallete from Gmail */
+}
+
+body.cryptup_gmail div.menu_reply_message_button > img {
+  height: 22px;
+  width: 20px;
+  padding: 0 12px;
+}
+
 body.cryptup_gmail.firefox .inserted div.reply_message_button {
   padding-top: 16px;
 }
