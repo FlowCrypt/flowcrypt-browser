@@ -280,10 +280,15 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private replaceActionsMenu = () => {
-    const gmailReplyMenuBtn = $(this.sel.msgActionsMenu);
-    if ($('.menu_reply_message_button').length <= 0) {
-      const menuSecureReplyBtn = $(this.factory.btnSecureReply('menu')).prependTo(gmailReplyMenuBtn); // xss-safe-factory
+    const gmailActionsMenuContainer = $(this.sel.msgActionsMenu);
+    if ($('.action_menu_message_button').length <= 0) {
+      const menuSecureReplyBtn = $(this.factory.actionsMenuBtn('reply')).insertAfter($(gmailActionsMenuContainer).find('#r')); // xss-safe-factory
+      const menuSecureForwardBtn = $(this.factory.actionsMenuBtn('forward')).insertAfter($(gmailActionsMenuContainer).find('#r3')); // xss-safe-factory
       menuSecureReplyBtn.on(
+        'click',
+        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
+      );
+      menuSecureForwardBtn.on(
         'click',
         Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
       );
@@ -307,7 +312,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const gmailReplyBtn = $(elem).find('.aaq.L3');
-        const secureReplyBtn = $(this.factory.btnSecureReply('toolbar')).insertAfter(gmailReplyBtn); // xss-safe-factory
+        const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn); // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
         secureReplyBtn.on(
@@ -360,7 +365,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
-    const secureReplyInvokedFromMenu = btn.className.includes('menu_reply_message_button');
+    const secureReplyInvokedFromMenu = btn.className.includes('action_reply_message_button');
     if ($('#switch_to_encrypted_reply').length) {
       $('#switch_to_encrypted_reply').trigger('click');
       return;

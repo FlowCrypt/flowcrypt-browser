@@ -202,18 +202,19 @@ body.cryptup_gmail .inserted div.reply_message_button {
   }
 }
 
-body.cryptup_gmail div.menu_reply_message_button {
+body.cryptup_gmail div.action_menu_message_button {
   display: flex;
-  cursor: pointer;
   align-items: center;
+  text-transform: capitalize;
+  cursor: pointer;
   padding: 4px;
 }
 
-body.cryptup_gmail div.menu_reply_message_button:hover {
+body.cryptup_gmail div.action_menu_message_button:hover {
   background-color: #eee; /* mimic Gmail hover. uses exact color pallete from Gmail */
 }
 
-body.cryptup_gmail div.menu_reply_message_button > img {
+body.cryptup_gmail div.action_menu_message_button > img {
   height: 22px;
   width: 20px;
   padding: 0 12px;

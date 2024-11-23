@@ -261,10 +261,15 @@ export class XssSafeFactory {
     }
   };
 
-  public btnSecureReply = (placement: 'menu' | 'toolbar' = 'toolbar') => {
-    const msgBtnClassName = placement === 'toolbar' ? 'reply_message_button' : 'menu_reply_message_button';
-    return `<div class="${this.destroyableCls} ${msgBtnClassName}" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
-    <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />${placement === 'menu' ? '<span>Secure Reply</span>' : ''}
+  public btnSecureReply = () => {
+    return `<div class="${this.destroyableCls} reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
+    <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
+    </div>`;
+  };
+
+  public actionsMenuBtn = (action: 'reply' | 'forward') => {
+    return `<div class="action_${action}_message_button action_menu_message_button" role="button" tabindex="0" aria-label="Secure Reply">
+    <img src="${this.srcImg(`svgs/${action}-icon.svg`)}" /><span>secure ${action}</span>
     </div>`;
   };
 
