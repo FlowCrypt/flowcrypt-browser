@@ -215,9 +215,10 @@ body.cryptup_gmail div.action_menu_message_button:hover {
 }
 
 body.cryptup_gmail div.action_menu_message_button > img {
-  height: 22px;
+  height: 20px;
   width: 20px;
   padding: 0 12px;
+  object-fit: contain;
 }
 
 body.cryptup_gmail.firefox .inserted div.reply_message_button {
