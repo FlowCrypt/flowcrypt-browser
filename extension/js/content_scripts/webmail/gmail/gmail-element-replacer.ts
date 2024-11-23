@@ -87,10 +87,12 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     ];
   };
 
-  public setReplyBoxEditable = async () => {
+  public setReplyBoxEditable = async (replyOption?: ReplyOption) => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
-      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getConvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
+      $(replyContainerIframe).replaceWith(
+        this.factory.embeddedReply(this.getLastMsgReplyParams(this.getConvoRootEl(replyContainerIframe[0]), replyOption), true)
+      ); // xss-safe-value
     } else {
       await this.replaceStandardReplyBox(undefined, true);
     }
@@ -365,7 +367,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
-    const secureReplyInvokedFromMenu = btn.className.includes('action_reply_message_button');
+    const secureReplyInvokedFromMenu = btn.className.includes('action_menu_message_button');
+    const replyOption: ReplyOption = btn.className.includes('reply') ? 'a_reply' : 'a_forward';
     if ($('#switch_to_encrypted_reply').length) {
       $('#switch_to_encrypted_reply').trigger('click');
       return;
@@ -374,12 +377,12 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const messageContainer = secureReplyInvokedFromMenu ? $('.T-I-JO.T-I-Kq').closest('.h7') : $(btn.closest('.h7')!);
     if (messageContainer.is(':last-child')) {
       if (this.isEncrypted()) {
-        await this.setReplyBoxEditable();
+        await this.setReplyBoxEditable(replyOption);
       } else {
         await this.replaceStandardReplyBox(undefined, true);
       }
     } else {
-      this.insertEncryptedReplyBox(messageContainer);
+      this.insertEncryptedReplyBox(messageContainer, replyOption);
     }
     if (secureReplyInvokedFromMenu) {
       $(this.sel.msgActionsBtn).removeClass('T-I-JO T-I-Kq');
@@ -613,18 +616,18 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return from ? Str.parseEmail(from) : undefined;
   };
 
-  private getLastMsgReplyParams = (convoRootEl: JQuery): FactoryReplyParams => {
-    return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
+  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption): FactoryReplyParams => {
+    return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()), replyOption };
   };
 
   private getConvoRootEl = (anyInnerElement: HTMLElement) => {
     return $(anyInnerElement).closest('div.if, div.aHU, td.Bu').first();
   };
 
-  private insertEncryptedReplyBox = (messageContainer: JQuery<Element>) => {
+  private insertEncryptedReplyBox = (messageContainer: JQuery<Element>, replyOption: ReplyOption) => {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
-    const replyParams: FactoryReplyParams = { replyMsgId: msgId, removeAfterClose: true };
+    const replyParams: FactoryReplyParams = { replyMsgId: msgId, removeAfterClose: true, replyOption };
     const secureReplyBoxXssSafe = /* xss-safe-factory */ `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(
       replyParams,
       true,
