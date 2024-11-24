@@ -466,15 +466,15 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(5);
         const actionsMenuSelector = '.J-J5-Ji.aap';
         await gmailPage.waitAndClick(actionsMenuSelector);
+        await Util.sleep(3);
         expect(await gmailPage.isElementPresent('@action-reply-message-button'));
         await gmailPage.waitAndClick('@action-reply-message-button');
-        await Util.sleep(3);
         const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
         await replyBox.waitForContent('@input-body', '');
         await gmailPage.waitAndClick(actionsMenuSelector);
-        expect(await gmailPage.isElementPresent('@action-forward-message-button'));
         await Util.sleep(3);
+        expect(await gmailPage.isElementPresent('@action-forward-message-button'));
         await gmailPage.waitAndClick('@action-forward-message-button');
         await Util.sleep(3);
         await replyBox.waitForContent('@input-body', '---------- Forwarded message ---------');
