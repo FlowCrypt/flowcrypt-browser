@@ -476,8 +476,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(3);
         expect(await gmailPage.isElementPresent('@action-forward-message-button'));
         await gmailPage.waitAndClick('@action-forward-message-button');
+        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
-        await replyBox.waitForContent('@input-body', '---------- Forwarded message ---------');
+        await replyBox2.waitForContent('@input-body', '---------- Forwarded message ---------');
       })
     );
 
