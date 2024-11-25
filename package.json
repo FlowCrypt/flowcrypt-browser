@@ -6,7 +6,7 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@openpgp/web-stream-tools": "^0.0.13",
+    "@openpgp/web-stream-tools": "^0.1.3",
     "@types/chai": "4.3.19",
     "@types/chai-as-promised": "7.1.8",
     "@types/chrome": "0.0.284",
@@ -29,7 +29,7 @@
     "lint-staged": "^15.2.10",
     "mailparser": "3.7.1",
     "mkdirp": "3.0.1",
-    "openpgp": "5.11.2",
+    "openpgp": "6.0.0",
     "pdfjs-dist": "4.8.69",
     "prettier": "^3.3.3",
     "puppeteer": "23.9.0",

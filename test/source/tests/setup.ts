@@ -814,7 +814,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Generate key that expires in 20 days
         const key = await opgp.generateKey({
           type: 'ecc',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           passphrase,
@@ -847,7 +847,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndClick('@source-paste');
         const updatedKey = await opgp.generateKey({
           type: 'ecc',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
           passphrase,
           format: 'armored',
@@ -875,7 +875,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Generate negative expiration key and check if it shows correct expiration note
         const negativeExpirationKey = await opgp.generateKey({
           format: 'armored',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 1,
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -906,7 +906,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Generate expired key(positive expiration) and check if it shows correct note
         const key = await opgp.generateKey({
           type: 'ecc',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           format: 'armored',
