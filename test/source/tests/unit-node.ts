@@ -1377,7 +1377,8 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // expect(decrypted.success).to.equal(true);
       // expect(decrypted.content!.toUtfStr()).to.equal(data.toUtfStr());
       expect(decrypted.success).to.equal(false);
-      expect((decrypted as DecryptError).error.type).to.equal('key_mismatch');
+      expect((decrypted as DecryptError).error.type).to.equal('other');
+      expect((decrypted as DecryptError).error.message).to.equal('No decryption key packets found');
       t.pass();
     });
 

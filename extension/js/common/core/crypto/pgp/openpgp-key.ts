@@ -445,7 +445,7 @@ export class OpenPGPKey {
     const opt: OpenPGP.KeyOptions = { userIDs, passphrase };
     if (variant === 'curve25519') {
       opt.type = 'ecc';
-      opt.curve = 'curve25519';
+      opt.curve = 'curve25519Legacy';
     } else if (variant === 'rsa2048') {
       opt.type = 'rsa';
       opt.rsaBits = 2048;
@@ -744,6 +744,7 @@ export class OpenPGPKey {
         // todo: we can make it faster by manually collecting expirations from signatures?
         ...(await Promise.all(key.subkeys.map(async subkey => OpenPGPKey.getExpirationAsDateOrUndefined(await subkey.getExpirationTime()))))
           .filter(Boolean)
+
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           .map(expirationTime => expirationTime!.getTime())
           .filter(expiration => !primaryKeyExpiration || expiration < primaryKeyExpiration)

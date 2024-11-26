@@ -722,7 +722,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           browser,
           '162275c819bcbf9b',
           {
-            content: ['Your current key cannot open this message.'],
+            content: ['No decryption key packets found'],
             error: 'decrypt error',
             expectPercentageProgress: true,
           },
@@ -1180,7 +1180,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           msgId,
           {
             content: ['テストです\nテスト'],
-            signature: 'error verifying signature: Ascii armor integrity check failed',
+            signature: 'error verifying signature: Unexpected end of packet',
             encryption: 'not encrypted',
           },
           authHdr
@@ -1863,19 +1863,26 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
+    /**
+     * RFC 4880
+     * An implementation MUST NOT reject an OpenPGP object when the CRC24 footer is present, missing, malformed, or disagrees
+     * with the computed CRC24 sum. When forming ASCII Armor, the CRC24 footer SHOULD NOT be generated,
+     * unless interoperability with implementations that require the CRC24 footer to be present is a concern.
+     * https://github.com/openpgpjs/openpgpjs/issues/1810#issuecomment-2490780175
+     */
     test(
-      'decrypt - wrong message - checksum throws error',
+      'decrypt - check if decrypted correctly and not throw error for wrong checksum message',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const threadId = '15f7ffb9320bd79e';
-        const expectedContent = 'Ascii armor integrity check failed';
+        const expectedContent = 'The International DUBLIN Literary Award is an international literary award presented each year for a novel written';
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
           threadId,
           {
             content: [expectedContent],
-            error: 'decrypt error',
+            encryption: 'encrypted',
           },
           authHdr
         );

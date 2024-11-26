@@ -2153,8 +2153,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await attachment.waitAndClick('@download-attachment');
         await attachment.waitAndClick('@decrypt-error-details');
         const decryptErrorDetails = await inboxPage.getFrame(['attachment_preview.htm']);
-        await decryptErrorDetails.waitForContent('@error-details', 'Error: Session key decryption failed'); // stack
-        await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
+        await decryptErrorDetails.waitForContent('@error-details', 'Error: No decryption key packets found'); // stack
+        await decryptErrorDetails.waitForContent('@error-details', '"type": "other"'); // DecryptError
       })
     );
 
@@ -2566,11 +2566,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // contains original key
         await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', 'AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
         // contains newly fetched key
-        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', '8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
-        await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
+        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', '8C4C 1FCC 779F 3577 29D1 94EC EA22 5AA5 1CA8 5E0A');
+        await contactsFrame.waitAndClick(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`, {
           confirmGone: true,
         });
-        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8C4C 1FCC 779F 3577 29D1 94EC EA22 5AA5 1CA8 5E0A');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Users: tom@bitoasis.net');
       })
     );
@@ -2692,10 +2692,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAll('@page-contacts');
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         // Check protonMailCompatKey key
-        await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
+        await contactsFrame.waitAndClick(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`, {
           confirmGone: true,
         });
-        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8C4C 1FCC 779F 3577 29D1 94EC EA22 5AA5 1CA8 5E0A');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Users: tom@bitoasis.net');
         // Check somePubkey
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
@@ -2806,10 +2806,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAll('@page-contacts');
         // Check test.ldap.timeout@gmail.com
         await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+        await contactsFrame.waitAny(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`);
         // Check test.flowcrypt.pubkey.timeout@gmail.com
         await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+        await contactsFrame.waitAny(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`);
       })
     );
 
