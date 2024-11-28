@@ -95,7 +95,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   public reinsertReplyBox = (replyMsgId: string) => {
-    console.log('wew', replyMsgId);
     const params: FactoryReplyParams = { replyMsgId };
     $('.reply_message_iframe_container:visible')
       .last()
@@ -621,7 +620,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
       if (msgId) {
-        console.log(msgId);
         replyParams.replyMsgId = msgId;
       }
       const hasDraft = newReplyBoxes.filter(replyBox => {
@@ -669,7 +667,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             const isReplyButtonView = replyBoxEl.className.includes('nr');
             const replyBoxes = document.querySelectorAll('iframe.reply_message');
             const alreadyHasSecureReplyBox = replyBoxes.length > 0;
-            console.log('wew', replyParams);
             const secureReplyBoxXssSafe = /* xss-safe-factory */ `
               <div class="remove_borders reply_message_iframe_container">
                 ${this.factory.embeddedReply(replyParams, !isReplyButtonView || alreadyHasSecureReplyBox || this.lastSwitchToEncryptedReply)}
