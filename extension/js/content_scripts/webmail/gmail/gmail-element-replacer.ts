@@ -281,19 +281,19 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return !!$('iframe.pgp_block').filter(':visible').length;
   };
 
+  private addMenuButton = (action: 'reply' | 'forward', selector: string) => {
+    const gmailActionsMenuContainer = $(this.sel.msgActionsMenu).find(selector);
+    const button = $(this.factory.actionsMenuBtn(action)).insertAfter(gmailActionsMenuContainer); // xss-safe-factory
+    button.on(
+      'click',
+      Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
+    );
+  };
+
   private replaceActionsMenu = () => {
-    const gmailActionsMenuContainer = $(this.sel.msgActionsMenu);
     if ($('.action_menu_message_button').length <= 0) {
-      const menuSecureReplyBtn = $(this.factory.actionsMenuBtn('reply')).insertAfter($(gmailActionsMenuContainer).find('#r')); // xss-safe-factory
-      const menuSecureForwardBtn = $(this.factory.actionsMenuBtn('forward')).insertAfter($(gmailActionsMenuContainer).find('#r3')); // xss-safe-factory
-      menuSecureReplyBtn.on(
-        'click',
-        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
-      );
-      menuSecureForwardBtn.on(
-        'click',
-        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
-      );
+      this.addMenuButton('reply', '#r');
+      this.addMenuButton('forward', '#r3');
     }
   };
 
