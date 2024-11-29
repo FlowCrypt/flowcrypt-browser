@@ -9,7 +9,7 @@ export abstract class WebmailElementReplacer {
   private replacePgpElsInterval: number;
 
   public abstract getIntervalFunctions: () => IntervalFunction[];
-  public abstract setReplyBoxEditable: (messageContainer?: JQuery<Element>) => Promise<void>;
+  public abstract setReplyBoxEditable: () => Promise<void>;
   public abstract reinsertReplyBox: (replyMsgId: string) => void;
   public abstract scrollToReplyBox: (replyMsgId: string) => void;
   public abstract scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
