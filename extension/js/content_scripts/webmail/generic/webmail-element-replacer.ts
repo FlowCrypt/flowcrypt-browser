@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module';
 import { ContentScriptWindow } from '../../../common/browser/browser-window';
 import { notifyMurdered } from './setup-webmail-content-script';
 
@@ -9,7 +10,7 @@ export abstract class WebmailElementReplacer {
   private replacePgpElsInterval: number;
 
   public abstract getIntervalFunctions: () => IntervalFunction[];
-  public abstract setReplyBoxEditable: () => Promise<void>;
+  public abstract setReplyBoxEditable: (replyOption?: ReplyOption) => Promise<void>;
   public abstract reinsertReplyBox: (replyMsgId: string) => void;
   public abstract scrollToReplyBox: (replyMsgId: string) => void;
   public abstract scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;

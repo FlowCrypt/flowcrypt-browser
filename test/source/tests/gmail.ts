@@ -457,6 +457,31 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
+    test(
+      'mail.google.com - secure reply and forward in dot menu',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
+        await Util.sleep(5);
+        const actionsMenuSelector = '.J-J5-Ji.aap';
+        await gmailPage.waitAndClick(actionsMenuSelector);
+        await Util.sleep(3);
+        expect(await gmailPage.isElementPresent('@action-reply-message-button'));
+        await gmailPage.waitAndClick('@action-reply-message-button');
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        await replyBox.waitForContent('@input-body', '');
+        await gmailPage.waitAndClick(actionsMenuSelector);
+        await Util.sleep(3);
+        expect(await gmailPage.isElementPresent('@action-forward-message-button'));
+        await gmailPage.waitAndClick('@action-forward-message-button');
+        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        await replyBox2.waitForContent('@input-body', '---------- Forwarded message ---------');
+      })
+    );
+
     // convo-sensitive, draft-sensitive test
     test.serial(
       'mail.google.com - plain reply draft',
