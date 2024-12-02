@@ -51,7 +51,6 @@ export class Browser {
   };
 
   public static openSettingsPage = async (path = 'index.htm', acctEmail?: string, page = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {

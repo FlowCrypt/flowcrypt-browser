@@ -95,7 +95,6 @@ export class Settings {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
     await new Promise<void>((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
       chrome.storage.local.get(async storage => {
         try {
           for (const storageIndex of Object.keys(storage)) {
@@ -440,10 +439,9 @@ export class Settings {
   }
 
   public static async loginWithPopupShowModalOnErr(acctEmail: string, isCustomIDP: boolean, then: () => void = () => undefined) {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (window !== window.top && !chrome.windows) {
       // Firefox, chrome.windows isn't available in iframes
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
+
       await Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
       window.location.reload();
