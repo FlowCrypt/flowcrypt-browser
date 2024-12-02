@@ -12,6 +12,7 @@
     "@types/chrome": "0.0.284",
     "@types/dompurify": "3.2.0",
     "@types/jquery": "3.5.32",
+    "@types/linkifyjs": "^2.1.7",
     "@types/mailparser": "3.4.5",
     "ava": "5.3.1",
     "chai": "4.5.0",

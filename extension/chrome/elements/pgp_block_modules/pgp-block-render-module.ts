@@ -8,6 +8,7 @@ import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import linkifyHtml from 'linkifyjs/html';
 
 export class PgpBlockViewRenderModule {
   private heightHist: number[] = [];
