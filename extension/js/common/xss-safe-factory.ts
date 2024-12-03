@@ -266,6 +266,12 @@ export class XssSafeFactory {
       this.destroyableCls
     } reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
       <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
+      </div>`;
+  };
+
+  public actionsMenuBtn = (action: 'reply' | 'forward') => {
+    return `<div class="action_${action}_message_button action_menu_message_button" data-test="action-${action}-message-button">
+    <img src="${this.srcImg(`svgs/${action}-icon.svg`)}" /><span>secure ${action}</span>
     </div>`;
   };
 
