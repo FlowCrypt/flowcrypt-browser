@@ -33,7 +33,8 @@
       "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js", "COMMENT"],
       "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
       "node-forge": ["./extension/types/node-forge.d.ts", "lib/forge.mjs"],
-      "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"]
+      "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"],
+      "linkifyjs/html": ["COMMENT"]
     },
     "typeRoots": ["./extension/js/common/core/types", "./extension/types"]
   },
