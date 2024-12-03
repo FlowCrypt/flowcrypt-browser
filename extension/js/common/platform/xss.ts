@@ -107,23 +107,28 @@ export class Xss {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
-      if (!node) {
+      // Ensure the node is an Element
+      if (!(node instanceof Element)) {
         return;
       }
-      if ('style' in node) {
+
+      // Handle style attributes
+      if (node.hasAttribute('style')) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        const style = (node as Element).getAttribute('style')?.toLowerCase();
+        const style = node.getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
-          (node as Element).removeAttribute('style'); // don't want any leaks through css url()
+          node.removeAttribute('style'); // don't want any leaks through css url()
         }
         // strip css styles that could use to overlap with the extension UI
         if (style && Xss.FORBID_CSS_STYLE.test(style)) {
           const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
-          (node as HTMLElement).setAttribute('style', updatedStyle);
+          node.setAttribute('style', updatedStyle);
         }
       }
-      if ('src' in node) {
-        const img = node as HTMLImageElement;
+
+      // Handle image attributes
+      if (node.tagName === 'IMG') {
+        const img = node as HTMLImageElement; // Narrow type to HTMLImageElement
         const src = img.getAttribute('src');
         if (imgHandling === 'IMG-DEL') {
           img.remove(); // just skip images
@@ -131,20 +136,27 @@ export class Xss {
           img.remove(); // src that exists but is null is suspicious
         } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
           // replace remote image with remote_image_container
-          const remoteImgEl = `<div class="remote_image_container" data-src="${src}" data-test="remote-image-container"><span>Authenticity of this remote image cannot be verified.</span></div>`;
+          const remoteImgEl = `
+        <div class="remote_image_container" data-src="${src}" data-test="remote-image-container">
+          <span>Authenticity of this remote image cannot be verified.</span>
+        </div>`;
           Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
         }
       }
+
+      // Handle custom containers or CID-patterned src
       if ((node.classList.contains('remote_image_container') || CID_PATTERN.test(node.getAttribute('src') ?? '')) && imgHandling === 'IMG-TO-PLAIN-TEXT') {
-        Xss.replaceElementDANGEROUSLY(node, node.getAttribute('data-src') ?? node.getAttribute('alt') ?? ''); // xss-safe-value
+        const replacement = node.getAttribute('data-src') ?? node.getAttribute('alt') ?? '';
+        Xss.replaceElementDANGEROUSLY(node, replacement); // xss-safe-value
       }
-      if ('target' in node) {
-        // open links in new window
-        (node as Element).setAttribute('target', '_blank');
-        // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
-        (node as Element).setAttribute('rel', 'noopener noreferrer');
+
+      // Handle links (target and rel attributes)
+      if (node.tagName === 'A') {
+        node.setAttribute('target', '_blank'); // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
+        node.setAttribute('rel', 'noopener noreferrer');
       }
     });
+
     const cleanHtml = Xss.htmlSanitize(dirtyHtml, true);
     DOMPurify.removeAllHooks();
     return cleanHtml;
