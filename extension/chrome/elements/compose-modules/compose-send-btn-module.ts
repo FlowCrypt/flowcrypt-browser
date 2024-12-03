@@ -179,7 +179,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         return;
       }
       if ('src' in node) {
-        const img: Element = node;
+        const img = node as HTMLImageElement;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const src = img.getAttribute('src')!;
         const { mimeType, data } = this.parseInlineImageSrc(src);
