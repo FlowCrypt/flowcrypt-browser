@@ -34,7 +34,8 @@
       "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
       "node-forge": ["./extension/types/node-forge.d.ts", "lib/forge.mjs"],
       "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"],
-      "linkifyjs/html": ["COMMENT"]
+      "linkifyHtml": ["../node_modules/linkify-html/dist/linkify-html.cjs.d.ts", "COMMENT"],
+      "linkifyjs": ["../node_modules/linkifyjs/dist/linkify.cjs.d.ts", "COMMENT"]
     },
     "typeRoots": ["./extension/js/common/core/types", "./extension/types"]
   },
