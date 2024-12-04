@@ -31,7 +31,7 @@
     "openpgp": "6.0.1",
     "pdfjs-dist": "4.9.124",
     "prettier": "^3.4.1",
-    "puppeteer": "23.9.0",
+    "puppeteer": "23.10.0",
     "stylelint": "16.11.0",
     "stylelint-config-standard": "36.0.1",
     "typescript": "5.7.2",
