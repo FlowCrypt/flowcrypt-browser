@@ -29,7 +29,7 @@ export interface ChildFrame {
 
 export namespace Bm {
   export type Dest = string;
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
+
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = unknown;
   export type RawResponse = { result: unknown; exception?: Bm.ErrAsJson };
@@ -415,7 +415,6 @@ export class BrowserMsg {
   }
 
   public static listen(dest: Bm.Dest) {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       // console.debug(`listener(${dest}) new message: ${msg.name} to ${msg.to} with id ${msg.uid} from`, _sender);
       if (msg.to && [dest, 'broadcast'].includes(msg.to)) {
@@ -432,7 +431,7 @@ export class BrowserMsg {
 
   public static createIntervalAlarm(action: string, periodInMinutes: number) {
     const alarmName = `${action}_interval_${Date.now()}`;
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
+
     void chrome.alarms.create(alarmName, { periodInMinutes });
   }
 
@@ -441,7 +440,6 @@ export class BrowserMsg {
   }
 
   public static bgListen() {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
         try {
@@ -521,7 +519,7 @@ export class BrowserMsg {
         Catch.try(BrowserMsg.INTERVAL_HANDLERS[actionName])();
       }
     };
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
+
     chrome.alarms.onAlarm.addListener(alarmListener);
   }
 
@@ -646,7 +644,7 @@ export class BrowserMsg {
           resolve(undefined);
         } else if (!r || typeof r !== 'object') {
           // r can be null if we sent a message to a non-existent window id
-          // eslint-disable-next-line @typescript-eslint/no-deprecated
+
           const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
           let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
@@ -676,24 +674,19 @@ export class BrowserMsg {
         }
       };
       try {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         if (chrome.runtime) {
           Env.isBackgroundPage()
             .then(isBackgroundPage => {
               if (isBackgroundPage) {
-                // eslint-disable-next-line @typescript-eslint/no-deprecated
                 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
                   for (const tab of tabs) {
-                    // eslint-disable-next-line @typescript-eslint/no-deprecated
                     chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
                   }
                 });
               } else {
                 if (awaitRes) {
-                  // eslint-disable-next-line @typescript-eslint/no-deprecated
                   chrome.runtime.sendMessage(msg, processRawMsgResponse);
                 } else {
-                  // eslint-disable-next-line @typescript-eslint/no-deprecated
                   void chrome.runtime.sendMessage(msg);
                 }
               }
