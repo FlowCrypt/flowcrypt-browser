@@ -403,7 +403,7 @@ export class Ui {
 
   public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
+
     const url = typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };

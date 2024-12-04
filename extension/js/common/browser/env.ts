@@ -9,13 +9,10 @@ export type WebMailVersion = 'generic' | 'gmail2020' | 'gmail2022';
 
 export class Env {
   public static runtimeId(orig = false) {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (chrome?.runtime?.id) {
       if (orig) {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         return chrome.runtime.id;
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
         return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
       }
     }
@@ -23,7 +20,6 @@ export class Env {
   }
 
   public static getExtensionOrigin() {
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const url = chrome.runtime.getURL('');
     return Url.removeTrailingSlash(url);
   }
@@ -32,7 +28,7 @@ export class Env {
     if (Env.isExtension()) {
       try {
         // Attempt to get the URL of an extension resource. This will succeed if we're in an extension context.
-        // eslint-disable-next-line @typescript-eslint/no-deprecated
+
         const extensionUrl = chrome.runtime.getURL('');
         // Check if the current page URL is different from the extension's base URL (i.e., it's not an extension page)
         return !window.location.href.startsWith(extensionUrl);
