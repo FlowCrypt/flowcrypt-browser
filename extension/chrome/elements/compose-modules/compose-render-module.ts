@@ -100,9 +100,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       if (inReplyToMessage) {
         const msgId = inReplyToMessage.payload?.headers?.find(header => header.name === 'Message-Id' || header.name === 'Message-ID')?.value;
         const references = inReplyToMessage.payload?.headers?.find(header => header.name === 'References')?.value;
-        if (msgId && references) {
-          this.setReplyHeaders(msgId, references);
-        }
+        this.setReplyHeaders(msgId, references);
       }
       this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
       if (this.view.useFullScreenSecureCompose) {
