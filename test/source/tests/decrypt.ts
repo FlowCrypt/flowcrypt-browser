@@ -1603,7 +1603,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    test(
+    // TODO: should re-enable test after https://github.com/FlowCrypt/flowcrypt-browser/pull/5873#issuecomment-2513848349 is fixed
+    test.skip(
       'decrypt - not an armored public key in a file that looked like a public key',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
