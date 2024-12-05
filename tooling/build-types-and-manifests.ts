@@ -14,9 +14,7 @@ import { execSync as exec } from 'child_process';
 const DIR = './build';
 const version: string = (JSON.parse(readFileSync('./package.json').toString()) as { version: string }).version;
 
-// eslint-disable-next-line @typescript-eslint/no-deprecated
 const addManifest = (toBuildType: string, transform: (manifest: chrome.runtime.Manifest) => void, fromBuildType = 'generic-extension-wip') => {
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
   const manifest = JSON.parse(readFileSync(`${DIR}/${fromBuildType}/manifest.json`).toString()) as chrome.runtime.ManifestV3;
   transform(manifest);
   writeFileSync(`${DIR}/${toBuildType}/manifest.json`, JSON.stringify(manifest, undefined, 2));
@@ -39,7 +37,7 @@ addManifest('firefox-consumer', manifest => {
     type: 'module',
     scripts: ['/js/service_worker/background.js'],
   };
-  // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars, @typescript-eslint/no-deprecated
+  // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
   const { service_worker, ...newManifest } = manifest.background as chrome.runtime.ManifestV3;
   manifest = newManifest;
   manifest.permissions = manifest.permissions?.filter((p: string) => p !== 'unlimitedStorage');

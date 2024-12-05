@@ -88,7 +88,7 @@ export class GmailWebmailStartup {
 
   private injectFCVarScript = () => {
     const scriptElement = document.createElement('script');
-    // eslint-disable-next-line @typescript-eslint/no-deprecated
+
     scriptElement.src = chrome.runtime.getURL('/js/common/core/feature-config-injector.js');
     (document.head || document.documentElement).appendChild(scriptElement);
   };
