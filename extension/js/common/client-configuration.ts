@@ -33,6 +33,8 @@ export type ClientConfigurationJson = {
   enforce_keygen_expire_months?: number;
   in_memory_pass_phrase_session_length?: number;
   prv_backup_to_designated_mailbox?: string;
+  disallow_password_messages_for_terms?: string[];
+  disallow_password_messages_error_text?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -108,6 +110,21 @@ export class ClientConfiguration {
    */
   public getEnforcedKeygenExpirationMonths = (): number | undefined => {
     return this.clientConfigurationJson.enforce_keygen_expire_months;
+  };
+
+  /**
+   * An array of strings to check against the subject of the composed password-protected message.
+   * If any string in this array is found in the subject, an error alert must be displayed.
+   */
+  public getDisallowPasswordMessagesForTerms = (): string[] | undefined => {
+    return this.clientConfigurationJson.disallow_password_messages_for_terms;
+  };
+
+  /**
+   * The text to be displayed in the password message terms error alert
+   */
+  public getDisallowPasswordMessagesErrorText = (): string | undefined => {
+    return this.clientConfigurationJson.disallow_password_messages_error_text;
   };
 
   /**
