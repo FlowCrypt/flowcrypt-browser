@@ -168,7 +168,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       disallowedPasswordMessageTerms &&
       subject.split(' ').some(term => disallowedPasswordMessageTerms.includes(term))
     ) {
-      throw new ComposerUserError(linkifyHtml(disallowedPasswordMessageErrorText));
+      throw new ComposerUserError(linkifyHtml(disallowedPasswordMessageErrorText, { target: '_blank' }));
     }
     // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
     if (this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed()) {
