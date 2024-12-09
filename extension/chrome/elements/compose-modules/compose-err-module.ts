@@ -16,6 +16,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
+import linkifyHtml from 'linkifyHtml';
 
 export class ComposerUserError extends Error {}
 class ComposerNotReadyError extends ComposerUserError {}
@@ -160,6 +161,15 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   };
 
   public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string; pwd?: string }) => {
+    const disallowedPasswordMessageTerms = this.view.clientConfiguration.getDisallowPasswordMessagesForTerms();
+    const disallowedPasswordMessageErrorText = this.view.clientConfiguration.getDisallowPasswordMessagesErrorText();
+    if (
+      disallowedPasswordMessageErrorText &&
+      disallowedPasswordMessageTerms &&
+      subject.split(' ').some(term => disallowedPasswordMessageTerms.includes(term))
+    ) {
+      throw new ComposerUserError(linkifyHtml(disallowedPasswordMessageErrorText, { target: '_blank' }));
+    }
     // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
     if (this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed()) {
       throw new ComposerUserError(Lang.compose.addMissingRecipientPubkeys);

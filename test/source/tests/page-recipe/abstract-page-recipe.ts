@@ -39,6 +39,16 @@ export abstract class PageRecipe {
     }
   };
 
+  public static checkModalLink = async (controllable: Controllable, type: ModalType, linktoCheck: string) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout: 15 });
+    const contentElement = await modalContainer.$('.swal2-html-container a');
+
+    const actualLink = await PageRecipe.getElementPropertyJson(contentElement!, 'textContent');
+    if (!actualLink.includes(linktoCheck)) {
+      throw new Error(`Expected link "${linktoCheck}" not found. Actual content: "${actualLink}"`);
+    }
+  };
+
   public static waitForToastToAppearAndDisappear = async (controllable: Controllable, containsText: string | RegExp): Promise<void> => {
     await controllable.waitForContent('.ui-toast-title', containsText);
     await controllable.waitTillGone('.ui-toast-title');
