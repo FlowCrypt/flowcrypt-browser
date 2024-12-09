@@ -241,7 +241,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const acct = 'user@disallow-password-message-terms.flowcrypt.test';
         const rules = getKeyManagerAutogenRules(t.context.urls!.port!);
-        const disallowedPasswordMessageErrorText = 'Password-protected messages are disabled';
+        const disallowedPasswordMessageErrorText = 'Password-protected messages are disabled. Please check https://test.com';
 
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -265,6 +265,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@gmail.com' }, 'forbidden subject');
         await composePage.waitAndClick('@action-send', { delay: 1 });
+        await PageRecipe.checkModalLink(composePage, 'error', 'https://test.com');
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
           contentToCheck: disallowedPasswordMessageErrorText,
           clickOn: 'confirm',
