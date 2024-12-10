@@ -117,7 +117,7 @@ export class ClientConfiguration {
    * If any string in this array is found in the subject, an error alert must be displayed.
    */
   public getDisallowPasswordMessagesForTerms = (): string[] | undefined => {
-    return this.clientConfigurationJson.disallow_password_messages_for_terms;
+    return this.clientConfigurationJson.disallow_password_messages_for_terms?.filter(term => !!term);
   };
 
   /**
