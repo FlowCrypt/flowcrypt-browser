@@ -905,7 +905,7 @@ ${testConstants.smimeCert}`),
     });
 
     test('[unit][MsgUtil.isPasswordMesageEnabled] test password protected message compliance', async t => {
-      const disallowTerms = ['[Classification: Data Control: Internal Data Control]', 'droid'];
+      const disallowTerms = ['[Classification: Data Control: Internal Data Control]', 'droid', 'forbidden data'];
 
       const subjectsToTestObj: { [key: string]: boolean } = {
         '[Classification: Data Control: Internal Data Control] Quarter results': false,
@@ -918,11 +918,12 @@ ${testConstants.smimeCert}`),
         'droid phone': false,
         // Check for case insensitive
         'DROiD phone': false,
+        '[forbidden data] year results': false,
       };
 
       for (const subject of Object.keys(subjectsToTestObj)) {
         const expectedValue = subjectsToTestObj[subject];
-        const result = MsgUtil.isPasswordMesageEnabled(subject, disallowTerms);
+        const result = MsgUtil.isPasswordMessageEnabled(subject, disallowTerms);
         expect(expectedValue).to.equal(result);
       }
       t.pass();

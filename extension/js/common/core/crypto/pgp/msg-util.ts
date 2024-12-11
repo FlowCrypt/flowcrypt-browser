@@ -306,31 +306,29 @@ export class MsgUtil {
     return diagnosis;
   }
 
-  public static isPasswordMesageEnabled(subject: string, disallowTerms: string[]) {
-    if (!subject || !Array.isArray(disallowTerms) || disallowTerms.length === 0) {
-      return true; // Allow by default if no terms are specified or subject is empty
+  public static isPasswordMessageEnabled(subject: string, disallowTerms: string[]) {
+    if (!subject || !Array.isArray(disallowTerms)) {
+      return true; // If no subject or no terms to disallow, assume enabled
     }
 
-    // Normalize subject for case-insensitive comparison
-    const lowerCaseSubject = subject.toLowerCase();
+    const lowerSubject = subject.toLowerCase();
 
-    // Check if any disallow term exists as an exact match in the subject
     for (const term of disallowTerms) {
-      const lowerCaseTerm = term.toLowerCase();
+      // Escape term for regex
+      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Use regex to ensure the term appears as a separate token
+      // (^|\W) ensures the term is at start or preceded by non-word char
+      // (\W|$) ensures the term is followed by non-word char or end
+      const regex = new RegExp(`(^|\\W)${escapedTerm}(\\W|$)`, 'i');
 
-      // Check for exact matches (full-term match within the subject)
-      if (
-        lowerCaseSubject.includes(lowerCaseTerm) &&
-        (lowerCaseSubject === lowerCaseTerm ||
-          lowerCaseSubject.startsWith(lowerCaseTerm + ' ') ||
-          lowerCaseSubject.endsWith(' ' + lowerCaseTerm) ||
-          lowerCaseSubject.includes(' ' + lowerCaseTerm + ' '))
-      ) {
+      if (regex.test(lowerSubject)) {
+        // Found a disallowed term as a separate token
         return false;
       }
     }
 
-    return true; // Allow if no matches are found
+    // No disallowed terms found as exact matches
+    return true;
   }
 
   private static async getSortedKeys(kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.Message<OpenPGP.Data>): Promise<SortedKeysForDecrypt> {

@@ -164,7 +164,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string; pwd?: string }) => {
     const disallowedPasswordMessageTerms = this.view.clientConfiguration.getDisallowPasswordMessagesForTerms();
     const disallowedPasswordMessageErrorText = this.view.clientConfiguration.getDisallowPasswordMessagesErrorText();
-    if (disallowedPasswordMessageErrorText && disallowedPasswordMessageTerms && !MsgUtil.isPasswordMesageEnabled(subject, disallowedPasswordMessageTerms)) {
+    if (disallowedPasswordMessageErrorText && disallowedPasswordMessageTerms && !MsgUtil.isPasswordMessageEnabled(subject, disallowedPasswordMessageTerms)) {
       throw new ComposerUserError(linkifyHtml(disallowedPasswordMessageErrorText, { target: '_blank' }));
     }
     // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
