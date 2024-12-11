@@ -237,6 +237,43 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'user@disallow-password-message-terms.flowcrypt.test - disallow password  protected message terms',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'user@disallow-password-message-terms.flowcrypt.test';
+        const rules = getKeyManagerAutogenRules(t.context.urls!.port!);
+        const disallowedPasswordMessageErrorText = 'Password-protected messages are disabled. Please check https://test.com';
+
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.existingPrv],
+          },
+          fes: {
+            clientConfiguration: {
+              ...rules,
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_password_messages_for_terms: ['forbidden', 'test'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_password_messages_error_text: disallowedPasswordMessageErrorText,
+            },
+          },
+        });
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'test@gmail.com' }, 'forbidden subject');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await PageRecipe.checkModalLink(composePage, 'error', 'https://test.com');
+        await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+          contentToCheck: disallowedPasswordMessageErrorText,
+          clickOn: 'confirm',
+        });
+      })
+    );
+
+    test(
       'compose - signed with entered pass phrase + will remember pass phrase in session',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';

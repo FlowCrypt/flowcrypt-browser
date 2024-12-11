@@ -904,6 +904,31 @@ ${testConstants.smimeCert}`),
       t.pass();
     });
 
+    test('[unit][MsgUtil.isPasswordMesageEnabled] test password protected message compliance', async t => {
+      const disallowTerms = ['[Classification: Data Control: Internal Data Control]', 'droid', 'forbidden data'];
+
+      const subjectsToTestObj: { [key: string]: boolean } = {
+        '[Classification: Data Control: Internal Data Control] Quarter results': false,
+        'Conference information [Classification: Data Control: Internal Data Control]': false,
+        'Classification: Data Control: Internal Data Control - Tomorrow meeting': true,
+        'Internal Data Control - Finance monitoring': true,
+        // term check should work only for exact matches - if we have droid in the list of strings,
+        // password-protected messages shouldn't be disabled for subjects with Android word
+        'Android phone update': true,
+        'droid phone': false,
+        // Check for case insensitive
+        'DROiD phone': false,
+        '[forbidden data] year results': false,
+      };
+
+      for (const subject of Object.keys(subjectsToTestObj)) {
+        const expectedValue = subjectsToTestObj[subject];
+        const result = MsgUtil.isPasswordMessageEnabled(subject, disallowTerms);
+        expect(expectedValue).to.equal(result);
+      }
+      t.pass();
+    });
+
     test('[unit][KeyUtil.parse] Correctly extracting email from SubjectAltName of S/MIME certificate', async t => {
       /*
             // generate a key pair
