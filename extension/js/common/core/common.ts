@@ -129,7 +129,7 @@ export class Str {
   };
 
   public static prettyPrint = (obj: unknown) => {
-    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj as unknown);
   };
 
   public static normalizeSpaces = (str: string) => {

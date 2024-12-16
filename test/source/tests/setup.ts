@@ -2383,7 +2383,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const fromEmailHeaderLine = rawMessage.headerLines[2].line;
         const toEmailHeaderLine = rawMessage.headerLines[3].line;
-        const subjectLine = String(rawMessage.headers.get('subject'));
+        const subjectLine = String(rawMessage.headers.get('subject') as unknown);
         const adminPrivateKey = testConstants.prvBackupToDesignatedMailboxTestPrvKey;
         const parsedAdminPrivateKey = await KeyUtil.parse(adminPrivateKey);
         const passphrase = 'super hard to guess passphrase';
