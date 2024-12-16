@@ -49,6 +49,8 @@ export type FesClientConfiguration = {
   allow_keys_openpgp_org_search_only_for_domains?: string[];
   disallow_keys_openpgp_org_search_for_domains?: string[];
   prv_backup_to_designated_mailbox?: string;
+  disallow_password_messages_for_terms?: string[];
+  disallow_password_messages_error_text?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
