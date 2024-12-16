@@ -368,7 +368,7 @@ export class Catch {
   private static formExceptionFromThrown(thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error {
     let exception: Error;
     if (typeof thrown !== 'object') {
-      exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown)}`);
+      exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown as unknown)}`);
     } else if (errMsg && url && typeof line !== 'undefined' && !col && !thrown && !isManuallyCalled) {
       exception = new Error(`LIMITED_ERROR: ${errMsg}`);
     } else if (thrown instanceof Error) {

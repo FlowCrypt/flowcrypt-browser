@@ -314,7 +314,7 @@ export class Api {
           .then(data => {
             resolve(data as FetchResult<T, RT>);
           })
-          // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+
           .catch(reject);
       });
     } catch (e) {

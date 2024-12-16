@@ -20,7 +20,7 @@ export class BrowserExtension {
     try {
       bugReport.details = JSON.stringify(details, undefined, 2);
     } catch (e) {
-      bugReport.details_as_string = String(details);
+      bugReport.details_as_string = String(details as unknown);
       bugReport.details_serialization_error = String(e);
     }
     let result = '';
