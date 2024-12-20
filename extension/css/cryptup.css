@@ -1592,6 +1592,13 @@ td {
   align-items: center;
 }
 
+.pgp-invalid-checksum {
+  border-left: 3px solid #d18826;
+  color: #d18826;
+  margin: 10px 0;
+  padding-left: 5px;
+}
+
 .pgp_badge {
   opacity: 1;
   margin-bottom: 1em;
