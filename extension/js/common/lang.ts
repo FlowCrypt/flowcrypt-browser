@@ -93,6 +93,8 @@ export const Lang = {
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
     pwdMsgAskSenderUsePubkey: 'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
+    invalidCheckSum:
+      'Warning: Checksum mismatch detected.\nThis indicates the message may have been altered or corrupted during transmission.\nDecryption may still succeed, but verify the message source and integrity if possible.',
   },
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
