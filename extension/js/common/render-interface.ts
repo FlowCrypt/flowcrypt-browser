@@ -24,7 +24,7 @@ export interface RenderInterface extends RenderInterfaceBase {
   renderPassphraseNeeded(longids: string[]): void;
   renderErr(errBoxContent: string, renderRawMsg: string | undefined, errMsg?: string): void;
   renderInnerAttachments(attachments: TransferableAttachment[], isEncrypted: boolean): void;
-  separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean, isCheckSumInvalid: boolean): void;
+  separateQuotedContentAndRenderText(decryptedContent: string, isHtml: boolean, isChecksumInvalid: boolean): void;
   renderVerificationInProgress(): void;
   renderSignatureOffline(retry: () => void): void;
 }

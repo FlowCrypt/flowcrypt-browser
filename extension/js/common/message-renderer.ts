@@ -522,7 +522,7 @@ export class MessageRenderer {
     renderModule: RenderInterface,
     retryVerification: (() => Promise<VerifyRes | undefined>) | undefined,
     plainSubject: string | undefined,
-    isCheckSumInvalid = false
+    isChecksumInvalid = false
   ): Promise<{ publicKeys?: string[] }> => {
     if (isEncrypted) {
       renderModule.renderEncryptionStatus('encrypted');
@@ -604,7 +604,7 @@ export class MessageRenderer {
       );
     }
     decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
-    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml, isCheckSumInvalid);
+    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml, isChecksumInvalid);
     await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, Boolean(signerEmail), retryVerification);
     if (renderableAttachments.length) {
       renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);

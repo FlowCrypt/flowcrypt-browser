@@ -111,7 +111,7 @@ export class PgpBlockView extends View {
       this.quoteModule.separateQuotedContentAndRenderText(
         data.separateQuotedContentAndRenderText.decryptedContent,
         data.separateQuotedContentAndRenderText.isHtml,
-        data.separateQuotedContentAndRenderText.isCheckSumInvalid
+        data.separateQuotedContentAndRenderText.isChecksumInvalid
       );
     }
     if (data?.setFrameColor) {

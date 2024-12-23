@@ -46,17 +46,16 @@ export class PgpBlockViewRenderModule {
     });
   };
 
-  public renderContent = (htmlContent: string, isErr: boolean, isCheckSumInvalid = false) => {
+  public renderContent = (htmlContent: string, isErr: boolean, isChecksumInvalid = false) => {
     let contentWithLink = linkifyHtml(htmlContent);
-
+    if (isChecksumInvalid) {
+      contentWithLink = `<div class="pgp-invalid-checksum">${Lang.pgpBlock.invalidCheckSum}</div>${contentWithLink}}`;
+    }
     // Temporary workaround for an issue where 'cryptup_reply' divs are not being hidden when replying to all
     // messages from the FES. The root cause is that FES currently returns the body of
     // password message replies as 'text/plain', which does not hide the divs as intended.
     // This workaround can be safely removed once the FES is updated to return the body of message replies as 'text/html'.
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5004
-    if (isCheckSumInvalid) {
-      contentWithLink = `<div class="pgp-invalid-checksum">${Lang.pgpBlock.invalidCheckSum}</div>${contentWithLink}}`;
-    }
     const regEx = /&lt;div[^&]*class="[^"]*cryptup_reply[^"]*"[^&]*&gt;&lt;\/div&gt;/g;
     contentWithLink = contentWithLink.replace(regEx, match => {
       return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>');

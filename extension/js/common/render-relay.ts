@@ -78,8 +78,8 @@ export class RenderRelay implements RenderInterface {
     this.relay({ resizePgpBlockFrame: true });
   };
 
-  public separateQuotedContentAndRenderText = (decryptedContent: string, isHtml: boolean, isCheckSumInvalid: boolean) => {
-    this.relay({ separateQuotedContentAndRenderText: { decryptedContent, isHtml, isCheckSumInvalid } });
+  public separateQuotedContentAndRenderText = (decryptedContent: string, isHtml: boolean, isChecksumInvalid: boolean) => {
+    this.relay({ separateQuotedContentAndRenderText: { decryptedContent, isHtml, isChecksumInvalid } });
   };
 
   public renderText = (text: string) => {
