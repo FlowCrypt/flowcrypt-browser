@@ -267,7 +267,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
+      'user4@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
       testWithBrowser(
         async (t, browser) => {
           t.context.mockApi!.configProvider = new ConfigurationProvider({

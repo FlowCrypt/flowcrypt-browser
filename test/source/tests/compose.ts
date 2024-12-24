@@ -3062,7 +3062,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal',
+      'user@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal',
       testWithBrowser(async (t, browser) => {
         const port = t.context.urls?.port;
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -3122,7 +3122,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering',
+      'user2@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES - Reply rendering',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -3218,7 +3218,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc',
+      'user3@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal - pubkey recipient in bcc',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -3255,7 +3255,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
+      'user4@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal - a send fails with gateway update error',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {

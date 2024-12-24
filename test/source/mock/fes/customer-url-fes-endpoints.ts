@@ -80,7 +80,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
     '/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
+        // test: `compose - user@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal`
         authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
@@ -90,7 +90,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
     '/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
-        // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
+        // test: `compose - user2@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES - Reply rendering`
         authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
@@ -100,10 +100,10 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
     '/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
-        // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
-        // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
-        // test: `compose - user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
+        // test: `compose - user@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal`
+        // test: `compose - user2@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES - Reply rendering`
+        // test: `compose - user3@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal - pubkey recipient in bcc`
+        // test: `compose - user4@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
         authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
@@ -113,7 +113,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
     '/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
       const port = parsePort(req);
       if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
+        // test: `compose - user@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal`
         authenticate(req, isCustomIDPUsed);
         expect(body).to.match(messageIdRegex(port));
         return {};
@@ -121,7 +121,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       throw new HttpClientErr('Not Found', 404);
     },
     '/api/v1/message/FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID/gateway': async () => {
-      // test: `user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error`
+      // test: `user4@standardsubdomainfes.localhost:{port} - PWD encrypted message with FES web portal - a send fails with gateway update error`
       throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
     },
   };
