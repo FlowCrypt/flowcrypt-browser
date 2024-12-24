@@ -1882,7 +1882,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           browser,
           threadId,
           {
-            content: [expectedContent],
+            content: [expectedContent, 'Warning: Checksum mismatch detected'],
             encryption: 'encrypted',
           },
           authHdr
