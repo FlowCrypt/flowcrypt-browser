@@ -133,7 +133,7 @@ const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
       const input = JSON.stringify(item.input);
       const output = JSON.stringify(item.output, undefined, 2);
       const file = `./test/tmp/${t.title}-${i}.txt`;
-      writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+      await writeFile(file, `in: ${input}\n\nout: ${output}`);
       t.log(`browser debug written to file: ${file}`);
     }
   } catch (e) {
@@ -224,7 +224,7 @@ test.afterEach.always('finalize', async t => {
       const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
-      writeFileSync(filePath, debugHtmlAttachments[i]);
+      await writeFile(filePath, debugHtmlAttachments[i]);
       try {
         await asyncExec(`artifact push job ${filePath}`);
       } catch {
