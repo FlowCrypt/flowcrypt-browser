@@ -8,7 +8,8 @@ import { BrowserHandle, BrowserPool } from './browser';
 import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'fs';
+import { mkdirSync, realpathSync } from 'fs';
+import { readFile, writeFile } from 'fs/promises';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
 import { defineComposeTests } from './tests/compose';
@@ -108,8 +109,9 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
     const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
     const filepath = `${buildDir}/js/common/core/const.js`;
 
-    const updatedCode = readFileSync(filepath, { encoding: 'utf-8' }).replace(/const (MOCK_PORT) = [^;]+;/g, `const $1 = '${address.port}';`);
-    writeFileSync(filepath, updatedCode);
+    const fileContent = await readFile(filepath, { encoding: 'utf-8' });
+    const updatedCode = fileContent.replace(/const (MOCK_PORT) = [^;]+;/g, `const $1 = '${address.port}';`);
+    await writeFile(filepath, updatedCode);
     t.context.extensionDir = result.stdout;
     t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
