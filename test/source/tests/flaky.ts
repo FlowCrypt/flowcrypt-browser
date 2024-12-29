@@ -245,6 +245,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
           selectKeyAlgo: 'rsa3072',
           key: { passphrase: 'long enough to suit requirements' },
+          submitPubkey: false,
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
 
@@ -253,6 +254,8 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           t,
           `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`
         );
+        await myKeyFrame.waitAll(['@container-shareable-pubkey-link']);
+        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.equal(false);
         const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
         // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const longid = fingerprint.substring(fingerprint.length - 16);
