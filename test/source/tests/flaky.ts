@@ -110,13 +110,9 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const fingerprint = '4BD89F39E74396AE462B97EE825B8AE8B14CFC0E';
-        const myKeyFrame = await browser.newPage(
-          t,
-          `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`
-        );
-        await myKeyFrame.waitAll(['@container-shareable-pubkey-link']);
-        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.equal(true);
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyFrame = await settingsPage.getFrame(['my_key.htm']);
+        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.be.true;
       })
     );
 
