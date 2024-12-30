@@ -258,13 +258,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           t,
           `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`
         );
-        await myKeyFrame.waitAll(['@container-shareable-pubkey-link']);
-        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.equal(false);
+        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.be.false;
         const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
         // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const longid = fingerprint.substring(fingerprint.length - 16);
         const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
-
         const key = await KeyUtil.parse(downloadedFiles[fileName].toString());
         expect(key.algo.bits).to.equal(3072);
         expect(key.algo.algorithm).to.equal('rsaEncryptSign');
