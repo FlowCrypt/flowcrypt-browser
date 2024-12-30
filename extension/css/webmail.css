@@ -5,7 +5,7 @@
   display: inline-flex;
   align-items: center;
   width: auto;
-  height: 48px;
+  height: 56px;
   margin: 0;
   padding: 0 24px 0 0;
   transition: box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -15,7 +15,7 @@
   line-height: 32px;
   background-color: #fff;
   border: none;
-  border-radius: 24px;
+  border-radius: 16px;
   box-shadow:
     0 1px 2px 0 rgb(60 64 67 / 30%),
     0 1px 3px 1px rgb(60 64 67 / 15%);
@@ -65,7 +65,7 @@
 .bhZ:not(.bym) #flowcrypt_secure_compose_button_icon {
   width: 56px;
   height: 56px;
-  border-radius: 28px;
+  border-radius: 16px;
   font-size: 0;
   padding: 0;
 }
