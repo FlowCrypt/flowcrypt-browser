@@ -9,9 +9,10 @@ import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeo
 import { Util, getParsedCliParams } from './util';
 
 import { mkdirSync, realpathSync } from 'fs';
-import { readFile, writeFile } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
+import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 import { defineComposeTests } from './tests/compose';
 import { defineContentScriptTests } from './tests/content-script';
 import { defineDecryptTests } from './tests/decrypt';
@@ -22,7 +23,6 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
-import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -107,11 +107,6 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   const address = mockApi.server.address();
   if (typeof address === 'object' && address) {
     const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
-    const filepath = `${buildDir}/js/common/core/const.js`;
-
-    const fileContent = await readFile(filepath, { encoding: 'utf-8' });
-    const updatedCode = fileContent.replace(/const (MOCK_PORT) = [^;]+;/g, `const $1 = '${address.port}';`);
-    await writeFile(filepath, updatedCode);
     t.context.extensionDir = result.stdout;
     t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
