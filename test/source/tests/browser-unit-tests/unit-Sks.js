@@ -23,7 +23,7 @@
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - trailing slash`);
 (async () => {
   const email = 'john.doe@example.com';
-  const sks = new Sks('https://localhost:8001/');
+  const sks = new Sks(`https://localhost:${MOCK_PORT}/`);
   const { pubkey } = await sks.lookupEmail(email);
   const key = await KeyUtil.parse(pubkey);
   if (key.id !== '094C3CBA696FA009F6015C473B635D858A1DB5E0') {
@@ -35,7 +35,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - trailing slash`);
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - no trailing slash`);
 (async () => {
   const email = 'john.doe@example.com';
-  const sks = new Sks('https://localhost:8001');
+  const sks = new Sks(`https://localhost:${MOCK_PORT}`);
   const { pubkey } = await sks.lookupEmail(email);
   const key = await KeyUtil.parse(pubkey);
   if (key.id !== '094C3CBA696FA009F6015C473B635D858A1DB5E0') {
@@ -62,7 +62,7 @@ BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - server down`);
 BROWSER_UNIT_TEST_NAME(`Sks lookup pubkey - not found`);
 (async () => {
   const email = 'nobody@example.com';
-  const sks = new Sks('https://localhost:8001/');
+  const sks = new Sks(`https://localhost:${MOCK_PORT}/`);
   const { pubkey } = await sks.lookupEmail(email);
   if (pubkey !== null) {
     throw Error(`expected pubkey=null but got ${pubkey}`);

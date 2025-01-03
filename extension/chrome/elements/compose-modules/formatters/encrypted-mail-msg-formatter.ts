@@ -124,7 +124,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const pubkeyMsgData = {
         ...newMsg,
         recipients: pubkeyRecipients,
-        // brackets are required for test emails like '@test:8001'
+        // brackets are required for test emails like '@test'
         replyTo: replyToForMessageSentToPubkeyRecipients.length
           ? Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)
           : undefined,

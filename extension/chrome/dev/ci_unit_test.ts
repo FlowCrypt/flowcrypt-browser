@@ -55,4 +55,6 @@ for (const lib of libs) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   (window as any)[(lib as any).name] = lib;
 }
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+(window as any).MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 /* eslint-enable @typescript-eslint/no-explicit-any */

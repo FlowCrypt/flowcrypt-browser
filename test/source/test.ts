@@ -8,9 +8,11 @@ import { BrowserHandle, BrowserPool } from './browser';
 import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
-import { mkdirSync, realpathSync, writeFileSync } from 'fs';
+import { mkdirSync, realpathSync } from 'fs';
+import { writeFile } from 'fs/promises';
 import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
+import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 import { defineComposeTests } from './tests/compose';
 import { defineContentScriptTests } from './tests/content-script';
 import { defineDecryptTests } from './tests/decrypt';
@@ -21,7 +23,6 @@ import { defineSettingsTests } from './tests/settings';
 import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
-import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 
 export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
@@ -106,7 +107,6 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   const address = mockApi.server.address();
   if (typeof address === 'object' && address) {
     const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
-
     t.context.extensionDir = result.stdout;
     t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
@@ -128,7 +128,7 @@ const saveBrowserLog = async (t: AvaContext, browser: BrowserHandle) => {
       const input = JSON.stringify(item.input);
       const output = JSON.stringify(item.output, undefined, 2);
       const file = `./test/tmp/${t.title}-${i}.txt`;
-      writeFileSync(file, `in: ${input}\n\nout: ${output}`);
+      await writeFile(file, `in: ${input}\n\nout: ${output}`);
       t.log(`browser debug written to file: ${file}`);
     }
   } catch (e) {
@@ -219,7 +219,7 @@ test.afterEach.always('finalize', async t => {
       const fileName = `debugHtmlAttachment-${testVariant}-${failRnd}-${i}.html`;
       const filePath = `${debugArtifactDir}/${fileName}`;
       console.info(`Writing debug file ${fileName}`);
-      writeFileSync(filePath, debugHtmlAttachments[i]);
+      await writeFile(filePath, debugHtmlAttachments[i]);
       try {
         await asyncExec(`artifact push job ${filePath}`);
       } catch {

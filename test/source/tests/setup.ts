@@ -2269,7 +2269,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'user@standardsubdomainfes.localhost:8001 - uses FES on standard domain',
+      'user@standardsubdomainfes.localhost - uses FES on standard domain',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
