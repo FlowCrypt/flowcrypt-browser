@@ -13,6 +13,8 @@ import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
+import { Buf } from '../../js/common/core/buf.js';
+import { OpenPGPKey } from '../../js/common/core/crypto/pgp/openpgp-key.js';
 
 // todo - this should use KeyImportUI for consistency.
 View.run(
@@ -71,7 +73,7 @@ View.run(
           !this.firstParsedPublicKey.usableForEncryption &&
           !this.firstParsedPublicKey.usableForSigning
         ) {
-          this.showKeyNotUsableError();
+          await this.showKeyNotUsableError();
         } else {
           let emailText = '';
           if (this.parsedPublicKeys.length === 1) {
@@ -116,7 +118,7 @@ View.run(
             frameId: this.frameId,
           });
         } else {
-          this.showKeyNotUsableError();
+          await this.showKeyNotUsableError();
         }
       }
       this.sendResizeMsg();
@@ -135,6 +137,21 @@ View.run(
         'click',
         this.setHandler(btn => this.showFullKeyHandler(btn))
       );
+    };
+
+    private getErrorText = async () => {
+      let errorStr = '';
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(this.armoredPubkey));
+      for (const err of errs) {
+        errorStr += `Error parsing input: ${String(err)}`;
+      }
+      for (const key of keys) {
+        const errorText = await OpenPGPKey.checkPublicKeyError(key);
+        if (errorText) {
+          errorStr += `${errorText}\n`;
+        }
+      }
+      return errorStr;
     };
 
     private sendResizeMsg = () => {
@@ -167,8 +184,9 @@ View.run(
       }
     };
 
-    private showKeyNotUsableError = () => {
+    private showKeyNotUsableError = async () => {
       $('.error_container').removeClass('hidden');
+      $('.error_introduce_label').text(`This OpenPGP key is not usable.\n${await this.getErrorText()}`);
       $('.hide_if_error').hide();
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
       const email = this.firstParsedPublicKey?.emails[0];
