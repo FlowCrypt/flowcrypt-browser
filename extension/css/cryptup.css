@@ -1629,6 +1629,10 @@ td {
   display: none;
 }
 
+#pgp_block.pgp_pubkey .action_show_full {
+  width: 118px;
+}
+
 #pgp_block .three_dots {
   text-align: center;
   width: 25px;

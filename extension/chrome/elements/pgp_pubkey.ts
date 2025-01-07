@@ -142,13 +142,17 @@ View.run(
     private getErrorText = async () => {
       let errorStr = '';
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(this.armoredPubkey));
-      for (const err of errs) {
-        errorStr += `Error parsing input: ${String(err)}`;
-      }
+      errorStr = errs.join('\n');
       for (const key of keys) {
-        const errorText = await OpenPGPKey.checkPublicKeyError(key);
-        if (errorText) {
-          errorStr += `${errorText}\n`;
+        const errorMessage = await OpenPGPKey.checkPublicKeyError(key);
+        if (errorMessage) {
+          const match = new RegExp(/Error encrypting message: (.+)$/).exec(errorMessage);
+          // remove `error: error encrypting message: part`, so error message will begin directly from error reason
+          if (match) {
+            errorStr += match[1];
+          } else {
+            errorStr += errorMessage;
+          }
         }
       }
       return errorStr;
@@ -186,7 +190,7 @@ View.run(
 
     private showKeyNotUsableError = async () => {
       $('.error_container').removeClass('hidden');
-      $('.error_introduce_label').text(`This OpenPGP key is not usable.\n${await this.getErrorText()}`);
+      $('.error_introduce_label').html(`This OpenPGP key is not usable.<br/><small>(${await this.getErrorText()})</small>`); // xss-escaped
       $('.hide_if_error').hide();
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
       const email = this.firstParsedPublicKey?.emails[0];
