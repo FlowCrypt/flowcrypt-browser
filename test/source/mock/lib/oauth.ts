@@ -5,8 +5,9 @@ import { HttpClientErr, Status } from './api';
 import { Buf } from '../../core/buf';
 import { Str } from '../../core/common';
 import { issuedCustomIDPIdTokens, issuedGoogleIDPIdTokens } from '../fes/customer-url-fes-endpoints';
+import { MOCK_PORT } from '../../core/const';
 
-const authURL = 'https://localhost:8001';
+const authURL = `https://localhost:${MOCK_PORT}`;
 
 export class OauthMock {
   public static customIDPClientId = 'custom-test-idp-client-id';
