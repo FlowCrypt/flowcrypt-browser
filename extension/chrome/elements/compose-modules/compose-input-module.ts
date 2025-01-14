@@ -301,17 +301,15 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     const result: ParsedRecipients = { to: [], cc: [], bcc: [] };
     for (const recipient of recipients) {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      // Setting recipient name to empty string as a hotfix - https://github.com/FlowCrypt/enterprise-server/issues/6264
-      const defaultName = '';
       switch (recipient.sendingType) {
         case 'to':
-          result.to!.push({ email: recipient.email, name: defaultName });
+          result.to!.push({ email: recipient.email, name: recipient.name });
           break;
         case 'cc':
-          result.cc!.push({ email: recipient.email, name: defaultName });
+          result.cc!.push({ email: recipient.email, name: recipient.name });
           break;
         case 'bcc':
-          result.bcc!.push({ email: recipient.email, name: defaultName });
+          result.bcc!.push({ email: recipient.email, name: recipient.name });
           break;
       }
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
