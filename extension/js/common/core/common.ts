@@ -283,7 +283,12 @@ export class Str {
   };
   private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
     if (name) {
-      return `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>`;
+      /*
+       * hotfix for issue https://github.com/FlowCrypt/enterprise-server/issues/6264
+       * this replaces accented characters with their unaccented counterparts
+       */
+      const normalizedName = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return `${Str.rmSpecialCharsKeepUtf(normalizedName, 'ALLOW-SOME')} <${email}>`;
     }
     return forceBrackets ? `<${email}>` : email;
   };
