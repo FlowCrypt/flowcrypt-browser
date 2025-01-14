@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
+const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
@@ -122,8 +123,8 @@ addManifest('chrome-enterprise', manifest => {
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
-  'chrome-consumer': 'https://localhost:8001',
-  'chrome-enterprise': 'https://google.mock.localhost:8001',
+  'chrome-consumer': `https://localhost:${MOCK_PORT}`,
+  'chrome-enterprise': `https://google.mock.localhost:${MOCK_PORT}`,
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
@@ -161,7 +162,7 @@ const updateEnterpriseBuild = () => {
 
 const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
-  const mockGmailPageHost = 'gmail.localhost:8001';
+  const mockGmailPageHost = `gmail.localhost:${MOCK_PORT}`;
   const mockGmailPage = `https://${mockGmailPageHost}`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
@@ -170,11 +171,11 @@ const makeMockBuild = (sourceBuildType: string) => {
         /const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g,
         `const $1 = '${MOCK_HOST[sourceBuildType]}';`
       )
-      .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
-      .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
-      .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/keys-openpgp-org/';`)
-      .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/shared-tenant-fes';`)
-      .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:8001';`);
+      .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/api/';`)
+      .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/attester/';`)
+      .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/keys-openpgp-org/';`)
+      .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/shared-tenant-fes';`)
+      .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:${MOCK_PORT}';`);
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
@@ -182,7 +183,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
     code
       .replace(/https:\/\/mail\.google\.com/g, mockGmailPage)
-      .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
+      .replace(/https:\/\/www\.google\.com/g, `https://google.localhost:${MOCK_PORT}`)
       .replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
   );
 };

@@ -489,6 +489,60 @@ export class KeyUtil {
     return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
   }
 
+  public static validateChecksum = (armoredText: string): boolean => {
+    const lines = armoredText.split('\n').map(l => l.trim());
+
+    // Filter out known non-data lines
+    const dataCandidates = lines.filter(line => line.length > 0 && !line.startsWith('-----') && !line.startsWith('Version:') && !line.startsWith('Comment:'));
+
+    // Find checksum line
+    const checksumIndex = dataCandidates.findIndex(line => line.startsWith('='));
+    if (checksumIndex === -1) return false;
+
+    const checksumLine = dataCandidates[checksumIndex].slice(1);
+    const dataLines = dataCandidates.slice(0, checksumIndex);
+
+    // Decode checksum
+    let providedBytes: string;
+    try {
+      providedBytes = atob(checksumLine);
+    } catch {
+      return false;
+    }
+    if (providedBytes.length !== 3) return false;
+
+    const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
+
+    // Attempt to decode all data lines (some may not be base64)
+    const decodedChunks: string[] = [];
+    for (const line of dataLines) {
+      try {
+        decodedChunks.push(atob(line));
+      } catch {
+        // Not a valid base64 line, skip it
+      }
+    }
+
+    if (decodedChunks.length === 0) return false;
+
+    const rawData = decodedChunks.join('');
+    const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+
+    return KeyUtil.crc24(dataBytes) === providedCRC;
+  };
+
+  private static crc24 = (dataBytes: Uint8Array): number => {
+    let crc = 0xb704ce;
+    for (const dataByte of dataBytes) {
+      crc ^= dataByte << 16;
+      for (let j = 0; j < 8; j++) {
+        crc <<= 1;
+        if (crc & 0x1000000) crc ^= 0x1864cfb;
+      }
+    }
+    return crc & 0xffffff;
+  };
+
   private static getSortValue(pubinfo: PubkeyInfo): number {
     const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration;
     // sort non-revoked first, then non-expired

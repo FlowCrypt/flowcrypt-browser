@@ -246,7 +246,14 @@ export class Api {
       } else if (resFmt === 'json') {
         try {
           const transformed = transformResponseWithProgressAndTimeout();
-          return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+          return (
+            await Promise.all([
+              transformed.response.text().then(text => {
+                return (text ? JSON.parse(text) : {}) as T; // Handle empty response body
+              }),
+              transformed.pipe(),
+            ])
+          )[0] as FetchResult<T, RT>;
         } catch (e) {
           // handle empty response https://github.com/FlowCrypt/flowcrypt-browser/issues/5601
           if (e instanceof SyntaxError && (e.message === 'Unexpected end of JSON input' || e.message.startsWith('JSON.parse: unexpected end of data'))) {
