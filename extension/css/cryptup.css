@@ -3321,7 +3321,7 @@ body#select_account {
   width: 340px;
   padding: 0;
   font-size: 14px;
-  zoom: reset;
+  zoom: 1;
 }
 
 body#select_account #title {
@@ -3362,7 +3362,6 @@ body#select_account .emails li a {
   text-transform: none;
   color: #337ab7;
   transition: 0.5s;
-  letter-spacing: 0.35;
   font-weight: 600;
 }
 
