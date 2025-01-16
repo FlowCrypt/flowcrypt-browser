@@ -61,7 +61,7 @@ const registerCompletionHandler = () => {
   dynamicImport('ava').then((module: { registerCompletionHandler: (handler: () => void) => void }) => {
     const { registerCompletionHandler } = module;
     registerCompletionHandler(() => {
-      process.exit();
+      process.exit(0);
     });
   });
 };
