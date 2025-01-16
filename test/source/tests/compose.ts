@@ -41,7 +41,7 @@ import {
   processMessageFromUser4,
 } from '../mock/fes/fes-constants';
 import { Buf } from '../core/buf';
-import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature } from '../mock/google/google-endpoints';
+import { flowcryptCompatibilityAliasList, flowcryptCompatibilityPrimarySignature, multipleEmailAliasList } from '../mock/google/google-endpoints';
 import { standardSubDomainFesClientConfiguration } from '../mock/fes/customer-url-fes-endpoints';
 import { OauthMock } from '../mock/lib/oauth';
 
@@ -81,6 +81,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.fillMsg(composePage, { to: recipientEmail }, subject);
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
         // The actualt test for this is present in '/shared-tenant-fes/api/v1/message' of shared-tenant-fes mock endpoint.
+      })
+    );
+
+    test(
+      'compose - signature changed correctly when user changes from address',
+      testWithBrowser(async (t, browser) => {
+        const primarySignature = 'Test primary signature';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: multipleEmailAliasList, acctPrimarySignature: 'Test primary signature' },
+        });
+
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        let emailBody = await composePage.read('@input-body');
+        expect(emailBody).to.contain(primarySignature);
+        // Select alias email and check if signature changes
+        await ComposePageRecipe.selectFromOption(composePage, 'alias2@example.com');
+        emailBody = await composePage.read('@input-body');
+        expect(emailBody).to.contain('Test signature 2');
+        expect(emailBody).to.not.contain(primarySignature);
       })
     );
 
@@ -212,6 +231,43 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
           contentToCheck: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
+          clickOn: 'confirm',
+        });
+      })
+    );
+
+    test(
+      'user@disallow-password-message-terms.flowcrypt.test - disallow password  protected message terms',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'user@disallow-password-message-terms.flowcrypt.test';
+        const rules = getKeyManagerAutogenRules(t.context.urls!.port!);
+        const disallowedPasswordMessageErrorText = 'Password-protected messages are disabled. Please check https://test.com';
+
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+          ekm: {
+            keys: [testConstants.existingPrv],
+          },
+          fes: {
+            clientConfiguration: {
+              ...rules,
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_password_messages_for_terms: ['forbidden', 'test'],
+              // eslint-disable-next-line @typescript-eslint/naming-convention
+              disallow_password_messages_error_text: disallowedPasswordMessageErrorText,
+            },
+          },
+        });
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.autoSetupWithEKM(settingsPage);
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acct);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'test@gmail.com' }, 'forbidden subject');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await PageRecipe.checkModalLink(composePage, 'error', 'https://test.com');
+        await PageRecipe.waitForModalAndRespond(composePage, 'error', {
+          contentToCheck: disallowedPasswordMessageErrorText,
           clickOn: 'confirm',
         });
       })
@@ -550,7 +606,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.close();
         // test the pubkeys we copied
         const contact = await dbPage.page.evaluate(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, 'manualcopypgp@flowcrypt.com');
         });
         expect(contact.sortedPubkeys.length).to.equal(2);
@@ -816,7 +872,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           });
           await composeFrame.waitAndClick('@action-send', { delay: 2 });
           const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-          expect(passphraseDialog.frame.isDetached()).to.equal(false);
+          expect(passphraseDialog.frame.detached).to.equal(false);
           await Util.sleep(0.5);
           expect(await composeFrame.read('@action-send')).to.eq('Signing...');
           await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
@@ -847,7 +903,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           );
           await composeFrame.waitAndClick('@action-send', { delay: 2 });
           const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-          expect(passphraseDialog.frame.isDetached()).to.equal(false);
+          expect(passphraseDialog.frame.detached).to.equal(false);
           await composeFrame.waitForContent('@action-send', 'Loading...');
           await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
           await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
@@ -878,7 +934,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-        expect(passphraseDialog.frame.isDetached()).to.equal(false);
+        expect(passphraseDialog.frame.detached).to.equal(false);
         await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
         await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
         await passphraseDialog.waitAndType('@input-pass-phrase', forgottenPassphrase);
@@ -1667,7 +1723,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
         const footer = await composePage.read('@input-body');
-        expect(footer).to.eq('\n\n\n\n--\n\nflowcrypt.compatibility test footer with an img\n\nand second line\n');
+        expect(footer).to.eq('\n\n\n--\nflowcrypt.compatibility test footer with an img\nand second line');
         await composePage.waitAndClick(`@action-send`);
         expect(await composePage.read('.swal2-html-container')).to.include('Send empty message?');
         await composePage.waitAndClick('.swal2-cancel');
@@ -1764,7 +1820,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           richtext: true,
         });
         await composePage.page.evaluate((src: string) => {
-          $('[data-test=action-insert-image]').val(src).click();
+          $('[data-test=action-insert-image]').val(src).trigger('click');
         }, imgBase64);
         await ComposePageRecipe.waitWhenDraftIsSaved(composePage);
         await composePage.close();
@@ -2134,8 +2190,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await attachment.waitAndClick('@download-attachment');
         await attachment.waitAndClick('@decrypt-error-details');
         const decryptErrorDetails = await inboxPage.getFrame(['attachment_preview.htm']);
-        await decryptErrorDetails.waitForContent('@error-details', 'Error: Session key decryption failed'); // stack
-        await decryptErrorDetails.waitForContent('@error-details', '"type": "key_mismatch"'); // DecryptError
+        await decryptErrorDetails.waitForContent('@error-details', 'Error: No decryption key packets found'); // stack
+        await decryptErrorDetails.waitForContent('@error-details', '"type": "other"'); // DecryptError
       })
     );
 
@@ -2547,11 +2603,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // contains original key
         await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', 'AB8C F86E 3715 7C3F 290D 7200 7ED4 3D79 E961 7655');
         // contains newly fetched key
-        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', '8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
-        await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
+        await SettingsPageRecipe.checkContactKey(contactsFrame, 'OPENPGP', 'ACTIVE', '8C4C 1FCC 779F 3577 29D1 94EC EA22 5AA5 1CA8 5E0A');
+        await contactsFrame.waitAndClick(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`, {
           confirmGone: true,
         });
-        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8C4C 1FCC 779F 3577 29D1 94EC EA22 5AA5 1CA8 5E0A');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Users: tom@bitoasis.net');
       })
     );
@@ -2673,10 +2729,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAll('@page-contacts');
         await contactsFrame.waitAndClick(`@action-show-email-${recipientEmail.replace(/[^a-z0-9]+/g, '')}`);
         // Check protonMailCompatKey key
-        await contactsFrame.waitAndClick(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`, {
+        await contactsFrame.waitAndClick(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`, {
           confirmGone: true,
         });
-        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8B8A 05A2 216E E6E4 C5EE 3D54 0D56 88EB F310 2BE7');
+        await contactsFrame.waitForContent('@container-pubkey-details', 'Fingerprint: 8C4C 1FCC 779F 3577 29D1 94EC EA22 5AA5 1CA8 5E0A');
         await contactsFrame.waitForContent('@container-pubkey-details', 'Users: tom@bitoasis.net');
         // Check somePubkey
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
@@ -2787,10 +2843,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await contactsFrame.waitAll('@page-contacts');
         // Check test.ldap.timeout@gmail.com
         await contactsFrame.waitAndClick(`@action-show-email-${recipients.to.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+        await contactsFrame.waitAny(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`);
         // Check test.flowcrypt.pubkey.timeout@gmail.com
         await contactsFrame.waitAndClick(`@action-show-email-${recipients.cc.replace(/[^a-z0-9]+/g, '')}`);
-        await contactsFrame.waitAny(`@action-show-pubkey-8B8A05A2216EE6E4C5EE3D540D5688EBF3102BE7-openpgp`);
+        await contactsFrame.waitAny(`@action-show-pubkey-8C4C1FCC779F357729D194ECEA225AA51CA85E0A-openpgp`);
       })
     );
 
@@ -3006,7 +3062,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal',
+      'user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal',
       testWithBrowser(async (t, browser) => {
         const port = t.context.urls?.port;
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -3066,7 +3122,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering',
+      'user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -3162,7 +3218,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc',
+      'user3@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - pubkey recipient in bcc',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -3199,7 +3255,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error',
+      'user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -3335,7 +3391,7 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // the following is a temporary hack - currently not able to directly paste an image with puppeteer
   // instead we should find a way to load the image into clipboard, and paste it into textbox
   await composePage.page.evaluate((src: string) => {
-    $('[data-test=action-insert-image]').val(src).click();
+    $('[data-test=action-insert-image]').val(src).trigger('click');
   }, imgBase64);
   const acctEmail = 'flowcrypt.compatibility@gmail.com';
   const accessToken = await BrowserRecipe.getGoogleAccessToken(composePage, acctEmail);

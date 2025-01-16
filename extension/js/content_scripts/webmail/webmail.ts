@@ -17,8 +17,7 @@ declare global {
 
 Catch.try(async () => {
   // when we support more webmails, there will be if/else here to figure out which one to run
-  const browserName = Catch.browser().name;
-  if (browserName === 'thunderbird') {
+  if (Catch.isThunderbirdMail()) {
     await new ThunderbirdWebmailStartup().asyncConstructor();
   } else {
     await new GmailWebmailStartup().asyncConstructor();

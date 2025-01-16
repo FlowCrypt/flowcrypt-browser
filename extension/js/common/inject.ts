@@ -57,9 +57,11 @@ export class Injector {
   }
 
   public meta = () => {
-    this.S.cached('body')
-      .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
-      .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
+    if (this.webmailName === 'gmail') {
+      this.S.cached('body')
+        .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
+        .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
+    }
   };
 
   public openComposeWin = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, replyOption?: string, replyMsgId?: string): boolean => {
@@ -127,14 +129,12 @@ export class Injector {
           el.remove();
         })
       )
-      .hover(
-        e => {
-          $(e.target).css('z-index', 4);
-        },
-        e => {
-          $(e.target).css('z-index', '');
-        }
-      );
+      .on('mouseenter', e => {
+        $(e.target).css('z-index', 4);
+      })
+      .on('mouseleave', e => {
+        $(e.target).css('z-index', '');
+      });
   };
 
   private determineWebmailVersion = (): WebMailVersion => {

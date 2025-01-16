@@ -73,11 +73,10 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
-          const testCodeWithMockPort = testCode.replace(/\:8001/g, ':' + t.context.urls?.port);
           const runThisCodeInBrowser = `
             (async () => {
               try {
-                return await ${testCodeWithMockPort}
+                return await ${testCode}
               } catch (e) {
                 return "unit test threw something:" + String(e) + "\\n\\n" + e.stack;
               }

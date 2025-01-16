@@ -5,6 +5,7 @@
 import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
 import { Buf } from './buf.js';
+import { MOCK_PORT } from './const.js';
 
 export type Dict<T> = { [key: string]: T };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -129,7 +130,7 @@ export class Str {
   };
 
   public static prettyPrint = (obj: unknown) => {
-    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj as unknown);
   };
 
   public static normalizeSpaces = (str: string) => {
@@ -159,7 +160,7 @@ export class Str {
     if (email.includes(' ')) {
       return false;
     }
-    email = email.replace(/\:8001$/, ''); // for MOCK tests, todo: remove from production
+    email = email.replace(new RegExp(`:${MOCK_PORT}$`), ''); // for MOCK tests, todo: remove from production
     // `localhost` is a valid top-level domain for an email address, otherwise we require a second-level domain to be present
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|localhost|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
       email
@@ -256,7 +257,7 @@ export class Str {
   };
 
   public static datetimeToDate = (date: string) => {
-    return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    return date.substring(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
   };
 
   public static fromDate = (date: Date) => {

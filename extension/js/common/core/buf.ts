@@ -126,23 +126,23 @@ export class Buf extends Uint8Array {
           } else if (this[i] >= 192 && this[i] < 224) {
             // 110x xxxx
             bytesLeftInChar = 1;
-            binaryChar = this[i].toString(2).substr(3);
+            binaryChar = this[i].toString(2).substring(3);
           } else if (this[i] >= 224 && this[i] < 240) {
             // 1110 xxxx
             bytesLeftInChar = 2;
-            binaryChar = this[i].toString(2).substr(4);
+            binaryChar = this[i].toString(2).substring(4);
           } else if (this[i] >= 240 && this[i] < 248) {
             // 1111 0xxx
             bytesLeftInChar = 3;
-            binaryChar = this[i].toString(2).substr(5);
+            binaryChar = this[i].toString(2).substring(5);
           } else if (this[i] >= 248 && this[i] < 252) {
             // 1111 10xx
             bytesLeftInChar = 4;
-            binaryChar = this[i].toString(2).substr(6);
+            binaryChar = this[i].toString(2).substring(6);
           } else if (this[i] >= 252 && this[i] < 254) {
             // 1111 110x
             bytesLeftInChar = 5;
-            binaryChar = this[i].toString(2).substr(7);
+            binaryChar = this[i].toString(2).substring(7);
           } else {
             if (mode === 'strict' || mode === 'inform') {
               const e = new Error('Buf.toUtfStr: invalid utf-8 character beginning byte: ' + this[i]);
@@ -154,7 +154,7 @@ export class Buf extends Uint8Array {
           }
         } else {
           // continuation of a multi-byte character
-          binaryChar += this[i].toString(2).substr(2);
+          binaryChar += this[i].toString(2).substring(2);
           bytesLeftInChar--;
         }
         if (binaryChar && !bytesLeftInChar) {

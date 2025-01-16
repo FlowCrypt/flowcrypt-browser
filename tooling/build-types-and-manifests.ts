@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync as exec } from 'child_process';
+const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
@@ -26,16 +27,6 @@ addManifest('chrome-consumer', manifest => {
 
 addManifest('firefox-consumer', manifest => {
   manifest.version = version;
-  // We decide to use manifest v2 for firefox and below codes are to make v3 manifest to v2
-  // Read more here: https://github.com/FlowCrypt/flowcrypt-browser/pull/5651#issuecomment-2029591323
-  manifest.manifest_version = 2;
-  const manifestV3 = manifest as chrome.runtime.ManifestV3;
-  manifest.web_accessible_resources = manifestV3.web_accessible_resources?.[0].resources;
-  manifest.content_security_policy = manifestV3.content_security_policy?.extension_pages;
-  manifest.permissions = [...(manifestV3.permissions ?? []), ...(manifestV3.host_permissions ?? [])];
-  delete manifest.host_permissions;
-  manifest.browser_action = manifestV3.action;
-  delete manifest.action;
   manifest.browser_specific_settings = {
     gecko: {
       id: 'firefox@cryptup.io',
@@ -57,12 +48,20 @@ addManifest('firefox-consumer', manifest => {
 addManifest(
   'thunderbird-consumer',
   manifest => {
-    const manifestV3 = manifest as messenger._manifest.WebExtensionManifest;
-
-    (manifest.browser_action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
+    // we can continue using Manifest V2 for Thunderbird MailExtension - https://github.com/FlowCrypt/flowcrypt-browser/issues/5848
+    manifest.manifest_version = 2;
     manifest.name = 'FlowCrypt Encryption for Thunderbird';
     manifest.description = 'Simple end-to-end encryption to secure email and attachments on Thunderbird';
-    manifest.permissions = [...(manifestV3.permissions ?? []), 'compose', 'messagesRead', 'accountsRead'];
+    manifest.permissions = [...(manifest.permissions ?? []), 'compose', 'messagesRead', 'messagesUpdate', 'messagesModify', 'accountsRead'];
+
+    const manifestV3 = manifest as chrome.runtime.ManifestV3;
+    manifest.web_accessible_resources = manifestV3.web_accessible_resources?.[0].resources;
+    manifest.content_security_policy = manifestV3.content_security_policy?.extension_pages;
+    manifest.permissions = [...(manifestV3.permissions ?? []), ...(manifestV3.host_permissions ?? [])];
+    delete manifest.host_permissions;
+    manifest.browser_action = manifestV3.action;
+    (manifest.browser_action as messenger._manifest._WebExtensionManifestAction).default_title = 'FlowCrypt';
+    delete manifest.action;
     manifest.compose_action = {
       default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
@@ -71,6 +70,7 @@ addManifest(
       default_title: 'Secure Compose', // eslint-disable-line @typescript-eslint/naming-convention
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
     };
+    delete manifest.minimum_chrome_version;
     (manifest.browser_specific_settings as messenger._manifest.FirefoxSpecificProperties).strict_min_version = '102.0';
     manifest.background = {
       type: 'module',
@@ -115,8 +115,8 @@ addManifest('chrome-enterprise', manifest => {
 const CHROME_CONSUMER = 'chrome-consumer';
 const CHROME_ENTERPRISE = 'chrome-enterprise';
 const MOCK_HOST: { [buildType: string]: string } = {
-  'chrome-consumer': 'https://localhost:8001',
-  'chrome-enterprise': 'https://google.mock.localhost:8001',
+  'chrome-consumer': `https://localhost:${MOCK_PORT}`,
+  'chrome-enterprise': `https://google.mock.localhost:${MOCK_PORT}`,
 };
 
 const buildDir = (buildType: string) => `./build/${buildType}`;
@@ -154,7 +154,7 @@ const updateEnterpriseBuild = () => {
 
 const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
-  const mockGmailPageHost = 'gmail.localhost:8001';
+  const mockGmailPageHost = `gmail.localhost:${MOCK_PORT}`;
   const mockGmailPage = `https://${mockGmailPageHost}`;
   exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
   const editor = (code: string) => {
@@ -163,11 +163,11 @@ const makeMockBuild = (sourceBuildType: string) => {
         /const (OAUTH_GOOGLE_API_HOST|GMAIL_GOOGLE_API_HOST|PEOPLE_GOOGLE_API_HOST|GOOGLE_OAUTH_SCREEN_HOST) = [^;]+;/g,
         `const $1 = '${MOCK_HOST[sourceBuildType]}';`
       )
-      .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/api/';`)
-      .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/attester/';`)
-      .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/keys-openpgp-org/';`)
-      .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:8001/shared-tenant-fes';`)
-      .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:8001';`);
+      .replace(/const (BACKEND_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/api/';`)
+      .replace(/const (ATTESTER_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/attester/';`)
+      .replace(/const (KEYS_OPENPGP_ORG_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/keys-openpgp-org/';`)
+      .replace(/const (SHARED_TENANT_API_HOST) = [^;]+;/g, `const $1 = 'https://localhost:${MOCK_PORT}/shared-tenant-fes';`)
+      .replace(/const (WKD_API_HOST) = '';/g, `const $1 = 'https://localhost:${MOCK_PORT}';`);
   };
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
@@ -175,7 +175,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
     code
       .replace(/https:\/\/mail\.google\.com/g, mockGmailPage)
-      .replace(/https:\/\/www\.google\.com/g, 'https://google.localhost:8001')
+      .replace(/https:\/\/www\.google\.com/g, `https://google.localhost:${MOCK_PORT}`)
       .replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
   );
 };

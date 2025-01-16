@@ -20,6 +20,12 @@ import { EmailParts, Str } from '../common.js';
  * all dates are expressed as number of milliseconds since Unix Epoch.
  * This is what `Date.now()` returns and `new Date(x)` accepts.
  */
+
+type KeyStatus = {
+  state: 'active' | 'revoked' | 'expired' | 'sign only' | 'unusable';
+  statusIndicator: 'light-gray' | 'green' | 'orange' | 'yellow' | 'red';
+};
+
 export interface Key extends KeyIdentity {
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
@@ -199,7 +205,7 @@ export class KeyUtil {
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
   }
 
-  public static async readBinary(key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[]; err: Error[] }> {
+  public static async readBinary(key: Uint8Array, passPhrase?: string): Promise<{ keys: Key[]; err: Error[] }> {
     const allKeys: Key[] = [],
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
@@ -239,7 +245,7 @@ export class KeyUtil {
     return { keys: allKeys, err: allErr };
   }
 
-  public static async parseBinary(key: Uint8Array, passPhrase?: string | undefined): Promise<Key[]> {
+  public static async parseBinary(key: Uint8Array, passPhrase?: string): Promise<Key[]> {
     const { keys, err } = await KeyUtil.readBinary(key, passPhrase);
     if (keys.length > 0) {
       return keys;
@@ -305,6 +311,30 @@ export class KeyUtil {
       return false;
     }
     return Date.now() > exp;
+  }
+
+  public static status(key: Key | undefined): KeyStatus {
+    if (!key) {
+      return { state: 'unusable', statusIndicator: 'red' };
+    }
+    let keyStatus: KeyStatus;
+    if (key.revoked) {
+      keyStatus = { state: 'revoked', statusIndicator: 'light-gray' };
+    } else if (key.usableForEncryption) {
+      keyStatus = { state: 'active', statusIndicator: 'green' };
+    } else if (key.usableForEncryptionButExpired) {
+      keyStatus = { state: 'expired', statusIndicator: 'orange' };
+    } else if (key.usableForSigning) {
+      keyStatus = { state: 'sign only', statusIndicator: 'yellow' };
+    } else {
+      keyStatus = { state: 'unusable', statusIndicator: 'red' };
+    }
+    return keyStatus;
+  }
+
+  public static statusHtml(keyid: string, key: Key | undefined): string {
+    const keyStatus = KeyUtil.status(key);
+    return `<span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status-${keyid}">${keyStatus.state}</span>`;
   }
 
   public static dateBeforeExpirationIfAlreadyExpired(key: Key): Date | undefined {
@@ -458,6 +488,61 @@ export class KeyUtil {
     const { keys } = await KeyUtil.readMany(Buf.fromUint8(binaryKeysData));
     return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
   }
+
+  public static validateChecksum = (armoredText: string): boolean => {
+    const lines = armoredText.split('\n').map(l => l.trim());
+
+    // Filter out known non-data lines
+    const dataCandidates = lines.filter(line => line.length > 0 && !line.startsWith('-----') && !line.startsWith('Version:') && !line.startsWith('Comment:'));
+
+    // Find checksum line
+    const checksumIndex = dataCandidates.findIndex(line => line.startsWith('='));
+    if (checksumIndex === -1) return false;
+
+    const checksumLine = dataCandidates[checksumIndex].slice(1);
+    const dataLines = dataCandidates.slice(0, checksumIndex);
+
+    // Decode checksum
+    let providedBytes: string;
+    try {
+      providedBytes = atob(checksumLine);
+    } catch {
+      return false;
+    }
+    if (providedBytes.length !== 3) return false;
+
+    const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
+
+    // Attempt to decode all data lines (some may not be base64)
+    const decodedChunks: string[] = [];
+    for (const line of dataLines) {
+      try {
+        decodedChunks.push(atob(line));
+      } catch {
+        // Not a valid base64 line, skip it
+      }
+    }
+
+    if (decodedChunks.length === 0) return false;
+
+    const rawData = decodedChunks.join('');
+    // eslint-disable-next-line @typescript-eslint/no-misused-spread
+    const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+
+    return KeyUtil.crc24(dataBytes) === providedCRC;
+  };
+
+  private static crc24 = (dataBytes: Uint8Array): number => {
+    let crc = 0xb704ce;
+    for (const dataByte of dataBytes) {
+      crc ^= dataByte << 16;
+      for (let j = 0; j < 8; j++) {
+        crc <<= 1;
+        if (crc & 0x1000000) crc ^= 0x1864cfb;
+      }
+    }
+    return crc & 0xffffff;
+  };
 
   private static getSortValue(pubinfo: PubkeyInfo): number {
     const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration;

@@ -33,8 +33,27 @@ BROWSER_UNIT_TEST_NAME(`collectEncryptAtts preserves utf attachment names`);
   await new Promise(resolve => setTimeout(resolve, 1000)); // the above method is actually async and needs some time
   attachmentUi.addFile(new File([content], utfName));
   await new Promise(resolve => setTimeout(resolve, 1000)); // again it seems to need some time to crunch the new file
-  const pubkey =
-    '-----BEGIN PGP PUBLIC KEY BLOCK-----\nVersion: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org\nComment: Seamlessly send, receive and search encrypted email\n\nxsBNBFU0WMgBCACZSzijeN4YozhjmHU7BGWzW7ZbY6GGtJinByt8OnEnQ9TX\n9zrAxbyr0grPE4On7nd3uepwNxJbk5LlaCwHNkpX39xKgDgCskRO9CfeqOIO\n4l5Wjj4XldrgLSOGJe8Vmimo9UKmqsP5v8fR3mMyIqQbtE4G+Vq/J9A3uabr\nf0XYVsBdBvVoJkQ83gtQrZoTA/zihNmtLXH9pTwtX8FJcqgFK6RgvfAh2jCz\nDhT+reI50ZcuHRvVRxvrL172DFSQsLSdj8PcewS1J89knH4sjjBC/kwbLa0n\ntod/gBPWw/uetaOJna43wNueUKKOl2kAXE4sw6ESIrlFDynJ4g05T9yxABEB\nAAHNIlRvbSBKYW1lcyBIb2x1YiA8dG9tQGJpdG9hc2lzLm5ldD7CwFwEEAEI\nABAFAlU0WM8JEA1WiOvzECvnAAAB4gf8DaIzZACUqkGEoI19HyBPtcrJT4mx\nhKZ/Wts0C6TGj/OQXevDI+h2jQTYf8+fOqCdQev2Kwh/8mQV6wQqmN9uiVXO\n5F4vAbWNfEve6mCVB5gi296mFf6kx04xC7VVYAJ3FUR72BplE/0+cwv9Nx2r\nJh3QGFhoPaFMPtCAk0TgKcO0UkcBwXNzAV5Pgz0MT1COTWBXEej4yOrqdWoP\nA6fEpV8aLaFnAt+zh3cw4A7SNAO9omGAUZeBl4Pz1IlN2lC2grc2zpqoxo8o\n3W49JYTfExeCNVWhlSU74f6bpN6CMdSdrh5phOr+ffQQhEhkNblUgSZe6tKa\nVFI1MhkJ6Xhrug==\n=+de8\n-----END PGP PUBLIC KEY BLOCK-----';
+  const pubkey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: CryptUP 3.2.0 Easy Gmail Encryption https://cryptup.org
+Comment: Seamlessly send, receive and search encrypted email
+
+
+mQENBGc9gogBCACzdC8asczNuVebgn4rQ87hBnpJcWRnYOjCFdL1mSsh6CT787kr
+AWdMr5xvNzCThv7n1uhWcdw4vdE87IRRiLTlx56HjkLkq/YyDC+rzf2kEVFSHpQn
+l0gAZrExcm7QSU3RkiyLeIhZl5TWnlk7swW4St85wurP+bEOn9hv0Csl5sNTVDYv
+jP02ewdm3VCe6y0s3euWo1FCOYtIx0K4IQyyghgHR94LYOtXa9nPbYLJr87Gqtto
+OK5yPB//ZN2t3tYwpAgpDWNQzFu/Jl0bREQFP1bVrZHhfy65UWwsxhP8REzdtl6Y
+t/EUM+74SC6pyEcVqCnJS8m3BmJUjGlrplT1ABEBAAG0IlRvbSBKYW1lcyBIb2x1
+YiA8dG9tQGJpdG9hc2lzLm5ldD6JAVEEEwEIADsWIQSMTB/Md581dynRlOzqIlql
+HKheCgUCZz2CiAIbLwULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRDqIlql
+HKheCt8vB/4pLL2aMJwDgi8Qhmxfllz9mXTOn+h3LequV3ou8gDNSwByLbSrcZvd
+M4rlqjezQ9/Y+itALjQ3/jwhHMh4M5sDc7BXaO82eQzrpBywgLTY2km1RQ9BaoxT
+PQwkBDSt2Zp/XhBwYXiMtxw/d90Cu99fnitXFFZz3lkCq4zn3BeCAJmL3CHotCLe
+clmE7C16Y/w6t5+2AXej+lNpmBvQt2cXzDWeNxcZhJInW1MuIdUQFT8rEQ1H/r83
+t1RcQH6LuwetOysrY5a9DjH09mHizyt9KFu+jPP//pTXlWE0d2JX9buvkLTsm8IX
+jg/j+T6eFDW23ZST+PeNj4pFukc+feDa
+=kM8e
+-----END PGP PUBLIC KEY BLOCK-----`;
   const pubkeyResult = { pubkey: await KeyUtil.parse(pubkey), email: 'some@email.com', isMine: false };
   // test
   const [att] = await attachmentUi.collectEncryptAttachments([pubkeyResult]);

@@ -794,6 +794,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const expiration = Str.datetimeToDate(Str.fromDate(expirationDate));
         const oneDayBeforeExpiration = Str.datetimeToDate(Str.fromDate(oneDayBeforeExpirationDate));
         expect(await myKeyFrame.read('@content-key-expiration')).to.be.oneOf([expiration, oneDayBeforeExpiration]);
+        await myKeyFrame.waitForContent('@content-key-creation', '2015-09-16');
+        await myKeyFrame.waitForContent('@container-key-status-77554D9512E22BB5', 'ACTIVE');
       })
     );
 
@@ -812,7 +814,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Generate key that expires in 20 days
         const key = await opgp.generateKey({
           type: 'ecc',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           passphrase,
@@ -845,7 +847,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndClick('@source-paste');
         const updatedKey = await opgp.generateKey({
           type: 'ecc',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }, { email: 'demo@gmail.com', name: 'Demo user' }],
           passphrase,
           format: 'armored',
@@ -859,6 +861,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.notPresent('@webmail-notification-notify_expiring_keys');
         // remove added key and observe warning appears again
         await settingsPage.waitAndClick('@action-remove-key-1');
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with fingerprint');
         await gmailPage.page.reload();
         await Util.sleep(1);
         await gmailPage.waitForContent('@webmail-notification-notify_expiring_keys', warningMsg);
@@ -872,7 +875,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Generate negative expiration key and check if it shows correct expiration note
         const negativeExpirationKey = await opgp.generateKey({
           format: 'armored',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 1,
           date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -903,7 +906,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         // Generate expired key(positive expiration) and check if it shows correct note
         const key = await opgp.generateKey({
           type: 'ecc',
-          curve: 'curve25519',
+          curve: 'curve25519Legacy',
           userIDs: [{ email: acctEmail }],
           keyExpirationTime: 20 * 24 * 60 * 60,
           format: 'armored',
@@ -2266,7 +2269,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'user@standardsubdomainfes.localhost:8001 - uses FES on standard domain',
+      'user@standardsubdomainfes.localhost - uses FES on standard domain',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -2380,7 +2383,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const fromEmailHeaderLine = rawMessage.headerLines[2].line;
         const toEmailHeaderLine = rawMessage.headerLines[3].line;
-        const subjectLine = String(rawMessage.headers.get('subject'));
+        const subjectLine = String(rawMessage.headers.get('subject') as unknown);
         const adminPrivateKey = testConstants.prvBackupToDesignatedMailboxTestPrvKey;
         const parsedAdminPrivateKey = await KeyUtil.parse(adminPrivateKey);
         const passphrase = 'super hard to guess passphrase';

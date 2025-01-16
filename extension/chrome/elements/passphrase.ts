@@ -119,7 +119,10 @@ View.run(
     };
 
     public setHandlers = () => {
-      $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
+      $('#passphrase').on(
+        'keyup',
+        this.setHandler(() => this.renderNormalPpPrompt())
+      );
       $('.action_close').on(
         'click',
         this.setHandler(() => this.closeDialog())
@@ -165,7 +168,8 @@ View.run(
           );
         })
       );
-      $('#passphrase').keydown(
+      $('#passphrase').on(
+        'keydown',
         this.setHandler((el, ev) => {
           if (ev.key === 'Enter') {
             $('.action_ok').trigger('click');
@@ -198,6 +202,18 @@ View.run(
     private closeDialog = (entered = false, initiatorFrameId?: string) => {
       BrowserMsg.send.closeDialog(this);
       BrowserMsg.send.passphraseEntry({ entered, initiatorFrameId });
+    };
+
+    private closeDialogPageOpenedExternally = async () => {
+      if (Catch.isThunderbirdMail() && window.top === window.self) {
+        const currentTab = await messenger.tabs.query({ active: true, currentWindow: true });
+        if (currentTab.length > 0) {
+          const tabId = currentTab[0].id;
+          if (tabId) {
+            await messenger.tabs.remove(tabId);
+          }
+        }
+      }
     };
 
     private submitHandler = async () => {
@@ -237,10 +253,12 @@ View.run(
       }
       if (unlockCount && allPrivateKeys.length > 1) {
         Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
+        await this.closeDialogPageOpenedExternally();
       }
       if (atLeastOneMatched) {
         await this.bruteForceProtection.passphraseCheckSucceed();
         this.closeDialog(true, this.initiatorFrameId);
+        await this.closeDialogPageOpenedExternally();
       } else {
         await this.bruteForceProtection.passphraseCheckFailed();
         this.renderFailedEntryPpPrompt();

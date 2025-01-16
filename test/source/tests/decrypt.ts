@@ -722,7 +722,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           browser,
           '162275c819bcbf9b',
           {
-            content: ['Your current key cannot open this message.'],
+            content: ['No decryption key packets found'],
             error: 'decrypt error',
             expectPercentageProgress: true,
           },
@@ -1180,7 +1180,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           msgId,
           {
             content: ['テストです\nテスト'],
-            signature: 'error verifying signature: Ascii armor integrity check failed',
+            signature: 'error verifying signature: Unexpected end of packet',
             encryption: 'not encrypted',
           },
           authHdr
@@ -1603,7 +1603,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    test(
+    // TODO: should re-enable test after https://github.com/FlowCrypt/flowcrypt-browser/pull/5873#issuecomment-2513848349 is fixed
+    test.skip(
       'decrypt - not an armored public key in a file that looked like a public key',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
@@ -1863,19 +1864,26 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
+    /**
+     * RFC 4880
+     * An implementation MUST NOT reject an OpenPGP object when the CRC24 footer is present, missing, malformed, or disagrees
+     * with the computed CRC24 sum. When forming ASCII Armor, the CRC24 footer SHOULD NOT be generated,
+     * unless interoperability with implementations that require the CRC24 footer to be present is a concern.
+     * https://github.com/openpgpjs/openpgpjs/issues/1810#issuecomment-2490780175
+     */
     test(
-      'decrypt - wrong message - checksum throws error',
+      'decrypt - check if decrypted correctly and not throw error for wrong checksum message',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const threadId = '15f7ffb9320bd79e';
-        const expectedContent = 'Ascii armor integrity check failed';
+        const expectedContent = 'The International DUBLIN Literary Award is an international literary award presented each year for a novel written';
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(
           t,
           browser,
           threadId,
           {
-            content: [expectedContent],
-            error: 'decrypt error',
+            content: [expectedContent, 'Warning: Checksum mismatch detected'],
+            encryption: 'encrypted',
           },
           authHdr
         );
@@ -2031,7 +2039,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
         const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
-        const threadId3 = '18b7f6a2b00ad967'; // a password-protected message that is also public key encrypted with noname attachment
+        const threadId3 = '191e2735a1cc08c4'; // email attachment "noname" with type message/global
+        const threadId4 = '18b7f6a2b00ad967'; // a password-protected message that is also public key encrypted with noname attachment
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage1.notPresent('iframe.pgp_block');
@@ -2042,11 +2051,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(await inboxPage2.isElementPresent('@container-attachments')).to.be.true;
         await inboxPage2.close();
         const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
-        const pgpBlock = await inboxPage3.getFrame(['pgp_block.htm']);
-        await inboxPage3.notPresent('@container-attachments');
-        expect(await inboxPage3.isElementPresent('iframe.pgp_block')).to.equal(true);
-        expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage3.notPresent('iframe.pgp_block');
+        const attachmentsContainer = await inboxPage3.waitAny('@container-attachments');
+        const attachments = await attachmentsContainer.$$('.pgp_attachment');
+        expect(attachments.length).to.equal(1);
         await inboxPage3.close();
+        const inboxPage4 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
+        const pgpBlock = await inboxPage4.getFrame(['pgp_block.htm']);
+        await inboxPage4.notPresent('@container-attachments');
+        expect(await inboxPage4.isElementPresent('iframe.pgp_block')).to.equal(true);
+        expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage4.close();
       })
     );
 

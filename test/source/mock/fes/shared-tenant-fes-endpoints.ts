@@ -49,6 +49,8 @@ export type FesClientConfiguration = {
   allow_keys_openpgp_org_search_only_for_domains?: string[];
   disallow_keys_openpgp_org_search_for_domains?: string[];
   prv_backup_to_designated_mailbox?: string;
+  disallow_password_messages_for_terms?: string[];
+  disallow_password_messages_error_text?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -157,7 +159,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     },
     '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
       if (req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
+        // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
         authenticate(req, 'oidc');
         expect(body).to.match(messageIdRegexForRequest(req));
         return {};
@@ -166,7 +168,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     },
     '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
       if (req.method === 'POST') {
-        // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
+        // test: `compose - user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering`
         authenticate(req, 'oidc');
         expect(body).to.match(messageIdRegexForRequest(req));
         return {};
@@ -175,10 +177,10 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     },
     '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
       if (req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
-        // test: `compose - user2@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES - Reply rendering`
-        // test: `compose - user3@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - pubkey recipient in bcc`
-        // test: `compose - user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
+        // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
+        // test: `compose - user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering`
+        // test: `compose - user3@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - pubkey recipient in bcc`
+        // test: `compose - user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
         authenticate(req, 'oidc');
         expect(body).to.match(messageIdRegexForRequest(req));
         return {};
@@ -187,7 +189,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     },
     '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
       if (req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal`
+        // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
         authenticate(req, 'oidc');
         expect(body).to.match(messageIdRegexForRequest(req));
         return {};
@@ -195,7 +197,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       throw new HttpClientErr('Not Found', 404);
     },
     '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID/gateway': async () => {
-      // test: `user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - a send fails with gateway update error`
+      // test: `user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error`
       throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
     },
   };

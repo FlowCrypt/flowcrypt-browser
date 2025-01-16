@@ -109,6 +109,10 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           { submitPubkey: true, usedPgpBefore: true },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyFrame = await settingsPage.getFrame(['my_key.htm']);
+        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.be.true;
       })
     );
 
@@ -245,6 +249,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         await SetupPageRecipe.createKey(settingsPage, 'unused', 'none', {
           selectKeyAlgo: 'rsa3072',
           key: { passphrase: 'long enough to suit requirements' },
+          submitPubkey: false,
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
 
@@ -253,11 +258,11 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           t,
           `chrome/settings/modules/my_key.htm?placement=settings&parentTabId=60%3A0&acctEmail=${acctEmail}&fingerprint=${fingerprint}`
         );
+        expect(await myKeyFrame.isElementPresent('@container-shareable-pubkey-link')).to.be.false;
         const downloadedFiles = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
         // const longid = OpenPGPKey.fingerprintToLongid(fingerprint);
         const longid = fingerprint.substring(fingerprint.length - 16);
         const fileName = `flowcrypt-backup-usernosubmitclientconfigurationflowcrypttest-0x${longid}.asc`;
-
         const key = await KeyUtil.parse(downloadedFiles[fileName].toString());
         expect(key.algo.bits).to.equal(3072);
         expect(key.algo.algorithm).to.equal('rsaEncryptSign');
@@ -267,7 +272,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'user4@standardsubdomainfes.localhost:8001 - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
+      'user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - some sends fail with BadRequest error',
       testWithBrowser(
         async (t, browser) => {
           t.context.mockApi!.configProvider = new ConfigurationProvider({

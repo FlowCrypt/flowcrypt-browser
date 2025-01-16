@@ -21,7 +21,7 @@ import { EmailParts, Str } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
-  public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509' | undefined): Promise<KeyInfoWithIdentity[]> => {
+  public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509'): Promise<KeyInfoWithIdentity[]> => {
     const unfilteredKeys = await KeyStore.get(this.view.acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(unfilteredKeys);
     const matchingFamily = unfilteredKeys.filter(ki => !family || ki.family === family);
@@ -146,7 +146,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     // re-query the storage, which is now updated
     const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
-    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${JSON.stringify(updatedContact)})`);
     return updatedContact;
   };
 

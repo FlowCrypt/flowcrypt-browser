@@ -1,0 +1,71 @@
+<div id="step_2a_manual_create" class="manual">
+  <div class="line left">
+    Choose pass phrase to protect your encrypted emails. <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>
+  </div>
+  <div class="line left">
+    <input
+      class="input_password"
+      type="text"
+      placeholder="Pass phrase"
+      style="margin-bottom: 0"
+      id="step_2a_manual_create_input_password"
+      data-test="input-step2bmanualcreate-passphrase-1"
+      maxlength="256"
+    />
+  </div>
+  <div class="line left">
+    <input
+      class="input_password2"
+      type="text"
+      placeholder="Repeat pass phrase"
+      id="step_2a_manual_create_input_password2"
+      data-test="input-step2bmanualcreate-passphrase-2"
+      maxlength="256"
+    />
+  </div>
+
+  <div class="line left">
+    <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualcreate-save-passphrase-label">
+      <input type="checkbox" class="input_passphrase_save" data-test="input-step2bmanualcreate-save-passphrase" value="" name="check" />
+      Remember the pass phrase after closing the browser
+    </label>
+  </div>
+  <div class="line left remove_if_backup_not_allowed">
+    <label data-test="input-step2bmanualcreate-backup-inbox">
+      <input type="checkbox" class="input_backup_inbox" value="" name="check" checked="" />
+      Back up encrypted private key in inbox (recommended)
+    </label>
+  </div>
+
+  <div class="line left remove_if_pubkey_submitting_not_user_configurable">
+    <label data-test="input-step2bmanualcreate-submit-pubkey">
+      <input type="checkbox" class="input_submit_key" value="" name="check" checked="" />
+      Submit corresponding pubkey to FlowCrypt Attester (recommended)
+    </label>
+  </div>
+  <div class="line left display_none remove_if_pubkey_submitting_not_user_configurable also_submit_alias_key_view">
+    <label>
+      <input type="checkbox" class="input_submit_all" disabled="disabled" />
+      <span>
+        Also submit the same pubkey for:
+        <br /><span class="addresses"></span>
+      </span>
+    </label>
+  </div>
+
+  <div class="line left">
+    <label>
+      Encryption key type:
+      <select class="key_type" data-test="input-step2bmanualcreate-key-type">
+        <option value="curve25519">ECC Curve25519</option>
+        <option value="rsa2048">RSA 2048bit</option>
+        <option value="rsa3072">RSA 3072bit</option>
+        <option value="rsa4096">RSA 4096bit</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="line left">
+    <button class="button longer gray action_proceed_private" data-test="input-step2bmanualcreate-create-and-save">CREATE AND SAVE</button>
+  </div>
+</div>

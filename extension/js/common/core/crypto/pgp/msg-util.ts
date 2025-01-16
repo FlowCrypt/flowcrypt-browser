@@ -306,6 +306,31 @@ export class MsgUtil {
     return diagnosis;
   }
 
+  public static isPasswordMessageEnabled(subject: string, disallowTerms: string[]) {
+    if (!subject || !Array.isArray(disallowTerms)) {
+      return true; // If no subject or no terms to disallow, assume enabled
+    }
+
+    const lowerSubject = subject.toLowerCase();
+
+    for (const term of disallowTerms) {
+      // Escape term for regex
+      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Use regex to ensure the term appears as a separate token
+      // (^|\W) ensures the term is at start or preceded by non-word char
+      // (\W|$) ensures the term is followed by non-word char or end
+      const regex = new RegExp(`(^|\\W)${escapedTerm}(\\W|$)`, 'i');
+
+      if (regex.test(lowerSubject)) {
+        // Found a disallowed term as a separate token
+        return false;
+      }
+    }
+
+    // No disallowed terms found as exact matches
+    return true;
+  }
+
   private static async getSortedKeys(kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.Message<OpenPGP.Data>): Promise<SortedKeysForDecrypt> {
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],

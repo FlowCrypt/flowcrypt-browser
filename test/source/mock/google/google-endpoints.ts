@@ -94,7 +94,7 @@ export const multipleEmailAliasList: MockUserAlias[] = [
     sendAsEmail: 'alias2@example.com',
     displayName: 'An Alias1',
     replyToAddress: 'alias2@example.com',
-    signature: '',
+    signature: 'Test signature 2',
     isDefault: false,
     isPrimary: false,
     treatAsAlias: false,
@@ -409,7 +409,7 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 };
 
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
-  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')?.toString() : '';
+  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? (mimeMsg.headers.get('in-reply-to') as unknown)?.toString() : '';
   if (threadId) {
     const messages = (await GoogleData.withInitializedData(acct)).getMessagesByThread(threadId);
     if (!messages?.length) {

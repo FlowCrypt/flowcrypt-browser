@@ -28,6 +28,7 @@ export class Env {
     if (Env.isExtension()) {
       try {
         // Attempt to get the URL of an extension resource. This will succeed if we're in an extension context.
+
         const extensionUrl = chrome.runtime.getURL('');
         // Check if the current page URL is different from the extension's base URL (i.e., it's not an extension page)
         return !window.location.href.startsWith(extensionUrl);
@@ -41,7 +42,12 @@ export class Env {
   }
 
   // Check if the current context is a Service Worker
-  public static isBackgroundPage() {
+  public static async isBackgroundPage() {
+    // In firefox, window&document is not null even in background page
+    if (typeof browser !== 'undefined' && typeof browser.runtime?.getBackgroundPage !== 'undefined') {
+      const backgroundPage = await browser.runtime.getBackgroundPage();
+      return backgroundPage === window;
+    }
     return typeof window === 'undefined' && typeof document === 'undefined';
   }
 
@@ -56,7 +62,7 @@ export class Env {
   }
 
   public static async webmails(): Promise<WebMailName[]> {
-    return ['gmail']; // async because storage may be involved in the future
+    return ['gmail', 'thunderbird']; // async because storage may be involved in the future
   }
 
   public static getBaseUrl() {

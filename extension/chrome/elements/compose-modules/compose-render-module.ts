@@ -98,9 +98,9 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       const thread = await this.view.emailProvider.threadGet(this.view.threadId, 'metadata');
       const inReplyToMessage = thread.messages?.find(message => message.id === this.view.replyMsgId);
       if (inReplyToMessage) {
-        this.view.replyParams.inReplyTo = inReplyToMessage.payload?.headers?.find(
-          header => header.name === 'Message-Id' || header.name === 'Message-ID'
-        )?.value;
+        const msgId = inReplyToMessage.payload?.headers?.find(header => header.name === 'Message-Id' || header.name === 'Message-ID')?.value;
+        const references = inReplyToMessage.payload?.headers?.find(header => header.name === 'References')?.value;
+        this.setReplyHeaders(msgId, references);
       }
       this.view.replyParams.subject = `${this.responseMethod === 'reply' ? 'Re' : 'Fwd'}: ${this.view.replyParams.subject}`;
       if (this.view.useFullScreenSecureCompose) {
@@ -117,8 +117,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         );
         if (this.view.quoteModule.messageToReplyOrForward) {
           const msgId = this.view.quoteModule.messageToReplyOrForward.headers['message-id'];
-          this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
-          this.view.sendBtnModule.additionalMsgHeaders.References = this.view.quoteModule.messageToReplyOrForward.headers.references + ' ' + msgId;
+          this.setReplyHeaders(msgId, this.view.quoteModule.messageToReplyOrForward.headers.references);
           if (this.view.replyPubkeyMismatch) {
             await this.renderReplyMsgAsReplyPubkeyMismatch();
           } else if (this.view.quoteModule.messageToReplyOrForward.isOnlySigned) {
@@ -273,6 +272,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
     }
   };
 
+  private setReplyHeaders = (msgId?: string, references?: string) => {
+    if (msgId) {
+      this.view.sendBtnModule.additionalMsgHeaders['In-Reply-To'] = msgId;
+      this.view.sendBtnModule.additionalMsgHeaders.References = [references, msgId].filter(Boolean).join(' ');
+    }
+  };
+
   private initComposeBoxStyles = () => {
     if (this.view.isReplyBox) {
       this.view.S.cached('body').addClass('reply_box');
@@ -371,12 +377,13 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private addComposeTableHandlers = async () => {
-    this.view.S.cached('body').keydown(
+    this.view.S.cached('body').on(
+      'keydown',
       this.view.setHandler((el, ev) => {
         this.onBodyKeydownHandler(el, ev);
       })
     );
-    this.view.S.cached('input_to').bind(
+    this.view.S.cached('input_to').on(
       'paste',
       this.view.setHandler((el, ev) => this.onRecipientPasteHandler(el, ev))
     );
@@ -391,7 +398,7 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
       .children()
       .on('click', () => false);
     this.view.S.cached('input_subject')
-      .bind(
+      .on(
         'input',
         this.view.setHandler((el: HTMLInputElement) => {
           this.subjectRTLHandler(el);

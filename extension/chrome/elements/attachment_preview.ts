@@ -17,6 +17,8 @@ import { AttachmentWarnings } from './shared/attachment_warnings.js';
 import * as pdfjsLib from 'pdfjs';
 import { AttachmentPreviewPdf } from '../../js/common/ui/attachment_preview_pdf.js';
 
+// https://github.com/FlowCrypt/flowcrypt-browser/issues/5822#issuecomment-2362529197
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(`lib/pdf.worker.min.mjs`);
 type AttachmentType = 'img' | 'txt' | 'pdf';
 
@@ -96,10 +98,8 @@ View.run(
       const extension = nameSplit[nameSplit.length - 1].toLowerCase();
       if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
         return 'img';
-      } else if (extension === 'txt') {
-        return 'txt';
-      } else if (extension === 'pdf') {
-        return 'pdf';
+      } else if (['txt', 'pdf'].includes(extension)) {
+        return extension as AttachmentType;
       }
       return undefined;
     };

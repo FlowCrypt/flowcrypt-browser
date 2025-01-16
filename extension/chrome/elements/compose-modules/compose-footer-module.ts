@@ -22,13 +22,10 @@ export class ComposeFooterModule extends ViewModule<ComposeView> {
    * it does not bother us if old footer stays in the text (eg when user later changes sendFrom address)
    */
   public onFooterUpdated = (newFooter: string | undefined) => {
-    if (this.view.quoteModule.tripleDotSanitizedHtmlContent) {
-      // footer not yet rendered
-      this.view.quoteModule.tripleDotSanitizedHtmlContent.footer = newFooter ? this.createFooterHtml(newFooter) : '';
-    } else if (this.view.S.cached('triple_dot')[0] && newFooter) {
-      // ellipsis preset (not yet clicked), but not visible (likely no footer earlier)
-      this.view.quoteModule.tripleDotSanitizedHtmlContent = { footer: this.createFooterHtml(newFooter), quote: '' };
-    }
+    this.view.quoteModule.tripleDotSanitizedHtmlContent = {
+      footer: newFooter ? this.createFooterHtml(newFooter) : '',
+      quote: this.view.quoteModule.tripleDotSanitizedHtmlContent?.quote,
+    };
   };
 
   public createFooterHtml = (footer: string) => {

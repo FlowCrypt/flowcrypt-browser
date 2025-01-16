@@ -58,8 +58,14 @@ View.run(
           Settings.redirectSubPage(this.acctEmail, this.parentTabId, '/chrome/settings/modules/test_passphrase.htm');
         })
       );
-      $('#hide_message_password').change(this.setHandler(el => this.hideMsgPasswordHandler(el)));
-      $('.password_message_language').change(this.setHandler(() => this.onMsgLanguageUserChange()));
+      $('#hide_message_password').on(
+        'change',
+        this.setHandler(el => this.hideMsgPasswordHandler(el))
+      );
+      $('.password_message_language').on(
+        'change',
+        this.setHandler(() => this.onMsgLanguageUserChange())
+      );
     };
 
     private renderPassPhraseOptionsIfStoredPermanently = async () => {
@@ -91,7 +97,7 @@ View.run(
         $('.cancel_passphrase_requirement_change').on('click', () => {
           window.location.reload();
         });
-        $('#passphrase_entry').keydown(this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
+        $('#passphrase_entry').on('keydown', this.setEnterHandlerThatClicks('.confirm_passphrase_requirement_change'));
       }
     };
 

@@ -87,12 +87,12 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw));
       const headers = {
         subject: decoded.subject,
-        date: String(decoded.headers.date),
+        date: decoded.headers.date as string,
         from: decoded.from,
         to: decoded.to,
         cc: decoded.cc,
-        references: String(decoded.headers.references || ''),
-        'message-id': String(decoded.headers['message-id'] || ''),
+        references: (decoded.headers.references as string) || '',
+        'message-id': (decoded.headers['message-id'] as string) || '',
       };
       const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];

@@ -93,6 +93,8 @@ export const Lang = {
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
     pwdMsgAskSenderUsePubkey: 'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
+    invalidCheckSum:
+      'Warning: Checksum mismatch detected.\nThis indicates the message may have been altered or corrupted during transmission.\nDecryption may still succeed, but verify the message source and integrity if possible.',
   },
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
@@ -149,6 +151,9 @@ export const Lang = {
     backup: 'Enter FlowCrypt pass phrase to back up',
     updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
     email: 'Enter FlowCrypt pass phrase to read encrypted email',
+  },
+  settings: {
+    deleteKeyConfirm: (fingerprint: string) => `Are you sure you want to remove encryption key with fingerprint ${fingerprint}?`,
   },
   attachment: {
     executableFileWarning: 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?', // xss-escaped

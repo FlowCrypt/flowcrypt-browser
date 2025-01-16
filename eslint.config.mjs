@@ -72,6 +72,7 @@ const commonConfig = {
         format: ['camelCase', 'PascalCase'],
       },
     ],
+    '@typescript-eslint/no-deprecated': 'warn',
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': ['warn'],
     '@typescript-eslint/no-extraneous-class': 'off',

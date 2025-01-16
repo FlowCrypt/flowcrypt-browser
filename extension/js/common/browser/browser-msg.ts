@@ -29,6 +29,7 @@ export interface ChildFrame {
 
 export namespace Bm {
   export type Dest = string;
+
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = unknown;
   export type RawResponse = { result: unknown; exception?: Bm.ErrAsJson };
@@ -96,6 +97,7 @@ export namespace Bm {
   export type ReRenderRecipient = { email: string };
   export type PgpBlockRetry = { frameId: string; messageSender: Dest };
   export type PgpBlockReady = { frameId: string; messageSender: Dest };
+  export type ThunderbirdOpenPassphraseDialog = { acctEmail: string; longids: string };
 
   export namespace Res {
     export type GetActiveTabInfo = {
@@ -112,6 +114,9 @@ export namespace Bm {
     export type ExpirationCacheGet<V> = Promise<V | undefined>;
     export type ExpirationCacheSet = Promise<void>;
     export type ExpirationCacheDeleteExpired = Promise<void>;
+    export type ThunderbirdGetCurrentUser = string | undefined;
+    export type ThunderbirdMsgGet = messenger.messages.MessagePart | undefined;
+    export type ThunderbirdOpenPassphraseDialog = Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export type Db = any; // not included in Any below
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,7 +133,8 @@ export namespace Bm {
       | ExpirationCacheSet
       | ExpirationCacheDeleteExpired
       | AjaxGmailAttachmentGetChunk
-      | ConfirmationResult;
+      | ConfirmationResult
+      | ThunderbirdMsgGet;
   }
 
   export type AnyRequest =
@@ -169,6 +175,7 @@ export namespace Bm {
     | PgpBlockReady
     | PgpBlockRetry
     | ConfirmationResult
+    | ThunderbirdOpenPassphraseDialog
     | Ajax;
 
   export type AsyncRespondingHandler = (req: AnyRequest) => Promise<Res.Any>;
@@ -232,6 +239,11 @@ export class BrowserMsg {
           BrowserMsg.sendAwait(undefined, 'expirationCacheSet', bm, true) as Promise<Bm.Res.ExpirationCacheSet>,
         expirationCacheDeleteExpired: (bm: Bm.ExpirationCacheDeleteExpired) =>
           BrowserMsg.sendAwait(undefined, 'expirationCacheDeleteExpired', bm, true) as Promise<Bm.Res.ExpirationCacheDeleteExpired>,
+        thunderbirdGetCurrentUser: () =>
+          BrowserMsg.sendAwait(undefined, 'thunderbirdGetCurrentUser', undefined, true) as Promise<Bm.Res.ThunderbirdGetCurrentUser>,
+        thunderbirdMsgGet: () => BrowserMsg.sendAwait(undefined, 'thunderbirdMsgGet', undefined, true) as Promise<Bm.Res.ThunderbirdMsgGet>,
+        thunderbirdOpenPassphraseDiaglog: (bm: Bm.ThunderbirdOpenPassphraseDialog) =>
+          BrowserMsg.sendAwait(undefined, 'thunderbirdOpenPassphraseDialog', bm, true) as Promise<Bm.Res.ThunderbirdOpenPassphraseDialog>,
       },
     },
     passphraseEntry: (bm: Bm.PassphraseEntry) => {
@@ -419,6 +431,7 @@ export class BrowserMsg {
 
   public static createIntervalAlarm(action: string, periodInMinutes: number) {
     const alarmName = `${action}_interval_${Date.now()}`;
+
     void chrome.alarms.create(alarmName, { periodInMinutes });
   }
 
@@ -596,7 +609,7 @@ export class BrowserMsg {
   private static async sendAwait(destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
-    const isBackgroundPage = Env.isBackgroundPage();
+    const isBackgroundPage = await Env.isBackgroundPage();
     if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') {
       // calling from bg script to bg script: skip messaging
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
@@ -605,7 +618,7 @@ export class BrowserMsg {
     return await BrowserMsg.sendRaw(destString, name, bm, awaitRes);
   }
 
-  private static sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
+  private static async sendRaw(destString: string | undefined, name: string, bm: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     const msg: Bm.Raw = {
       name,
       data: { bm },
@@ -614,7 +627,7 @@ export class BrowserMsg {
       stack: Catch.stackTrace(),
     };
     // eslint-disable-next-line no-null/no-null
-    if (!Env.isBackgroundPage() && msg.to !== null) {
+    if (!(await Env.isBackgroundPage()) && msg.to !== null) {
       const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
       // send via window messaging in parallel
       Catch.try(async () => {
@@ -631,6 +644,7 @@ export class BrowserMsg {
           resolve(undefined);
         } else if (!r || typeof r !== 'object') {
           // r can be null if we sent a message to a non-existent window id
+
           const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
           let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
@@ -661,19 +675,25 @@ export class BrowserMsg {
       };
       try {
         if (chrome.runtime) {
-          if (Env.isBackgroundPage()) {
-            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-              for (const tab of tabs) {
-                chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+          Env.isBackgroundPage()
+            .then(isBackgroundPage => {
+              if (isBackgroundPage) {
+                chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+                  for (const tab of tabs) {
+                    chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
+                  }
+                });
+              } else {
+                if (awaitRes) {
+                  chrome.runtime.sendMessage(msg, processRawMsgResponse);
+                } else {
+                  void chrome.runtime.sendMessage(msg);
+                }
               }
+            })
+            .catch((e: unknown) => {
+              throw e;
             });
-          } else {
-            if (awaitRes) {
-              chrome.runtime.sendMessage(msg, processRawMsgResponse);
-            } else {
-              void chrome.runtime.sendMessage(msg);
-            }
-          }
         } else {
           BrowserMsg.renderFatalErrCorner('Error: missing chrome.runtime', 'RED-RELOAD-PROMPT');
         }

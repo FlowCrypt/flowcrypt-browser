@@ -124,7 +124,6 @@ a.gray_link {
   cursor: pointer;
   height: auto;
   border: 1px solid #f3f3f3;
-  letter-spacing: 0.35;
 }
 
 #alt-accounts.accounts-row .row.alt-accounts .contains_email {
@@ -320,6 +319,7 @@ a.gray_link {
   text-indent: 5px;
   font-weight: 600;
   display: inline-block;
+  flex: 1;
 }
 
 #settings-row h1 {
@@ -405,9 +405,9 @@ a.gray_link {
 }
 
 .abs-row span.keys-link-top-right-container {
-  display: inline-block;
-  position: absolute;
+  display: flex;
   right: 10px;
+  gap: 15px;
 }
 
 .abs-row .key-icon {

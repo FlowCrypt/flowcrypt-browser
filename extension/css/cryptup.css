@@ -1428,7 +1428,7 @@ td {
 .backup_neutral {
   border: none;
   border-left: 4px solid #989898;
-  padding-left: 10px;
+  padding: 6px 10px;
 }
 
 .pgp_neutral .error_container {
@@ -1444,6 +1444,10 @@ td {
   flex-direction: column;
   width: 270px;
   align-items: flex-start;
+}
+
+.pgp_neutral .error_container .error_info .error_introduce_label {
+  white-space: pre-line;
 }
 
 .pgp_neutral .error_container .error_info span {
@@ -1592,6 +1596,13 @@ td {
   align-items: center;
 }
 
+.pgp-invalid-checksum {
+  border-left: 3px solid #d18826;
+  color: #d18826;
+  margin: 10px 0;
+  padding-left: 5px;
+}
+
 .pgp_badge {
   opacity: 1;
   margin-bottom: 1em;
@@ -1623,6 +1634,10 @@ td {
 
 #pgp_block.pgp_pubkey pre.pubkey {
   display: none;
+}
+
+#pgp_block.pgp_pubkey .action_show_full {
+  width: 118px;
 }
 
 #pgp_block .three_dots {
@@ -3314,7 +3329,7 @@ body#select_account {
   width: 340px;
   padding: 0;
   font-size: 14px;
-  zoom: reset;
+  zoom: 1;
 }
 
 body#select_account #title {
@@ -3355,7 +3370,6 @@ body#select_account .emails li a {
   text-transform: none;
   color: #337ab7;
   transition: 0.5s;
-  letter-spacing: 0.35;
   font-weight: 600;
 }
 

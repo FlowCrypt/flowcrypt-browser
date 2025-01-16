@@ -96,6 +96,7 @@ export class BrowserPool {
   public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => reject(new TimeoutError(`Test timed out after ${timeout}ms`)), timeout); // reject in
+
       cb().then(resolve, reject);
     });
   };

@@ -88,13 +88,14 @@ export class Settings {
     if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
+    await GlobalStore.acctEmailsRemove(acctEmail);
     const storageIndexesToRemove: AccountIndex[] = [];
     const filter = AbstractStore.singleScopeRawIndex(acctEmail, '');
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
     await new Promise<void>((resolve, reject) => {
-      chrome.storage.local.get(async storage => {
+      chrome.storage.local.get([], async storage => {
         try {
           for (const storageIndex of Object.keys(storage)) {
             if (storageIndex.startsWith(filter)) {
@@ -151,13 +152,13 @@ export class Settings {
     const storage = await storageGetAll('local');
     for (const acctKey of Object.keys(storage)) {
       if (acctKey.startsWith(oldAcctEmailIndexPrefix)) {
-        const key = acctKey.substr(oldAcctEmailIndexPrefix.length);
+        const key = acctKey.substring(oldAcctEmailIndexPrefix.length);
         const mode = Settings.getOverwriteMode(key);
         if (mode !== 'forget') {
           storageIndexesToKeepOld.push(key);
         }
       } else if (acctKey.startsWith(newAcctEmailIndexPrefix)) {
-        const key = acctKey.substr(newAcctEmailIndexPrefix.length);
+        const key = acctKey.substring(newAcctEmailIndexPrefix.length);
         const mode = Settings.getOverwriteMode(key);
         if (mode !== 'keep') {
           storageIndexesToKeepNew.push(key);
@@ -189,7 +190,6 @@ export class Settings {
       }
     }
     await Settings.acctStorageReset(oldAcctEmail);
-    await GlobalStore.acctEmailsRemove(oldAcctEmail);
   }
 
   public static async renderPrvCompatFixUiAndWaitTilSubmittedByUser(
@@ -226,7 +226,8 @@ export class Settings {
         '</div>',
       ].join('\n')
     );
-    container.find('select.input_fix_expire_years').change(
+    container.find('select.input_fix_expire_years').on(
+      'change',
       Ui.event.handle(target => {
         if ($(target).val()) {
           container.find('.action_fix_compatibility').removeClass('gray').addClass('green');
@@ -440,6 +441,7 @@ export class Settings {
   public static async loginWithPopupShowModalOnErr(acctEmail: string, isCustomIDP: boolean, then: () => void = () => undefined) {
     if (window !== window.top && !chrome.windows) {
       // Firefox, chrome.windows isn't available in iframes
+
       await Browser.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/index.htm`), { acctEmail }));
       await Ui.modal.info(`Reload after logging in.`);
       window.location.reload();

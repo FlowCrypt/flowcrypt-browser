@@ -52,11 +52,11 @@ export class SendableMsg {
     public type: MimeEncodeType,
     public externalId?: string // for binding a password-protected message
   ) {
-    const allEmails = this.getAllRecipients();
-    if (!allEmails.length && !isDraft) {
+    const allRecipients = this.getAllRecipients();
+    if (!allRecipients.length && !isDraft) {
       throw new Error('The To:, Cc: and Bcc: fields are empty. Please add recipients and try again');
     }
-    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email.email));
+    const invalidEmails = allRecipients.map(recipient => recipient.email).filter(email => !Str.isEmailValid(email));
     // todo: distinguish To:, Cc: and Bcc: in error report?
     if (invalidEmails.length) {
       throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);

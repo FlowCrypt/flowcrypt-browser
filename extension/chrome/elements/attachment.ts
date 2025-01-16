@@ -376,7 +376,7 @@ export class AttachmentDownloadView extends View {
       const result = await this.gmail.msgGet(this.attachment.msgId, 'full');
       if (result?.payload?.parts) {
         for (const attMeta of result.payload.parts) {
-          if (attMeta.filename === name && attMeta.body && attMeta.body.size === this.size && attMeta.body.attachmentId) {
+          if (attMeta.filename === this.name && attMeta.body && attMeta.body.size === this.size && attMeta.body.attachmentId) {
             this.attachment.id = attMeta.body.attachmentId;
             return;
           }

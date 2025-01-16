@@ -136,9 +136,6 @@ export class Attachment {
     );
   };
 
-  /** @deprecated should be made private
-   *
-   */
   public isPublicKey = (): boolean => {
     if (this.treatAsValue) {
       return this.treatAsValue === 'publicKey';
@@ -148,15 +145,6 @@ export class Attachment {
       /^(0|0x)?([A-F0-9]{16}|[A-F0-9]{8}([A-F0-9]{8})?)\.asc(\.pgp)?$/i.test(this.name) || // Key ID (8 or 16 characters) with .asc extension (optional .pgp)
       (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}.*\.asc$/g.test(this.name)) || // name contains the word "public", any key id and ends with .asc
       (this.name.endsWith('.asc') && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
-    );
-  };
-
-  public isPrivateKey = (): boolean => {
-    return (
-      Boolean(this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+(?:\-[A-F0-9]{40})?)\.(key|asc)$/g)) ||
-      (/\.(asc|key)$/.test(this.name) &&
-        this.hasData() &&
-        Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PRIVATE KEY BLOCK-----'))
     );
   };
 
@@ -181,7 +169,7 @@ export class Attachment {
     throw new Error('Attachment has no data set');
   };
 
-  public isAttachmentAnImage = () => {
+  public isImage = () => {
     return this.type.startsWith('image/') || this.type.startsWith('img/');
   };
 
@@ -204,9 +192,9 @@ export class Attachment {
         }
       }
       return 'signature';
-    } else if (this.inline && this.isAttachmentAnImage()) {
+    } else if (this.inline && this.isImage()) {
       return 'inlineImage';
-    } else if (!this.name && !this.isAttachmentAnImage() && this.type !== 'application/octet-stream' && this.type !== 'multipart/mixed') {
+    } else if (!this.name && !this.isImage() && !['application/octet-stream', 'multipart/mixed', 'message/global'].includes(this.type)) {
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
@@ -225,11 +213,10 @@ export class Attachment {
     } else if (this.isPrivateKey()) {
       return 'privateKey';
     } else {
-      // && !Attachment.encryptedMsgNames.includes(this.name) -- already checked above
       const isAmbiguousAscFile = this.name.endsWith('.asc'); // ambiguous .asc name
       const isAmbiguousNonameFile = !this.name || this.name === 'noname'; // may not even be OpenPGP related
-      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isAttachmentAnImage()) {
-        if (isAmbiguousNonameFile && this.type === 'application/octet-stream') {
+      if (!this.inline && this.length < 100000 && (isAmbiguousAscFile || isAmbiguousNonameFile) && !this.isImage()) {
+        if (isAmbiguousNonameFile && ['application/octet-stream', 'message/global'].includes(this.type)) {
           return 'plainFile';
         }
         return this.hasData() ? 'maybePgp' : 'needChunk';
@@ -240,6 +227,12 @@ export class Attachment {
 
   public isPgpMimeVersion = () => {
     return this.type === 'application/pgp-encrypted' && this.name.length === 0 && this.getData().toUtfStr() === 'Version: 1';
+  };
+
+  public shouldBeHidden = () => {
+    return (
+      this.type === 'application/pgp-keys' || this.isPublicKey() || this.inline || Attachment.encryptedMsgNames.some(filename => this.name.includes(filename))
+    );
   };
 
   public isExecutableFile = () => {
@@ -298,5 +291,14 @@ export class Attachment {
       'wsh',
       'xll',
     ].some(exeFileExtension => this.name.endsWith('.' + exeFileExtension));
+  };
+
+  private isPrivateKey = (): boolean => {
+    return (
+      Boolean(this.name.match(/(cryptup|flowcrypt)-backup-([a-z0-9]+(?:\-[A-F0-9]{40})?)\.(key|asc)$/g)) ||
+      (/\.(asc|key)$/.test(this.name) &&
+        this.hasData() &&
+        Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PRIVATE KEY BLOCK-----'))
+    );
   };
 }
