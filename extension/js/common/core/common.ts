@@ -121,6 +121,13 @@ export class Str {
     return str.replace(/[.~!$%^*=?]/gi, '');
   };
 
+  public static replaceAccentedChars = (str: string) => {
+    /*
+     * hotfix for issue https://github.com/FlowCrypt/enterprise-server/issues/6264
+     */
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
   public static formatEmailWithOptionalName = (emailParts: EmailParts): string => {
     return Str.formatEmailWithOptionalNameEx(emailParts);
   };
@@ -281,6 +288,7 @@ export class Str {
   public static stripPgpOrGpgExtensionIfPresent = (filename: string) => {
     return filename.replace(/\.(pgp|gpg)$/i, '');
   };
+
   private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
     if (name) {
       return `${Str.rmSpecialCharsKeepUtf(name, 'ALLOW-SOME')} <${email}>`;
