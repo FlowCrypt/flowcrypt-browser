@@ -94,8 +94,10 @@ export class Settings {
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
+
     await new Promise<void>((resolve, reject) => {
-      chrome.storage.local.get(async storage => {
+      // eslint-disable-next-line no-null/no-null
+      chrome.storage.local.get(null, async storage => {
         try {
           for (const storageIndex of Object.keys(storage)) {
             if (storageIndex.startsWith(filter)) {
