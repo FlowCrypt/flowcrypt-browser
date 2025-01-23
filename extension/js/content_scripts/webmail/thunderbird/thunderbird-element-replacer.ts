@@ -19,6 +19,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public reinsertReplyBox: (replyMsgId: string) => void;
   public scrollToReplyBox: (replyMsgId: string) => void;
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
+  public addSecureActionsToMessageMenu: () => void;
   private emailBodyFromThunderbirdMail: string;
 
   public getIntervalFunctions = (): IntervalFunction[] => {
