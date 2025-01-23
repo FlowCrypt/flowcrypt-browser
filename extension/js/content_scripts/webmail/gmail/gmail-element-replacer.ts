@@ -281,9 +281,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return !!$('iframe.pgp_block').filter(':visible').length;
   };
 
-  private addMenuButton = (action: 'reply' | 'forward', selector: string) => {
+  private addMenuButton = (replyOption: ReplyOption, selector: string) => {
     const gmailActionsMenuContainer = $(this.sel.msgActionsMenu).find(selector);
-    const button = $(this.factory.actionsMenuBtn(action)).insertAfter(gmailActionsMenuContainer); // xss-safe-factory
+    const button = $(this.factory.actionsMenuBtn(replyOption)).insertAfter(gmailActionsMenuContainer); // xss-safe-factory
     button.on(
       'click',
       Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
@@ -292,8 +292,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private replaceActionsMenu = () => {
     if ($('.action_menu_message_button').length <= 0) {
-      this.addMenuButton('reply', '#r');
-      this.addMenuButton('forward', '#r3');
+      this.addMenuButton('a_reply', '#r');
+      this.addMenuButton('a_forward', '#r3');
     }
   };
 
