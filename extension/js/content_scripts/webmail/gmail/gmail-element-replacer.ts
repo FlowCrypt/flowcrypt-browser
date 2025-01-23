@@ -293,6 +293,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private replaceActionsMenu = () => {
     if ($('.action_menu_message_button').length <= 0) {
       this.addMenuButton('a_reply', '#r');
+      // * when adding the reply_all button, check if #r2, the placeholder for reply_all, is visible
+      // * otherwise, it's not wise adding reply_all for single recipient emails
       this.addMenuButton('a_forward', '#r3');
     }
   };
@@ -368,7 +370,14 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private actionActivateSecureReplyHandler = async (btn: HTMLElement, event: JQuery.Event) => {
     event.stopImmediatePropagation();
     const secureReplyInvokedFromMenu = btn.className.includes('action_menu_message_button');
-    const replyOption: ReplyOption = btn.className.includes('reply') ? 'a_reply' : 'a_forward';
+    let replyOption: ReplyOption;
+    if (btn.className.includes('reply-all')) {
+      replyOption = 'a_reply_all';
+    } else if (btn.className.includes('forward')) {
+      replyOption = 'a_forward';
+    } else {
+      replyOption = 'a_reply';
+    }
     if ($('#switch_to_encrypted_reply').length) {
       $('#switch_to_encrypted_reply').trigger('click');
       return;
