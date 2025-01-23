@@ -640,7 +640,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
-      this.replyOption = undefined;
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
@@ -683,10 +682,15 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             this.removeNextReplyBoxBorders = false;
           }
           if (!midConvoDraft) {
+            console.log('------------------------------------');
             const replyOption = this.parseReplyOption(replyBox);
+            console.log(replyOption);
+            console.log(replyBox);
+
             if (replyOption) {
               this.replyOption = replyOption;
             }
+            console.log(this.replyOption);
             replyParams.replyOption = this.replyOption;
             // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const isReplyButtonView = replyBoxEl.className.includes('nr');
