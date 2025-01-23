@@ -291,10 +291,14 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private replaceActionsMenu = () => {
-    $(this.sel.msgActionsBtn).on('click', () => {
-      if ($('.action_menu_message_button').length <= 0) {
-        this.addMenuButton('reply', '#r');
-        this.addMenuButton('forward', '#r3');
+    $(document).on('click', 'div.aHU.hx', event => {
+      const $clickedElement = $(event.currentTarget);
+      const $actionsBtn = $clickedElement.find(this.sel.msgActionsBtn);
+      if ($actionsBtn.length > 0) {
+        if ($('.action_menu_message_button').length <= 0) {
+          this.addMenuButton('reply', '#r');
+          this.addMenuButton('forward', '#r3');
+        }
       }
     });
   };
