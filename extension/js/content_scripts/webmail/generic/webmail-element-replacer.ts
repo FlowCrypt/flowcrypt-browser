@@ -14,6 +14,7 @@ export abstract class WebmailElementReplacer {
   public abstract reinsertReplyBox: (replyMsgId: string) => void;
   public abstract scrollToReplyBox: (replyMsgId: string) => void;
   public abstract scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
+  public abstract addSecureActionsToMessageMenu: () => void;
 
   public runIntervalFunctionsPeriodically = () => {
     const intervalFunctions = this.getIntervalFunctions();

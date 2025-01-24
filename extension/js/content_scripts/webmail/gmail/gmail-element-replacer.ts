@@ -147,11 +147,20 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
+  public addSecureActionsToMessageMenu = () => {
+    $(document).on('click', 'div.aHU.hx', event => {
+      const $actionsBtn = $(event.currentTarget).find(this.sel.msgActionsBtn);
+      if ($actionsBtn.length && !$('.action_menu_message_button').length) {
+        this.addMenuButton('reply', '#r');
+        this.addMenuButton('forward', '#r3');
+      }
+    });
+  };
+
   private everything = () => {
     this.replaceArmoredBlocks().catch(Catch.reportErr);
     this.replaceAttachments().catch(Catch.reportErr);
     this.replaceComposeDraftLinks();
-    this.replaceActionsMenu();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
