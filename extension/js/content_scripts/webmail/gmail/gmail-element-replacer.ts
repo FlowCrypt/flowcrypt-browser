@@ -151,8 +151,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     $(document).on('click', 'div.aHU.hx', event => {
       const $actionsBtn = $(event.currentTarget).find(this.sel.msgActionsBtn);
       if ($actionsBtn.length && !$('.action_menu_message_button').length) {
-        this.addMenuButton('reply', '#r');
-        this.addMenuButton('forward', '#r3');
+        this.addMenuButton('a_reply', '#r');
+        this.addMenuButton('a_reply_all', '#r2');
+        this.addMenuButton('a_forward', '#r3');
       }
     });
   };
@@ -292,19 +293,12 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private addMenuButton = (replyOption: ReplyOption, selector: string) => {
     const gmailActionsMenuContainer = $(this.sel.msgActionsMenu).find(selector);
-    const button = $(this.factory.actionsMenuBtn(replyOption)).insertAfter(gmailActionsMenuContainer); // xss-safe-factory
-    button.on(
-      'click',
-      Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
-    );
-  };
-
-  private replaceActionsMenu = () => {
-    if ($('.action_menu_message_button').length <= 0) {
-      this.addMenuButton('a_reply', '#r');
-      // * when adding the reply_all button, check if #r2, the placeholder for reply_all, is visible
-      // * otherwise, it's not wise adding reply_all for single recipient emails
-      this.addMenuButton('a_forward', '#r3');
+    if ($(selector).css('display') === 'block') {
+      const button = $(this.factory.actionsMenuBtn(replyOption)).insertAfter(gmailActionsMenuContainer); // xss-safe-factory
+      button.on(
+        'click',
+        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
+      );
     }
   };
 
