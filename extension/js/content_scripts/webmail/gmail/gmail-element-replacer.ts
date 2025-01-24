@@ -682,15 +682,10 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             this.removeNextReplyBoxBorders = false;
           }
           if (!midConvoDraft) {
-            console.log('------------------------------------');
             const replyOption = this.parseReplyOption(replyBox);
-            console.log(replyOption);
-            console.log(replyBox);
-
             if (replyOption) {
               this.replyOption = replyOption;
             }
-            console.log(this.replyOption);
             replyParams.replyOption = this.replyOption;
             // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const isReplyButtonView = replyBoxEl.className.includes('nr');
