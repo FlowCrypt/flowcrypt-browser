@@ -40,6 +40,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private removeNextReplyBoxBorders = false;
   private lastSwitchToEncryptedReply = false;
   private replyOption: ReplyOption | undefined;
+  private lastReplyOption: ReplyOption | undefined;
 
   private sel = {
     // gmail_variant=standard|new
@@ -640,6 +641,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
+      // removing this line will cause unexpected draft creation bug reappear
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/5616#issuecomment-1972897692
+      this.replyOption = undefined;
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl);
@@ -685,7 +689,12 @@ export class GmailElementReplacer extends WebmailElementReplacer {
             const replyOption = this.parseReplyOption(replyBox);
             if (replyOption) {
               this.replyOption = replyOption;
+              this.lastReplyOption = replyOption;
+            } else if (this.lastReplyOption) {
+              this.replyOption = this.lastReplyOption;
+              this.lastReplyOption = undefined;
             }
+            console.log(this.replyOption);
             replyParams.replyOption = this.replyOption;
             // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const isReplyButtonView = replyBoxEl.className.includes('nr');
