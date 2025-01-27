@@ -687,9 +687,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
           }
           if (!midConvoDraft) {
             const replyOption = this.parseReplyOption(replyBox);
-            console.log(`replyOption: ${replyOption}`);
-            console.log(`this.replyOption: ${this.replyOption}`);
-            console.log(`this.lastReplyOption: ${this.lastReplyOption}`);
             if (replyOption) {
               this.replyOption = replyOption;
               this.lastReplyOption = replyOption;
@@ -717,12 +714,10 @@ export class GmailElementReplacer extends WebmailElementReplacer {
               replyBox.addClass('reply_message_evaluated remove_borders').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
               replyBox.hide();
               this.lastReplyOption = undefined;
-              console.log('here 1');
             } else if (isReplyButtonView) {
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
               this.lastReplyOption = undefined;
               this.replyOption = undefined;
-              console.log('here 2');
             } else {
               const deleteReplyEl = document.querySelector('.oh.J-Z-I.J-J5-Ji.T-I-ax7');
               this.lastSwitchToEncryptedReply = this.switchToEncryptedReply;
@@ -730,7 +725,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
                 // Remove standard reply by clicking `delete` button
                 (deleteReplyEl as HTMLElement).click();
               }
-              console.log('here 3');
             }
             midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
           }
