@@ -458,6 +458,29 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
+      'mail.google.com - switch to encrypted forward',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
+        await Util.sleep(5);
+        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAndClick('[act="25"]', { delay: 1 }); // click forward
+        await Util.sleep(3);
+        await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
+        await gmailPage.waitForContent(
+          '.reply_message_evaluated .error_notification',
+          'The last message was encrypted, but you are composing a message without encryption. Switch to encrypted compose'
+        );
+        await gmailPage.waitAndClick('#switch_to_encrypted_reply'); // Switch to encrypted compose
+        await Util.sleep(3);
+        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        await replyBox2.waitForContent('@input-body', '---------- Forwarded message ---------');
+      })
+    );
+
+    test(
       'mail.google.com - secure reply and forward in dot menu',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
