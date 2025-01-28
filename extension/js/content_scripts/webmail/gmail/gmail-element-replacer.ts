@@ -618,8 +618,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return from ? Str.parseEmail(from) : undefined;
   };
 
-  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption): FactoryReplyParams => {
-    return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()), replyOption };
+  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption, replyBoxMessageId?: string): FactoryReplyParams => {
+    return { replyMsgId: replyBoxMessageId ?? this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()), replyOption };
   };
 
   private getConvoRootEl = (anyInnerElement: HTMLElement) => {
@@ -643,9 +643,12 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       this.replyOption = undefined;
+      // Try to get message id from plain reply box
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/5906
+      const replyBoxMessageId = $(newReplyBoxes[0]).find('[name="lts"]').val() as string;
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
-      const replyParams = this.getLastMsgReplyParams(convoRootEl);
+      const replyParams = this.getLastMsgReplyParams(convoRootEl, undefined, replyBoxMessageId);
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
