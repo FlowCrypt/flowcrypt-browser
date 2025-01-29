@@ -275,7 +275,7 @@ export class XssSafeFactory {
       underscore: actionText.replace(' ', '_'),
       hyphen: actionText.replace(' ', '-'),
     };
-    // * The action_${action.underscoreSeparated}_message_button is used as an identifier in GmailElementReplacer.actionActivateSecureReplyHandler()
+    // * The action_${action.underscore}_message_button is used as an identifier in GmailElementReplacer.actionActivateSecureReplyHandler()
     return `<div class="action_${action.underscore}_message_button action_menu_message_button" data-test="action-${action.hyphen}-message-button">
     <img src="${this.srcImg(`svgs/${action.hyphen}-icon.svg`)}" /><span>secure ${actionText}</span>
     </div>`;
