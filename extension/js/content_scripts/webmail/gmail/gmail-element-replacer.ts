@@ -299,10 +299,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return !!$('iframe.pgp_block').filter(':visible').length;
   };
 
-  private addMenuButton = (replyOption: ReplyOption, selector: string) => {
-    const gmailActionsMenuContainer = $(this.sel.msgActionsMenu).find(selector);
-    if ($(selector).css('display') === 'block') {
-      const button = $(this.factory.actionsMenuBtn(replyOption)).insertAfter(gmailActionsMenuContainer); // xss-safe-factory
+  private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: string) => {
+    if ($(gmailContextMenuBtn).css('display') === 'block') {
+      const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
       button.on(
         'click',
         Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))

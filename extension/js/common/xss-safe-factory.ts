@@ -269,7 +269,7 @@ export class XssSafeFactory {
       </div>`;
   };
 
-  public actionsMenuBtn = (replyOption: ReplyOption) => {
+  public btnSecureMenuBtn = (replyOption: ReplyOption) => {
     const actionText = replyOption.replace('a_', '').replace('_', ' ');
     const action = {
       underscore: actionText.replace(' ', '_'),
