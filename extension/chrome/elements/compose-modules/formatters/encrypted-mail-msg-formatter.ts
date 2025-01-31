@@ -85,7 +85,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       );
     }
     // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
-    const attachments = this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(encrypted);
+    const attachments = await this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(encrypted, pubkeys);
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, {
       isDraft: this.isDraft,
     });
@@ -191,7 +191,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       this.acctEmail,
       this.headers(newMsg),
       emailIntroAndLinkBody,
-      this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(pubEncryptedNoAttachments),
+      await this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(pubEncryptedNoAttachments, pubs),
       { isDraft: this.isDraft, externalId }
     );
   };
@@ -212,8 +212,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     });
   };
 
-  private formatEncryptedMimeDataAsPgpMimeMetaAttachments = (data: Uint8Array) => {
-    const attachments: Attachment[] = [];
+  private formatEncryptedMimeDataAsPgpMimeMetaAttachments = async (data: Uint8Array, pubkeys: PubkeyResult[]) => {
+    const attachments: Attachment[] = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
     attachments.push(
       new Attachment({
         data: Buf.fromUtfStr('Version: 1'),
