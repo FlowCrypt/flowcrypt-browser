@@ -618,7 +618,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return from ? Str.parseEmail(from) : undefined;
   };
 
-  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption, replyBoxMessageId?: string): FactoryReplyParams => {
+  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption, replyBoxMessageId?: string | null): FactoryReplyParams => {
     return { replyMsgId: replyBoxMessageId ?? this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()), replyOption };
   };
 
@@ -645,7 +645,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       this.replyOption = undefined;
       // Try to get message id from plain reply box
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/5906
-      const replyBoxMessageId = $(newReplyBoxes[0]).find('[name="lts"]').val() as string;
+      const replyBoxMessageId = newReplyBoxes[0].closest('.gA.gt')?.previousElementSibling?.getAttribute('data-legacy-message-id');
+
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl, undefined, replyBoxMessageId);
