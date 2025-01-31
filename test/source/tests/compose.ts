@@ -205,6 +205,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - attachment included correctly in PWD encrypted message',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'ci.tests.gmail@flowcrypt.test';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const subject = 'attachment included correctly in PWD encrypted message';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, acctEmail);
+        await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject, 'test');
+        const fileInput = (await composePage.target.$('input[type=file]'))!;
+        await fileInput.uploadFile('test/samples/small.txt');
+        await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await ComposePageRecipe.closed(composePage);
+        const sentMsgs = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(subject);
+        expect(sentMsgs[0]?.payload?.parts?.find(part => part.filename?.includes('small.txt'))).to.not.be.undefined;
+      })
+    );
+
+    test(
       'user@key-manager-disabled-password-message.flowcrypt.test - disabled flowcrypt hosted password protected messages',
       testWithBrowser(async (t, browser) => {
         const acct = 'user@key-manager-disabled-password-message.flowcrypt.test';
