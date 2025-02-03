@@ -148,24 +148,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  public addSecureActionsToMessageMenu = () => {
-    const retryInterval = 100;
-    const addButtons = () => {
-      if (!$(this.sel.msgActionsBtn).length) {
-        Catch.setHandledTimeout(addButtons, retryInterval);
-      } else {
-        $(document).on('click', 'div.aHU.hx', () => {
-          if (!$('.action_menu_message_button').length) {
-            this.addMenuButton('a_reply', '#r');
-            this.addMenuButton('a_reply_all', '#r2');
-            this.addMenuButton('a_forward', '#r3');
-          }
-        });
-      }
-    };
-    addButtons();
-  };
-
   private everything = () => {
     this.replaceArmoredBlocks().catch(Catch.reportErr);
     this.replaceAttachments().catch(Catch.reportErr);
@@ -174,6 +156,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
+    this.addSecureActionsToMessageMenu();
     this.renderLocalDrafts().catch(Catch.reportErr);
   };
 
@@ -933,5 +916,16 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         offlineDraftsContainer.remove();
       }
     }
+  };
+
+  private addSecureActionsToMessageMenu = () => {
+    const addSecureOptionsToGmail = () => {
+      if ($(this.sel.msgActionsMenu).is(':visible') && !$('.action_menu_message_button').length) {
+        this.addMenuButton('a_reply', '#r');
+        this.addMenuButton('a_reply_all', '#r2');
+        this.addMenuButton('a_forward', '#r3');
+      }
+    };
+    Catch.setHandledTimeout(addSecureOptionsToGmail, 100);
   };
 }
