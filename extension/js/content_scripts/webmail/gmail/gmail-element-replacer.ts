@@ -618,8 +618,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return from ? Str.parseEmail(from) : undefined;
   };
 
-  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption): FactoryReplyParams => {
-    return { replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()), replyOption };
+  private getLastMsgReplyParams = (convoRootEl: JQuery, replyOption?: ReplyOption, replyBoxMessageId?: string | null): FactoryReplyParams => {
+    return { replyMsgId: replyBoxMessageId ?? this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()), replyOption };
   };
 
   private getConvoRootEl = (anyInnerElement: HTMLElement) => {
@@ -645,9 +645,13 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       // removing this line will cause unexpected draft creation bug reappear
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/5616#issuecomment-1972897692
       this.replyOption = undefined;
+      // Try to get message id from plain reply box
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/5906
+      const replyBoxMessageId = newReplyBoxes[0].closest('.gA.gt')?.previousElementSibling?.getAttribute('data-legacy-message-id');
+
       // cache for subseqent loop runs
       const convoRootEl = this.getConvoRootEl(newReplyBoxes[0]);
-      const replyParams = this.getLastMsgReplyParams(convoRootEl);
+      const replyParams = this.getLastMsgReplyParams(convoRootEl, undefined, replyBoxMessageId);
       if (msgId) {
         replyParams.replyMsgId = msgId;
       }
