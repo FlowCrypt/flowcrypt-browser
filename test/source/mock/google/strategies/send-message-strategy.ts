@@ -452,8 +452,6 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {
       this.strategy = new PwdEncryptedMessageWithFesIdTokenTestStrategy();
-    } else if (subject.includes('attachment included correctly in PWD encrypted message')) {
-      this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('PWD encrypted message with FES - Reply rendering')) {
       this.strategy = new PwdEncryptedMessageWithFesReplyRenderingTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - pubkey recipient in bcc')) {

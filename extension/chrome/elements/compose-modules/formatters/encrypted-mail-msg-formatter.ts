@@ -85,7 +85,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       );
     }
     // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
-    const attachments = await this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(encrypted, pubkeys);
+    const attachments = this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(encrypted);
     return await SendableMsg.createPgpMime(this.acctEmail, this.headers(newMsg), attachments, {
       isDraft: this.isDraft,
     });
@@ -181,17 +181,18 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     { msgUrl, externalId }: { msgUrl: string; externalId?: string },
     signingPrv?: Key
   ) => {
-    // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
+    // encoded as: PGP/MIME-like structure
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+    const attachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs);
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
+    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     return await SendableMsg.createPwdMsg(
       this.acctEmail,
       this.headers(newMsg),
       emailIntroAndLinkBody,
-      await this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(pubEncryptedNoAttachments, pubs),
+      this.formatEncryptedMimeDataAsPgpMimeMetaAttachments(pubEncryptedNoAttachments),
       { isDraft: this.isDraft, externalId }
     );
   };
@@ -212,8 +213,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     });
   };
 
-  private formatEncryptedMimeDataAsPgpMimeMetaAttachments = async (data: Uint8Array, pubkeys: PubkeyResult[]) => {
-    const attachments: Attachment[] = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubkeys);
+  private formatEncryptedMimeDataAsPgpMimeMetaAttachments = (data: Uint8Array) => {
+    const attachments: Attachment[] = [];
     attachments.push(
       new Attachment({
         data: Buf.fromUtfStr('Version: 1'),
