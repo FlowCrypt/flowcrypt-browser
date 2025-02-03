@@ -283,7 +283,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: string) => {
-    if ($(gmailContextMenuBtn).css('display') === 'block') {
+    if ($(gmailContextMenuBtn).is(':visible')) {
       const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
       button.on(
         'click',
@@ -924,8 +924,10 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         this.addMenuButton('a_reply', '#r');
         this.addMenuButton('a_reply_all', '#r2');
         this.addMenuButton('a_forward', '#r3');
+      } else {
+        Catch.setHandledTimeout(addSecureOptionsToGmail, 100);
       }
     };
-    Catch.setHandledTimeout(addSecureOptionsToGmail, 100);
+    addSecureOptionsToGmail();
   };
 }
