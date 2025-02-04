@@ -150,15 +150,13 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   public setupSecureActionsOnGmailMenu = () => {
-    $(() => {
-      const observer = new MutationObserver(() => {
-        const gmailActionsMenu = $(this.sel.msgActionsMenu);
-        if (gmailActionsMenu.is(':visible')) {
-          this.addSecureActionsToMessageMenu();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
+    const observer = new MutationObserver(() => {
+      const gmailActionsMenu = document.querySelector(this.sel.msgActionsMenu);
+      if (gmailActionsMenu && (gmailActionsMenu as HTMLElement).offsetParent !== undefined) {
+        this.addSecureActionsToMessageMenu();
+      }
     });
+    observer.observe(document.body, { childList: true, subtree: true });
   };
 
   private everything = () => {
