@@ -151,10 +151,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   public setupSecureActionsOnGmailMenu = () => {
     $(() => {
-      const targetSelector = '.b7.J-M';
       const observer = new MutationObserver(() => {
-        const $element = $(targetSelector);
-        if ($element.length && $element.is(':visible')) {
+        const gmailActionsMenu = $(this.sel.msgActionsMenu);
+        if (gmailActionsMenu.is(':visible')) {
           this.addSecureActionsToMessageMenu();
         }
       });
