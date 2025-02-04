@@ -150,7 +150,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   public setupSecureActionsOnGmailMenu = () => {
-    $(document).ready(() => {
+    $(() => {
       const targetSelector = '.b7.J-M';
       const observer = new MutationObserver(() => {
         const $element = $(targetSelector);
