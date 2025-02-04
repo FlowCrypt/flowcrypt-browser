@@ -79,6 +79,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     super();
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.pubLookup = new PubLookup(clientConfiguration);
+    this.setupSecureActionsOnGmailMenu();
   }
 
   public getIntervalFunctions = (): IntervalFunction[] => {
@@ -148,6 +149,19 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
+  public setupSecureActionsOnGmailMenu = () => {
+    $(document).ready(() => {
+      const targetSelector = '.b7.J-M';
+      const observer = new MutationObserver(() => {
+        const $element = $(targetSelector);
+        if ($element.length && $element.is(':visible')) {
+          this.addSecureActionsToMessageMenu();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  };
+
   private everything = () => {
     this.replaceArmoredBlocks().catch(Catch.reportErr);
     this.replaceAttachments().catch(Catch.reportErr);
@@ -156,7 +170,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
-    this.addSecureActionsToMessageMenu();
     this.renderLocalDrafts().catch(Catch.reportErr);
   };
 
@@ -923,15 +936,11 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private addSecureActionsToMessageMenu = () => {
-    const addSecureOptionsToGmail = () => {
-      if ($(this.sel.msgActionsMenu).is(':visible') && !$('.action_menu_message_button').length) {
-        this.addMenuButton('a_reply', '#r');
-        this.addMenuButton('a_reply_all', '#r2');
-        this.addMenuButton('a_forward', '#r3');
-      } else {
-        Catch.setHandledTimeout(addSecureOptionsToGmail, 100);
-      }
-    };
-    addSecureOptionsToGmail();
+    if ($('.action_menu_message_button').length) {
+      return;
+    }
+    this.addMenuButton('a_reply', '#r');
+    this.addMenuButton('a_reply_all', '#r2');
+    this.addMenuButton('a_forward', '#r3');
   };
 }
