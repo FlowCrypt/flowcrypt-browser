@@ -32,7 +32,5 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "chai-as-promised"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "web-ext"
-        update-types: ["version-update:semver-major"]
       - dependency-name: "filesize"
         versions: [ ">= 10.1.3" ]
