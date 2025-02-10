@@ -44,6 +44,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
   private uniqueRecipientIndex = 0;
+  private inputContainerPaddingBottom = '30px';
 
   public constructor(view: ComposeView) {
     super(view);
@@ -91,6 +92,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.now('cc').on(
       'click',
       this.view.setHandler(target => {
+        $('#input-container-to').css('padding-bottom', 0);
         const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
         this.copyCcBccActionsClickHandler(target, newContainer);
       })
@@ -98,6 +100,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.now('bcc').on(
       'click',
       this.view.setHandler(target => {
+        $('#input-container-cc').css('padding-bottom', 0);
         const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
         this.copyCcBccActionsClickHandler(target, newContainer);
       })
@@ -106,6 +109,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       'click',
       this.view.setHandler(() => {
         this.view.S.cached('input_to').trigger('focus');
+        this.setCorrectPaddingForInputContainer();
       })
     );
     this.view.S.cached('input_to').on(
@@ -405,6 +409,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
     this.view.S.cached('recipients_placeholder').css('display', 'flex');
+    $('.input-container').css('padding-bottom', '0');
     this.setEmailsPreview();
     this.hideContacts();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
@@ -914,6 +919,20 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     sendingType: RecipientType,
     status: RecipientStatus
   ): RecipientElement[] => {
+    // we don't need to add padding bottom to bcc
+    if (sendingType !== 'bcc') {
+      if (sendingType === 'to') {
+        if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
+      }
+      if (sendingType === 'cc') {
+        if ($('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
+      }
+    }
+
     const result: RecipientElement[] = [];
     for (const { email, name, invalid } of emails) {
       const recipientId = this.generateRecipientId();
@@ -1156,12 +1175,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private removeRecipient = (element: HTMLElement) => {
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
-    this.addedRecipients[index].element.remove();
+    const recipient = this.addedRecipients[index];
+    // Adjust padding when the last recipient of a specific type is removed
+    if (this.addedRecipients.filter(r => r.sendingType === recipient.sendingType).length === 1) {
+      $(`#input-container-${recipient.sendingType}`).css('padding-bottom', '0');
+    }
+    recipient.element.remove();
     const container = element.parentElement?.parentElement; // Get Container, e.g. '.input-container-cc'
     if (container) {
       this.view.sizeModule.resizeInput($(container).find('input'));
     }
-    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).trigger('focus');
+    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${recipient.sendingType} input`).trigger('focus');
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
@@ -1250,6 +1274,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         child.parentElement?.removeChild(child);
         break;
       }
+    }
+  };
+
+  private setCorrectPaddingForInputContainer = () => {
+    if (this.addedRecipients.some(r => r.sendingType === 'cc')) {
+      $('#input-container-cc').css('padding-bottom', this.inputContainerPaddingBottom);
+    } else if (this.addedRecipients.some(r => r.sendingType === 'to')) {
+      $('#input-container-to').css('padding-bottom', this.inputContainerPaddingBottom);
     }
   };
 
