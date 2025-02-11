@@ -919,17 +919,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     sendingType: RecipientType,
     status: RecipientStatus
   ): RecipientElement[] => {
-    // we don't need to add padding bottom to bcc
-    if (sendingType !== 'bcc') {
-      if (sendingType === 'to') {
-        if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
-          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
-        }
+    if (sendingType === 'to') {
+      if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
+        container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
       }
-      if (sendingType === 'cc') {
-        if ($('#input-container-bcc').css('display') === 'none') {
-          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
-        }
+    }
+    if (sendingType === 'cc') {
+      if ($('#input-container-bcc').css('display') === 'none') {
+        container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
       }
     }
 
@@ -1278,10 +1275,10 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private setCorrectPaddingForInputContainer = () => {
-    if (this.addedRecipients.some(r => r.sendingType === 'cc')) {
-      $('#input-container-cc').css('padding-bottom', this.inputContainerPaddingBottom);
-    } else if (this.addedRecipients.some(r => r.sendingType === 'to')) {
+    if (this.addedRecipients.some(r => r.sendingType === 'to') && !this.addedRecipients.some(r => r.sendingType === 'cc')) {
       $('#input-container-to').css('padding-bottom', this.inputContainerPaddingBottom);
+    } else if (this.addedRecipients.some(r => r.sendingType === 'cc') && !this.addedRecipients.some(r => r.sendingType === 'bcc')) {
+      $('#input-container-cc').css('padding-bottom', this.inputContainerPaddingBottom);
     }
   };
 
