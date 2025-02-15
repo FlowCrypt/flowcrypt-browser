@@ -919,14 +919,18 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     sendingType: RecipientType,
     status: RecipientStatus
   ): RecipientElement[] => {
-    if (sendingType === 'to') {
-      if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
-        container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+    // Do not add padding-bottom for reply box
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5935
+    if (!container.hasClass('input-container')) {
+      if (sendingType === 'to') {
+        if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
       }
-    }
-    if (sendingType === 'cc') {
-      if ($('#input-container-bcc').css('display') === 'none') {
-        container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+      if (sendingType === 'cc') {
+        if ($('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
       }
     }
 
