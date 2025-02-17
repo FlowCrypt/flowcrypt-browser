@@ -949,7 +949,11 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const messageContainer = $('.T-I-JO.T-I-Kq').closest('.h7');
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
-    if (msgId && !$('#r2').is('visible')) {
+    const replyAllMenuButton = document.querySelector('#r2');
+    // Cannot use jQuery $('#r2').is(':visible') because the element is considered invisible if its parent has display: none.
+    if (replyAllMenuButton && window.getComputedStyle(replyAllMenuButton).display !== 'none') {
+      this.addMenuButton('a_reply_all', '#r2');
+    } else if (msgId) {
       try {
         const gmailMsg = await this.emailProvider.msgGet(msgId, 'metadata');
         const replyMeta = GmailParser.determineReplyMeta(this.acctEmail, [], gmailMsg);
@@ -963,7 +967,6 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
 
     this.addMenuButton('a_reply', '#r');
-    this.addMenuButton('a_reply_all', '#r2');
     this.addMenuButton('a_forward', '#r3');
   };
 }
