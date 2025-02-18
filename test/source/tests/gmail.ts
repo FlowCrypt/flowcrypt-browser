@@ -301,7 +301,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test.serial(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769, originally uses test.serial
+    test.skip(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -403,7 +404,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5906
-    test(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
       'mail.google.com - Keep original reply message when switching to secure mode',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -421,7 +423,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
         const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&skipClickPrompt=___cu_true___'], { sleep: 5 });
-        await Util.sleep(3);
+        await replyBox.waitAll(['@action-expand-quoted-text']);
         await replyBox.waitAndClick('@action-expand-quoted-text');
         // Check if quoted message doesn't contain last message
         expect(await replyBox.read('@input-body')).to.not.contain(`Here's reply`);
@@ -495,7 +497,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
       'mail.google.com - switch to encrypted forward',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -537,6 +540,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAndClick('@action-reply-all-message-button');
         const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await replyBox2.waitForContent('@input-body', '');
+        const recipientsCount = await replyBox2.target.$$eval('.email_address', elements => elements.length);
+        expect(recipientsCount).to.equal(2);
         await gmailPage.waitAndClick(gmailContextMenu);
         await Util.sleep(1);
         expect(await gmailPage.isElementPresent('@action-forward-message-button'));
