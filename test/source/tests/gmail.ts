@@ -420,9 +420,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(2);
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
-        // const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&skipClickPrompt=___cu_true___'], { sleep: 5 });
-        // await Util.sleep(3);
-        // await replyBox.waitAndClick('@action-expand-quoted-text');
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        await replyBox.waitAndClick('@action-expand-quoted-text');
         // Check if quoted message doesn't contain last message
         // expect(await replyBox.read('@input-body')).to.not.contain(`Here's reply`);
       })
