@@ -27,6 +27,9 @@ import { MessageBody, Mime } from '../../../common/core/mime.js';
 import { MsgBlock } from '../../../common/core/msg-block.js';
 import { ReplyOption } from '../../../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
 import { WebmailElementReplacer, IntervalFunction } from '../generic/webmail-element-replacer.js';
+import { EmailProviderInterface } from '../../../common/api/email-provider/email-provider-api.js';
+import { Gmail } from '../../../common/api/email-provider/gmail/gmail.js';
+import { GmailParser } from '../../../common/api/email-provider/gmail/gmail-parser.js';
 
 export class GmailElementReplacer extends WebmailElementReplacer {
   private debug = false;
@@ -41,6 +44,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private lastSwitchToEncryptedReply = false;
   private replyOption: ReplyOption | undefined;
   private lastReplyOption: ReplyOption | undefined;
+  private emailProvider: EmailProviderInterface;
 
   private sel = {
     // gmail_variant=standard|new
@@ -79,6 +83,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     super();
     this.webmailCommon = new WebmailCommon(acctEmail, injector);
     this.pubLookup = new PubLookup(clientConfiguration);
+    this.emailProvider = new Gmail(this.acctEmail);
     this.setupSecureActionsOnGmailMenu();
   }
 
@@ -152,8 +157,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   public setupSecureActionsOnGmailMenu = () => {
     const observer = new MutationObserver(() => {
       const gmailActionsMenu = document.querySelector(this.sel.msgActionsMenu);
-      if (gmailActionsMenu && (gmailActionsMenu as HTMLElement).offsetParent !== undefined) {
-        this.addSecureActionsToMessageMenu();
+      if (gmailActionsMenu && window.getComputedStyle(gmailActionsMenu).display !== 'none' && (gmailActionsMenu as HTMLElement).offsetParent !== undefined) {
+        void this.addSecureActionsToMessageMenu();
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
@@ -293,7 +298,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: string) => {
-    if ($(gmailContextMenuBtn).is(':visible')) {
+    if ($(gmailContextMenuBtn).is(':visible') && !document.querySelector(`.action_${replyOption.replace('a_', '')}_message_button`)) {
       const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
       button.on(
         'click',
@@ -932,12 +937,36 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
   };
 
-  private addSecureActionsToMessageMenu = () => {
-    if ($('.action_menu_message_button').length) {
-      return;
+  private addSecureActionsToMessageMenu = async () => {
+    /**
+     * Adds secure reply actions to the Gmail message menu.
+     * - If the default "Reply to all" button is missing and there are multiple "To" recipients
+     *   (due to a custom Reply-To header for password-protected messages),
+     *   a "Secure Reply to All" button is added after the "Reply" button.
+     *
+     * Issue: https://github.com/FlowCrypt/flowcrypt-browser/issues/5933
+     */
+    const messageContainer = $('.T-I-JO.T-I-Kq').closest('.h7');
+    const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
+    const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
+    const replyAllMenuButton = document.querySelector('#r2');
+    // Cannot use jQuery $('#r2').is(':visible') because the element is considered invisible if its parent has display: none.
+    if (replyAllMenuButton && window.getComputedStyle(replyAllMenuButton).display !== 'none') {
+      this.addMenuButton('a_reply_all', '#r2');
+    } else if (msgId) {
+      try {
+        const gmailMsg = await this.emailProvider.msgGet(msgId, 'metadata');
+        const replyMeta = GmailParser.determineReplyMeta(this.acctEmail, [], gmailMsg);
+
+        if (replyMeta.to.length > 1) {
+          this.addMenuButton('a_reply_all', '#r');
+        }
+      } catch (error) {
+        console.error(`Failed to retrieve message metadata for ID ${msgId}:`, error);
+      }
     }
+
     this.addMenuButton('a_reply', '#r');
-    this.addMenuButton('a_reply_all', '#r2');
     this.addMenuButton('a_forward', '#r3');
   };
 }

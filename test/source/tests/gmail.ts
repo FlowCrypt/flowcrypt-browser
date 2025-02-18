@@ -483,6 +483,18 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5933
+    test(
+      'mail.google.com - test reply all for password protected message',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzQZTMHNLflWQjRcSvWlMsKbLhpr');
+        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAll('.action_reply_all_message_button');
+      })
+    );
+
     test(
       'mail.google.com - switch to encrypted forward',
       testWithBrowser(async (t, browser) => {
