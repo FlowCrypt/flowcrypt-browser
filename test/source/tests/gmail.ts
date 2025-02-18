@@ -301,7 +301,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769, originally uses test.serial
     test.skip(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
