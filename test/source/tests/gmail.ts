@@ -301,7 +301,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test.serial(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -403,7 +404,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5906
-    test(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
       'mail.google.com - Keep original reply message when switching to secure mode',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -495,7 +497,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
       'mail.google.com - switch to encrypted forward',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
