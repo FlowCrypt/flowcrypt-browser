@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "8.5.9",
+  "version": "8.5.10",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -37,7 +37,7 @@
     "typescript": "5.7.3",
     "typescript-eslint": "^8.24.0",
     "undici-types": "^7.3.0",
-    "web-ext": "8.4.0",
+    "web-ext": "7.12.0",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
