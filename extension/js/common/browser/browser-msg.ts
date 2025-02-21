@@ -429,17 +429,8 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static async clearAllDeleteExpiredAlarms() {
-    const alarms = await chrome.alarms.getAll();
-    for (const alarm of alarms) {
-      if (alarm.name.includes('delete_expired_interval_')) {
-        await chrome.alarms.clear(alarm.name);
-      }
-    }
-  }
-
   public static async createIntervalAlarm(action: string, periodInMinutes: number) {
-    const alarmName = `${action}_interval_${Date.now()}`;
+    const alarmName = `${action}_interval`;
 
     await chrome.alarms.create(alarmName, { periodInMinutes });
   }
