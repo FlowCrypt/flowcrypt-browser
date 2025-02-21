@@ -429,10 +429,10 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static createIntervalAlarm(action: string, periodInMinutes: number) {
-    const alarmName = `${action}_interval_${Date.now()}`;
+  public static async createIntervalAlarm(action: string, periodInMinutes: number) {
+    const alarmName = `${action}_interval`;
 
-    void chrome.alarms.create(alarmName, { periodInMinutes });
+    await chrome.alarms.create(alarmName, { periodInMinutes });
   }
 
   public static intervalAddListener(name: string, handler: IntervalHandler) {
