@@ -513,7 +513,6 @@ export class BrowserMsg {
 
   public static alarmListen() {
     const alarmListener = (alarm: { name: string }) => {
-      console.log(alarm.name);
       const alarmName = alarm.name;
       const actionName = alarmName.split('_interval')[0];
       if (BrowserMsg.INTERVAL_HANDLERS[actionName]) {
