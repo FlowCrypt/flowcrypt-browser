@@ -858,9 +858,9 @@ export class ContactStore extends AbstractStore {
     });
   }
 
-  private static chainExtraction<T>(store: IDBObjectStore, setup: { keys: IDBValidKey[]; values: T[] }, req?: IDBRequest): void {
+  private static chainExtraction(store: IDBObjectStore, setup: { keys: IDBValidKey[]; values: unknown[] }, req?: IDBRequest): void {
     if (req) {
-      ContactStore.setReqPipe(req, (value: T) => {
+      ContactStore.setReqPipe(req, (value: unknown) => {
         if (value) {
           setup.values.push(value);
         }
