@@ -1890,6 +1890,21 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5949
+    test(
+      `decrypt - check if checksum error doesn't appear for signed message reply`,
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const threadId = '195883e4d3e2f249';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe.pgp_block');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        const htmlContent = await pgpBlock.readHtml('#pgp_block');
+        expect(htmlContent).not.include('Warning: Checksum mismatch detected');
+      })
+    );
+
     test(
       'decrypt - inbox - encrypted message inside signed',
       testWithBrowser(async (t, browser) => {

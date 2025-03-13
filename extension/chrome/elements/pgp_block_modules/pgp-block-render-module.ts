@@ -49,7 +49,7 @@ export class PgpBlockViewRenderModule {
   public renderContent = (htmlContent: string, isErr: boolean, isChecksumInvalid = false) => {
     let contentWithLink = linkifyHtml(htmlContent);
     if (isChecksumInvalid) {
-      contentWithLink = `<div class="pgp-invalid-checksum">${Lang.pgpBlock.invalidCheckSum}</div>${contentWithLink}}`;
+      contentWithLink = `<div class="pgp-invalid-checksum">${Lang.pgpBlock.invalidCheckSum}</div>${contentWithLink}`;
     }
     // Temporary workaround for an issue where 'cryptup_reply' divs are not being hidden when replying to all
     // messages from the FES. The root cause is that FES currently returns the body of
