@@ -80,11 +80,6 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
       };
       /* eslint-enable @typescript-eslint/naming-convention */
       const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
-      console.log(keyAlgo);
-      console.log(this.keyImportUi.getSelectedEmailAliases('generate_private_key'));
-      if (opts.passphrase !== 'a') {
-        return;
-      }
       const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo, this.keyImportUi.getSelectedEmailAliases('generate_private_key'));
       if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
         const adminPubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
