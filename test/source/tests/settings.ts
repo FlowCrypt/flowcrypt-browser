@@ -33,6 +33,36 @@ import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
     test(
+      'settings - inform user when importing newer key version',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const key50yearExpiry = testConstants.keyWith50yearsExpiry;
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          fixKey: true,
+          key: {
+            title: '',
+            armored: key50yearExpiry,
+            passphrase: 'passphrase',
+            longid: '6B673BAB02EC3E43',
+          },
+        });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPopup.waitAndClick('@source-paste');
+        const key80yearExpiry = testConstants.keyWith80yearsExpiry;
+        await addKeyPopup.waitAndType('@input-armored-key', key80yearExpiry);
+        await addKeyPopup.waitAndType('@input-passphrase', 'passphrase');
+        const expectedInfoMsg = "The key you're trying to import is a newer version of one you already have, based on its expiry date";
+        await addKeyPopup.waitAndRespondToModal('info', 'confirm', expectedInfoMsg);
+      })
+    );
+    test(
       'settings - my own emails show as contacts',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
