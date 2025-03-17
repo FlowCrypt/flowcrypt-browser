@@ -18,6 +18,7 @@ import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { saveKeysAndPassPhrase, setPassphraseForPrvs } from '../../../js/common/helpers.js';
 import { KeyErrors } from '../../elements/shared/key_errors.js';
 import { AddKeyGenerateModule } from './add_key_generate_module.js';
+import { Settings } from '../../../js/common/settings.js';
 
 export class AddKeyView extends View {
   public readonly acctEmail: string;
@@ -42,6 +43,7 @@ export class AddKeyView extends View {
     const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
     this.fesUrl = storage.fesUrl;
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
+    await Settings.refreshSendAs(this.acctEmail);
     await this.addKeyGenerateModule.initGenerateKeyView();
     if (!this.clientConfiguration.forbidStoringPassPhrase()) {
       $('.input_passphrase_save_label').removeClass('hidden');
@@ -67,6 +69,7 @@ export class AddKeyView extends View {
       await this.loadAndRenderKeyBackupsOrRenderError();
       $('.source_selector').css('display', 'block');
       $('#spinner_container').text('');
+      await this.keyImportUi.renderEmailAliasView(this.acctEmail);
     }
   };
 

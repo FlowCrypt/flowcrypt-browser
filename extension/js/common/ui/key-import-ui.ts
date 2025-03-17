@@ -12,13 +12,14 @@ import { Key, KeyUtil } from '../core/crypto/key.js';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
-import { Url, Str } from '../core/common.js';
+import { Url, Str, Value } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
 import { Xss } from '../platform/xss.js';
 import { ClientConfiguration } from '../client-configuration.js';
+import { AcctStore } from '../platform/store/acct-store.js';
 
 type KeyImportUiCheckResult = {
   normalized: string;
@@ -39,6 +40,8 @@ export class KeyCanBeFixed extends Error {
 export class UserAlert extends Error {}
 
 export class KeyImportUi {
+  // public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
+  public readonly emailDomainsToSkip = ['test'];
   private expectedLongid?: string;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
@@ -70,19 +73,36 @@ export class KeyImportUi {
     return;
   };
 
-  public static addAliasForSubmission = (email: string, submitKeyForAddrs: string[]) => {
-    submitKeyForAddrs.push(email);
-  };
-
-  public static removeAliasFromSubmission = (email: string, submitKeyForAddrs: string[]) => {
-    submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
-  };
-
   // by unselecting, we allow to click on "Load from a file" and trigger the fineuploader again
   public static allowReselect = () => {
     $('input[type=radio][name=source]').prop('checked', false);
   };
 
+  public renderEmailAliasView = async (acctEmail: string) => {
+    const storage = await AcctStore.get(acctEmail, ['email_provider']);
+    console.log(storage);
+    if (storage.email_provider === 'gmail') {
+      const { sendAs } = await AcctStore.get(acctEmail, ['sendAs']);
+      const addresses = this.filterAddressesForSubmittingKeys(Object.keys(sendAs ?? {}));
+
+      const emailAliases = Value.arr.withoutVal(addresses, acctEmail);
+      for (const e of emailAliases) {
+        for (const option of ['generate_private_key', 'submit_pubkey']) {
+          $(`.${option}_addresses`).append(
+            `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-test="input-email-alias-${option}-${e.replace(
+              /[^a-z0-9]+/g,
+              ''
+            )}" />${Xss.escape(e)}</label><br/>`
+          ); // xss-escaped
+        }
+      }
+      if (emailAliases.length > 0) {
+        $('.also_submit_alias_key_view').show();
+        $(`.generate_alias_key_view`).show();
+      }
+      $('.manual .input_submit_all').prop({ checked: true, disabled: false });
+    }
+  };
   public onBadPassphrase: VoidCallback = () => undefined;
 
   public shouldSubmitPubkey = (clientConfiguration: ClientConfiguration, checkboxSelector: string) => {
@@ -98,7 +118,15 @@ export class KeyImportUi {
     return Boolean($(checkboxSelector).prop('checked'));
   };
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
+  public getSelectedEmailAliases = (type: 'generate_private_key' | 'submit_pubkey'): string[] => {
+    const selectedEmails: string[] = [];
+    for (const el of $(`.input_email_alias_${type}:checked`)) {
+      selectedEmails.push(String($(el).data('email')));
+    }
+    return selectedEmails;
+  };
+
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
     $('input[type=radio][name=source]')
       .off()
       .on('change', function () {
@@ -144,17 +172,14 @@ export class KeyImportUi {
       'keyup paste change',
       Ui.event.handle(async target => {
         $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
-        $('.input_email_alias').prop('checked', false);
+        $('.input_email_alias_submit_pubkey').prop('checked', false);
         const prv = await Catch.undefinedOnException(KeyUtil.parse(String($(target).val())));
         if (prv !== undefined) {
           $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-          if (submitKeyForAddrs !== undefined) {
-            for (const email of prv.emails) {
-              for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
-                if (String($(inputCheckboxesWithEmail).data('email')) === email) {
-                  KeyImportUi.addAliasForSubmission(email, submitKeyForAddrs);
-                  $(inputCheckboxesWithEmail).prop('checked', true);
-                }
+          for (const email of prv.emails) {
+            for (const inputCheckboxesWithEmail of $('.input_email_alias_submit_pubkey')) {
+              if (String($(inputCheckboxesWithEmail).data('email')) === email) {
+                $(inputCheckboxesWithEmail).prop('checked', true);
               }
             }
           }
@@ -457,5 +482,10 @@ export class KeyImportUi {
                 <div></div>
               </div>`;
     return { passwordResultElement: $(passwordResultHTML), progressBarElement: $(progressBarHTML) };
+  };
+
+  private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
+    const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
+    return addresses.filter(e => !filterAddrRegEx.test(e));
   };
 }
