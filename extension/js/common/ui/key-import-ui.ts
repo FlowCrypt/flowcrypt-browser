@@ -120,7 +120,7 @@ export class KeyImportUi {
 
   public getSelectedEmailAliases = (type: 'generate_private_key' | 'submit_pubkey'): string[] => {
     const selectedEmails: string[] = [];
-    for (const el of $(`.input_email_alias_${type}:checked`)) {
+    for (const el of $(`.input_email_alias_${type}:visible:checked`)) {
       selectedEmails.push(String($(el).data('email')));
     }
     return selectedEmails;
