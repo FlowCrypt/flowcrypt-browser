@@ -177,7 +177,6 @@ export class OpenPGPKey {
     expireSeconds: number
   ) {
     const opgpPrv = (await OpenPGPKey.extractExternalLibraryObjFromKey(privateKey)) as OpenPGP.PrivateKey; // todo: check isPrivate()?
-    console.log(userIDs);
     const keyPair = await opgp.reformatKey({
       privateKey: opgpPrv,
       passphrase,
