@@ -9,7 +9,7 @@ import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 import * as Stream from '@openpgp/web-stream-tools';
 
 type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGP.Data> | OpenPGP.CleartextMessage;
-interface KeyWithPrivateFields extends Key {
+export interface KeyWithPrivateFields extends Key {
   internal: OpenPGP.Key | string; // usable key without weak packets
   rawKey?: OpenPGP.Key; // parsed version of rawArmored
   rawArmored: string;
@@ -177,6 +177,7 @@ export class OpenPGPKey {
     expireSeconds: number
   ) {
     const opgpPrv = (await OpenPGPKey.extractExternalLibraryObjFromKey(privateKey)) as OpenPGP.PrivateKey; // todo: check isPrivate()?
+    console.log(userIDs);
     const keyPair = await opgp.reformatKey({
       privateKey: opgpPrv,
       passphrase,
