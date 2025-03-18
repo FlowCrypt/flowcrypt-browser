@@ -86,10 +86,6 @@ export class KeyImportUi {
       const addresses = this.filterAddressesForSubmittingKeys(Object.keys(sendAs ?? {}));
 
       const emailAliases = Value.arr.withoutVal(addresses, acctEmail);
-      console.log(emailAliases);
-      console.log(addresses);
-      console.log(acctEmail);
-      console.log(Object.keys(sendAs ?? {}));
       for (const e of emailAliases) {
         for (const option of ['generate_private_key', 'submit_pubkey']) {
           $(`.${option}_addresses`).append(

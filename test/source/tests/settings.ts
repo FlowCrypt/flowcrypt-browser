@@ -217,7 +217,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(contacts1).to.contain('flowcrypt.compatibility@gmail.com');
         expect(contacts1).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
         await contactsFrame.waitAndClick('@action-back-to-contact-list', { confirmGone: true });
-        await Util.sleep(100000);
+        await Util.sleep(1);
         expect(await contactsFrame.read('@page-contacts')).to.contain('flowcrypt.compatibility@gmail.com');
         expect(await contactsFrame.read('@page-contacts')).to.contain('flowcryptcompatibility@gmail.com');
         await SettingsPageRecipe.closeDialog(settingsPage);
