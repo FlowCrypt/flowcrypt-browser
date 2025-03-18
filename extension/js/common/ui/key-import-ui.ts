@@ -79,13 +79,17 @@ export class KeyImportUi {
   };
 
   public renderEmailAliasView = async (acctEmail: string) => {
+    await Settings.refreshSendAs(acctEmail);
     const storage = await AcctStore.get(acctEmail, ['email_provider']);
-    console.log(storage);
     if (storage.email_provider === 'gmail') {
       const { sendAs } = await AcctStore.get(acctEmail, ['sendAs']);
       const addresses = this.filterAddressesForSubmittingKeys(Object.keys(sendAs ?? {}));
 
       const emailAliases = Value.arr.withoutVal(addresses, acctEmail);
+      console.log(emailAliases);
+      console.log(addresses);
+      console.log(acctEmail);
+      console.log(Object.keys(sendAs ?? {}));
       for (const e of emailAliases) {
         for (const option of ['generate_private_key', 'submit_pubkey']) {
           $(`.${option}_addresses`).append(
