@@ -103,6 +103,20 @@ export class KeyImportUi {
       $('.manual .input_submit_all').prop({ checked: true, disabled: false });
     }
   };
+
+  public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
+    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
+    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
+    if ($(target).prop('checked')) {
+      if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
+        $('.input_email_alias_submit_pubkey').prop({ disabled: false });
+      }
+    } else {
+      $('.input_email_alias_submit_pubkey').prop({ checked: false });
+      $('.input_email_alias_submit_pubkey').prop({ disabled: true });
+    }
+  };
+
   public onBadPassphrase: VoidCallback = () => undefined;
 
   public shouldSubmitPubkey = (clientConfiguration: ClientConfiguration, checkboxSelector: string) => {
@@ -136,12 +150,14 @@ export class KeyImportUi {
             $('.input_private_key').val('').trigger('change').prop('disabled', true);
             $('.source_paste_container').css('display', 'none');
             $('.source_generate_container').hide();
+            $('.generate_alias_key_view').hide();
             $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
             $('#fineuploader_button > input').trigger('click');
             break;
           case 'paste':
             $('.input_private_key').val('').trigger('change').prop('disabled', false);
             $('.source_generate_container').hide();
+            $('.generate_alias_key_view').hide();
             $('.source_paste_container').css('display', 'block');
             $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
             break;
@@ -155,6 +171,7 @@ export class KeyImportUi {
           case 'generate':
             $('.source_paste_container').hide();
             $('.source_generate_container').show();
+            $('.generate_alias_key_view').show();
             break;
           default:
             break;

@@ -203,7 +203,7 @@ export class SetupView extends View {
     );
     $('.input_submit_key').on(
       'click',
-      this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
+      this.setHandler(el => this.keyImportUi.actionSubmitPublicKeyToggleHandler(el))
     );
     $('#step_0_backup_to_designated_mailbox .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
       'click',
@@ -283,19 +283,6 @@ export class SetupView extends View {
       'click',
       this.setHandler(() => window.location.reload())
     );
-  };
-
-  public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
-    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
-    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
-    if ($(target).prop('checked')) {
-      if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        $('.input_email_alias_submit_pubkey').prop({ disabled: false });
-      }
-    } else {
-      $('.input_email_alias_submit_pubkey').prop({ checked: false });
-      $('.input_email_alias_submit_pubkey').prop({ disabled: true });
-    }
   };
 
   public actionCloseHandler = () => {
