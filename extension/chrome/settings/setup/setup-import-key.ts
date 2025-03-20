@@ -47,7 +47,12 @@ export class SetupImportKeyModule {
         }
       }
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
-      await saveKeysAndPassPhrase(this.view.acctEmail, [checked.encrypted], options, this.view.keyImportUi.getSelectedEmailAliases('submit_pubkey'));
+      await saveKeysAndPassPhrase(
+        this.view.acctEmail,
+        [checked.encrypted],
+        options,
+        this.view.keyImportUi.getSelectedEmailAliases('submit_pubkey').map(alias => alias.email)
+      );
       await this.view.submitPublicKeys(options);
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();

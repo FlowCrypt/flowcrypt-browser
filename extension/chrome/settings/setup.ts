@@ -302,7 +302,7 @@ export class SetupView extends View {
       await submitPublicKeyIfNeeded(
         this.clientConfiguration,
         this.acctEmail,
-        this.keyImportUi.getSelectedEmailAliases('submit_pubkey'),
+        this.keyImportUi.getSelectedEmailAliases('submit_pubkey').map(alias => alias.email),
         this.pubLookup.attester,
         mostUsefulPrv?.keyInfo.public,
         {

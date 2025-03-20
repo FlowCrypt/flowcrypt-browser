@@ -89,7 +89,7 @@ export class KeyImportUi {
       for (const e of emailAliases) {
         for (const option of ['generate_private_key', 'submit_pubkey']) {
           $(`.${option}_addresses`).append(
-            `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-test="input-email-alias-${option}-${e.replace(
+            `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-name="${sendAs?.[e].name ?? ''}" data-test="input-email-alias-${option}-${e.replace(
               /[^a-z0-9]+/g,
               ''
             )}" />${Xss.escape(e)}</label><br/>`
@@ -131,10 +131,13 @@ export class KeyImportUi {
     return Boolean($(checkboxSelector).prop('checked'));
   };
 
-  public getSelectedEmailAliases = (type: 'generate_private_key' | 'submit_pubkey'): string[] => {
-    const selectedEmails: string[] = [];
+  public getSelectedEmailAliases = (type: 'generate_private_key' | 'submit_pubkey'): { name: string; email: string }[] => {
+    const selectedEmails = [];
     for (const el of $(`.input_email_alias_${type}:visible:checked`)) {
-      selectedEmails.push(String($(el).data('email')));
+      selectedEmails.push({
+        name: $(el).data('name') as string,
+        email: $(el).data('email') as string,
+      });
     }
     return selectedEmails;
   };

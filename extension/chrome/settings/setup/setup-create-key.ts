@@ -131,7 +131,12 @@ export class SetupCreateKeyModule {
     const expireMonths = this.view.clientConfiguration.getEnforcedKeygenExpirationMonths();
     const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
     const prv = await KeyUtil.parse(key.private);
-    await saveKeysAndPassPhrase(this.view.acctEmail, [prv], options, this.view.keyImportUi.getSelectedEmailAliases('submit_pubkey'));
+    await saveKeysAndPassPhrase(
+      this.view.acctEmail,
+      [prv],
+      options,
+      this.view.keyImportUi.getSelectedEmailAliases('submit_pubkey').map(alias => alias.email)
+    );
     return { id: prv.id, family: prv.family };
   };
 }
