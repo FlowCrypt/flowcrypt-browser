@@ -562,6 +562,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
         await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with');
         await SettingsPageRecipe.ready(settingsPage);
       })
     );
@@ -590,6 +591,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // Check if primary and alias key is generated correctly
         await myKeyPage.waitForContent('@content-emails', 'flowcrypt.compatibility@gmail.com');
         await myKeyPage.waitForContent('@content-emails', 'flowcryptcompatibility@gmail.com');
+        await SettingsPageRecipe.closeDialog(settingsPage);
+        await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with');
+        await SettingsPageRecipe.ready(settingsPage);
       })
     );
     test(
