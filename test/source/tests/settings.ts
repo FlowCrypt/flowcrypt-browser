@@ -566,6 +566,33 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - my key page - generate key with alias',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.ready(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPopup.waitAndClick('@source-generate');
+        const passphrase = 'long enough to suit requirements';
+        // Check alias email so that flowcrypt can generate key for alias too
+        await addKeyPopup.waitAndClick('@input-email-alias-generate_private_key-flowcryptcompatibilitygmailcom');
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await Util.sleep(3);
+        // await SettingsPageRecipe.ready(settingsPage);
+        await settingsPage.waitAndClick('@action-show-key-2'); // Show newly generated key
+        const myKeyPage = await settingsPage.getFrame(['my_key.htm']);
+        // Check if primary and alias key is generated correctly
+        await myKeyPage.waitForContent('@content-emails', 'flowcrypt.compatibility@gmail.com');
+        await myKeyPage.waitForContent('@content-emails', 'flowcryptcompatibility@gmail.com');
+      })
+    );
+    test(
       'settings - my key page - privileged frames and action buttons should be hidden when using key manager test',
       testWithBrowser(async (t, browser) => {
         const acct = 'two.keys@key-manager-autogen.flowcrypt.test';

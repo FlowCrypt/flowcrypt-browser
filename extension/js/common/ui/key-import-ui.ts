@@ -98,7 +98,6 @@ export class KeyImportUi {
       }
       if (emailAliases.length > 0) {
         $('.also_submit_alias_key_view').show();
-        $(`.generate_alias_key_view`).show();
       }
       $('.manual .input_submit_all').prop({ checked: true, disabled: false });
     }
