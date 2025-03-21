@@ -40,8 +40,7 @@ export class KeyCanBeFixed extends Error {
 export class UserAlert extends Error {}
 
 export class KeyImportUi {
-  // public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
-  public readonly emailDomainsToSkip = ['test'];
+  public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
   private expectedLongid?: string;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
