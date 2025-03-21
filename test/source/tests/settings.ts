@@ -566,7 +566,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.ready(settingsPage);
       })
     );
-    test.only(
+    test(
       'settings - my key page - generate key with alias',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
