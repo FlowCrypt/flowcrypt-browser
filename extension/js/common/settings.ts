@@ -28,6 +28,7 @@ import { Api } from './api/shared/api.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
+import { KeyWithPrivateFields } from './core/crypto/pgp/openpgp-key.js';
 
 declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
 
@@ -256,7 +257,25 @@ export class Settings {
             const expireSeconds = expireYears === 'never' ? 0 : Math.floor((Date.now() - origPrv.created) / 1000) + 60 * 60 * 24 * 365 * Number(expireYears);
             await KeyUtil.decrypt(origPrv, passphrase);
             let reformatted;
-            const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
+            let userIds: { email: string | undefined; name: string }[] = [];
+            const originalUsers = (origPrv as KeyWithPrivateFields).rawKey?.users ?? [];
+            for (const u of originalUsers) {
+              if (u.userID) {
+                userIds.push({
+                  email: u.userID.email,
+                  name: u.userID.name || '',
+                });
+              }
+            }
+            if (!userIds.length) {
+              userIds = uids.map(uid => {
+                const parsed = Str.parseEmail(uid);
+                return {
+                  email: parsed.email,
+                  name: parsed.name || '',
+                };
+              });
+            }
             try {
               reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
             } catch (e) {
