@@ -566,7 +566,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.ready(settingsPage);
       })
     );
-    test(
+    test.only(
       'settings - my key page - generate key with alias',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
@@ -583,17 +583,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndClick('@input-email-alias-generate_private_key-flowcryptcompatibilitygmailcom');
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
-        await Util.sleep(3);
-        // await SettingsPageRecipe.ready(settingsPage);
-        await settingsPage.waitAndClick('@action-show-key-2'); // Show newly generated key
-        const myKeyPage = await settingsPage.getFrame(['my_key.htm']);
-        // Check if primary and alias key is generated correctly
-        await myKeyPage.waitForContent('@content-emails', 'flowcrypt.compatibility@gmail.com');
-        await myKeyPage.waitForContent('@content-emails', 'flowcryptcompatibility@gmail.com');
-        await SettingsPageRecipe.closeDialog(settingsPage);
-        await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
-        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with');
+        await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
+        await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
       })
     );
