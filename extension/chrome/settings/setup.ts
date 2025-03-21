@@ -72,7 +72,6 @@ export class SetupView extends View {
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
   public mathingPassphrases: string[] = [];
-  public submitKeyForAddrs: string[];
 
   public constructor() {
     super();
@@ -89,8 +88,7 @@ export class SetupView extends View {
     } else {
       window.location.href = 'index.htm';
     }
-    this.submitKeyForAddrs = [];
-    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').trigger('focus');
     this.keyImportUi.renderPassPhraseStrengthValidationInput(
       $('#step_2_ekm_choose_pass_phrase .input_password'),
@@ -155,6 +153,8 @@ export class SetupView extends View {
       $('.remove_if_backup_not_allowed').remove();
     }
     await this.setupRender.renderInitial();
+
+    await this.keyImportUi.renderEmailAliasView(this.acctEmail);
   };
 
   public setHandlers = () => {
@@ -203,7 +203,7 @@ export class SetupView extends View {
     );
     $('.input_submit_key').on(
       'click',
-      this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
+      this.setHandler(el => this.keyImportUi.actionSubmitPublicKeyToggleHandler(el))
     );
     $('#step_0_backup_to_designated_mailbox .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
       'click',
@@ -285,19 +285,6 @@ export class SetupView extends View {
     );
   };
 
-  public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
-    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
-    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
-    if ($(target).prop('checked')) {
-      if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        $('.input_email_alias').prop({ disabled: false });
-      }
-    } else {
-      $('.input_email_alias').prop({ checked: false });
-      $('.input_email_alias').prop({ disabled: true });
-    }
-  };
-
   public actionCloseHandler = () => {
     if (this.parentTabId) {
       BrowserMsg.send.redirect(this.parentTabId, {
@@ -312,10 +299,17 @@ export class SetupView extends View {
   public submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
-      await submitPublicKeyIfNeeded(this.clientConfiguration, this.acctEmail, this.submitKeyForAddrs, this.pubLookup.attester, mostUsefulPrv?.keyInfo.public, {
-        submit_main,
-        submit_all,
-      });
+      await submitPublicKeyIfNeeded(
+        this.clientConfiguration,
+        this.acctEmail,
+        this.keyImportUi.getSelectedEmailAliases('submit_pubkey').map(alias => alias.email),
+        this.pubLookup.attester,
+        mostUsefulPrv?.keyInfo.public,
+        {
+          submit_main,
+          submit_all,
+        }
+      );
     } catch (e) {
       return await Settings.promptToRetry(
         e,

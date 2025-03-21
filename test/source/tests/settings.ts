@@ -562,6 +562,31 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
         await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with');
+        await SettingsPageRecipe.ready(settingsPage);
+      })
+    );
+    test(
+      'settings - my key page - generate key with alias',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.ready(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPopup.waitAndClick('@source-generate');
+        const passphrase = 'long enough to suit requirements';
+        // Check alias email so that flowcrypt can generate key for alias too
+        await addKeyPopup.waitAndClick('@input-email-alias-generate_private_key-flowcryptcompatibilitygmailcom');
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
+        await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
       })
     );

@@ -51,10 +51,14 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
     $('#step_2a_manual_create.input_password2').on('keydown', this.view.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
   };
 
-  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity> => {
+  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo, aliasList: { name: string; email: string }[] = []): Promise<KeyIdentity> => {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
-    const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
+    const fullName = full_name ?? '';
+    const pgpUids = [{ name: fullName, email: this.view.acctEmail }];
+    for (const alias of aliasList) {
+      pgpUids.push({ name: alias.name ?? fullName, email: alias.email });
+    }
     const expireMonths = this.view.clientConfiguration.getEnforcedKeygenExpirationMonths();
     const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
     const prv = await KeyUtil.parse(key.private);
@@ -77,7 +81,7 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
       };
       /* eslint-enable @typescript-eslint/naming-convention */
       const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
-      const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
+      const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo, this.keyImportUi.getSelectedEmailAliases('generate_private_key'));
       if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
         const adminPubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
         if (adminPubkey) {

@@ -150,8 +150,8 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
           skipForPassphrase: true,
           submitPubkey: true,
           pageEvaluator: async () => {
-            expect(await settingsPage.isChecked('@input-email-alias-flowcryptcompatibilitygmailcom')).to.equal(false); // unchecked by default
-            await settingsPage.clickIfPresent('@input-email-alias-flowcryptcompatibilitygmailcom'); // include by the user (simulated)
+            expect(await settingsPage.isChecked('@input-email-alias-submit_pubkey-flowcryptcompatibilitygmailcom')).to.equal(false); // unchecked by default
+            await settingsPage.clickIfPresent('@input-email-alias-submit_pubkey-flowcryptcompatibilitygmailcom'); // include by the user (simulated)
             await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
           },
         });
@@ -2642,8 +2642,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           { isSavePassphraseChecked: false, isSavePassphraseHidden: false }
         );
-        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
-        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias1examplecom')).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias2examplecom')).to.equal(true);
         await settingsPage.close();
       })
     );
@@ -2671,14 +2671,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           longid: null, // eslint-disable-line no-null/no-null
         };
         await SetupPageRecipe.manualEnter(settingsPage, key.title, { submitPubkey: true, fillOnly: true, key });
-        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias1examplecom')).to.equal(true);
-        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-alias2examplecom')).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias1examplecom')).to.equal(true);
+        expect(await settingsPage.isChecked('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias2examplecom')).to.equal(true);
         /* simulate several clicks then exclude alias2@example.com from submitting key from the attester */
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // uncheck
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias1examplecom'); // check
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // uncheck
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // check
-        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-alias2examplecom'); // finally uncheck
+        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias1examplecom'); // uncheck
+        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias1examplecom'); // check
+        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias2examplecom'); // uncheck
+        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias2examplecom'); // check
+        await settingsPage.waitAndClick('.container_for_import_key_email_alias @input-email-alias-submit_pubkey-alias2examplecom'); // finally uncheck
         await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
         await settingsPage.waitAndClick('@action-step4done-account-settings');
         expect(t.context.mockApi!.configProvider?.config.attester?.pubkeyLookup?.[acct]).not.to.be.an('undefined');
