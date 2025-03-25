@@ -20,6 +20,8 @@ export class OpenPGPKey {
   // mapping of algo names to required param count, lazy initialized
   private static paramCountByAlgo: { [key: number]: { pub: number; priv: number } };
 
+  private static readonly noKeyFlags = 0 as OpenPGP.enums.keyFlags;
+
   public static parse = async (text: string): Promise<Key> => {
     const keys = await OpenPGPKey.parseMany(text);
     const keysLength = keys.length;
@@ -27,7 +29,7 @@ export class OpenPGPKey {
       throw new Error(`Found ${keysLength} OpenPGP keys, expected one`);
     }
     return keys[0];
-  }
+  };
 
   public static async parseMany(text: string): Promise<Key[]> {
     const resultKeys = await opgp.readKeys({ armoredKeys: text });
@@ -190,7 +192,7 @@ export class OpenPGPKey {
     let lastModified: undefined | number;
     try {
       lastModified = await OpenPGPKey.getLastSigTime(opgpKey);
-    } catch (e) {
+    } catch {
       // never had any valid signature
     }
     const fingerprint = opgpKey.getFingerprint();
@@ -247,7 +249,7 @@ export class OpenPGPKey {
     keyWithPrivateFields.internal = opgpKey;
     keyWithPrivateFields.rawArmored = opgpKey.armor();
     return key;
-  }
+  };
 
   /**
    * Returns cleartext signed message if detached=false
@@ -778,7 +780,7 @@ export class OpenPGPKey {
       signingKeyIgnoringExpiration = await OpenPGPKey.getKeyByDate((date: Date | null | undefined) => key.getSigningKey(undefined, date), possibleExpirations);
     }
     return { encryptionKey, encryptionKeyIgnoringExpiration, expiration, signingKey, signingKeyIgnoringExpiration };
-  }
+  };
 
   private static async getKeyByDate(extractor: (date?: Date | null) => Promise<OpenPGP.Key | OpenPGP.Subkey>, dates: number[]) {
     if (dates.length > 0) {
@@ -793,7 +795,7 @@ export class OpenPGPKey {
       return await Catch.undefinedOnException(extractor(null)); // eslint-disable-line no-null/no-null
     }
     return undefined;
-  };
+  }
   private static arePrivateParamsMissing = (packet: OpenPGP.BasePublicKeyPacket): boolean => {
     // detection of missing private params to solve #2887
     if (!OpenPGPKey.paramCountByAlgo) {
@@ -817,7 +819,7 @@ export class OpenPGPKey {
         !(packet as unknown as { isEncrypted: string }).isEncrypted && // isDecrypted() returns false when isEncrypted is null
         (!packet.privateParams || OpenPGPKey.paramCountByAlgo[packet.algorithm].priv > Object.keys(packet.privateParams).length))
     );
-  }
+  };
 
   private static async testEncryptDecrypt(key: OpenPGP.Key): Promise<string[]> {
     const output: string[] = [];
