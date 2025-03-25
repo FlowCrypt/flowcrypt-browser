@@ -9,11 +9,11 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class PgpBlockViewQuoteModule {
   public constructor(private view: PgpBlockView) {}
 
-  public separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
+  public separateQuotedContentAndRenderText = (decryptedContent: string, isHtml: boolean, isChecksumInvalid: boolean) => {
     if (isHtml) {
-      const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent, 'IMG-TO-LINK')); // xss-sanitized
+      const message = $('<div>').html(Xss.htmlSanitizeKeepBasicTags(decryptedContent)); // xss-sanitized
       let htmlBlockQuoteExists = false;
-      const shouldBeQuoted: Array<Element> = [];
+      const shouldBeQuoted: Element[] = [];
       for (let i = message[0].children.length - 1; i >= 0; i--) {
         if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
           shouldBeQuoted.push(message[0].children[i]);
@@ -32,10 +32,10 @@ export class PgpBlockViewQuoteModule {
           message[0].removeChild(shouldBeQuoted[i]);
           quotedHtml += shouldBeQuoted[i].outerHTML;
         }
-        await this.view.renderModule.renderContent(message.html(), false);
+        this.view.renderModule.renderContent(message.html(), false, isChecksumInvalid);
         this.appendCollapsedQuotedContentButton(quotedHtml, true);
       } else {
-        await this.view.renderModule.renderContent(decryptedContent, false);
+        this.view.renderModule.renderContent(decryptedContent, false, isChecksumInvalid);
       }
     } else {
       const lines = decryptedContent.split(/\r?\n/);
@@ -43,7 +43,7 @@ export class PgpBlockViewQuoteModule {
       while (lines.length) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const lastLine = lines.pop()!; // lines.length above ensures there is a line
-        if (lastLine[0] === '>' || !lastLine.length) {
+        if (lastLine.startsWith('>') || !lastLine.length) {
           // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
           linesQuotedPart.unshift(lastLine);
         } else {
@@ -62,7 +62,7 @@ export class PgpBlockViewQuoteModule {
         // only got quoted part, no real text -> show everything as real text, without quoting
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
-      await this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false);
+      this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false, isChecksumInvalid);
       if (linesQuotedPart.join('').trim()) {
         this.appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
@@ -75,7 +75,7 @@ export class PgpBlockViewQuoteModule {
       '<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'
     ); // xss-direct
     const messageHtml = isHtml ? message : Str.escapeTextAsRenderableHtml(message);
-    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(messageHtml, 'IMG-TO-LINK')}</div>`); // xss-sanitized
+    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(messageHtml)}</div>`); // xss-sanitized
     pgpBlk.find('#action_show_quoted_content').on(
       'click',
       this.view.setHandler(() => {

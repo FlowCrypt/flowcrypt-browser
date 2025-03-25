@@ -4,19 +4,24 @@ import { ExecutionContext } from 'ava';
 import { TestUrls } from '../../browser/test-urls';
 
 import { Consts } from '../../test';
+import { Api } from '../../mock/lib/api';
 
-export type AvaContext = ExecutionContext<unknown> & {
+export type TestContext = {
   retry?: true;
   attemptNumber?: number;
   totalAttempts?: number;
   attemptText?: string;
   extensionDir?: string;
   urls?: TestUrls;
+  mockApi?: Api<{ query: { [k: string]: string }; body?: unknown }, unknown>;
+  mockApiLogs?: string[];
+  debugHtmls?: string[];
 };
+
+export type AvaContext = ExecutionContext<TestContext>;
 
 const MAX_ATT_SIZE = 5 * 1024 * 1024;
 
-const debugHtmls: string[] = [];
 const debugHtmlStyle = `
 <style>
   h1 { margin-top: 50px; margin-left: 20px; }
@@ -33,17 +38,21 @@ const debugHtmlStyle = `
 </style>
 `;
 
-export const addDebugHtml = (html: string) => {
-  debugHtmls.push(html);
+export const addDebugHtml = (context: TestContext, html: string) => {
+  if (context.debugHtmls) {
+    context.debugHtmls.push(html);
+  } else {
+    context.debugHtmls = [html];
+  }
 };
 
-export const getDebugHtmlAtts = (testId: string, mockApiLogs: string[]): string[] => {
-  if (debugHtmls.length && mockApiLogs.length) {
-    debugHtmls.push(`<h1>Google Mock API logs</h1><pre>${mockApiLogs.join('\n')}</pre>`);
+export const getDebugHtmlAtts = (testId: string, context: TestContext): string[] => {
+  if (context.debugHtmls?.length && context.mockApiLogs?.length) {
+    context.debugHtmls.push(`<h1>Google Mock API logs</h1><pre>${context.mockApiLogs.join('\n')}</pre>`);
   }
   const debugAtts: string[] = [];
   let currentDebugAtt = '';
-  for (const debugHtml of debugHtmls) {
+  for (const debugHtml of context.debugHtmls ?? []) {
     currentDebugAtt += debugHtml;
     if (currentDebugAtt.length > MAX_ATT_SIZE) {
       debugAtts.push(currentDebugAtt);
@@ -67,9 +76,7 @@ export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) =
 
 export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise<T>) => Promise<T>) => {
   // returns a function
-  const timeoutAllRetries = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES)
-  ) as Promise<never>;
+  const timeoutAllRetries = new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES));
   return <T>(actionPromise: Promise<T>) =>
     Promise.race([
       actionPromise, // the actual action being performed

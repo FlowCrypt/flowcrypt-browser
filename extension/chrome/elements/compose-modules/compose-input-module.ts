@@ -3,7 +3,7 @@
 'use strict';
 
 import { NewMsgData, ValidRecipientElement } from './compose-types.js';
-import { CursorEvent, SquireEditor, WillPasteEvent } from '../../../types/squire.js';
+import Squire from 'squire-rte';
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { ParsedRecipients } from '../../../js/common/api/email-provider/email-provider-api.js';
@@ -14,37 +14,54 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { ComposeView } from '../compose.js';
 import { Lang } from '../../../js/common/lang.js';
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    Squire: typeof Squire;
+  }
+}
+
+interface SquireWillPasteEvent extends Event {
+  detail: {
+    fragment: DocumentFragment;
+  };
+}
+
 export class ComposeInputModule extends ViewModule<ComposeView> {
-  public squire = new window.Squire(this.view.S.cached('input_text').get(0));
+  public squire!: Squire;
+
+  public constructor(view: ComposeView) {
+    super(view);
+    this.initSquire(false);
+  }
 
   public setHandlers = () => {
+    this.configureRichTextFormatting();
     this.view.S.cached('add_intro').on(
       'click',
       this.view.setHandler(el => this.actionAddIntroHandler(el), this.view.errModule.handle(`add intro`))
     );
-    this.handlePaste();
-    this.handlePasteImages();
-    this.initShortcuts();
-    this.resizeReplyBox();
-    this.scrollIntoView();
-    this.handleRTL();
-    this.squire.setConfig({ addLinks: this.isRichText() });
+    // Set lastDraftBody to current empty squire content ex: <div><br></div>)
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5184
+    this.view.draftModule.setLastDraftBody(this.squire.getHTML());
     if (this.view.debug) {
       this.insertDebugElements();
     }
   };
 
   public addRichTextFormatting = () => {
-    this.squire.setConfig({ addLinks: true });
+    this.initSquire(true);
   };
 
   public removeRichTextFormatting = () => {
-    this.squire.setHTML(Xss.htmlSanitizeAndStripAllTags(this.squire.getHTML(), '<br>'));
-    this.squire.setConfig({ addLinks: false });
+    if (this.isRichText()) {
+      this.initSquire(false, true);
+    }
   };
 
   public inputTextHtmlSetSafely = (html: string) => {
     this.squire.setHTML(Xss.htmlSanitize(Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP')));
+    this.view.draftModule.setLastDraftBody(this.squire.getHTML());
   };
 
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
@@ -68,8 +85,8 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   public extractAll = async (): Promise<NewMsgData> => {
     const recipients = this.mapRecipients(this.view.recipientsModule.getValidRecipients());
     const subject = this.view.isReplyBox && this.view.replyParams ? this.view.replyParams.subject : String($('#input_subject').val() || '');
-    const plaintext = this.view.inputModule.extract('text', 'input_text');
-    const plainhtml = this.view.inputModule.extract('html', 'input_text');
+    const plaintext = this.extract('text', 'input_text');
+    const plainhtml = this.extract('html', 'input_text');
     const password = this.view.S.cached('input_password').val();
     const pwd = typeof password === 'string' && password ? password : undefined;
     const from = await this.view.storageModule.getEmailWithOptionalName(this.view.senderModule.getSender());
@@ -88,10 +105,39 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     return isInputLimitExceeded;
   };
 
+  private configureRichTextFormatting = () => {
+    if (this.isRichText()) {
+      this.addRichTextFormatting();
+    } else {
+      this.removeRichTextFormatting();
+    }
+  };
+
+  private initSquire = (addLinks: boolean, removeExistingLinks = false) => {
+    const squireHtml = this.squire?.getHTML();
+    const el = this.view.S.cached('input_text').get(0);
+    if (!el) {
+      throw new Error('Input element not found');
+    }
+    this.squire?.destroy();
+    this.squire = new window.Squire(el, { addLinks });
+    this.initShortcuts();
+    this.handlePaste();
+    this.handleDragImages();
+    this.handlePasteImages();
+    this.resizeReplyBox();
+    this.scrollIntoView();
+    this.handleRTL();
+    if (squireHtml) {
+      const processedHtml = removeExistingLinks ? Xss.htmlSanitizeAndStripAllTags(squireHtml, '<br>', false) : squireHtml;
+      this.squire.setHTML(processedHtml);
+    }
+  };
+
   private handlePaste = () => {
-    this.squire.addEventListener('willPaste', async (e: WillPasteEvent) => {
+    this.squire.addEventListener('willPaste', async (e: SquireWillPasteEvent) => {
       const div = document.createElement('div');
-      div.appendChild(e.fragment);
+      div.appendChild(e.detail.fragment);
       const html = div.innerHTML;
       const sanitized = this.isRichText() ? Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP') : Xss.htmlSanitizeAndStripAllTags(html, '<br>', false);
       if (this.willInputLimitBeExceeded(sanitized, this.squire.getRoot(), () => this.squire.getSelectedText().length)) {
@@ -100,36 +146,52 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
         return;
       }
       Xss.setElementContentDANGEROUSLY(div, sanitized); // xss-sanitized
-      e.fragment.appendChild(div);
+      e.detail.fragment.appendChild(div);
+    });
+  };
+
+  private loadImageFromFile = (file: File, callback: (result: string) => void) => {
+    const reader = new FileReader();
+    reader.onload = () => callback(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  private insertImageIntoSquire = (imageData: string, name: string) => {
+    try {
+      this.squire.insertImage(imageData, { name, title: name });
+      this.view.draftModule.draftSave().catch(Catch.reportErr);
+    } catch (e) {
+      Catch.reportErr(e);
+    }
+  };
+
+  private handleDragImages = () => {
+    this.squire.addEventListener('drop', (ev: DragEvent) => {
+      if (!this.isRichText() || !ev.dataTransfer?.files.length) {
+        return;
+      }
+      const file = ev.dataTransfer.files[0];
+      this.loadImageFromFile(file, imageData => {
+        this.insertImageIntoSquire(imageData, file.name);
+      });
+    });
+    this.squire.addEventListener('dragover', (e: DragEvent) => {
+      e.preventDefault(); // this is needed for 'drop' event to fire
     });
   };
 
   private handlePasteImages = () => {
-    this.squire.addEventListener('drop', (ev: DragEvent) => {
-      try {
-        if (!this.isRichText()) {
-          return;
-        }
-        if (!ev.dataTransfer?.files.length) {
-          return;
-        }
-        const file = ev.dataTransfer.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            this.squire.insertImage(reader.result as ArrayBuffer, { name: file.name, title: file.name });
-            this.view.draftModule.draftSave().catch(Catch.reportErr);
-          } catch (e) {
-            Catch.reportErr(e);
-          }
-        };
-        reader.readAsDataURL(file);
-      } catch (e) {
-        Catch.reportErr(e);
+    this.squire.addEventListener('pasteImage', (ev: Event & { detail: { clipboardData: DataTransfer } }) => {
+      if (!this.isRichText()) return;
+      const items = Array.from(ev.detail.clipboardData?.items ?? []);
+      const imageItem = items.find(item => item.type.includes('image'));
+
+      const imageFile = imageItem?.getAsFile();
+      if (imageItem && imageFile) {
+        this.loadImageFromFile(imageFile, imageData => {
+          this.insertImageIntoSquire(imageData, 'Pasted Image');
+        });
       }
-    });
-    this.squire.addEventListener('dragover', (e: DragEvent) => {
-      e.preventDefault(); // this is needed for 'drop' event to fire
     });
   };
 
@@ -157,10 +219,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
 
   private initShortcuts = () => {
     try {
-      const isMac = /Mac OS X/.test(navigator.userAgent);
-      const ctrlKey = isMac ? 'meta-' : 'ctrl-';
+      const isMac = navigator.userAgent.includes('Mac OS X');
+      const ctrlKey = isMac ? 'Meta-' : 'Ctrl-';
       const mapKeyToFormat = (tag: string) => {
-        return (self: SquireEditor, event: Event) => {
+        return (self: Squire, event: Event) => {
           try {
             event.preventDefault();
             if (!this.isRichText()) {
@@ -177,10 +239,10 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
           }
         };
       };
-      const noop = (self: SquireEditor, event: Event) => {
+      const noop = (_self: Squire, event: Event) => {
         event.preventDefault();
       };
-      const removeFormatting = (self: SquireEditor) => {
+      const removeFormatting = (self: Squire) => {
         self.removeAllFormatting();
       };
       this.squire.setKeyHandler(ctrlKey + 'b', mapKeyToFormat('B'));
@@ -200,9 +262,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   };
 
   private resizeReplyBox = () => {
-    this.squire.addEventListener('cursor', (e: CursorEvent) => {
+    this.squire.addEventListener('cursor', (e: Event & { detail: { range: Range } }) => {
       if (this.view.isReplyBox) {
-        const cursorContainer = e.range.commonAncestorContainer as HTMLElement;
+        const cursorContainer = e.detail.range.commonAncestorContainer as HTMLElement;
         this.view.sizeModule.resizeComposeBox(0, cursorContainer?.offsetTop);
       }
     });
@@ -213,6 +275,9 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
     this.squire.addEventListener('cursor', () => {
       try {
         const inputText = this.view.S.cached('input_text').get(0);
+        if (!inputText) {
+          return;
+        }
         const offsetBottom = this.squire.getCursorPosition().bottom - inputText.getBoundingClientRect().top;
         const editorRootHeight = this.view.S.cached('input_text').height() || 0;
         if (offsetBottom > editorRootHeight) {
@@ -228,7 +293,7 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   private actionAddIntroHandler = (addIntroBtn: HTMLElement) => {
     $(addIntroBtn).css('display', 'none');
     this.view.S.cached('intro_container').css('display', 'table-row');
-    this.view.S.cached('input_intro').focus();
+    this.view.S.cached('input_intro').trigger('focus');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 

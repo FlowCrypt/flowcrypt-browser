@@ -6,6 +6,7 @@ import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
+import { Url } from '../../core/common.js';
 
 export class Sks extends Api {
   private static MR_VERSION_1 = 'info:1:';
@@ -13,7 +14,7 @@ export class Sks extends Api {
 
   public constructor(url: string) {
     super();
-    this.url = url.replace(/\/$/, ''); // remove trailing space
+    this.url = Url.removeTrailingSlash(url);
   }
 
   /**
@@ -23,7 +24,7 @@ export class Sks extends Api {
    */
   public lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     const index = await this.get(`/pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
-    if (!index || !index.startsWith(Sks.MR_VERSION_1)) {
+    if (!index?.startsWith(Sks.MR_VERSION_1)) {
       return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     const foundUidsByLongid: { [longid: string]: string[] } = {};
@@ -33,7 +34,7 @@ export class Sks extends Api {
       .map(l => l.trim())
       .filter(l => !l.startsWith(Sks.MR_VERSION_1))) {
       if (line.startsWith('pub:')) {
-        const match = line.match(/^pub:[A-F0-9]{24}([A-F0-9]{16}):[0-9:]+:$/); // in particular cannot end with :r, meaning revoked
+        const match = /^pub:[A-F0-9]{24}([A-F0-9]{16}):[0-9:]+:$/.exec(line); // in particular cannot end with :r, meaning revoked
         if (!match) {
           currentLongid = '';
         } else {
@@ -63,7 +64,7 @@ export class Sks extends Api {
       throw new Error('Expected fingerprint or longid, got email');
     }
     const pubkey = await this.get(`/pks/lookup?op=get&search=0x${fingerprintOrLongid}&options=mr`);
-    if (!pubkey || !pubkey.includes(String(PgpArmor.headers('publicKey').end))) {
+    if (!pubkey?.includes(String(PgpArmor.headers('publicKey').end))) {
       return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
     return { pubkey };
@@ -71,7 +72,7 @@ export class Sks extends Api {
 
   private get = async (path: string): Promise<string | undefined> => {
     try {
-      const { responseText } = (await Api.apiCall(this.url, path, undefined, undefined, undefined, undefined, 'xhr', 'GET')) as XMLHttpRequest;
+      const responseText = await Api.apiCall(this.url, path, undefined, undefined, undefined, 'text');
       return responseText;
     } catch (e) {
       if (ApiErr.isNotFound(e)) {

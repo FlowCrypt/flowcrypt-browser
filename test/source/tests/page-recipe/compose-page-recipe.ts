@@ -24,7 +24,7 @@ export class ComposePageRecipe extends PageRecipe {
     options: {
       appendUrl?: string;
       hasReplyPrompt?: boolean;
-      skipClickPropt?: boolean;
+      skipClickPrompt?: boolean;
       skipValidation?: boolean;
       initialScript?: EvaluateFunc<unknown[]>;
     } = {}
@@ -47,7 +47,7 @@ export class ComposePageRecipe extends PageRecipe {
         await composePage.waitAll(['@input-body', '@input-subject', '@action-send']);
         await composePage.waitAny(['@action-show-container-cc-bcc-buttons', '@container-cc-bcc-buttons']);
       } else {
-        if (options.skipClickPropt) {
+        if (options.skipClickPrompt) {
           await Util.sleep(2);
         } else {
           await composePage.waitAll(['@action-accept-reply-prompt']);
@@ -74,26 +74,32 @@ export class ComposePageRecipe extends PageRecipe {
   public static async fillMsg(
     composePageOrFrame: Controllable,
     recipients: Recipients,
-    subject?: string | undefined,
-    body?: string | undefined,
+    subject?: string,
+    body?: string,
     sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {} // undefined means leave default
   ) {
-    await Util.sleep(0.5);
-    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
-    if (subject) {
-      await composePageOrFrame.click('@input-subject');
-      await Util.sleep(1);
-      await composePageOrFrame.type('@input-subject', subject?.match(/RTL/) ? subject : `Automated puppeteer test: ${subject}`);
-    }
     const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
     const keys = ['richtext', 'encrypt', 'sign'];
-    await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     for (const opt of keys) {
       const shouldBeTicked = sendingOpts[opt];
       if (typeof shouldBeTicked !== 'undefined') {
         await ComposePageRecipe.setPopoverToggle(composePageOrFrame, opt as PopoverOpt, shouldBeTicked);
       }
     }
+    await Util.sleep(0.5); // todo: should we wait only if we didn't modify any sendingOpts?
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
+    if (subject) {
+      await composePageOrFrame.click('@input-subject');
+      await Util.sleep(1);
+      await composePageOrFrame.type('@input-subject', /RTL/.exec(subject) ? subject : `Automated puppeteer test: ${subject}`);
+    }
+    await composePageOrFrame.click('@input-body');
+    // bring cursor to the beginning of the multiline contenteditable
+    const keyboard = composePageOrFrame.keyboard();
+    await keyboard.down('Control');
+    await keyboard.press('Home');
+    await keyboard.up('Control');
+    await composePageOrFrame.type('@input-body', body || subject || ''); // fall back to subject if body is not provided
     return { subject, body };
   }
 
@@ -116,7 +122,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
     for (const key of Object.keys(recipients)) {
       const sendingType = key as RecipientType;
-      const email = recipients[sendingType] as string | undefined;
+      const email = recipients[sendingType];
       if (email) {
         if (sendingType !== 'to') {
           // input-to is always visible
@@ -127,7 +133,7 @@ export class ComposePageRecipe extends PageRecipe {
       }
     }
     await composePageOrFrame.target.evaluate(() => {
-      $('#input_text').focus();
+      $('#input_text').trigger('focus');
     });
     await Util.sleep(1);
   };
@@ -168,9 +174,8 @@ export class ComposePageRecipe extends PageRecipe {
     await Util.sleep(5);
     const contacts = await composePage.waitAny('@container-contacts');
     const contactsList = await contacts.$$('li');
-    // eslint-disable-next-line guard-for-in
-    for (const index in contactsList) {
-      expect(await PageRecipe.getElementPropertyJson(contactsList[index], 'textContent')).to.equal(emails[index]);
+    for (const [index, contact] of contactsList.entries()) {
+      expect(await PageRecipe.getElementPropertyJson(contact, 'textContent')).to.equal(emails[index]);
     }
   };
 
@@ -197,9 +202,9 @@ export class ComposePageRecipe extends PageRecipe {
     if (inputMethod === 'mouse') {
       await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
     } else if (inputMethod === 'keyboard') {
-      await page.press('Escape');
+      await passPhraseFrame.keyboard().press('Escape');
     }
     await page.waitTillGone('@dialog-passphrase');
-    expect(passPhraseFrame.frame.isDetached()).to.equal(true);
+    expect(passPhraseFrame.frame.detached).to.equal(true);
   };
 }

@@ -19,15 +19,21 @@ import { PassphraseStore } from '../../../js/common/platform/store/passphrase-st
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
+import { KeyCanBeFixed, KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import { saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
+import { KeyErrors } from '../../elements/shared/key_errors.js';
 
 View.run(
   class MyKeyUpdateView extends View {
     protected fesUrl?: string;
     private readonly acctEmail: string;
+    private readonly keyImportUi = new KeyImportUi({});
     private readonly fingerprint: string;
+    private readonly parentTabId: string;
     private readonly showKeyUrl: string;
     private readonly inputPrivateKey = $('.input_private_key');
     private readonly prvHeaders = PgpArmor.headers('privateKey');
+    private readonly keyErrors: KeyErrors;
     private ki: KeyInfoWithIdentity | undefined;
     private clientConfiguration!: ClientConfiguration;
     private pubLookup!: PubLookup;
@@ -36,8 +42,10 @@ View.run(
       super();
       const uncheckedUrlParams = Url.parse(['acctEmail', 'fingerprint', 'parentTabId']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+      this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.fingerprint = Assert.urlParamRequire.string(uncheckedUrlParams, 'fingerprint');
       this.showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
+      this.keyErrors = new KeyErrors(this.fesUrl || '', this.acctEmail, this.parentTabId, this.clientConfiguration);
     }
 
     public render = async () => {
@@ -56,7 +64,8 @@ View.run(
       `
         );
       } else {
-        $('#content').show();
+        $('.my_key_update_container').show();
+        this.keyImportUi.initPrvImportSrcForm(this.acctEmail, undefined);
         this.pubLookup = new PubLookup(this.clientConfiguration);
         [this.ki] = await KeyStore.get(this.acctEmail, [this.fingerprint]);
         Assert.abortAndRenderErrorIfKeyinfoEmpty(this.ki ? [this.ki] : []);
@@ -64,6 +73,7 @@ View.run(
         $('.email').text(this.acctEmail);
         $('.fingerprint').text(Str.spaced(this.ki.fingerprints[0]));
         this.inputPrivateKey.attr('placeholder', this.inputPrivateKey.attr('placeholder') + ' (' + this.ki.fingerprints[0] + ')');
+        $('.source_selector').css('display', 'block');
       }
     };
 
@@ -72,17 +82,14 @@ View.run(
         'click',
         this.setHandlerPrevent('double', () => this.updatePrivateKeyHandler())
       );
-      $('.input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_update_private_key'));
+      $('.input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_update_private_key'));
     };
 
     private storeUpdatedKeyAndPassphrase = async (updatedPrv: Key, updatedPrvPassphrase: string) => {
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      const shouldSavePassphraseInStorage =
-        !this.clientConfiguration.forbidStoringPassPhrase() && !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
-      await KeyStore.add(this.acctEmail, updatedPrv);
-      await PassphraseStore.set('local', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? updatedPrvPassphrase : undefined);
-      await PassphraseStore.set('session', this.acctEmail, this.ki!, shouldSavePassphraseInStorage ? undefined : updatedPrvPassphrase);
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
+      /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/naming-convention */
+      const passphrase_save = !this.clientConfiguration.forbidStoringPassPhrase() && !!(await PassphraseStore.get(this.acctEmail, this.ki!, true));
+      await saveKeysAndPassPhrase(this.acctEmail, [updatedPrv], { passphrase: updatedPrvPassphrase, passphrase_save, passphrase_ensure_single_copy: true });
+      /* eslint-enable @typescript-eslint/no-non-null-assertion, @typescript-eslint/naming-convention */
       if (
         this.clientConfiguration.canSubmitPubToAttester() &&
         (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?'))
@@ -101,46 +108,54 @@ View.run(
     };
 
     private updatePrivateKeyHandler = async () => {
-      const updatedKey = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-      const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
-      const updatedKeyPassphrase = String($('.input_passphrase').val());
-      if (typeof updatedKey === 'undefined') {
-        await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.testCompatibilityLink);
-      } else if (updatedKey.isPublic) {
-        await Ui.modal.warning(
-          'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
-        );
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
-        await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
-        /* eslint-enable @typescript-eslint/no-non-null-assertion */
-      } else if ((await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase)) !== true) {
-        await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
-      } else {
-        if (updatedKey.usableForEncryption) {
-          await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
-          return;
-        }
-        // cannot get a valid encryption key packet
-        if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
-          // known issues - key can be fixed
-          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-            this.acctEmail,
-            '.compatibility_fix_container',
-            updatedKeyEncrypted,
-            updatedKeyPassphrase,
-            this.showKeyUrl
-          );
-          await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
-        } else {
+      try {
+        const updatedKeyEncrypted = await KeyUtil.parse(String(this.inputPrivateKey.val()));
+        const updatedKey = await KeyUtil.parse(KeyUtil.armor(updatedKeyEncrypted)); // create a "cloned" copy to decrypt later
+        const updatedKeyPassphrase = String($('.input_passphrase').val());
+        KeyImportUi.allowReselect();
+        if (typeof updatedKey === 'undefined') {
+          await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.getTestCompatibilityLink(this.acctEmail));
+        } else if (updatedKeyEncrypted.identities.length === 0) {
+          throw new KeyCanBeFixed(updatedKeyEncrypted);
+        } else if (updatedKey.isPublic) {
           await Ui.modal.warning(
-            `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
-              !!this.fesUrl
-            )} to see why is that.`,
-            Ui.testCompatibilityLink
+            'This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + this.prvHeaders.begin + '"'
           );
-          window.location.href = this.showKeyUrl;
+          /* eslint-disable @typescript-eslint/no-non-null-assertion */
+        } else if (updatedKey.id !== (await KeyUtil.parse(this.ki!.public)).id) {
+          await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
+          /* eslint-enable @typescript-eslint/no-non-null-assertion */
+        } else if (!(await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase))) {
+          await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
+        } else {
+          if (updatedKey.usableForEncryption) {
+            await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);
+            return;
+          }
+          // cannot get a valid encryption key packet
+          if ((await KeyUtil.isWithoutSelfCertifications(updatedKey)) || updatedKey.usableForEncryptionButExpired) {
+            // known issues - key can be fixed
+            const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+              this.acctEmail,
+              '.compatibility_fix_container',
+              updatedKeyEncrypted,
+              updatedKeyPassphrase,
+              this.showKeyUrl
+            );
+            await this.storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, updatedKeyPassphrase);
+          } else {
+            await Ui.modal.warning(
+              `Key update: This looks like a valid key but it cannot be used for encryption. Please ${Lang.general.contactMinimalSubsentence(
+                !!this.fesUrl
+              )} to see why is that.`,
+              Ui.getTestCompatibilityLink(this.acctEmail)
+            );
+            window.location.href = this.showKeyUrl;
+          }
         }
+      } catch (e) {
+        await this.keyErrors.handlePrivateKeyError(e, (e as { encrypted: Key }).encrypted, undefined);
+        return;
       }
     };
   }

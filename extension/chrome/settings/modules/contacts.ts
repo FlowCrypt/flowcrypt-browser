@@ -30,7 +30,7 @@ View.run(
     private factory: XssSafeFactory | undefined; // set in render()
     private attachmentUI = new AttachmentUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
     private clientConfiguration!: ClientConfiguration;
-    private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
+    private backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">Back</a>';
     private space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
     public constructor() {
@@ -40,7 +40,7 @@ View.run(
     }
 
     public render = async () => {
-      const tabId = await BrowserMsg.requiredTabId();
+      const tabId = BrowserMsg.generateTabId();
       BrowserMsg.listen(tabId); // set_css
       const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
       this.fesUrl = storage.fesUrl;
@@ -55,12 +55,12 @@ View.run(
     };
 
     public setHandlers = () => {
-      $('.action_show_pubkey_list').off().on('click', this.setHandlerPrevent('double', this.actionRenderListPublicKeyHandler));
+      $('.action_show_pubkey_list').off().on('click', this.setHandler(this.actionRenderListPublicKeyHandler));
       $('#edit_contact .action_save_edited_pubkey').off().on('click', this.setHandlerPrevent('double', this.actionSaveEditedPublicKeyHandler));
       $('#bulk_import .action_process').off().on('click', this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
       $('.action_export_all').off().on('click', this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
       $('.action_view_bulk_import').off().on('click', this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
-      $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
+      $('.input-search-contacts').off().on('keyup', this.setHandlerPrevent('double', this.loadAndRenderContactList));
     };
 
     // --- PRIVATE
@@ -72,16 +72,16 @@ View.run(
         substring: String($('.input-search-contacts').val()),
       });
       let lineActionsHtml =
-        '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
-        '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">import public keys</a>&nbsp;&nbsp;';
+        '&nbsp;&nbsp;<a href="#" class="action_export_all">Export all</a>&nbsp;&nbsp;' +
+        '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">Import public keys</a>&nbsp;&nbsp;';
       if (this.clientConfiguration.getCustomSksPubkeyServer()) {
         lineActionsHtml +=
           `&nbsp;&nbsp;<br><br><b class="bad" data-test="custom-key-server-description">` +
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration!.getCustomSksPubkeyServer()!)}</b>`;
+          `using custom SKS pubkeyserver: ${Xss.escape(this.clientConfiguration.getCustomSksPubkeyServer()!)}</b>`;
       } else {
         lineActionsHtml +=
-          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
+          '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/enterprise/configuration/keyserver-integration.html" target="_blank">Use custom keyserver</a>&nbsp;&nbsp;';
       }
       Xss.sanitizeRender('.line.actions', lineActionsHtml);
       $('#emails').text('');
@@ -119,9 +119,7 @@ View.run(
     };
 
     private actionExportAllKeysHandler = async () => {
-      const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true }))
-        .map(a => a!.trim()) // eslint-disable-line @typescript-eslint/no-non-null-assertion
-        .join('\n');
+      const allArmoredPublicKeys = (await ContactStore.searchPubkeys(undefined, { hasPgp: true })).map(a => a.trim()).join('\n');
       const exportFile = new Attachment({
         name: 'public-keys-export.asc',
         type: 'application/pgp-keys',
@@ -131,39 +129,32 @@ View.run(
     };
 
     private actionRenderListPublicKeyHandler = async (emailRow: HTMLElement) => {
+      if ($(emailRow).hasClass('opened')) {
+        $(emailRow).removeClass('opened');
+        $(emailRow).children('.contacts-pubkey').remove();
+        return;
+      }
       $(emailRow).addClass('opened');
       const email = $(emailRow).attr('email')!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
       const contact = await ContactStore.getOneWithAllPubkeys(undefined, email);
       const e = Xss.escape(email);
-      if (contact && contact.sortedPubkeys.length) {
+      if (contact?.sortedPubkeys.length) {
         let tableContents = '';
         for (const pubkey of contact.sortedPubkeys) {
           const keyid = Xss.escape(pubkey.pubkey.id);
           const type = Xss.escape(pubkey.pubkey.family);
-          let status: string;
-          if (pubkey.revoked) {
-            status = 'revoked';
-          } else if (pubkey.pubkey?.usableForEncryption) {
-            status = 'active';
-          } else if (pubkey.pubkey?.usableForEncryptionButExpired) {
-            status = 'expired';
-          } else if (pubkey.pubkey?.usableForSigning) {
-            status = 'sign only';
-          } else {
-            status = 'unusable';
-          }
           const change = `<a href="#" title="Change" class="action_change" data-test="action-change-pubkey-${keyid}-${type}"></a>`;
           const remove = `<a href="#" title="Remove" class="action_remove" data-test="action-remove-pubkey-${keyid}-${type}"></a>`;
-          const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${type} - ${status} - ${Str.spaced(
-            keyid
-          )}</a>`;
-          tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">${show}${change}${remove}</div>`;
+          const show = `<a href="#" title="Show" class="action_show" data-test="action-show-pubkey-${keyid}-${type}">${Str.spaced(keyid)}</a>`;
+          tableContents += `<div class="contacts-pubkey" email="${e}" keyid="${keyid}" type="${type}">
+          <div class="contacts-pubkey-info">
+            <span class="fc-badge fc-badge-gray" data-test="container-contact-key-type-${keyid}">${type}</span>&nbsp;
+            ${KeyUtil.statusHtml(keyid, pubkey.pubkey)}
+            ${show}
+          </div>
+          <div class="contacts-pubkey-actions">${change}${remove}</div></div>`;
         }
-        $(emailRow).after(tableContents);
-        // remove all listeners from the old link by creating a new element
-        const newElement = emailRow.cloneNode(true);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        emailRow!.parentNode!.replaceChild(newElement, emailRow);
+        $(emailRow).append(tableContents); // xss-safe-value
         $('.action_remove').off().on('click', this.setHandlerPrevent('double', this.actionRemovePublicKey));
         $('.action_show').off().on('click', this.setHandlerPrevent('double', this.actionRenderViewPublicKeyHandler));
         $('.action_change').off().on('click', this.setHandlerPrevent('double', this.actionRenderChangePublicKeyHandler));
@@ -230,9 +221,9 @@ View.run(
           const pubkey = await KeyUtil.parse(armoredPubkey);
           await ContactStore.update(undefined, email, { pubkey, lastUse: Date.now() });
           await this.loadAndRenderContactList();
-        } catch (e) {
+        } catch {
           await Ui.modal.warning('Cannot recognize a valid public key, please try again. ' + Lang.general.contactIfNeedAssistance(!!this.fesUrl));
-          $('#edit_contact .input_pubkey').val('').focus();
+          $('#edit_contact .input_pubkey').val('').trigger('focus');
         }
       }
     };
@@ -282,12 +273,8 @@ View.run(
           const container = $('#bulk_import #processed');
           for (const block of blocks) {
             if (block.type === 'publicKey' || block.type === 'certificate') {
-              const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(
-                this.factory!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                block.content.toString(),
-                '',
-                ''
-              );
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              const replacedHtmlSafe = XssSafeFactory.renderableMsgBlock(this.factory!, block);
               if (replacedHtmlSafe && replacedHtmlSafe !== value) {
                 container.append(replacedHtmlSafe); // xss-safe-factory
               }

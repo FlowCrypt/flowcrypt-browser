@@ -68,11 +68,11 @@
         },
         {
           "name": "From",
-          "value": "FlowCrypt Compatibility <flowcrypt.compatibility@protonmail.com>"
+          "value": "some.alias@protonmail.com"
         },
         {
           "name": "Reply-To",
-          "value": "FlowCrypt Compatibility <flowcrypt.compatibility@protonmail.com>"
+          "value": "some.alias@protonmail.com"
         },
         {
           "name": "Subject",

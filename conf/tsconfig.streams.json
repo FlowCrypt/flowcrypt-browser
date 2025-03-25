@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": [
-      "es6",
-      "dom"
-    ],
+    "target": "ES2022",
+    "lib": ["es6", "dom"],
     "allowJs": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
@@ -16,7 +13,5 @@
     "outDir": "../build/streams",
     "skipLibCheck": true
   },
-  "include": [
-    "../node_modules/@openpgp/web-stream-tools/lib/*.js"
-  ]
+  "include": ["../node_modules/@openpgp/web-stream-tools/lib/*.js"]
 }

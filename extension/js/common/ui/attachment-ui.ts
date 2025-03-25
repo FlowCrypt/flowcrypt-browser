@@ -50,9 +50,12 @@ export class AttachmentUI {
         },
         callbacks: {
           onSubmit: (uploadFileId: string) => this.processNewAttachment(uploadFileId),
-          onCancel: (uploadFileId: string) => this.cancelAttachment(uploadFileId),
+          onCancel: (uploadFileId: string) => {
+            this.cancelAttachment(uploadFileId);
+          },
         },
       };
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       this.uploader = new qq.FineUploader(config);
       this.setInputAttributes();
     });
@@ -100,12 +103,12 @@ export class AttachmentUI {
       if (pubs.find(pub => pub.pubkey.family === 'x509')) {
         throw new UnreportableError('Attachments are not yet supported when sending to recipients using S/MIME x509 certificates.');
       }
-      const encrypted = (await MsgUtil.encryptMessage({
+      const encrypted = await MsgUtil.encryptMessage({
         pubkeys: pubsForEncryption,
         data,
         filename: file.name,
         armor: false,
-      }));
+      });
       attachments.push(
         new Attachment({
           name: Attachment.sanitizeName(file.name) + '.pgp',
@@ -119,14 +122,17 @@ export class AttachmentUI {
 
   public clearAllAttachments = () => {
     this.attachedFiles = {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.uploader.reset();
   };
 
   public addFile = (file: File) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.uploader.addFiles([file]);
   };
 
   private cancelAttachment = (uploadFileId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this.attachedFiles[uploadFileId];
     if (this.callbacks.uiChanged) {
       // run at next event loop cycle - let DOM changes render first
@@ -142,6 +148,7 @@ export class AttachmentUI {
       await Ui.modal.warning(msg);
       throw new CancelAttachmentSubmit(msg);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const newFile: File = this.uploader.getFile(uploadFileId);
     if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
       const msg = `Combined file size is limited to ${limits.sizeMb} MB`;

@@ -1,0 +1,90 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "18736a0687a8426b",
+    "threadId": "18736a0687a8426b",
+    "labelIds": [
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA256 test for flowcrypt-browser issue #4866 (signed) &lt;a href=&quot;https://flowcrypt.s3.amazonaws.com/attachment/b3d5f2b8e09a52cdf7c7979249ffccb5e654b7a7.",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/mixed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "multipart/mixed; boundary=\"----sinikael-?=_1-16802486942840.8360110019314089\""
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=E8F0517BA6D7DAB6081C96E4ADAC279C95093207"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Subject",
+          "value": "test for flowcrypt-browser issue #4866 (signed)"
+        },
+        {
+          "name": "Date",
+          "value": "Fri, 31 Mar 2023 02:44:55 -0500"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "text/plain"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "quoted-printable"
+            }
+          ],
+          "body": {
+            "size": 1341,
+            "data": "LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMjU2DQoNCnRlc3QgZm9yIGZsb3djcnlwdC1icm93c2VyIGlzc3VlICM0ODY2IChzaWduZWQpDQoNCjxhDQpocmVmPSJodHRwczovL2Zsb3djcnlwdC5zMy5hbWF6b25hd3MuY29tL2F0dGFjaG1lbnQvYjNkNWYyYjhlMDlhNTJjZGY3Yzc5NzkyNDlmZmNjYjVlNjU0YjdhNy5wZ3AiDQpjbGFzcz0iY3J5cHR1cF9maWxlIg0KY3J5cHR1cC1kYXRhPSJleUp6YVhwbElqbzJNVFVzSW5SNWNHVWlPaUpoY0hCc2FXTmhkR2x2Ymk5dlkzUmxkQzF6ZEhKbFlXMGlMQ0p1WVcxbElqb2laR1Z0Ynk1aVlYUXVjR2R3SW4wIj5BdHRhY2htZW50Og0KZGVtby5iYXQucGdwIChhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW0pPC9hPg0KLS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0NClZlcnNpb246IEZsb3dDcnlwdCBFbWFpbCBFbmNyeXB0aW9uIDguNC41DQpDb21tZW50OiBTZWFtbGVzc2x5IHNlbmQgYW5kIHJlY2VpdmUgZW5jcnlwdGVkIGVtYWlsDQoNCndzRnpCQUVCQ0FBbkJZSmtKbzkyQ1pDdHJDZWNsUWt5QnhZaEJPandVWHVtMTlxMkNCeVc1SzJzSjV5Vg0KQ1RJSEFBQy9waEFBbGdzZ3dvYm10anRxR0s3d3RRckJBQ2R0M2RFeTg2WisyMjQ4eW1OT3FDa1VnWHNIDQpxYytpZ2oxM3J0WlVxK0Y1QnhIS25OLzJlbGZrdHB2Zmt0RE9Ca25ZcW41cVJoZEFLSUtSTWZNYy84WEsNCmRHdXRQWUxaR2RUdHNDWXVka3BrN3V3b1VTREl0TWJyU3hxK1hsME5MVDRJNzNFODhWT0xObFNPVXNVbg0KZmVYdXBmV1RJYUdOeXVYdUpMU2ZFa09aWkN2OE5nNmt0SVoybUFBQUFyV2NaUGFtNEhZemNsaU1qc3dzDQplNCtGMFZVTkhTMnkzM2dvYWIwUVhid2ttbUtOUVp0YWhWK2NxbU94Vi9HeXVDRWlia3ViajRsQ01jeCsNCnUrbHB0MjQwTmhPRnZZMTZOZFYvcmJUMjBYTFM4L2d0YThKTzFCM25QVVYzTndDN0hRcFZyRGtBZkQ4eA0KaldJQUZ0SkZHdHRLSGxyNmNGWHBYRWI3Z3BuTS9tN0FaNm1YNkFSR28zNUFFM1pIUGlnRk9HTXY0KzV2DQpBeGMya1ZPeEhmV0FaaG9vRVdqcHdMUHAyRFJSYmx3NEpLaHJWKzF0QWxxSncwK29MaW1kYjlmbWMxcmgNCmRFZVArWEx2Q3ZrWDNERVdQNEpoeStuTWtWMnV0MmVvcFZHNmdvQUtVWUR2WnpHM1hrR3pXakk5VTVjZw0KU1VDM081dnkyZ295UkptRWZoWWlxcWNrYTI0SG10R3RtSGZXczh0dnZWYjI2REV3NFIxdkovOExyaHo5DQpuK0d0eDI0SmpxdEEwV3liTVB6OFNVa0Z3eENwa3dEZXpxYmZjZ2JmeGdBTHpBQjZTVDJYZnc2K2VvMDkNCjEzeEZHNDJTeGxqd1pBUGY1MEFqeE1VQ2FRVkpyRmJDNkVzPQ0KPVNJS2oNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K"
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 2142,
+    "historyId": "1400548",
+    "internalDate": "1680248695000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "18736a0687a8426b",
+    "threadId": "18736a0687a8426b",
+    "labelIds": [
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA256 test for flowcrypt-browser issue #4866 (signed) &lt;a href=&quot;https://flowcrypt.s3.amazonaws.com/attachment/b3d5f2b8e09a52cdf7c7979249ffccb5e654b7a7.",
+    "sizeEstimate": 2142,
+    "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCUZyaSwgMzEgTWFyIDIwMjMgMDI6NDQ6NTUgLTA1MDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNjgwMjQ4Njk0Mjg0MC44MzYwMTEwMDE5MzE0MDg5Ig0KT3BlbnBncDogaWQ9RThGMDUxN0JBNkQ3REFCNjA4MUM5NkU0QURBQzI3OUM5NTA5MzIwNw0KRnJvbTogRmxvd0NyeXB0IENvbXBhdGliaWxpdHkgPGZsb3djcnlwdC5jb21wYXRpYmlsaXR5QGdtYWlsLmNvbT4NClRvOiBGbG93Q3J5cHQgQ29tcGF0aWJpbGl0eSA8Zmxvd2NyeXB0LmNvbXBhdGliaWxpdHlAZ21haWwuY29tPg0KU3ViamVjdDogdGVzdCBmb3IgZmxvd2NyeXB0LWJyb3dzZXIgaXNzdWUgIzQ4NjYgKHNpZ25lZCkNCkRhdGU6IEZyaSwgMzEgTWFyIDIwMjMgMDI6NDQ6NTUgLTA1MDANCk1lc3NhZ2UtSWQ6IDxDQUtidUxUcmk1PVhRbk9zSFY0Ml9OODJCMzQ2MWZhVHNzYmFMZ0V6dUJ0dFgyNmF6WVFAbWFpbC5nbWFpbC5jb20-DQpNSU1FLVZlcnNpb246IDEuMA0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2ODAyNDg2OTQyODQwLjgzNjAxMTAwMTkzMTQwODkNCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbg0KQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogcXVvdGVkLXByaW50YWJsZQ0KDQotLS0tLUJFR0lOIFBHUCBTSUdORUQgTUVTU0FHRS0tLS0tDQpIYXNoOiBTSEEyNTYNCg0KdGVzdCBmb3IgZmxvd2NyeXB0LWJyb3dzZXIgaXNzdWUgIzQ4NjYgKHNpZ25lZCkNCg0KPGENCmhyZWY9M0QiaHR0cHM6Ly9mbG93Y3J5cHQuczMuYW1hem9uYXdzLmNvbS9hdHRhY2htZW50L2IzZDVmMmI4ZTA5YTUyY2RmN2M3OT0NCjc5MjQ5ZmZjY2I1ZTY1NGI3YTcucGdwIg0KY2xhc3M9M0QiY3J5cHR1cF9maWxlIg0KY3J5cHR1cC1kYXRhPTNEImV5SnphWHBsSWpvMk1UVXNJblI1Y0dVaU9pSmhjSEJzYVdOaGRHbHZiaTl2WTNSbGRDMXpkSEpsWVcwPQ0KaUxDSnVZVzFsSWpvaVpHVnRieTVpWVhRdWNHZHdJbjAiPkF0dGFjaG1lbnQ6DQpkZW1vLmJhdC5wZ3AgKGFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbSk8L2E-DQotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQ0KVmVyc2lvbjogRmxvd0NyeXB0IEVtYWlsIEVuY3J5cHRpb24gOC40LjUNCkNvbW1lbnQ6IFNlYW1sZXNzbHkgc2VuZCBhbmQgcmVjZWl2ZSBlbmNyeXB0ZWQgZW1haWwNCg0Kd3NGekJBRUJDQUFuQllKa0pvOTJDWkN0ckNlY2xRa3lCeFloQk9qd1VYdW0xOXEyQ0J5VzVLMnNKNXlWDQpDVElIQUFDL3BoQUFsZ3Nnd29ibXRqdHFHSzd3dFFyQkFDZHQzZEV5ODZaKzIyNDh5bU5PcUNrVWdYc0gNCnFjK2lnajEzcnRaVXErRjVCeEhLbk4vMmVsZmt0cHZma3RET0JrbllxbjVxUmhkQUtJS1JNZk1jLzhYSw0KZEd1dFBZTFpHZFR0c0NZdWRrcGs3dXdvVVNESXRNYnJTeHErWGwwTkxUNEk3M0U4OFZPTE5sU09Vc1VuDQpmZVh1cGZXVElhR055dVh1SkxTZkVrT1paQ3Y4Tmc2a3RJWjJtQUFBQXJXY1pQYW00SFl6Y2xpTWpzd3MNCmU0K0YwVlVOSFMyeTMzZ29hYjBRWGJ3a21tS05RWnRhaFYrY3FtT3hWL0d5dUNFaWJrdWJqNGxDTWN4Kw0KdStscHQyNDBOaE9GdlkxNk5kVi9yYlQyMFhMUzgvZ3RhOEpPMUIzblBVVjNOd0M3SFFwVnJEa0FmRDh4DQpqV0lBRnRKRkd0dEtIbHI2Y0ZYcFhFYjdncG5NL203QVo2bVg2QVJHbzM1QUUzWkhQaWdGT0dNdjQrNXYNCkF4YzJrVk94SGZXQVpob29FV2pwd0xQcDJEUlJibHc0SktoclYrMXRBbHFKdzArb0xpbWRiOWZtYzFyaA0KZEVlUCtYTHZDdmtYM0RFV1A0Smh5K25Na1YydXQyZW9wVkc2Z29BS1VZRHZaekczWGtHeldqSTlVNWNnDQpTVUMzTzV2eTJnb3lSSm1FZmhZaXFxY2thMjRIbXRHdG1IZldzOHR2dlZiMjZERXc0UjF2Si84THJoejkNCm4rR3R4MjRKanF0QTBXeWJNUHo4U1VrRnd4Q3Brd0RlenFiZmNnYmZ4Z0FMekFCNlNUMlhmdzYrZW8wOQ0KMTN4Rkc0MlN4bGp3WkFQZjUwQWp4TVVDYVFWSnJGYkM2RXM9M0QNCj0zRFNJS2oNCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2ODAyNDg2OTQyODQwLjgzNjAxMTAwMTkzMTQwODktLQ0K",
+    "historyId": "1400548",
+    "internalDate": "1680248695000"
+  }
+}

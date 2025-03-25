@@ -30,7 +30,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { PubLookup } from '../../js/common/api/pub-lookup.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { AccountServer } from '../../js/common/api/account-server.js';
-import { ComposeReplyBtnPopoverModule } from './compose-modules/compose-reply-btn-popover-module.js';
+import { ComposeReplyBtnPopoverModule, ReplyOption } from './compose-modules/compose-reply-btn-popover-module.js';
 import { Lang } from '../../js/common/lang.js';
 
 export class ComposeView extends View {
@@ -41,16 +41,18 @@ export class ComposeView extends View {
   public readonly removeAfterClose: boolean;
   public readonly disableDraftSaving: boolean;
   public readonly debug: boolean;
+  public readonly useFullScreenSecureCompose: boolean;
   public readonly isReplyBox: boolean;
   public readonly replyMsgId: string;
   public readonly replyPubkeyMismatch: boolean;
+  public replyOption?: ReplyOption;
   public fesUrl?: string;
   public skipClickPrompt: boolean;
   public draftId: string;
   public threadId = '';
   public ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
 
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public factory!: XssSafeFactory;
   public replyParams: ReplyParams | undefined;
   public emailProvider: EmailProviderInterface;
@@ -99,6 +101,7 @@ export class ComposeView extends View {
     password_input_container: '.password_input_container',
     warning_nopgp: '.warning_nopgp',
     warning_revoked: '.warning_revoked',
+    warning_no_pubkey_on_attester: '.warning_no_pubkey_on_attester',
     send_btn_note: '#send_btn_note',
     send_btn_i: '#send_btn i',
     send_btn: '#send_btn',
@@ -106,6 +109,7 @@ export class ComposeView extends View {
     toggle_send_options: '#toggle_send_options',
     toggle_reply_options: '#toggle_reply_options',
     icon_pubkey: '.icon.action_include_pubkey',
+    close_compose_window: '.close_compose_window',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
     triple_dot: '.action_show_prev_msg',
@@ -145,6 +149,8 @@ export class ComposeView extends View {
       'debug',
       'removeAfterClose',
       'replyPubkeyMismatch',
+      'replyOption',
+      'useFullScreenSecureCompose',
     ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -152,12 +158,14 @@ export class ComposeView extends View {
     this.skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
     this.ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
     this.removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
+    this.replyOption = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyOption') as ReplyOption;
     this.disableDraftSaving = false;
     this.debug = uncheckedUrlParams.debug === true;
     this.replyPubkeyMismatch = uncheckedUrlParams.replyPubkeyMismatch === true;
     this.draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
     this.replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
-    this.isReplyBox = !!this.replyMsgId;
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.isReplyBox = !!this.replyMsgId && !this.useFullScreenSecureCompose;
     this.emailProvider = new Gmail(this.acctEmail);
     this.acctServer = new AccountServer(this.acctEmail);
   }
@@ -170,7 +178,6 @@ export class ComposeView extends View {
       opgp.config.showVersion = false;
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
-    this.tabId = await BrowserMsg.requiredTabId();
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.draftModule = new ComposeDraftModule(this);
     this.quoteModule = new ComposeQuoteModule(this);
@@ -198,13 +205,16 @@ export class ComposeView extends View {
     }
     BrowserMsg.listen(this.tabId);
     await this.renderModule.initComposeBox();
+    if (this.replyOption && this.replyMsgId) {
+      await this.renderModule.activateReplyOption(this.replyOption, true);
+    }
     this.senderModule.checkEmailAliases().catch(Catch.reportErr);
   };
 
   public setHandlers = () => {
     BrowserMsg.addListener('focus_previous_active_window', async ({ frameId }: Bm.ComposeWindow) => {
       if (this.frameId === frameId) {
-        this.S.cached('input_to').focus();
+        this.S.cached('input_to').trigger('focus');
       }
     });
     BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
@@ -219,6 +229,10 @@ export class ComposeView extends View {
     });
     this.S.cached('body').on('focusin', setActiveWindow);
     this.S.cached('body').on('click', setActiveWindow);
+    this.S.cached('close_compose_window').on(
+      'click',
+      this.setHandler(async () => await this.renderModule.actionCloseHandler(), this.errModule.handle(`close compose window`))
+    );
     this.S.cached('icon_help').on(
       'click',
       this.setHandler(async () => await this.renderModule.openSettingsWithDialog('help'), this.errModule.handle(`help dialog`))

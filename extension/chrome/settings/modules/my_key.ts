@@ -20,8 +20,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { FlowCryptWebsite } from '../../../js/common/api/flowcrypt-website.js';
 
 declare class ClipboardJS {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  public constructor(selector: string, options: {});
+  public constructor(selector: string, options: unknown);
 }
 
 View.run(
@@ -56,8 +55,11 @@ View.run(
       $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
       Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
       const expiration = this.pubKey.expiration;
-      $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Key does not expire');
-      await this.renderPrivateKeyLink();
+      const creation = Str.datetimeToDate(Str.fromDate(new Date(this.pubKey.created)));
+      Xss.sanitizeRender('.key_status_contatiner', KeyUtil.statusHtml(this.keyInfo.longid, this.pubKey));
+      $('.key_creation').text(creation);
+      $('.key_expiration').text(expiration && expiration !== Infinity ? Str.datetimeToDate(Str.fromDate(new Date(expiration))) : 'Does not expire');
+      this.renderPrivateKeyLink();
       await this.renderPubkeyShareableLink();
       await initPassphraseToggle(['input_passphrase']);
     };
@@ -123,7 +125,7 @@ View.run(
       $('.enter_pp').hide();
       $('#input_passphrase').val('');
       let revokeConfirmMsg = `Revocation cert is used when you want to revoke your Public Key (meaning you are asking others to stop using it).\n\n`;
-      revokeConfirmMsg += `You can save it do your hard drive, and use it later in case you ever need it.\n\n`;
+      revokeConfirmMsg += `You can save it to your hard drive and use it later in case you ever need it.\n\n`;
       revokeConfirmMsg += `Would you like to generate and save a revocation cert now?`;
       if (!(await Ui.modal.confirm(revokeConfirmMsg))) {
         return;

@@ -3,7 +3,10 @@
 import { GmailCategory } from '../tests/gmail';
 
 export class TestUrls {
-  public constructor(public extensionId: string, public port?: number) {}
+  public constructor(
+    public extensionId: string,
+    public port?: number
+  ) {}
 
   public static googleChat = (acctLoginIndex = 0) => {
     return `https://mail.google.com/chat/u/${acctLoginIndex}`;
@@ -17,12 +20,13 @@ export class TestUrls {
     return `chrome-extension://${this.extensionId}/${path}`;
   };
 
-  public extensionSettings = (acctEmail?: string | undefined) => {
+  public extensionSettings = (acctEmail?: string) => {
     return this.extension(`chrome/settings/index.htm?account_email=${acctEmail || ''}`);
   };
 
-  public extensionInbox = (acctEmail: string) => {
-    return this.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
+  public extensionInbox = (acctEmail: string, threadId?: string) => {
+    const url = this.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}`);
+    return threadId ? url + `&threadId=${threadId}` : url;
   };
 
   public mockGmailUrl = () => `https://gmail.localhost:${this.port}/gmail`;

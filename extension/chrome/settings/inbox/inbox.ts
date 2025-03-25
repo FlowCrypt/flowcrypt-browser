@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { SelCache, Ui } from '../../../js/common/browser/ui.js';
+import { CommonHandlers, SelCache, Ui } from '../../../js/common/browser/ui.js';
 import { Url, UrlParams } from '../../../js/common/core/common.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -21,7 +21,9 @@ import { View } from '../../../js/common/view.js';
 import { WebmailCommon } from '../../../js/common/webmail.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { XssSafeFactory } from '../../../js/common/xss-safe-factory.js';
-import { AcctStore, AcctStoreDict } from '../../../js/common/platform/store/acct-store.js';
+import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { RelayManager } from '../../../js/common/relay-manager.js';
+import { MessageRenderer } from '../../../js/common/message-renderer.js';
 
 export class InboxView extends View {
   public readonly inboxMenuModule: InboxMenuModule;
@@ -34,23 +36,40 @@ export class InboxView extends View {
   public readonly threadId: string | undefined;
   public readonly showOriginal: boolean;
   public readonly debug: boolean;
+  public readonly useFullScreenSecureCompose: boolean;
+  public readonly thunderbirdMsgId: number | undefined;
+  public readonly composeMethod: 'reply' | 'forward' | undefined;
   public readonly S: SelCache;
   public readonly gmail: Gmail;
 
   public injector!: Injector;
   public webmailCommon!: WebmailCommon;
+  public messageRenderer!: MessageRenderer;
   public factory!: XssSafeFactory;
-  public storage!: AcctStoreDict;
-  public tabId!: string;
+  public picture?: string;
+  public readonly tabId = BrowserMsg.generateTabId();
+  public relayManager!: RelayManager;
 
   public constructor() {
     super();
-    const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal', 'debug']);
+    const uncheckedUrlParams = Url.parse([
+      'acctEmail',
+      'labelId',
+      'threadId',
+      'showOriginal',
+      'debug',
+      'useFullScreenSecureCompose',
+      'composeMethod',
+      'thunderbirdMsgId',
+    ]);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
     this.labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
     this.threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
     this.showOriginal = uncheckedUrlParams.showOriginal === true;
     this.debug = uncheckedUrlParams.debug === true;
+    this.useFullScreenSecureCompose = uncheckedUrlParams.useFullScreenSecureCompose === true;
+    this.composeMethod = (Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'composeMethod') as 'reply') || 'forward';
+    this.thunderbirdMsgId = Number(Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'thunderbirdMsgId'));
     this.S = Ui.buildJquerySels({ threads: '.threads', thread: '.thread', body: 'body' });
     this.gmail = new Gmail(this.acctEmail);
     this.inboxMenuModule = new InboxMenuModule(this);
@@ -60,23 +79,33 @@ export class InboxView extends View {
   }
 
   public render = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
+    this.relayManager = new RelayManager(this.debug);
     this.factory = new XssSafeFactory(this.acctEmail, this.tabId);
     this.injector = new Injector('settings', undefined, this.factory);
     this.webmailCommon = new WebmailCommon(this.acctEmail, this.injector);
-    this.storage = await AcctStore.get(this.acctEmail, ['email_provider', 'picture', 'sendAs']);
+    let emailProvider: 'gmail' | undefined;
+    ({ email_provider: emailProvider, picture: this.picture } = await AcctStore.get(this.acctEmail, ['email_provider', 'picture']));
+    this.messageRenderer = await MessageRenderer.newInstance(this.acctEmail, this.gmail, this.relayManager, this.factory, this.debug);
     this.inboxNotificationModule.render();
-    const emailProvider = this.storage.email_provider || 'gmail';
+    const parsedThreadId = await this.parseThreadIdFromHeaderMessageId();
+    this.preRenderSecureComposeInFullScreen(parsedThreadId);
+    if (Catch.isThunderbirdMail()) {
+      $('#container-gmail-banner').hide();
+    }
     try {
       await Settings.populateAccountsMenu('inbox.htm');
-      if (emailProvider !== 'gmail') {
+      if (emailProvider && emailProvider !== 'gmail') {
         $('body').text('Not supported for ' + emailProvider);
       } else {
         await this.inboxMenuModule.render();
         if (this.threadId) {
           await this.inboxActiveThreadModule.render(this.threadId);
         } else {
-          await this.inboxListThreadsModule.render(this.labelId);
+          if (parsedThreadId && !this.useFullScreenSecureCompose) {
+            await this.inboxActiveThreadModule.render(parsedThreadId);
+          } else {
+            await this.inboxListThreadsModule.render(this.labelId);
+          }
         }
       }
     } catch (e) {
@@ -92,8 +121,9 @@ export class InboxView extends View {
   };
 
   public setHandlers = () => {
-    // BrowserMsg.addPgpListeners(); // todo - re-allow when https://github.com/FlowCrypt/flowcrypt-browser/issues/2560 fixed
+    this.addBrowserMsgListeners();
     BrowserMsg.listen(this.tabId);
+    BrowserMsg.send.setHandlerReadyForPGPBlock('broadcast');
     Catch.setHandledInterval(this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded, 30000);
     $('.action_open_settings').on(
       'click',
@@ -110,7 +140,6 @@ export class InboxView extends View {
       'click',
       this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
     );
-    this.addBrowserMsgListeners();
   };
 
   public redirectToUrl = (params: UrlParams) => {
@@ -125,7 +154,32 @@ export class InboxView extends View {
   public displayBlock = (name: string, title: string) => {
     this.S.cached('threads').css('display', name === 'thread' ? 'none' : 'block');
     this.S.cached('thread').css('display', name === 'thread' ? 'block' : 'none');
-    Xss.sanitizeRender('h1', `${title}`);
+    Xss.sanitizeRender('h1', title);
+  };
+
+  private preRenderSecureComposeInFullScreen = (replyMsgId?: string) => {
+    if (this.useFullScreenSecureCompose && this.composeMethod) {
+      const replyOption = this.composeMethod === 'reply' ? 'a_reply' : 'a_forward';
+      this.injector.openComposeWin(undefined, true, this.thunderbirdMsgId, replyOption, replyMsgId);
+    }
+  };
+
+  private parseThreadIdFromHeaderMessageId = async () => {
+    let threadId;
+    if (Catch.isThunderbirdMail() && this.thunderbirdMsgId) {
+      const { headers } = await messenger.messages.getFull(this.thunderbirdMsgId);
+      if (headers) {
+        const messageId = headers['message-id'][0];
+        if (messageId) {
+          const query = `rfc822msgid:${messageId}`;
+          const gmailRes = await this.gmail.msgList(query);
+          if (gmailRes.messages) {
+            threadId = gmailRes.messages[0].threadId;
+          }
+        }
+      }
+    }
+    return threadId;
   };
 
   private addBrowserMsgListeners = () => {
@@ -168,6 +222,13 @@ export class InboxView extends View {
     });
     BrowserMsg.addListener('show_attachment_preview', async ({ iframeUrl }: Bm.ShowAttachmentPreview) => {
       await Ui.modal.attachmentPreview(iframeUrl);
+    });
+    BrowserMsg.addListener('confirmation_show', CommonHandlers.showConfirmationHandler);
+    BrowserMsg.addListener('pgp_block_ready', async ({ frameId, messageSender }: Bm.PgpBlockReady) => {
+      this.relayManager.associate(frameId, messageSender);
+    });
+    BrowserMsg.addListener('pgp_block_retry', async ({ frameId, messageSender }: Bm.PgpBlockRetry) => {
+      this.relayManager.retry(frameId, messageSender);
     });
     if (this.debug) {
       BrowserMsg.addListener('open_compose_window', async ({ draftId }: Bm.ComposeWindowOpenDraft) => {

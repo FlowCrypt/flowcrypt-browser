@@ -52,7 +52,7 @@ View.run(
       } else {
         $('.line .private_key_status')
           .text('This private key was not imported yet. We suggest to import all backups so that you can read all incoming encrypted emails.')
-          .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>');
+          .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>'); // xss-direct
       }
       this.sendResizeMsg();
     };
@@ -61,14 +61,16 @@ View.run(
       if (!this.storedPrvWithMatchingLongid) {
         $('#action_import_key').on(
           'click',
-          this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm'))
+          this.setHandler(async () => {
+            await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/add_key.htm');
+          })
         );
       }
       $('.action_test_pass').on(
         'click',
         this.setHandler(async () => this.testPassphraseHandler())
       );
-      $('#pass_phrase').keydown(this.setEnterHandlerThatClicks('.action_test_pass'));
+      $('#pass_phrase').on('keydown', this.setEnterHandlerThatClicks('.action_test_pass'));
     };
 
     private sendResizeMsg = () => {
@@ -80,7 +82,7 @@ View.run(
     };
 
     private testPassphraseHandler = async () => {
-      if ((await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val()))) === true) {
+      if (await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val()))) {
         await Ui.modal.info('Success - your pass phrase matches this backup!');
       } else {
         await Ui.modal.warning(

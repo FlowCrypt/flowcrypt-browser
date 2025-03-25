@@ -4,7 +4,7 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
-import { Config, TestVariant, Util } from '../util';
+import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
@@ -17,7 +17,6 @@ import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
 import { testConstants } from './tooling/consts';
 import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
-import { ExpirationCache } from '../core/expiration-cache';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
@@ -121,7 +120,7 @@ Something wrong with this key`),
       const revocationCertificate = await OpenPGPKey.getOrCreateRevocationCertificate(originalPrv);
       expect(revocationCertificate).to.be.not.empty;
       if (!revocationCertificate) {
-        throw Error;
+        throw new Error();
       }
       expect(revocationCertificate.startsWith('-----BEGIN PGP PUBLIC KEY BLOCK-----')).to.be.true;
       expect(revocationCertificate).to.include('Version: FlowCrypt Email Encryption');
@@ -331,6 +330,18 @@ qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
       const generatedString = PgpPwd.random();
       // eg TDW6-DU5M-TANI-LJXY
       expect(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedString)).to.equal(true);
+      t.pass();
+    });
+
+    test('[unit][Str.is7bit] correctly detects presence of non-7bit characters', async t => {
+      const UNICODE = `abcგ`;
+      const UNICODE_AS_BYTES = Buf.fromUtfStr(UNICODE);
+      const ASCII = 'Simple ASCII text\r\nwith line breaks';
+      const ASCII_AS_BYTES = Buf.fromUtfStr(ASCII);
+      expect(Str.is7bit(UNICODE)).to.be.false;
+      expect(Str.is7bit(UNICODE_AS_BYTES)).to.be.false;
+      expect(Str.is7bit(ASCII)).to.be.true;
+      expect(Str.is7bit(ASCII_AS_BYTES)).to.be.true;
       t.pass();
     });
 
@@ -893,6 +904,31 @@ ${testConstants.smimeCert}`),
       t.pass();
     });
 
+    test('[unit][MsgUtil.isPasswordMesageEnabled] test password protected message compliance', async t => {
+      const disallowTerms = ['[Classification: Data Control: Internal Data Control]', 'droid', 'forbidden data'];
+
+      const subjectsToTestObj: { [key: string]: boolean } = {
+        '[Classification: Data Control: Internal Data Control] Quarter results': false,
+        'Conference information [Classification: Data Control: Internal Data Control]': false,
+        'Classification: Data Control: Internal Data Control - Tomorrow meeting': true,
+        'Internal Data Control - Finance monitoring': true,
+        // term check should work only for exact matches - if we have droid in the list of strings,
+        // password-protected messages shouldn't be disabled for subjects with Android word
+        'Android phone update': true,
+        'droid phone': false,
+        // Check for case insensitive
+        'DROiD phone': false,
+        '[forbidden data] year results': false,
+      };
+
+      for (const subject of Object.keys(subjectsToTestObj)) {
+        const expectedValue = subjectsToTestObj[subject];
+        const result = MsgUtil.isPasswordMessageEnabled(subject, disallowTerms);
+        expect(expectedValue).to.equal(result);
+      }
+      t.pass();
+    });
+
     test('[unit][KeyUtil.parse] Correctly extracting email from SubjectAltName of S/MIME certificate', async t => {
       /*
             // generate a key pair
@@ -1014,12 +1050,11 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
     test('[unit][MsgUtil.decryptMessage] mdc - missing - error', async t => {
-      const encryptedData = Buf.fromUtfStr(decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded));
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+      const encryptedData = decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded);
+
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
       const kisWithPp = [
         {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
           passphrase: compatibilityKey1.passphrase,
         },
@@ -1038,25 +1073,21 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     test('[unit][MsgUtil.decryptMessage] decrypts a pubkey-encrypted OpenPGP message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const enc = Buf.fromBase64Str(msg!.raw!)
-        .toUtfStr()
-        .match(/-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s)![0];
-      const encryptedData = Buf.fromUtfStr(enc);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1')!;
+
+      const encryptedData = /-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s.exec(Buf.fromBase64Str(msg.raw!).toUtfStr())![0];
+
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
       const kisWithPp = [
         {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
           passphrase: compatibilityKey1.passphrase,
         },
       ];
       const decrypted1 = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted1.success).to.equal(true);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const verifyRes1 = (decrypted1 as DecryptSuccess).signature!;
       expect(verifyRes1.match).to.be.null;
       t.pass();
@@ -1082,14 +1113,12 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       t.pass();
     });
 
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     test('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const enc = Buf.fromBase64Str(msg!.raw!)
-        .toUtfStr()
-        .match(/\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0];
-      const encryptedData = Buf.fromUtfStr(enc);
+      const encryptedData = /\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s.exec(
+        Buf.fromBase64Str(msg.raw!).toUtfStr()
+      )![0];
       // actual key the message was signed with
       const signerPubkey = testConstants.pubkey2864E326A5BE488A;
       // better key
@@ -1141,23 +1170,19 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Thunderbird html signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('17daefa0eb077da6')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
-      const sigText = msgText
-        .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const sigText = /\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s
+        .exec(msgText)![0]
         .replace(/=\r\n/g, '')
         .replace(/=3D/g, '=');
-      const plaintext = msgText
-        .match(/Content\-Type: multipart\/mixed; boundary="------------0i0uwO075ZQ0NjkA1rJACksf".*--------------0i0uwO075ZQ0NjkA1rJACksf--\r?\n/s)![0]
-        .replace(/\r?\n/g, '\r\n')!;
-      const pubkey = plaintext
-        .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+      const plaintext = /Content\-Type: multipart\/mixed; boundary="------------0i0uwO075ZQ0NjkA1rJACksf".*--------------0i0uwO075ZQ0NjkA1rJACksf--\r?\n/s
+        .exec(msgText)![0]
+        .replace(/\r?\n/g, '\r\n');
+      const pubkey = /\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s
+        .exec(plaintext)![0]
         .replace(/=\r\n/g, '')
         .replace(/=3D/g, '=');
-      const result = await MsgUtil.verifyDetached({
-        plaintext: Buf.fromUtfStr(plaintext),
-        sigText: Buf.fromUtfStr(sigText),
-        verificationPubs: [pubkey],
-      });
+      const result = await MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs: [pubkey] });
       expect(result.match).to.be.true;
       t.pass();
     });
@@ -1165,23 +1190,19 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Thunderbird text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('17dad75e63e47f97')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
-      const sigText = msgText
-        .match(/\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s)![0]
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const sigText = /\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s
+        .exec(msgText)![0]
         .replace(/=\r\n/g, '')
         .replace(/=3D/g, '=');
-      const plaintext = msgText
-        .match(/Content\-Type: multipart\/mixed; boundary="------------FQ7CfxuiGriwTfTfyc4i1ppF".*-------------FQ7CfxuiGriwTfTfyc4i1ppF--\r?\n/s)![0]
-        .replace(/\r?\n/g, '\r\n')!;
-      const pubkey = plaintext
-        .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+      const plaintext = /Content\-Type: multipart\/mixed; boundary="------------FQ7CfxuiGriwTfTfyc4i1ppF".*-------------FQ7CfxuiGriwTfTfyc4i1ppF--\r?\n/s
+        .exec(msgText)![0]
+        .replace(/\r?\n/g, '\r\n');
+      const pubkey = /\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s
+        .exec(plaintext)![0]
         .replace(/=\r\n/g, '')
         .replace(/=3D/g, '=');
-      const result = await MsgUtil.verifyDetached({
-        plaintext: Buf.fromUtfStr(plaintext),
-        sigText: Buf.fromUtfStr(sigText),
-        verificationPubs: [pubkey],
-      });
+      const result = await MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs: [pubkey] });
       expect(result.match).to.be.true;
       t.pass();
     });
@@ -1189,25 +1210,20 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Firefox rich text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
-      const sigBase64 = msgText.match(/Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s)![1];
-      const sigText = Buf.fromBase64Str(sigBase64);
-      const plaintext = msgText
-        .match(
-          /Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s
-        )![0]
-        .replace(/\r?\n/g, '\r\n')!;
-      const result = await MsgUtil.verifyDetached({
-        plaintext: Buf.fromUtfStr(plaintext),
-        sigText,
-        verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788],
-      });
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const sigBase64 = /Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s.exec(msgText)![1];
+      const sigText = Buf.fromBase64Str(sigBase64).toUtfStr();
+      const plaintext =
+        /Content\-Type: multipart\/mixed;\r?\n? boundary="\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896".*\-\-\-\-\-\-sinikael\-\?=_2\-16054595384320\.6487848448108896\-\-\r?\n/s
+          .exec(msgText)![0]
+          .replace(/\r?\n/g, '\r\n');
+      const result = await MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788] });
       expect(result.match).to.be.true;
       t.pass();
     });
 
     test(`[unit][MsgUtil.verifyDetached] returns non-fatal error when signature doesn't match`, async t => {
-      const sigText = Buf.fromUtfStr(`-----BEGIN PGP SIGNATURE-----
+      const sigText = `-----BEGIN PGP SIGNATURE-----
 
 wsB5BAABCAAjFiEEK7IZd28jzkjruGCcID+ucHYAU4EFAmG1nzIFAwAAAAAACgkQID+ucHYAU4H1
 9AgAmi5QUmrzlMa/V8SeEv7VydA3v7Hca/EM18o4ot/ygQgS1BoCm9tAajOGWgzo7eEJwDK8LRj2
@@ -1215,17 +1231,17 @@ c/XcKWExxcqkLjiem7CdePbi/xr5jMsPYzOlMtcFaD3zY9h8zabiiGM0kIpT8PVCofgFJMqQdByr
 gF0NuioMzAiCY+W9aiaSzquH9FVVE+C4bwsU4leTkANDGi05XBUIYaocNilHnUghG6DyFWS6qYFW
 cU4SvRcN5yDDUUjrtFJqp2a2Cs76KgbBr3KQcD42EypUL4/ZS+7/4MN4SA05R/mMtmfK4HwAKcC2
 jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
------END PGP SIGNATURE-----`);
+-----END PGP SIGNATURE-----`;
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg = data.getMessage('17dad75e63e47f97')!;
-      const msgText = Buf.fromBase64Str(msg!.raw!).toUtfStr();
+      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
       {
-        const pubkey = msgText
-          .match(/\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s)![0]
+        const pubkey = /\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s
+          .exec(msgText)![0]
           .replace(/=\r\n/g, '')
           .replace(/=3D/g, '=');
         const resultRightKey = await MsgUtil.verifyDetached({
-          plaintext: Buf.fromUtfStr('some irrelevant text'),
+          plaintext: 'some irrelevant text',
           sigText,
           verificationPubs: [pubkey],
         });
@@ -1235,7 +1251,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       }
       {
         const resultWrongKey = await MsgUtil.verifyDetached({
-          plaintext: Buf.fromUtfStr('some irrelevant text'),
+          plaintext: 'some irrelevant text',
           sigText,
           verificationPubs: [testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788],
         });
@@ -1244,7 +1260,6 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       }
       t.pass();
     });
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     test('[unit][MsgUtil.getSortedKeys,matchingKeyids] must be able to find matching keys', async t => {
       const passphrase = 'some pass for testing';
@@ -1268,8 +1283,8 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       ];
       // we are testing a private method here because the outcome of this method is not directly testable from the
       //   public method that uses it. It only makes the public method faster, which is hard to test.
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - accessing private method
+
+      // @ts-expect-error - accessing private method
       const sortedKeys = await MsgUtil.getSortedKeys(kisWithPp, m);
       // point is that only one of the private keys should be used for decrypting, not two
       expect(sortedKeys.prvMatching.length).to.equal(1);
@@ -1281,11 +1296,11 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       expect(sortedKeys.prvForDecryptDecrypted[0].ki.longid).to.equal(OpenPGPKey.fingerprintToLongid(pub1.id));
       // also test MsgUtil.matchingKeyids
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-expect-error
       const matching1 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub1), m.getEncryptionKeyIDs());
       expect(matching1.length).to.equal(1);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // @ts-expect-error
       const matching2 = MsgUtil.matchingKeyids(KeyUtil.getPubkeyLongids(pub2), m.getEncryptionKeyIDs());
       expect(matching2.length).to.equal(0);
       t.pass();
@@ -1387,7 +1402,8 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // expect(decrypted.success).to.equal(true);
       // expect(decrypted.content!.toUtfStr()).to.equal(data.toUtfStr());
       expect(decrypted.success).to.equal(false);
-      expect((decrypted as DecryptError).error.type).to.equal('key_mismatch');
+      expect((decrypted as DecryptError).error.type).to.equal('other');
+      expect((decrypted as DecryptError).error.message).to.equal('No decryption key packets found');
       t.pass();
     });
 
@@ -1429,17 +1445,17 @@ ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
 
     test('[KeyUtil.diagnose] displays PK and SK usage', async t => {
       const usageRegex = /\[\-\] \[(.*)\]/;
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+
       const result1 = await KeyUtil.diagnose(await KeyUtil.parse(pubEncryptForPrimaryIsFine), '');
       {
         const pk0UsageStr = result1.get('Usage flags')!;
         const sk0UsageStr = result1.get('SK 0 > Usage flags')!;
-        const pk0Usage = pk0UsageStr.match(usageRegex)![1].split(', ');
+        const pk0Usage = usageRegex.exec(pk0UsageStr)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
         expect(pk0Usage).to.include('sign_data');
         expect(pk0Usage).to.include('encrypt_storage');
         expect(pk0Usage).to.include('encrypt_communication');
-        const sk0Usage = sk0UsageStr.match(usageRegex)![1].split(', ');
+        const sk0Usage = usageRegex.exec(sk0UsageStr)![1].split(', ');
         expect(sk0Usage).to.not.include('certify_keys');
         expect(sk0Usage).to.not.include('sign_data');
         expect(sk0Usage).to.include('encrypt_storage');
@@ -1449,18 +1465,17 @@ ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
       {
         const pk0UsageStr = result2.get('Usage flags')!;
         const sk0UsageStr = result2.get('SK 0 > Usage flags')!;
-        const pk0Usage = pk0UsageStr.match(usageRegex)![1].split(', ');
+        const pk0Usage = usageRegex.exec(pk0UsageStr)![1].split(', ');
         expect(pk0Usage).to.include('certify_keys');
         expect(pk0Usage).to.include('sign_data');
         expect(pk0Usage).to.not.include('encrypt_storage');
         expect(pk0Usage).to.not.include('encrypt_communication');
-        const sk0Usage = sk0UsageStr.match(usageRegex)![1].split(', ');
+        const sk0Usage = usageRegex.exec(sk0UsageStr)![1].split(', ');
         expect(sk0Usage).to.not.include('certify_keys');
         expect(sk0Usage).to.not.include('sign_data');
         expect(sk0Usage).to.include('encrypt_storage');
         expect(sk0Usage).to.include('encrypt_communication');
       }
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
       t.pass();
     });
 
@@ -2747,15 +2762,6 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       t.pass();
     });
 
-    test(`[unit][ExpirationCache] entry expires after configured interval`, async t => {
-      const cache = new ExpirationCache(2000); // 2 seconds
-      cache.set('test-key', 'test-value');
-      expect(cache.get('test-key')).to.equal('test-value');
-      await Util.sleep(2);
-      expect(cache.get('test-key')).to.be.an('undefined');
-      t.pass();
-    });
-
     test(`[unit][Str] splitAlphanumericExtended returns all parts extendec till the end of the original string`, async t => {
       expect(Str.splitAlphanumericExtended('part1.part2@part3.part4')).to.eql(['part1.part2@part3.part4', 'part2@part3.part4', 'part3.part4', 'part4']);
       t.pass();
@@ -2766,13 +2772,32 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       await KeyUtil.decrypt(prv, '1234');
       const plaintext = 'data to sign';
       const sigText = await MsgUtil.sign(prv, plaintext, true);
-      const verifyRes = await MsgUtil.verifyDetached({
-        plaintext: Buf.fromRawBytesStr(plaintext),
-        sigText: Buf.fromRawBytesStr(sigText),
-        verificationPubs: [],
-      });
+      const verifyRes = await MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs: [] });
       expect(verifyRes.signerLongids.length).to.equal(1);
       expect(verifyRes.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
+      t.pass();
+    });
+
+    test(`[unit][MsgUtil.sign(detached=false)] creates a cleartext signed message`, async t => {
+      const prv = await KeyUtil.parse(rsaPrimaryKeyAndSubkeyBothHavePrivateKey);
+      await KeyUtil.decrypt(prv, '1234');
+      const plaintext = 'data to sign';
+      const signedData = await MsgUtil.sign(prv, plaintext, false);
+      expect(signedData).to.not.include(PgpArmor.headers('encryptedMsg').begin);
+      expect(signedData).to.include(PgpArmor.headers('signedMsg').begin);
+      expect(signedData).to.include(plaintext);
+      const decrypted = await MsgUtil.decryptMessage({
+        kisWithPp: [],
+        encryptedData: signedData,
+        verificationPubs: [KeyUtil.armor(await KeyUtil.asPublicKey(prv))],
+      });
+      expect(decrypted.success).to.be.true;
+      if (decrypted.success) {
+        const verifyRes = decrypted.signature;
+        expect(verifyRes?.match).to.be.true;
+        expect(verifyRes?.signerLongids.length).to.equal(1);
+        expect(verifyRes?.signerLongids[0]).to.equal(KeyUtil.getPrimaryLongid(prv));
+      }
       t.pass();
     });
   }

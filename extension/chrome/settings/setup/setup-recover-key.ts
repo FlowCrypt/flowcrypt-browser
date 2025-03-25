@@ -31,7 +31,7 @@ export class SetupRecoverKeyModule {
       }
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of this.view.fetchedKeyBackups) {
-        if ((await KeyUtil.checkPassPhrase(fetchedKey.private, passphrase)) === true) {
+        if (await KeyUtil.checkPassPhrase(fetchedKey.private, passphrase)) {
           if (!this.view.mathingPassphrases.includes(passphrase)) {
             this.view.mathingPassphrases.push(passphrase);
           }
@@ -63,9 +63,10 @@ export class SetupRecoverKeyModule {
         submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
+        passphrase_ensure_single_copy: true,
         recovered: true,
       };
-      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options);
+      await saveKeysAndPassPhrase(this.view.acctEmail, newlyMatchingKeys, options, [], true);
       const { setup_done } = await AcctStore.get(this.view.acctEmail, ['setup_done']);
       /* eslint-enable @typescript-eslint/naming-convention */
       if (!setup_done) {
@@ -135,7 +136,7 @@ export class SetupRecoverKeyModule {
       const backups = await this.view.gmail.fetchKeyBackups();
       this.view.fetchedKeyBackups = backups.keyinfos.backups;
       this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
-    } catch (e) {
+    } catch {
       window.location.href = Url.create('modules/add_key.htm', {
         acctEmail: this.view.acctEmail,
         parentTabId: this.view.parentTabId,

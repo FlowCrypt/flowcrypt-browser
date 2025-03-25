@@ -2,15 +2,14 @@
 
 'use strict';
 
-import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, rmSync } from 'fs';
 
 import { getFilesInDir } from './utils/tooling-utils';
+import { TSConfig } from './resolve-modules';
 
 const OUT_DIR = `./build/generic-extension-wip/js/content_scripts`;
-let {
-  compilerOptions: { outDir: sourceDir },
-} = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
-sourceDir = `./build/${sourceDir}`;
+const { compilerOptions } = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString()) as TSConfig;
+const sourceDir = `./build/${compilerOptions.outDir}`;
 
 const processedSrc = (srcFilePath: string) => {
   let file = readFileSync(srcFilePath).toString();
@@ -28,6 +27,9 @@ const buildContentScript = (srcFilePaths: string[], outFileName: string) => {
   writeFileSync(`${OUT_DIR}/${outFileName}`, contentScriptBundle);
 };
 
+if (existsSync(OUT_DIR)) {
+  rmSync(OUT_DIR, { recursive: true });
+}
 mkdirSync(OUT_DIR);
 
 // webmail
@@ -42,6 +44,9 @@ buildContentScript(
     getFilesInDir(`${sourceDir}/js/common/api/shared`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/key-server`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/account-servers`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication/generic`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication/google`, /\.js$/, false),
+    getFilesInDir(`${sourceDir}/js/common/api/authentication`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/email-provider`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api/email-provider/gmail`, /\.js$/, false),
     getFilesInDir(`${sourceDir}/js/common/api`, /\.js$/, false),

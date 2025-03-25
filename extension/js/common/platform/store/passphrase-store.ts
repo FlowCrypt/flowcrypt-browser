@@ -3,7 +3,7 @@
 import { StorageType, AbstractStore } from './abstract-store.js';
 import { AccountIndex, AcctStore, AcctStoreDict } from './acct-store.js';
 import { PromiseCancellation, Dict } from '../../core/common.js';
-import { Ui } from '../../browser/ui.js';
+import { Time } from '../../browser/time.js';
 import { InMemoryStore } from './in-memory-store.js';
 import { ClientConfiguration } from '../../client-configuration.js';
 
@@ -12,47 +12,47 @@ import { ClientConfiguration } from '../../client-configuration.js';
  */
 export class PassphraseStore extends AbstractStore {
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static get = async (acctEmail: string, keyInfo: { longid: string }, ignoreSession = false): Promise<string | undefined> => {
+  public static async get(acctEmail: string, keyInfo: { longid: string }, ignoreSession = false): Promise<string | undefined> {
     return (await PassphraseStore.getMany(acctEmail, [keyInfo], ignoreSession))[0]?.value;
-  };
+  }
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static getMany = async (
+  public static async getMany(
     acctEmail: string,
     keyInfos: { longid: string }[],
     ignoreSession = false
-  ): Promise<({ value: string; source: StorageType } | undefined)[]> => {
+  ): Promise<({ value: string; source: StorageType } | undefined)[]> {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     return await PassphraseStore.getByIndexes(acctEmail, storageIndexes, ignoreSession);
-  };
+  }
 
-  public static removeMany = async (acctEmail: string, keyInfos: { longid: string }[]) => {
+  public static async removeMany(acctEmail: string, keyInfos: { longid: string }[]) {
     const storageIndexes = keyInfos.map(keyInfo => PassphraseStore.getIndex(keyInfo.longid));
     await Promise.all([
       AcctStore.remove(acctEmail, storageIndexes), // remove from local storage
       ...storageIndexes.map(storageIndex => InMemoryStore.set(acctEmail, storageIndex, undefined)), // remove from session
     ]);
-  };
+  }
 
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here
-  public static set = async (storageType: StorageType, acctEmail: string, keyInfo: { longid: string }, passphrase: string | undefined): Promise<void> => {
+  public static async set(storageType: StorageType, acctEmail: string, keyInfo: { longid: string }, passphrase: string | undefined): Promise<void> {
     const storageIndex = PassphraseStore.getIndex(keyInfo.longid);
     await PassphraseStore.setByIndex(storageType, acctEmail, storageIndex, passphrase);
-  };
+  }
 
-  public static waitUntilPassphraseChanged = async (
+  public static async waitUntilPassphraseChanged(
     acctEmail: string,
     missingOrWrongPpKeyLongids: string[],
     interval = 1000,
     cancellation: PromiseCancellation = { cancel: false }
-  ): Promise<boolean> => {
+  ): Promise<boolean> {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => PassphraseStore.get(acctEmail, { longid })));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
     }
     while (!cancellation.cancel) {
-      await Ui.time.sleep(interval);
+      await Time.sleep(interval);
       const longidsMissingPp = Object.keys(missingOrWrongPassprases);
       const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => PassphraseStore.get(acctEmail, { longid })));
       for (let i = 0; i < longidsMissingPp.length; i++) {
@@ -64,17 +64,17 @@ export class PassphraseStore extends AbstractStore {
       }
     }
     return false;
-  };
+  }
 
-  private static getIndex = (longid: string): AccountIndex => {
+  private static getIndex(longid: string): AccountIndex {
     return `passphrase_${longid}` as unknown as AccountIndex;
-  };
+  }
 
-  private static getByIndexes = async (
+  private static async getByIndexes(
     acctEmail: string,
     storageIndexes: AccountIndex[],
     ignoreSession = false
-  ): Promise<({ value: string; source: StorageType } | undefined)[]> => {
+  ): Promise<({ value: string; source: StorageType } | undefined)[]> {
     const storage = await AcctStore.get(acctEmail, storageIndexes);
     const results = await Promise.all(
       storageIndexes.map(async storageIndex => {
@@ -93,14 +93,9 @@ export class PassphraseStore extends AbstractStore {
       })
     );
     return results;
-  };
+  }
 
-  private static setByIndex = async (
-    storageType: StorageType,
-    acctEmail: string,
-    storageIndex: AccountIndex,
-    passphrase: string | undefined
-  ): Promise<void> => {
+  private static async setByIndex(storageType: StorageType, acctEmail: string, storageIndex: AccountIndex, passphrase: string | undefined): Promise<void> {
     const clientConfiguration = await ClientConfiguration.newInstance(acctEmail);
     if (storageType === 'session') {
       return await InMemoryStore.set(acctEmail, storageIndex, passphrase, Date.now() + clientConfiguration.getInMemoryPassPhraseSessionExpirationMs());
@@ -113,5 +108,5 @@ export class PassphraseStore extends AbstractStore {
         await AcctStore.set(acctEmail, toSave);
       }
     }
-  };
+  }
 }

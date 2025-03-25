@@ -32,7 +32,7 @@ export class BackupUi {
   public manualModule!: BackupUiManualModule;
   public automaticModule!: BackupUiAutomaticModule;
   public emailProvider: EmailProvider = 'gmail';
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public clientConfiguration!: ClientConfiguration;
   public fesUrl?: string;
   public identityOfKeysToManuallyBackup: KeyIdentity[] = [];
@@ -49,7 +49,7 @@ export class BackupUi {
     this.onBackedUpFinished = options.onBackedUpFinished;
     const htmlUrl = '/chrome/elements/shared/backup.template.htm';
     const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
-    Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0), sanitized); // xss-sanitized
+    Xss.setElementContentDANGEROUSLY($('#backup-template-container').get(0) as Element, sanitized); // xss-sanitized
     this.gmail = new Gmail(this.acctEmail);
     this.statusModule = new BackupUiStatusModule(this);
     this.manualModule = new BackupUiManualModule(this);
@@ -58,7 +58,7 @@ export class BackupUi {
     this.setBackupHandlers();
   };
 
-  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
+  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
   };
 
@@ -71,15 +71,15 @@ export class BackupUi {
   };
 
   public renderBackupView = async () => {
-    this.tabId = await BrowserMsg.requiredTabId();
     this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
     const storage = await AcctStore.get(this.acctEmail, ['email_provider', 'fesUrl']);
     this.fesUrl = storage.fesUrl;
     this.emailProvider = storage.email_provider || 'gmail';
-    if (!this.clientConfiguration.canBackupKeys()) {
+    if (!this.clientConfiguration.canBackupKeys() && !this.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
       Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
       return;
     }
+    $('#add_key_option_container').hide();
     if (this.action === 'setup_automatic') {
       $('#button-go-back').css('display', 'none');
       await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();
@@ -153,8 +153,8 @@ export class BackupUi {
           <label>
             <p class="m-0">
             <input class="input_prvkey_backup_checkbox" type="checkbox" data-type="${ki.family}" data-id="${ki.id}" ${
-        ki.family === 'openpgp' ? 'checked' : 'disabled'
-      } />
+              ki.family === 'openpgp' ? 'checked' : 'disabled'
+            } />
             ${email}
             </p>
             <p class="m-0 prv_fingerprint"><span>${ki.family} - ${Str.spaced(ki.fingerprints[0])}</span></p>

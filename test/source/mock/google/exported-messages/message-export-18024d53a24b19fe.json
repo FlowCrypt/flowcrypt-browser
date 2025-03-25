@@ -1,0 +1,106 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "18024d53a24b19fe",
+    "threadId": "18024d53a24b19fe",
+    "labelIds": ["INBOX", "Label_35"],
+    "snippet": "テストですテスト",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/signed",
+      "filename": "",
+      "headers": [
+        {
+          "name": "Date",
+          "value": "Fri, 26 Mar 2021 22:08:51 +0900 (JST)"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Subject",
+          "value": "テストです"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "Mime-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "Multipart/Signed; protocol=\"application/pgp-signature\"; micalg=pgp-sha256; boundary=\"--Security_Multipart(Fri_Mar_26_22_08_51_2021_147)--\""
+        },
+        {
+          "name": "Content-Transfer-Encoding",
+          "value": "7bit"
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "text/plain",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "Text/Plain; charset=iso-2022-jp"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "7bit"
+            }
+          ],
+          "body": {
+            "size": 30,
+            "data": "44OG44K544OI44Gn44GZCuODhuOCueODiAo="
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "application/pgp-signature",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/pgp-signature"
+            },
+            {
+              "name": "Content-Transfer-Encoding",
+              "value": "7bit"
+            }
+          ],
+          "body": {
+            "attachmentId": "18024d53a24b19fe-signature",
+            "size": 256
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 1036,
+    "historyId": "1350094",
+    "internalDate": "1616764131000"
+  },
+  "attachments": {
+    "18024d53a24b19fe-signature": {
+      "data": "LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KCnFjZVUvaW5rd1p5YkFRQzNuZmpNOUEvaXRYMXE3d3p6YWpMbW5VZ0NDeXBxZWRheGdNT2J5S3ZVQlE9PQo9MGtORAotLS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K",
+      "size": 256
+    }
+  },
+  "raw": {
+    "id": "18024d53a24b19fe",
+    "threadId": "18024d53a24b19fe",
+    "labelIds": ["INBOX", "Label_35"],
+    "snippet": "テストですテスト",
+    "sizeEstimate": 1036,
+    "raw": "RGF0ZTogRnJpLCAyNiBNYXIgMjAyMSAyMjowODo1MSArMDkwMCAoSlNUKQpNZXNzYWdlLUlkOiA8MjAyMTAzMjYuMjIwODUxLjE0MjA4NDkyMTM2MTg0MjU5NkBjZW5zb3JlZD4KVG86IHJlY2lwaWVudEBlbWFpbC5jb20KU3ViamVjdDogPT9pc28tMjAyMi1qcD9CP0d5UkNKVVlsT1NWSUpFY2tPUnNvUWc9PT89CkZyb206IFRvbW95dWtpIE11cmFrYW1pIDx0b21veXVraUBwb2JveC5jb20+Ck1pbWUtVmVyc2lvbjogMS4wCkNvbnRlbnQtVHlwZTogTXVsdGlwYXJ0L1NpZ25lZDsgcHJvdG9jb2w9ImFwcGxpY2F0aW9uL3BncC1zaWduYXR1cmUiOwogbWljYWxnPXBncC1zaGEyNTY7CiBib3VuZGFyeT0iLS1TZWN1cml0eV9NdWx0aXBhcnQoRnJpX01hcl8yNl8yMl8wOF81MV8yMDIxXzE0NyktLSIKQ29udGVudC1UcmFuc2Zlci1FbmNvZGluZzogN2JpdAoKLS0tLVNlY3VyaXR5X011bHRpcGFydChGcmlfTWFyXzI2XzIyXzA4XzUxXzIwMjFfMTQ3KS0tCkNvbnRlbnQtVHlwZTogVGV4dC9QbGFpbjsgY2hhcnNldD1pc28tMjAyMi1qcApDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiA3Yml0CgobJEIlRiU5JUgkRyQ5GyhCChskQiVGJTklSBsoQgoKLS0tLVNlY3VyaXR5X011bHRpcGFydChGcmlfTWFyXzI2XzIyXzA4XzUxXzIwMjFfMTQ3KS0tCkNvbnRlbnQtVHlwZTogYXBwbGljYXRpb24vcGdwLXNpZ25hdHVyZQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiA3Yml0CgotLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQoKcWNlVS9pbmt3WnliQVFDM25mak05QS9pdFgxcTd3enphakxtblVnQ0N5cHFlZGF4Z01PYnlLdlVCUT09Cj0wa05ECi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQoKLS0tLVNlY3VyaXR5X011bHRpcGFydChGcmlfTWFyXzI2XzIyXzA4XzUxXzIwMjFfMTQ3KS0tLS0K",
+    "historyId": "1350094",
+    "internalDate": "1616764131000"
+  }
+}

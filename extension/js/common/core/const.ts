@@ -11,6 +11,8 @@ export const GOOGLE_OAUTH_SCREEN_HOST = '[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_
 export const BACKEND_API_HOST = '[BUILD_REPLACEABLE_BACKEND_API_HOST]';
 export const ATTESTER_API_HOST = '[BUILD_REPLACEABLE_ATTESTER_API_HOST]';
 export const SHARED_TENANT_API_HOST = '[BUILD_REPLACEABLE_SHARED_TENANT_API_HOST]';
+export const KEYS_OPENPGP_ORG_API_HOST = '[BUILD_REPLACEABLE_KEYS_OPENPGP_ORG_API_HOST]';
+export const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 export const WKD_API_HOST = ''; // empty means choose host per recipient domain
 
 /**
@@ -37,5 +39,6 @@ export const gmailBackupSearchQuery = (acctEmail: string) => {
 
 export class InMemoryStoreKeys {
   public static readonly ID_TOKEN = 'idToken';
+  public static readonly CUSTOM_IDP_ID_TOKEN = 'customIdpIdToken';
   public static readonly GOOGLE_TOKEN_ACCESS = 'google_token_access';
 }

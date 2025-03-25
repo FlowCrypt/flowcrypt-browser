@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { BrowserMsg } from '../browser/browser-msg.js';
 import { Catch } from '../platform/catch.js';
 import { KeyImportUi } from './key-import-ui.js';
 import { Ui } from '../browser/ui.js';
+import { Api } from '../api/shared/api.js';
 
 export class FetchKeyUI {
-  public handleOnPaste = (elem: JQuery<HTMLElement>) => {
+  public handleOnPaste = (elem: JQuery) => {
     elem.on(
       'paste',
       Ui.event.handle(async (elem: HTMLInputElement, event) => {
@@ -29,13 +29,10 @@ export class FetchKeyUI {
 
   private fetchPubkey = async (url: string) => {
     try {
-      const result = (await BrowserMsg.send.bg.await.ajax({
-        req: { url, type: 'GET', dataType: 'text', async: true },
-        stack: Catch.stackTrace(),
-      })) as string;
+      const result: string = await Api.ajax({ url, method: 'GET', stack: Catch.stackTrace() }, 'text');
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       return await keyImportUi.checkPub(result);
-    } catch (e) {
+    } catch {
       return;
     }
   };

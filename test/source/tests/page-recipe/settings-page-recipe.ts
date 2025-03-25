@@ -24,11 +24,11 @@ export class SettingsPageRecipe extends PageRecipe {
 
   public static toggleScreen = async (settingsPage: ControllablePage, to: 'basic' | 'additional') => {
     await SettingsPageRecipe.ready(settingsPage);
-    await Util.sleep(0.5);
+    await Util.sleep(1);
     await settingsPage.waitAndClick(to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
-    await Util.sleep(0.5);
+    await Util.sleep(1);
     await settingsPage.waitAll(to === 'basic' ? '@action-toggle-screen-additional' : '@action-toggle-screen-basic'); // wait for opposite button to show up
-    await Util.sleep(0.5);
+    await Util.sleep(1);
   };
 
   public static closeDialog = async (settingsPage: ControllablePage) => {
@@ -89,7 +89,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(1);
     const k = Config.key(expectedKeyName);
     await myKeyFrame.waitAll('@content-fingerprint');
-    if (!k.longid) {
+    if (!k?.longid) {
       throw new Error(`Missing key longid for tests: ${expectedKeyName}`);
     }
     expect(await myKeyFrame.read('@content-fingerprint')).to.contain(Str.spaced(k.longid));
@@ -167,5 +167,17 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
     await settingsPage.waitForContent('@container-settings-keys-list', fp); // confirm key successfully loaded
     await settingsPage.close();
+  };
+
+  public static checkContactKey = async (
+    contactsFrame: ControllableFrame,
+    keyType: 'OPENPGP' | 'X509',
+    keyStatus: 'ACTIVE' | 'SIGN ONLY' | 'EXPIRED' | 'UNUSABLE' | 'REVOKED',
+    fingerprint: string
+  ) => {
+    const keyId = fingerprint.split(' ').join('');
+    await contactsFrame.waitForContent('@page-contacts', fingerprint);
+    await contactsFrame.waitForContent(`@container-contact-key-type-${keyId}`, keyType);
+    await contactsFrame.waitForContent(`@container-key-status-${keyId}`, keyStatus);
   };
 }

@@ -39,6 +39,17 @@ export class OauthPageRecipe extends PageRecipe {
     }
   };
 
+  public static customIdp = async (t: AvaContext, oauthPage: ControllablePage): Promise<void> => {
+    const mockOauthUrl = oauthPage.target.url();
+    try {
+      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+    } catch (e) {
+      if (!e.message.includes('Navigating frame was detached')) {
+        throw e;
+      }
+    }
+  };
+
   public static google = async (
     t: AvaContext,
     oauthPage: ControllablePage,
@@ -71,34 +82,35 @@ export class OauthPageRecipe extends PageRecipe {
       auth0password: '#password',
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
+      googleContinueAuthBtn: '.VfPpkd-LgbsSe',
     };
     try {
-      const alreadyLoggedSelector = '.w6VTHd, .wLBAL';
+      const alreadyLoggedSelector = '.w6VTHd, .wLBAL, .yAlK0b';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
       await oauthPage.waitAny(
-        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}`,
+        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}, ${selectors.googleContinueAuthBtn}`,
         { timeout: 45 }
       );
-      // eslint-disable-next-line no-null/no-null
-      if ((await oauthPage.target.$(selectors.googleEmailInput)) !== null) {
+
+      if (await oauthPage.target.$(selectors.googleEmailInput)) {
         // 2017-style login
         await oauthPage.waitAll(selectors.googleEmailInput, { timeout: OauthPageRecipe.longTimeout });
         await oauthPage.waitAndType(selectors.googleEmailInput, acctEmail, { delay: 2 });
         await oauthPage.waitAll(selectors.googleEmailConfirmBtn);
         await Util.sleep(2);
         await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.googleEmailConfirmBtn));
-        // eslint-disable-next-line no-null/no-null
-      } else if ((await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`)) !== null) {
+      } else if (await oauthPage.target.$(`.wLBAL[data-email="${acctEmail}"]`)) {
         // already logged in - just choose an account
         await oauthPage.waitAndClick(`.wLBAL[data-email="${acctEmail}"]`, { delay: 1 });
-        // eslint-disable-next-line no-null/no-null
-      } else if ((await oauthPage.target.$(alreadyLoggedSelector)) !== null) {
+      } else if (await oauthPage.target.$(`.yAlK0b[data-email="${acctEmail}"]`)) {
+        // already logged in - just choose an account (google ui update 2024)
+        await oauthPage.waitAndClick(`.yAlK0b[data-email="${acctEmail}"]`, { delay: 1 });
+      } else if (await oauthPage.target.$(alreadyLoggedSelector)) {
         // select from accounts where already logged in
         await oauthPage.waitAndClick(alreadyLoggedChooseOtherAccountSelector, { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
-        // eslint-disable-next-line no-null/no-null
-      } else if ((await oauthPage.target.$('.wLBAL[data-email="dummy"]')) !== null) {
+      } else if (await oauthPage.target.$('.wLBAL[data-email="dummy"]')) {
         // let any e-mail pass
         const href = (await oauthPage.attr('.wLBAL', 'href')) + acctEmail;
         await oauthPage.goto(href);
@@ -111,16 +123,30 @@ export class OauthPageRecipe extends PageRecipe {
         }
         throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
       }
+      if ((await oauthPage.isElementPresent('.F9NWFb')) || (await oauthPage.isElementPresent('.Svhjgc'))) {
+        // additional confirmation screen
+        const actionButtons = await oauthPage.target.$$(selectors.googleContinueAuthBtn);
+        await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
+      }
       await oauthPage.waitAny([selectors.googleApproveBtn, selectors.auth0username]);
       if (await oauthPage.isElementPresent(selectors.auth0username)) {
         await oauthPage.waitAndType(selectors.auth0username, acctEmail);
         if (acctPassword) {
           await oauthPage.waitAndType(selectors.auth0password, acctPassword);
         }
-        await oauthPage.waitForNavigationIfAny(() => oauthPage.waitAndClick(selectors.auth0loginBtn));
+        const loginButtons = await oauthPage.target.$$(selectors.auth0loginBtn);
+        await oauthPage.waitForNavigationIfAny(() => loginButtons[loginButtons.length - 1].click());
         await oauthPage.waitAndClick(alreadyLoggedSelector, { delay: 1 });
       }
       await Util.sleep(1);
+      const button = await oauthPage.waitAny('button');
+      const formAction = await button.evaluate(button => (button as HTMLButtonElement).formAction);
+      if (formAction?.includes('confirmaccount?')) {
+        // click on "Continue" on "Verify it's you" screen
+        await button.click();
+        await Util.sleep(2);
+        return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // it should handle the list of accounts
+      }
       await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
@@ -133,7 +159,11 @@ export class OauthPageRecipe extends PageRecipe {
       }
     } catch (e) {
       const eStr = String(e);
-      if (!eStr.includes('Execution context was destroyed') && !eStr.includes('Cannot find context with specified id')) {
+      if (
+        !eStr.includes('Execution context was destroyed') &&
+        !eStr.includes('Cannot find context with specified id') &&
+        !eStr.includes('Argument should belong to the same JavaScript world as target object')
+      ) {
         throw e; // not a known retriable error
       }
       // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);

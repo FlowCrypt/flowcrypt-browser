@@ -17,10 +17,11 @@ import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { Debug } from '../../js/common/platform/debug.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Url } from '../../js/common/core/common.js';
-import * as forge from 'node-forge';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { PgpHash } from '../../js/common/core/crypto/pgp/pgp-hash.js';
 import { PgpArmor } from '../../js/common/core/crypto/pgp/pgp-armor.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { ExpirationCache } from '../../js/common/core/expiration-cache.js';
 
 /**
  * importing all libs that are tested in ci tests
@@ -31,6 +32,7 @@ const libs: unknown[] = [
   Attachment,
   AttachmentUI,
   Buf,
+  ExpirationCache,
   KeyUtil,
   Mime,
   Wkd,
@@ -45,11 +47,14 @@ const libs: unknown[] = [
   Gmail,
   PgpHash,
   PgpArmor,
+  Xss,
 ];
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them
 for (const lib of libs) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   (window as any)[(lib as any).name] = lib;
 }
-(window as any).forge = forge;
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+(window as any).MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 /* eslint-enable @typescript-eslint/no-explicit-any */

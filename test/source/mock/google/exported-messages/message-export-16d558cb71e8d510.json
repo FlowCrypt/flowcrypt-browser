@@ -1,0 +1,118 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "16d558cb71e8d510",
+    "threadId": "16d558cb71e8d510",
+    "labelIds": [
+      "IMPORTANT",
+      "STARRED",
+      "Label_3",
+      "CATEGORY_PERSONAL"
+    ],
+    "snippet": "",
+    "payload": {
+      "partId": "",
+      "mimeType": "multipart/encrypted",
+      "filename": "",
+      "headers": [
+        {
+          "name": "X-Gm-Message-State",
+          "value": "APjAAAUb15chLaGd9+iPy/5kyuzk0uvDvHUSiCnfo//1m9xKY+PIuvRU AGrPyRjvHl46DBkwQtZn5vssrzCELOc="
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "Date",
+          "value": "Sat, 21 Sep 2019 13:39:02 -0700"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Subject",
+          "value": "encrypted message sample from EverDesk"
+        },
+        {
+          "name": "References",
+          "value": "EDSK201909161405190000048B"
+        },
+        {
+          "name": "X-Mailer",
+          "value": "EverDesk 5.8.6"
+        },
+        {
+          "name": "Mime-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Content-Type",
+          "value": "multipart/encrypted; boundary=\"=ENCR201909161405190000048D\"; protocol=\"application/pgp-encrypted\""
+        }
+      ],
+      "body": {
+        "size": 0
+      },
+      "parts": [
+        {
+          "partId": "0",
+          "mimeType": "application/pgp-encrypted",
+          "filename": "",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/pgp-encrypted"
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ-LpRu6X4T3_0sc6w75k2ue7zu-GmlYGSw3NN4J3mw-t2iBu6PbCcofWxMypG-E1uzZJZDPBMGL05aUnRPsxstoTxctnTo5iebpaVO1aOJDVmlyoZsATpNHwKT7rl9eJiXmiLqr1gtnXIf1hoBdP-C0DDztVcKW3cpzDNH_RIn7KnMigJHIk9n_saMf-JbOkvx_UkzLdmJpgUJJ70b4QZ_Cu8Rs6-DYxbYJz6a1Xm6syxwpLafdUXZbKdoUnWC52LsM2u7nmMWkoEQCiphXghW3opq359hsGXW6K9YU0SA60YDyNrqEkW2n80GmGZwH9sxhfA-x0h0pWNwZu2lvAlFKg5oTRzmt1CDN-HOIYetXDmbtahVgsA-EQFA",
+            "size": 12
+          }
+        },
+        {
+          "partId": "1",
+          "mimeType": "application/octet-stream",
+          "filename": "encrypted.asc",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream; name=\"encrypted.asc\""
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "inline; filename=\"encrypted.asc\""
+            }
+          ],
+          "body": {
+            "attachmentId": "ANGjdJ-lyVfCmgIskxdLKmIegNuvv14Gk66bGGTw4Pwdphd62Iw_AV59LJPL6S2zv7Qc8za1fhtJo1WtNJncnqpO8rpe9QpS_LxMXZBJ5gIxLkPf8XvzBtB7P_w9qCrxKX8kYZWGWm4SRKo_N2OKk6LLCvrL7HqU07DZcivykaZYNzgt9PKb0aKb2wzoDV7ZgE6BH7HLwDgfFBq0VoFzKYoI33W0amaqC1_MZaMYd1x1Q0Onpsq9YHnkCHXSUPFni1Cv07u9oH4vhKRYgaolbZ9JxKmVNu7hrHD8z5Xt5TFue7r6yKx49VhoVB3R6uMM7nisHNTx9qFD9YK0qqX184VpQSsfJIU-SskEdkE3bdacefa9rqZaRLxjut4dyYw",
+            "size": 1777
+          }
+        }
+      ]
+    },
+    "sizeEstimate": 7157,
+    "historyId": "1406352",
+    "internalDate": "1569098342000"
+  },
+  "attachments": {
+    "ANGjdJ-LpRu6X4T3_0sc6w75k2ue7zu-GmlYGSw3NN4J3mw-t2iBu6PbCcofWxMypG-E1uzZJZDPBMGL05aUnRPsxstoTxctnTo5iebpaVO1aOJDVmlyoZsATpNHwKT7rl9eJiXmiLqr1gtnXIf1hoBdP-C0DDztVcKW3cpzDNH_RIn7KnMigJHIk9n_saMf-JbOkvx_UkzLdmJpgUJJ70b4QZ_Cu8Rs6-DYxbYJz6a1Xm6syxwpLafdUXZbKdoUnWC52LsM2u7nmMWkoEQCiphXghW3opq359hsGXW6K9YU0SA60YDyNrqEkW2n80GmGZwH9sxhfA-x0h0pWNwZu2lvAlFKg5oTRzmt1CDN-HOIYetXDmbtahVgsA-EQFA": {
+      "data": "VmVyc2lvbjogMQ0K",
+      "size": 12
+    },
+    "ANGjdJ-lyVfCmgIskxdLKmIegNuvv14Gk66bGGTw4Pwdphd62Iw_AV59LJPL6S2zv7Qc8za1fhtJo1WtNJncnqpO8rpe9QpS_LxMXZBJ5gIxLkPf8XvzBtB7P_w9qCrxKX8kYZWGWm4SRKo_N2OKk6LLCvrL7HqU07DZcivykaZYNzgt9PKb0aKb2wzoDV7ZgE6BH7HLwDgfFBq0VoFzKYoI33W0amaqC1_MZaMYd1x1Q0Onpsq9YHnkCHXSUPFni1Cv07u9oH4vhKRYgaolbZ9JxKmVNu7hrHD8z5Xt5TFue7r6yKx49VhoVB3R6uMM7nisHNTx9qFD9YK0qqX184VpQSsfJIU-SskEdkE3bdacefa9rqZaRLxjut4dyYw": {
+      "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNCndjRk1BNjJzSjV5VkNUSUhBUS84Q2tjV2VMbUN5OGx2QU5sbDBLYkE5eW1UaE5PbVpqYmxCTlJadmdUOERxYUwNCmhhR1h6SGFNR0h2aTBkNjZQMzhSWGZEYytIOWwvakd0ZFMxemdpTUpNcENVRnREYzNPUGdPdUE5M3NSZXFCc3ENCjdmdjVhK0xTZGZGWlVQZ1VrWE0ydXIwZUErbmlORStHM21iRGNyL2N1SUxZSTh4VHM2eGJIUklLVmwyRzA5ZVMNCkJaTUV5cUgzZHVJQWkwTTQycjRML3V2QUJUY0V5Vkt2WS9RSEZtRlRqMXRTenFTRDVQRHYrbk4waWhOUjE2UjkNCk41NlBNY1phenZUZENoaFh1QTNNTmNpS29KdGJaNzg1Yy9kd1JMOGJ6OHJyN1dqNmlGKzNRbTZrZ2JrZWYvbzQNCjZEOHU4RzFlRGZTV3V3dFhWcUlPdW9rZC9tWWdOSVZad3Qxc0p1a3VHdjNlTDc2YjdNaGszbENFakU4dVNPZjkNCk45bWJMRXJlbDVWVVR6TlRWcEEzMzZhQm5NS2pFc0pVSU9nMHNVMHE4WEFLZVNqY3JJdUJyc2FLcGpxN1dEWHANCkZBMmVRa3BIcHdabmxXalZNT1lSUkVkamkzRy90MzJBVFRjaE5YbDl6aFFzaW9xUWJmVXRXa2oyV3ZsdEU1b3oNCk84NWRkVlVuaXFwUVBkUWFvalo1K2RQWjhTQkMvNGVVcDN6NEo0L2IwZldTVFBsL3RMYmxGeTFISnMwbEtHNVoNCjhBYW9DR0Y1VExQb3lnWGpCazBJbWlrZUlHbFlJU2hWT3FHMzZSSmxNaDR4T1FDbVkwZzluejlMZENFSEordUMNCmtXaC9vUkVCaFNNbnFsbW4xaWMvREcxNmgxN0UvdGlPdU94c3FUZklHbGtMU1NoWERvaVRqeGdtNTI3RkE1SEINCndVd0RTMW92L09ZdGxRRUJELzlmNmp3SnhZamRCbzJwVXk1YytnQTQ3QnRXL3p6MTJNS2hSQUhkKy9iVmJUdjYNCjVKaGxCdzFKb3cwY2tqY2JuRFJxQlA5RUwrRXJBbGMyVXpHYSs0MkFocmMySGxEdnlNSkNjeEx0MEZhMm5oWEcNCllXR0hzUWJIeGdiZVBXSG96d3VuMlJYYUF2dkJvbmhCYVl0Y24wUVBORXRBckI5dXlPNFlxWFhvSDEvbDAvZ2gNCklBenVSK0xOeW13ZE9CWHB5aVZGTUpiNnh5UUY0MGFUMzFrSThHZStVa0Jia1dEcGhjRVBvZ2Q1OWtyQkVwd3oNCmZCZlBkbEdvVHJTd2ZiS2JzaE0wa2lFYlBoK0VTTVZ2eXBnK1BabzFRcDBlWFl0N2dqbFlZcU56UUhXb2JUVHINCklRalkzVDh2bWw3WGxjUHp4TEZxdlFsaXVJWnlSTGN6dm0rd0RoVGorSi9kWEFLMFNIRS85WGRxS1kwMTRqNXQNCldqVWZ5OWlENnNlWjg1bnRBV2R4SG1Pa3l0QU5lM1FmeVZ4Yk8zTjMxbkZlNHVxSm1XMFJhRUR4MGVtM2s5WU0NCllMZTVPd0svNDlJcFVqNWdWMVIzd25OMHVOT1pOT2Roa3lWSnluTERKWFY1RExvV08zeUdNUE0zaU0rWkd1amsNCjRRcnBYalZGc2NmVEh5LzUrYk5GR0huYXBsanpsaTljYktxdDNqNjEwd0xRYTFwSGo2SzN4Sk9BTndyMFZkankNCkJGR3dwUkVRRFBjZVNOUkVGQSs3RmRQaDdXUWU3UDVOYmZZdUJYR1paZUl2Ulo2UjBFSGk4QWd4bjE0MjZxWUoNCkVKTnIrcU8ycjQ5RWhmQ2R3Yml6UkxoQnNxTUpRSWlya2Y1c0k0dzVSSWdwSTlnZ2t2L2dRaXF4dnFGY0RkSzcNCkFWSytlWmlCMmJ2WTNTVmFINDloV2FDRTFPWjI4Z0RZUGxjZTZBUnh6bnExZXFRaHZnVXlPZmZqcERqUGdTa0YNClFoUUNqNi9sZTlsdW5Qa05LRVlVaEZyMmVCQmFiQmVqUkFzZExUT3NsRzN5bHRJQ3BCakhHcU9CMkNhRGxIZ0wNCmE1ZW9lcUh1c0JBeDlmbVl0ZDBaaTQ3NGNHYXk4UmpHdHEvRSs4d0RUc3VwbllHYnNIRjVwRFhDN2VyVzlneVoNCk16SUU4d0FaK0l4YmhHN0pYVnRIYVBXQWJ2bDFhYzdZQlY3cnBCWVJLdXZadkRROUJML3RZeTU5SEE9PQ0KPXQxQ1kNCi0tLS0tRU5EIFBHUCBNRVNTQUdFLS0tLS0NCg",
+      "size": 1777
+    }
+  },
+  "raw": {
+    "id": "16d558cb71e8d510",
+    "threadId": "16d558cb71e8d510",
+    "labelIds": ["IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL"],
+    "snippet": "",
+    "sizeEstimate": 7157,
+    "historyId": "1406352",
+    "internalDate": "1569098342000"
+  }
+}

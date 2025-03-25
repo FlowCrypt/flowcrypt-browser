@@ -21,7 +21,7 @@ import { EmailParts, Str } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
-  public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509' | undefined): Promise<KeyInfoWithIdentity[]> => {
+  public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509'): Promise<KeyInfoWithIdentity[]> => {
     const unfilteredKeys = await KeyStore.get(this.view.acctEmail);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(unfilteredKeys);
     const matchingFamily = unfilteredKeys.filter(ki => !family || ki.family === family);
@@ -140,13 +140,13 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     try {
       // no valid keys found, query synchronously, then return result
       await this.updateLocalPubkeysFromRemote(storedContact?.sortedPubkeys || [], email);
-    } catch (e) {
+    } catch {
       return PUBKEY_LOOKUP_RESULT_FAIL;
     }
     // re-query the storage, which is now updated
     const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
-    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${JSON.stringify(updatedContact)})`);
     return updatedContact;
   };
 
@@ -157,15 +157,18 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
    *    newer versions of public keys we already have (compared by fingerprint), then we
    *    update the public keys we already have.
    */
-  public updateLocalPubkeysFromRemote = async (storedPubkeys: PubkeyInfo[], email: string, name?: string): Promise<void> => {
+  public updateLocalPubkeysFromRemote = async (storedPubkeys: PubkeyInfo[], email: string, name?: string): Promise<boolean> => {
     if (!email) {
       throw Error('Empty email');
     }
     try {
-      const lookupResult = await this.view.pubLookup.lookupEmail(email);
+      // Skip keys.openpgp.org search if there is at least one valid key
+      const shouldSkipOpenpgpOrg = storedPubkeys.some(pubkey => pubkey.pubkey.usableForEncryption);
+      const lookupResult = await this.view.pubLookup.lookupEmail(email, shouldSkipOpenpgpOrg);
       if (await compareAndSavePubkeysToStorage({ email, name }, lookupResult.pubkeys, storedPubkeys)) {
         await this.view.recipientsModule.reRenderRecipientFor(email);
       }
+      return lookupResult.pubkeys.length > 0;
     } catch (e) {
       if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
         Catch.reportErr(e);
@@ -185,12 +188,12 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     }
     const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
     let name: string | undefined;
-    if (sendAs && sendAs[parsedEmail.email]?.name) {
+    if (sendAs?.[parsedEmail.email]?.name) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       name = sendAs[parsedEmail.email].name!;
     } else {
       const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, parsedEmail.email);
-      if (contactWithPubKeys && contactWithPubKeys.info.name) {
+      if (contactWithPubKeys?.info.name) {
         name = contactWithPubKeys.info.name;
       }
     }

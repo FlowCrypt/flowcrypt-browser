@@ -23,12 +23,12 @@ type SanitizedBlocks = {
 export class MsgBlockParser {
   private static ARMOR_HEADER_MAX_LENGTH = 50;
 
-  public static detectBlocks = (origText: string) => {
+  public static detectBlocks(origText: string, completeOnly?: boolean) {
     const blocks: MsgBlock[] = [];
     const normalized = Str.normalize(origText);
     let startAt = 0;
     while (true) {
-      const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt);
+      const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt, completeOnly);
       if (found) {
         blocks.push(...found);
       }
@@ -42,12 +42,9 @@ export class MsgBlockParser {
         startAt = continueAt;
       }
     }
-  };
+  }
 
-  public static fmtDecryptedAsSanitizedHtmlBlocks = async (
-    decryptedContent: Uint8Array,
-    imgHandling: SanitizeImgHandling = 'IMG-TO-LINK'
-  ): Promise<SanitizedBlocks> => {
+  public static async fmtDecryptedAsSanitizedHtmlBlocks(decryptedContent: Uint8Array, imgHandling: SanitizeImgHandling = 'IMG-KEEP'): Promise<SanitizedBlocks> {
     const blocks: MsgBlock[] = [];
     let isRichText = false;
     let webReplyToken: unknown | undefined;
@@ -56,7 +53,7 @@ export class MsgBlockParser {
       plain = MsgBlockParser.extractFcAttachments(plain, blocks);
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
-        plain = MsgBlockParser.stripFcTeplyToken(plain);
+        plain = MsgBlockParser.stripFcReplyToken(plain);
       }
       const armoredPubKeys: string[] = [];
       plain = MsgBlockParser.stripPublicKeys(plain, armoredPubKeys);
@@ -68,21 +65,21 @@ export class MsgBlockParser {
     if (typeof decoded.html !== 'undefined') {
       webReplyToken = MsgBlockParser.extractFcReplyToken(decoded.html);
       if (webReplyToken) {
-        decoded.html = MsgBlockParser.stripFcTeplyToken(decoded.html);
+        decoded.html = MsgBlockParser.stripFcReplyToken(decoded.html);
       }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html, imgHandling))); // sanitized html
       isRichText = true;
     } else if (typeof decoded.text !== 'undefined') {
       webReplyToken = MsgBlockParser.extractFcReplyToken(decoded.text);
       if (webReplyToken) {
-        decoded.text = MsgBlockParser.stripFcTeplyToken(decoded.text);
+        decoded.text = MsgBlockParser.stripFcReplyToken(decoded.text);
       }
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(decoded.text))); // escaped text as html
     } else {
       blocks.push(MsgBlock.fromContent('decryptedHtml', Str.escapeTextAsRenderableHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
     }
     for (const attachment of decoded.attachments) {
-      if (attachment.treatAs() === 'publicKey') {
+      if (attachment.treatAs(decoded.attachments) === 'publicKey') {
         await MsgBlockParser.pushArmoredPubkeysToBlocks([attachment.getData().toUtfStr()], blocks);
       } else {
         blocks.push(
@@ -96,9 +93,9 @@ export class MsgBlockParser {
       }
     }
     return { blocks, subject: decoded.subject, isRichText, webReplyToken };
-  };
+  }
 
-  public static extractFcAttachments = (decryptedContent: string, blocks: MsgBlock[]) => {
+  public static extractFcAttachments(decryptedContent: string, blocks: MsgBlock[]) {
     // these tags were created by FlowCrypt exclusively, so the structure is rigid (not arbitrary html)
     // `<a href="${attachment.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
@@ -126,21 +123,21 @@ export class MsgBlockParser {
       );
     }
     return decryptedContent;
-  };
+  }
 
-  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+  public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
     let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
     for (const block of blocks) {
       if (block.type === 'publicKey') {
-        const armored = block.content.toString();
+        const armored = Str.with(block.content);
         foundPublicKeys.push(armored);
         normalized = normalized.replace(armored, '');
       }
     }
     return normalized;
-  };
+  }
 
-  public static extractFcReplyToken = (decryptedContent: string): unknown | undefined => {
+  public static extractFcReplyToken(decryptedContent: string): unknown | undefined {
     const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
     if (fcTokenElement.length) {
       const fcData = fcTokenElement.attr('cryptup-data');
@@ -149,13 +146,13 @@ export class MsgBlockParser {
       }
     }
     return undefined;
-  };
+  }
 
-  public static stripFcTeplyToken = (decryptedContent: string) => {
+  public static stripFcReplyToken(decryptedContent: string) {
     return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
-  };
+  }
 
-  private static isFcAttachmentLinkData = (o: unknown): o is FcAttachmentLinkData => {
+  private static isFcAttachmentLinkData(o: unknown): o is FcAttachmentLinkData {
     return (
       !!o &&
       typeof o === 'object' &&
@@ -163,22 +160,23 @@ export class MsgBlockParser {
       typeof (o as FcAttachmentLinkData).size !== 'undefined' &&
       typeof (o as FcAttachmentLinkData).type !== 'undefined'
     );
-  };
+  }
 
-  private static detectBlockNext = (origText: string, startAt: number) => {
+  private static detectBlockNext(origText: string, startAt: number, completeOnly?: boolean) {
     const armorHdrTypes = Object.keys(PgpArmor.ARMOR_HEADER_DICT) as ReplaceableMsgBlockType[];
     const result: { found: MsgBlock[]; continueAt?: number } = { found: [] as MsgBlock[] };
     const begin = origText.indexOf(PgpArmor.headers('null').begin, startAt);
     if (begin !== -1) {
       // found
-      const potentialBeginHeader = origText.substr(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH);
+      const potentialBeginHeader = origText.substring(begin, MsgBlockParser.ARMOR_HEADER_MAX_LENGTH + begin);
       for (const armorHdrType of armorHdrTypes) {
         const blockHeaderDef = PgpArmor.ARMOR_HEADER_DICT[armorHdrType];
         if (blockHeaderDef.replace) {
           const indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
           if (indexOfConfirmedBegin === 0) {
+            let potentialTextBeforeBlockBegun = '';
             if (begin > startAt) {
-              let potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
+              potentialTextBeforeBlockBegun = origText.substring(startAt, begin);
               if (!potentialTextBeforeBlockBegun.endsWith('\n')) {
                 // only replace blocks if they begin on their own line
                 // contains deliberate block: `-----BEGIN PGP PUBLIC KEY BLOCK-----\n...`
@@ -187,10 +185,6 @@ export class MsgBlockParser {
                 continue; // block treated as plaintext, not on dedicated line - considered accidental
                 // this will actually cause potential deliberate blocks that follow accidental block to be ignored
                 // but if the message already contains accidental (not on dedicated line) blocks, it's probably a good thing to ignore the rest
-              }
-              potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
-              if (potentialTextBeforeBlockBegun) {
-                result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
               }
             }
             let endIndex = -1;
@@ -207,30 +201,36 @@ export class MsgBlockParser {
                 foundBlockEndHeaderLength = matchEnd[0].length;
               }
             }
-            if (endIndex !== -1) {
-              // identified end of the same block
-              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
-              result.continueAt = endIndex + foundBlockEndHeaderLength;
-            } else {
-              // corresponding end not found
-              result.found.push(MsgBlock.fromContent(armorHdrType, origText.substr(begin), true));
+            if (endIndex !== -1 || !completeOnly) {
+              // flush the preceding plainText
+              potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
+              if (potentialTextBeforeBlockBegun) {
+                result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
+              }
+              if (endIndex !== -1) {
+                // identified end of the same block
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+                result.continueAt = endIndex + foundBlockEndHeaderLength;
+              } else {
+                result.found.push(MsgBlock.fromContent(armorHdrType, origText.substring(begin), true));
+              }
+              break;
             }
-            break;
           }
         }
       }
     }
     if (origText && !result.found.length) {
       // didn't find any blocks, but input is non-empty
-      const potentialText = origText.substr(startAt).trim();
+      const potentialText = origText.substring(startAt).trim();
       if (potentialText) {
         result.found.push(MsgBlock.fromContent('plainText', potentialText));
       }
     }
     return result;
-  };
+  }
 
-  private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
+  private static async pushArmoredPubkeysToBlocks(armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> {
     for (const armoredPubkey of armoredPubkeys) {
       const keys = await KeyUtil.parseMany(armoredPubkey);
       for (const key of keys) {
@@ -238,5 +238,5 @@ export class MsgBlockParser {
         blocks.push(MsgBlock.fromContent('publicKey', KeyUtil.armor(pub)));
       }
     }
-  };
+  }
 }

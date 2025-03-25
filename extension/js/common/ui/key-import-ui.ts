@@ -17,6 +17,8 @@ import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
+import { Xss } from '../platform/xss.js';
+import { ClientConfiguration } from '../client-configuration.js';
 
 type KeyImportUiCheckResult = {
   normalized: string;
@@ -76,27 +78,58 @@ export class KeyImportUi {
     submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
   };
 
+  // by unselecting, we allow to click on "Load from a file" and trigger the fineuploader again
+  public static allowReselect = () => {
+    $('input[type=radio][name=source]').prop('checked', false);
+  };
+
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[] | undefined) => {
+  public shouldSubmitPubkey = (clientConfiguration: ClientConfiguration, checkboxSelector: string) => {
+    if (clientConfiguration.mustSubmitToAttester() && !clientConfiguration.canSubmitPubToAttester()) {
+      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
+    }
+    if (!clientConfiguration.canSubmitPubToAttester()) {
+      return false;
+    }
+    if (clientConfiguration.mustSubmitToAttester()) {
+      return true;
+    }
+    return Boolean($(checkboxSelector).prop('checked'));
+  };
+
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
     $('input[type=radio][name=source]')
       .off()
-      .change(function () {
-        if ((this as HTMLInputElement).value === 'file') {
-          $('.input_private_key').val('').change().prop('disabled', true);
-          $('.source_paste_container').css('display', 'none');
-          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-          $('#fineuploader_button > input').trigger('click');
-        } else if ((this as HTMLInputElement).value === 'paste') {
-          $('.input_private_key').val('').change().prop('disabled', false);
-          $('.source_paste_container').css('display', 'block');
-          $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
-        } else if ((this as HTMLInputElement).value === 'backup') {
-          window.location.href = Url.create('/chrome/settings/setup.htm', {
-            acctEmail,
-            parentTabId,
-            action: 'add_key',
-          });
+      .on('change', function () {
+        const selectedValue = (this as HTMLInputElement).value;
+        switch (selectedValue) {
+          case 'file':
+            $('.input_private_key').val('').trigger('change').prop('disabled', true);
+            $('.source_paste_container').css('display', 'none');
+            $('.source_generate_container').hide();
+            $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+            $('#fineuploader_button > input').trigger('click');
+            break;
+          case 'paste':
+            $('.input_private_key').val('').trigger('change').prop('disabled', false);
+            $('.source_generate_container').hide();
+            $('.source_paste_container').css('display', 'block');
+            $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
+            break;
+          case 'backup':
+            window.location.href = Url.create('/chrome/settings/setup.htm', {
+              acctEmail,
+              parentTabId,
+              action: 'add_key',
+            });
+            break;
+          case 'generate':
+            $('.source_paste_container').hide();
+            $('.source_generate_container').show();
+            break;
+          default:
+            break;
         }
       });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').on(
@@ -128,10 +161,11 @@ export class KeyImportUi {
         }
       })
     );
-    $('.input_private_key').change(
+    $('.input_private_key').on(
+      'change',
       Ui.event.handle(async target => {
         const prv = await Catch.undefinedOnException(opgp.readKey({ armoredKey: String($(target).val()) }));
-        if (!prv || !prv.isPrivate()) {
+        if (!prv?.isPrivate()) {
           $('.line.unprotected_key_create_pass_phrase').hide();
           return;
         }
@@ -146,7 +180,7 @@ export class KeyImportUi {
             removeValidationElements();
             $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
           });
-          $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
+          $('.input_private_key').on('change', removeValidationElementsWhenKeyChanged);
         } else if (OpenPGPKey.isFullyEncrypted(prv)) {
           $('.line.unprotected_key_create_pass_phrase').hide();
         } else {
@@ -162,26 +196,26 @@ export class KeyImportUi {
         let prv: Key | undefined;
         const utf = file.getData().toUtfStr('ignore'); // ignore utf8 errors because this may be a binary key (in which case we use the bytes directly below)
         if (utf.includes(PgpArmor.headers('privateKey').begin)) {
-          const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
+          const firstPrv = MsgBlockParser.detectBlocks(utf).blocks.find(b => b.type === 'privateKey');
           if (firstPrv) {
             // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-            prv = await KeyUtil.parse(firstPrv.content.toString());
+            prv = await KeyUtil.parse(Str.with(firstPrv.content));
           }
         } else {
           try {
             const parsed = await KeyUtil.parseBinary(file.getData(), '');
             prv = parsed[0];
-          } catch (e) {
+          } catch {
             // ignore
           }
         }
         if (typeof prv !== 'undefined') {
-          $('.input_private_key').val(KeyUtil.armor(prv)).change().prop('disabled', true);
+          $('.input_private_key').val(KeyUtil.armor(prv)).trigger('change').prop('disabled', true);
           $('.source_paste_container').css('display', 'block');
         } else {
-          $('.input_private_key').val('').change().prop('disabled', false);
-          await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.testCompatibilityLink);
-          $('input[type=radio][name=source]').removeAttr('checked');
+          $('.input_private_key').val('').trigger('change').prop('disabled', false);
+          await Ui.modal.error('Not able to read this key. Make sure it is a valid PGP private key.', false, Ui.getTestCompatibilityLink(acctEmail));
+          KeyImportUi.allowReselect();
         }
       },
     });
@@ -226,11 +260,14 @@ export class KeyImportUi {
     return normalized;
   };
 
-  public renderPassPhraseStrengthValidationInput = (
-    input: JQuery<HTMLElement>,
-    submitButton?: JQuery<HTMLElement>,
-    type: 'passphrase' | 'pwd' = 'passphrase'
-  ) => {
+  public renderKeyManualCreateView = async (selector: string) => {
+    const htmlUrl = '/chrome/elements/shared/create_key.template.htm';
+    const sanitized = Xss.htmlSanitize(await (await fetch(htmlUrl)).text());
+    Xss.setElementContentDANGEROUSLY($(selector).get(0) as Element, sanitized); // xss-sanitized
+    this.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
+  };
+
+  public renderPassPhraseStrengthValidationInput = (input: JQuery, submitButton?: JQuery, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       if (submitButton) {
@@ -310,7 +347,7 @@ export class KeyImportUi {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
     if (type === 'publicKey' && !k.isPublic) {
-      throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
+      throw new UserAlert('This was a private key. Please insert a public key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
   };
 

@@ -5,7 +5,7 @@
 import { Browser } from '../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Ui } from '../../js/common/browser/ui.js';
+import { Time } from '../../js/common/browser/time.js';
 import { View } from '../../js/common/view.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
@@ -53,7 +53,7 @@ View.run(
 
     private redirectToInitSetup = async (acctEmail?: string) => {
       BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
-      await Ui.time.sleep(100);
+      await Time.sleep(100);
       window.close();
     };
 
@@ -74,7 +74,7 @@ View.run(
         this.setHandler(async () => {
           if (activeAcctEmail) {
             await Browser.openSettingsPage('inbox/inbox.htm', activeAcctEmail);
-            await Ui.time.sleep(100);
+            await Time.sleep(100);
             window.close();
           } else {
             window.location.href = 'select_account.htm?action=inbox';

@@ -1,34 +1,35 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as fs from 'fs';
-import { Keyboard, KeyInput } from 'puppeteer';
+import { ElementHandle, Keyboard, KeyInput } from 'puppeteer';
 import { BrowserHandle } from '../browser/browser-handle.js';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
 import { SettingsPageRecipe } from '../tests/page-recipe/settings-page-recipe.js';
 import { testKeyConstants } from '../tests/tooling/consts';
 import { AvaContext } from '../tests/tooling/index.js';
 
-export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS';
+export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS' | 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
-  if (process.argv.includes('CONSUMER-MOCK')) {
+  let testGroup: 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
+  if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
+    testVariant = 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
+    testGroup = 'CONTENT-SCRIPT-TESTS';
+  } else if (process.argv.includes('CONSUMER-MOCK')) {
     testVariant = 'CONSUMER-MOCK';
   } else if (process.argv.includes('ENTERPRISE-MOCK')) {
     testVariant = 'ENTERPRISE-MOCK';
   } else if (process.argv.includes('CONSUMER-LIVE-GMAIL')) {
     testVariant = 'CONSUMER-LIVE-GMAIL';
-  } else if (process.argv.includes('UNIT-TESTS')) {
-    testVariant = 'UNIT-TESTS';
   } else {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
-  const testGroup = (process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP') as
-    | 'FLAKY-GROUP'
-    | 'STANDARD-GROUP'
-    | 'UNIT-TESTS';
+  if (!testGroup) {
+    testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
+  }
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
-  const poolSizeOne = process.argv.includes('--pool-size=1') || testGroup === 'FLAKY-GROUP';
+  const poolSizeOne = process.argv.includes('--pool-size=1') || ['FLAKY-GROUP', 'CONTENT-SCRIPT-TESTS'].includes(testGroup);
   const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
   return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
@@ -43,10 +44,12 @@ export type TestMessage = {
   signature?: string;
   encryption?: string;
   error?: string;
+  enterPp?: { passphrase: string; isForgetPpHidden?: boolean; isForgetPpChecked?: boolean };
 };
 
-export type TestMessageWithParams = TestMessage & {
-  params: string;
+export type TestMessageAndSession = TestMessage & {
+  finishSessionBeforeTesting?: boolean; // finish session before testing pgp_block
+  finishSessionAfterTesting?: boolean; // finish session after testing pgp_block and test that pgp_block now requires a passphrase
 };
 
 export type TestKeyInfo = {
@@ -83,7 +86,7 @@ export class Config {
   };
 
   public static key = (title: string) => {
-    return testKeyConstants.keys.filter(k => k.title === title)[0];
+    return testKeyConstants.keys.find(k => k.title === title)!;
   };
 
   public static getKeyInfo = async (titles: string[]): Promise<KeyInfoWithIdentityAndOptionalPp[]> => {
@@ -91,7 +94,7 @@ export class Config {
       testKeyConstants.keys
         .filter(key => key.armored && titles.includes(key.title))
         .map(async key => {
-          const parsed = await KeyUtil.parse(key.armored!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          const parsed = await KeyUtil.parse(key.armored!);
           return { ...(await KeyUtil.keyInfoObj(parsed)), passphrase: key.passphrase };
         })
     );
@@ -120,9 +123,14 @@ export class Util {
   public static deleteFileIfExists = (filename: string) => {
     try {
       fs.unlinkSync(filename);
-    } catch (e) {
+    } catch {
       // file didn't exist
     }
+  };
+
+  public static isVisible = async <T extends Node>(element: ElementHandle<T>) => {
+    // eslint-disable-next-line no-null/no-null
+    return (await element.boundingBox()) !== null;
   };
 
   public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {

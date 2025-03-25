@@ -19,8 +19,8 @@ import { KeyUtil } from '../../js/common/core/crypto/key.js';
 
 View.run(
   class AddPubkeyView extends View {
+    public readonly parentTabId: string;
     private readonly acctEmail: string;
-    private readonly parentTabId: string;
     private readonly missingPubkeyEmails: string[];
     private readonly fetchKeyUi = new FetchKeyUI();
     private readonly attachmentUI = new AttachmentUI(() =>
@@ -53,7 +53,9 @@ View.run(
       this.fetchKeyUi.handleOnPaste($('.pubkey'));
       $('.action_settings').on(
         'click',
-        this.setHandler(async () => await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm'))
+        this.setHandler(async () => {
+          await Browser.openSettingsPage('index.htm', this.acctEmail, '/chrome/settings/modules/contacts.htm');
+        })
       );
     };
 
@@ -74,19 +76,24 @@ View.run(
           }
         },
       });
-      $('select.copy_from_email').change(this.setHandler(el => this.copyFromEmailHandler(el)));
+      $('select.copy_from_email').on(
+        'change',
+        this.setHandler(el => this.copyFromEmailHandler(el))
+      );
       $('.action_ok').on(
         'click',
         this.setHandler(() => this.submitHandler())
       );
       $('.action_close').on(
         'click',
-        this.setHandler(() => this.closeDialog())
+        this.setHandler(() => {
+          this.closeDialog();
+        })
       );
     };
 
     private closeDialog = () => {
-      BrowserMsg.send.closeDialog(this.parentTabId);
+      BrowserMsg.send.closeDialog(this);
     };
 
     private copyFromEmailHandler = async (fromSelect: HTMLElement) => {

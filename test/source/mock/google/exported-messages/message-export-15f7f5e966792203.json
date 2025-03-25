@@ -1,0 +1,71 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "15f7f5e966792203",
+    "threadId": "15f7f5e966792203",
+    "labelIds": [
+      "IMPORTANT",
+      "STARRED",
+      "CATEGORY_PERSONAL",
+      "Label_4",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA256 Standard message signed inline should easily verify This is email footer -----BEGIN PGP SIGNATURE----- Version: FlowCrypt 5.0.4 Gmail Encryption",
+    "payload": {
+      "partId": "",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+        {
+          "name": "X-Gm-Message-State",
+          "value": "AMCzsaULbONjxuOMpEc2a1JkbQC/SVGvvFoKC15wLWI6HWy+gneXeEFG RMLGsUQPi33rBmNVhp84pNfWPZX2+ZpMF/RNM3M="
+        },
+        {
+          "name": "Openpgp",
+          "value": "id=6D24791A5B106262B06217C606CA553EC2455D70"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 2 Nov 2017 17:53:45 -0700"
+        },
+        {
+          "name": "Subject",
+          "value": "signed with FlowCrypt Extension (inline signature)"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=\"UTF-8\""
+        }
+      ],
+      "body": {
+        "size": 1071,
+        "data": "LS0tLS1CRUdJTiBQR1AgU0lHTkVEIE1FU1NBR0UtLS0tLQ0KSGFzaDogU0hBMjU2DQoNClN0YW5kYXJkIG1lc3NhZ2UNCg0Kc2lnbmVkIGlubGluZQ0KDQpzaG91bGQgZWFzaWx5IHZlcmlmeQ0KVGhpcyBpcyBlbWFpbCBmb290ZXINCi0tLS0tQkVHSU4gUEdQIFNJR05BVFVSRS0tLS0tDQpWZXJzaW9uOiBGbG93Q3J5cHQgNS4wLjQgR21haWwgRW5jcnlwdGlvbiBmbG93Y3J5cHQuY29tDQpDb21tZW50OiBTZWFtbGVzc2x5IHNlbmQsIHJlY2VpdmUgYW5kIHNlYXJjaCBlbmNyeXB0ZWQgZW1haWwNCg0Kd3NGY0JBRUJDQUFRQlFKWis3NFlDUkFHeWxVK3drVmRjQUFBZkFrUUFLWXdUQ1FVWDRLMjZqd3pLUEcwDQp1ZTYralN5Z3BrTmxzSHFmbzdaVTBTWWJ2YW8weEVvMVFRUHk5elZXN3pQMzlVQUpaa041RXBJQVJCekYNCjY3MUFBM3MwS3Rrbkx0MEFZZmlUSmRrcVRpaFJqSlpIQkhRY3hra2Fqd3MrM0JyOG9CaWVCNHppMTlHSg0Kb09xanlpMnV4bDdCeTVDU1AyMzhCNkNYQlRnYVlraC83VHBZSkRnRnp1aHRYdHgwYVdCUDloN1RnRVlODQpBWU5tdEdJdFQ2VzJRL0pvQjI5Y1ZzeHl1Z1ZzUWhkZk04REE1TXBFWlkyWmsvK1VIWE4wTDQ1ckVKRmoNCjhISmtSODN2b2l3QWU2RGRrTFFIYllmVnl0U0RaTitLODB4Ti9WQ1FmZGQ3K0hLcEtiZnRJaWcwY1htcg0KK09zb0RNR3ZQV2tHRXFKUmg1N2JleldmejZqbmtTU0pTWDltWEZHNktTSjJ4dWozMG5QWHNsMVduMVh2DQp3UjVUM0wya0R1c2x1RkVSaXEwTm5LRHdBdmVIWkl6aDd4dGptWVJsR1ZOdWp0YTBxVFFYVHlhanhEcHUNCmdaSXFaS2pEVlpwN0NqS1lZUHp2Z1VzaWhQemxneXFBb2RrTXBsL0loWWlkUE1CMTM1bFY0QkJLSHJGMg0KVXJiYjJ0WE1IYTZyRVpvajZqYlMwdXcvTzFmU0JKQVNZZmxySjFNOFlMc0ZDd0JIcE1XV0wzOG9qYm1LDQppMUVIWUlVOEEveTBxRUxQcEtvcmduTE5LaDh0MDVhMDFuclVXZC9lWERLUzFiYkdsTGVSNlIvWXZPTTUNCkFEanZneXdwaUdtcndkZWhpb0t0UzBTckhSdkV4WXg4b3J5MGlMbzBjTEdFUkFyWjNqeWNGOEYrUzJYcA0KNUJuSQ0KPUYyb20NCi0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQ0K"
+      }
+    },
+    "sizeEstimate": 5805,
+    "historyId": "1405939",
+    "internalDate": "1509670425000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "15f7f5e966792203",
+    "threadId": "15f7f5e966792203",
+    "labelIds": ["IMPORTANT", "STARRED", "CATEGORY_PERSONAL", "Label_4", "INBOX"],
+    "snippet": "-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA256 Standard message signed inline should easily verify This is email footer -----BEGIN PGP SIGNATURE----- Version: FlowCrypt 5.0.4 Gmail Encryption",
+    "sizeEstimate": 5805,
+    "historyId": "1405939",
+    "internalDate": "1509670425000"
+  }
+}

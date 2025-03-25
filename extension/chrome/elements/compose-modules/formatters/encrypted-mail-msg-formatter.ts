@@ -4,7 +4,7 @@
 
 import { UploadedMessageData } from '../../../../js/common/api/account-server.js';
 import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-msg.js';
-import { ApiErr } from '../../../../js/common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../../../js/common/api/shared/api-error.js';
 import { Api, RecipientType } from '../../../../js/common/api/shared/api.js';
 import { Ui } from '../../../../js/common/browser/ui.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
@@ -96,7 +96,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     //    - flowcrypt.com/shared-tenant-fes (consumers and customers without on-prem setup), or
     //    - fes.customer-domain.com (enterprise customers with on-prem setup)
     //    It will be served to recipient through web
-    const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg); // encrypted for pwd only, pubkeys ignored
+    const uploadedMessageData = await this.prepareAndUploadPwdEncryptedMsg(newMsg, signingKey);
     // pwdRecipients that have their personal link
     const individualPwdRecipients = Object.keys(uploadedMessageData.emailToExternalIdAndUrl ?? {}).filter(email => !pubkeys.some(p => p.email === email));
     const legacyPwdRecipients: { [type in RecipientType]?: EmailParts[] } = {};
@@ -124,9 +124,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const pubkeyMsgData = {
         ...newMsg,
         recipients: pubkeyRecipients,
-        // brackets are required for test emails like '@test:8001'
+        // brackets are required for test emails like '@test'
         replyTo: replyToForMessageSentToPubkeyRecipients.length
-          ? `${Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)}`
+          ? Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)
           : undefined,
       };
       msgs.push(await this.sendableNonPwdMsg(pubkeyMsgData, pubkeys, signingKey?.key));
@@ -154,7 +154,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     };
   };
 
-  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData): Promise<UploadedMessageData> => {
+  private prepareAndUploadPwdEncryptedMsg = async (newMsg: NewMsgData, signingKey?: ParsedKeyInfo): Promise<UploadedMessageData> => {
     // PGP/MIME + included attachments (encrypted for password only)
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
@@ -165,7 +165,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
       await this.view.attachmentsModule.attachment.collectAttachments()
     );
-    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, []); // encrypted only for pwd, not signed
+    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, [], signingKey?.key);
     return await this.view.acctServer.messageUpload(
       pwdEncryptedWithAttachments,
       replyToken,
@@ -181,10 +181,11 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     { msgUrl, externalId }: { msgUrl: string; externalId?: string },
     signingPrv?: Key
   ) => {
-    // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
+    // encoded as: PGP/MIME-like structure
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+    const attachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs);
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
+    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     return await SendableMsg.createPwdMsg(
@@ -219,6 +220,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         data: Buf.fromUtfStr('Version: 1'),
         type: 'application/pgp-encrypted',
         contentDescription: 'PGP/MIME version identification',
+        contentTransferEncoding: '7bit',
       })
     );
     attachments.push(
@@ -227,6 +229,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         type: 'application/octet-stream',
         contentDescription: 'OpenPGP encrypted message',
         name: 'encrypted.asc',
+        contentTransferEncoding: Str.is7bit(data) ? '7bit' : 'quoted-printable',
         inline: true,
       })
     );
@@ -250,7 +253,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     newMsgData: NewMsgData
   ): Promise<{ bodyWithReplyToken: SendableMsgBody; replyToken: string }> => {
-    const recipients = getUniqueRecipientEmails(newMsgData.recipients);
+    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
+    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
     try {
       const response = await this.view.acctServer.messageToken();
       const replyInfoRaw: ReplyInfoRaw = {
@@ -272,6 +276,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         replyToken: response.replyToken,
       };
     } catch (msgTokenErr) {
+      if (msgTokenErr instanceof EnterpriseServerAuthErr) {
+        Settings.offerToLoginCustomIDPWithPopupShowModalOnErr(this.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
+        throw new ComposerResetBtnTrigger();
+      }
       if (ApiErr.isAuthErr(msgTokenErr)) {
         Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
         throw new ComposerResetBtnTrigger();

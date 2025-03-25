@@ -51,10 +51,13 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault ? 0 : sendAs![a].isDefault ? -1 : 1));
-      Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() =>
+      Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).on('change', () =>
         this.view.myPubkeyModule.reevaluateShouldAttachOrNot()
       );
-      this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHandler()));
+      this.view.S.now('input_from').on(
+        'change',
+        this.view.setHandler(() => this.actionInputFromChangeHandler())
+      );
       if (this.view.isReplyBox) {
         this.view.sizeModule.resizeComposeBox();
       }
@@ -67,5 +70,25 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
   private actionInputFromChangeHandler = async () => {
     await this.view.recipientsModule.reEvaluateRecipients(this.view.recipientsModule.getValidRecipients());
     this.view.footerModule.onFooterUpdated(await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender()));
+
+    const inputEl = this.view.S.cached('input_text');
+    const inputHtml = inputEl.html();
+    const footer = this.view.quoteModule.tripleDotSanitizedHtmlContent?.footer ?? '';
+    let htmlWithUpdatedFooter = inputHtml;
+    if (inputHtml.includes('---------- Forwarded message ---------')) {
+      // Update signature for forwarded messages
+      const forwardSignaturePattern = /(--<br>[\s\S]*?)(?=<br>--<br>[\s\S]*?$|$)/gm;
+      const matches = inputHtml.match(forwardSignaturePattern);
+
+      if (matches?.length) {
+        const lastSignature = matches[matches.length - 1];
+        htmlWithUpdatedFooter = inputHtml.replace(lastSignature, footer);
+      }
+    } else {
+      const signaturePattern =
+        /--\s*<br\s*\/?>\s*[\s\S]*?(?=<br><\/div><div><br><\/div><div>|<br><br><blockquote dir="ltr"|On .* at .*, .*? wrote:|<br><\div><div><br><\div>|$)/;
+      htmlWithUpdatedFooter = inputHtml.replace(signaturePattern, footer);
+    }
+    Xss.sanitizeRender(inputEl, htmlWithUpdatedFooter);
   };
 }

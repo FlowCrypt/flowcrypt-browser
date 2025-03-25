@@ -12,6 +12,7 @@ import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
+import * as $ from 'jquery';
 
 export class SetupRenderModule {
   public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
@@ -21,8 +22,7 @@ export class SetupRenderModule {
   public renderInitial = async (): Promise<void> => {
     $('.email-address').text(this.view.acctEmail);
     $('#button-go-back').css('visibility', 'hidden');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (this.view.storage!.email_provider === 'gmail') {
+    if (this.view.storage.email_provider === 'gmail') {
       // show alternative account addresses in setup form + save them for later
       try {
         await Settings.refreshSendAs(this.view.acctEmail);
@@ -30,22 +30,31 @@ export class SetupRenderModule {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
       } catch (e) {
-        return await Settings.promptToRetry(
+        await Settings.promptToRetry(
           e,
           Lang.setup.failedToLoadEmailAliases,
           () => this.renderInitial(),
           Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
         );
+        return;
       }
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (this.view.storage!.setup_done && this.view.action !== 'update_from_ekm') {
+
+    if (this.view.storage.setup_done && this.view.action !== 'update_from_ekm') {
       if (this.view.action !== 'add_key') {
         await this.renderSetupDone();
       } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
         throw new Error('Manual add_key is not supported when PRV_AUTOIMPORT_OR_AUTOGEN org rule is in use');
       } else {
         await this.view.setupRecoverKey.renderAddKeyFromBackup();
+      }
+    } else if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox() && !this.view.clientConfiguration.usesKeyManager()) {
+      if (!this.view.clientConfiguration.prvKeyAutoImportOrAutogen()) {
+        this.displayBlock('step_0_backup_to_designated_mailbox');
+      } else {
+        await Ui.modal.error('Combination of org rules not valid: prv_backup_to_designated_mailbox cannot be used together with PRV_AUTOIMPORT_OR_AUTOGEN.');
+        window.location.href = Url.create('index.htm', { acctEmail: this.view.acctEmail });
+        return;
       }
     } else if (this.view.clientConfiguration.mustAutoImportOrAutogenPrvWithKeyManager()) {
       if (this.view.clientConfiguration.mustAutogenPassPhraseQuietly() && this.view.clientConfiguration.forbidStoringPassPhrase()) {
@@ -89,6 +98,7 @@ export class SetupRenderModule {
   public displayBlock = (name: string) => {
     const blocks = [
       'loading',
+      'step_0_backup_to_designated_mailbox',
       'step_0_found_key',
       'step_1_easy_or_manual',
       'step_2a_manual_create',
@@ -109,7 +119,7 @@ export class SetupRenderModule {
         $('.backups_count_words').text(
           this.view.fetchedKeyBackupsUniqueLongids.length > 1 ? `${this.view.fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup'
         );
-        $('#step_2_recovery input').focus();
+        $('#step_2_recovery input').trigger('focus');
       }
     }
   };
@@ -119,30 +129,31 @@ export class SetupRenderModule {
     try {
       keyserverRes = await this.view.pubLookup.lookupEmail(this.view.acctEmail);
     } catch (e) {
-      return await Settings.promptToRetry(
+      await Settings.promptToRetry(
         e,
         Lang.setup.failedToCheckIfAcctUsesEncryption,
         () => this.renderSetupDialog(),
         Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
       );
+      return;
     }
     if (keyserverRes.pubkeys.length) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      } else if (this.view.storage!.email_provider === 'gmail') {
+      } else if (this.view.storage.email_provider === 'gmail') {
         try {
           const backups = await this.view.gmail.fetchKeyBackups();
           this.view.fetchedKeyBackups = backups.keyinfos.backups;
           this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
         } catch (e) {
-          return await Settings.promptToRetry(
+          await Settings.promptToRetry(
             e,
             Lang.setup.failedToCheckAccountBackups,
             () => this.renderSetupDialog(),
             Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
           );
+          return;
         }
         if (this.view.fetchedKeyBackupsUniqueLongids.length) {
           this.displayBlock('step_2_recovery');
@@ -189,9 +200,9 @@ export class SetupRenderModule {
       }
     });
     if (emailAliases.length > 0) {
-      $('.container_for_import_key_email_alias').css('visibility', 'visible');
+      $('.also_submit_alias_key_view').show();
     }
-    $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
+    $('.manual .input_submit_all').prop({ checked: true, disabled: false });
   };
 
   private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {

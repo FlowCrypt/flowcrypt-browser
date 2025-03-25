@@ -1,63 +1,53 @@
-# FlowCrypt: Encrypt Gmail with PGP
+# 🌐 FlowCrypt Browser Extension (Encrypt Gmail with PGP)
 
-## Users
+| 👋 Try our extension                                                                                                           |
+|:-------------------------------------------------------------------------------------------------------------------------------|
+| ⬇ Download the FlowCrypt Browser Extension on your device from the [FlowCrypt Downloads](https://flowcrypt.com/download) page. |
 
-Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
+## 💻 Developers
 
-## Developers
+![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
 
-Mock tests: ![Mock tests](https://flowcrypt.semaphoreci.com/badges/flowcrypt-browser.svg?key=d575b4ff-e35d-4217-9152-27cea9e72c19)
+We develop the project in TypeScript. However, since browsers only understand JavaScript, the project needs to be transpiled to it. You need to build the project the first time you download/clone it, and then build it again after each change you make to see the result in the browser. To get started, please follow the instructions below:
 
-Live tests: [![Live Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
-
-This project is written in TypeScript. Browsers only understand JavaScript, so the project needs to be transpiled. You need to build the project the first time you download it, and build it after each change you make to see the result in the browser. First, install tooling:
+1. Navigate to the project folder and install the tooling by running the following commands:
 
 ```bash
+# 1. Navigate to the appropriate folder
 $ cd some/folder/flowcrypt-browser
+# 2. Install the tooling
 $ npm install
 ```
 
-To build the project (for now Linux and Mac only)
+2. To build the project (currently available for Linux and Mac only), run the following command:
 
-```
-$ npm run-script build
-
-> flowcrypt-browser@5.9.7 build /home/luke/git/flowcrypt-browser
-> gulp
-
-[02:42:04] Using gulpfile ~/git/flowcrypt-browser/gulpfile.js
-[02:42:04] Starting 'default'...
-[02:42:04] Starting 'flush'...
-[02:42:04] Finished 'flush' after 62 ms
-[02:42:04] Starting 'transpileProjectTs'...
-[02:42:04] Starting 'copySourceFiles'...
-[02:42:04] Starting 'copyVersionedManifest'...
-[02:42:05] Finished 'copyVersionedManifest' after 199 ms
-[02:42:05] Finished 'copySourceFiles' after 557 ms
-[02:42:12] Finished 'transpileProjectTs' after 7.57 s
-[02:42:12] Starting 'chromeBuildSpacesToTabs'...
-[02:42:12] Finished 'chromeBuildSpacesToTabs' after 4.55 ms
-[02:42:12] Starting 'copyChromeToFirefox'...
-[02:42:12] Finished 'copyChromeToFirefox' after 323 ms
-[02:42:12] Starting 'copyChromeToFirefoxEditedManifest'...
-[02:42:12] Finished 'copyChromeToFirefoxEditedManifest' after 10 ms
-[02:42:12] Finished 'default' after 7.97 s
+```bash
+$ npm run build
 ```
 
-Now you can find your built project in `build/chrome-consumer` and `build/firefox-consumer`
+After executing the build command, you can find your built project in the `build/chrome-consumer` and `build/firefox-consumer` folders.
 
-Printing debug data to test logs can be done using special `Debug` class:
-https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7
+> ℹ️ Note: The `build` folder also contains other versions of the browser extension.
 
-### Note for Mac OS users
+✔️ To load the extension in Google Chrome, please follow these steps:
 
-In order for `npm run-script build` to work you have to:
+1. Open your Chrome browser and navigate to `chrome://extensions/`.
+2. If it isn't already enabled, toggle on the **Developer mode**. The switch button is located at the top-right corner.
+3. Click on the **Load unpacked** button.
+4. Browse to the `flowcrypt-browser/build` folder and select the appropriate project version, either `chrome-consumer` or `chrome-enterprise`.
 
-1. Upgrade `bash` to v4 or higher and make the new version default: https://www.shell-tips.com/mac/upgrade-bash/
+✔️ To load the extension in Firefox, please follow these steps:
 
-2. Install GNU `cp` util and make it default: https://stackoverflow.com/a/40431200/3049064
+1. Open your Firefox browser and navigate to `about:debugging`.
+2. Click on the **This Firefox** tab.
+3. Click on the **Load Temporary Add-on** button located at the top-right corner.
+4. Browse to the `flowcrypt-browser/build` folder, open the `firefox-consumer` project version folder, and select the `manifest.json` file.
 
-## Other guides
+If you wish, you can also use the `run_firefox` script (`npm run run_firefox`) included in the `package.json` file to run the Firefox extension in a separate instance without interfering with the production extension installed in your browser.
+
+Printing debug data to test logs can be accomplished using a [special Debug class](https://github.com/FlowCrypt/flowcrypt-browser/tree/master/extension/js/common/platform/debug.ts#L7).
+
+## 📚 Other guides
 
 - [FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
 - [FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)

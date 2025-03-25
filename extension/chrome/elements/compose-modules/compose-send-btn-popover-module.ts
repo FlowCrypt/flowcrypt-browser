@@ -30,7 +30,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     this.choices.richtext = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richtext' && !this.view.debug && Catch.browser().name !== 'firefox') {
+      if (popoverOpt === 'richtext' && !this.view.debug && !Catch.isFirefox()) {
         continue; // richtext not deployed to Chrome yet, for now only allow firefox (and also in automated tests which set debug===true)
       }
       const item = popoverItems[popoverOpt];
@@ -54,7 +54,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
   /**
    * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
    */
-  public toggleItemTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
+  public toggleItemTick = (elem: JQuery, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) => {
     const currentlyTicked = this.isTicked(elem);
     let newToggleTicked = typeof machineForceStateTo !== 'undefined' ? machineForceStateTo : !currentlyTicked;
     if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
@@ -96,12 +96,13 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
+  private toggleVisible = (event: JQuery.TriggeredEvent<HTMLElement>) => {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
-    const popoverClickHandler = this.view.setHandler((elem, event) => {
-      if (!this.view.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
+    const popoverClickHandler = this.view.setHandler((_elem, event) => {
+      const ev = event as JQuery.BlurEvent<HTMLElement>;
+      if (!this.view.S.cached('sending_options_container')[0].contains(ev.relatedTarget as HTMLElement)) {
         sendingContainer.removeClass('popover-opened');
         $('body').off('click', popoverClickHandler);
         this.view.S.cached('toggle_send_options').off('keydown');
@@ -114,7 +115,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
         this.view.setHandler(async (target, e) => this.keydownHandler(e))
       );
       const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
-      sendingOptions.hover(function () {
+      sendingOptions.on('hover', function () {
         sendingOptions.removeClass('active');
         $(this).addClass('active');
       });
@@ -124,7 +125,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  private keydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+  private keydownHandler = (e: JQuery.TriggeredEvent<HTMLElement>): void => {
     const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
     const currentActive = sendingOptions.filter('.active');
     if (e.key === 'Escape') {
@@ -164,7 +165,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     return store.use_rich_text || false;
   };
 
-  private renderCrossOrTick = (elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) => {
+  private renderCrossOrTick = (elem: JQuery, popoverOpt: PopoverOpt, renderTick: boolean) => {
     if (renderTick) {
       elem.find('img.icon-tick,img.icon-cross').remove();
       elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
@@ -176,7 +177,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  private isTicked = (popoverItemElem: JQuery<HTMLElement>) => {
+  private isTicked = (popoverItemElem: JQuery) => {
     return !!popoverItemElem.find('img.icon-tick').length;
   };
 

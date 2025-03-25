@@ -1,18 +1,20 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 'use strict';
 
-import { Api, ProgressCb, ProgressCbs, ReqFmt, ReqMethod } from '../shared/api.js';
+import { Api, ProgressCb, ProgressCbs } from '../shared/api.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Dict, Str } from '../../core/common.js';
 import { ErrorReport } from '../../platform/catch.js';
-import { ApiErr, BackendAuthErr } from '../shared/api-error.js';
-import { FLAVOR, InMemoryStoreKeys } from '../../core/const.js';
+import { ApiErr } from '../shared/api-error.js';
+import { FLAVOR } from '../../core/const.js';
 import { Attachment } from '../../core/attachment.js';
 import { ParsedRecipients } from '../email-provider/email-provider-api.js';
 import { Buf } from '../../core/buf.js';
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
-import { InMemoryStore } from '../../platform/store/in-memory-store.js';
-import { GoogleAuth } from '../email-provider/gmail/google-auth.js';
+import { Serializable } from '../../platform/store/abstract-store.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
+import { Xss } from '../../platform/xss.js';
+import { ConfiguredIdpOAuth } from '../authentication/configured-idp-oauth.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -83,11 +85,18 @@ export class ExternalService extends Api {
   };
 
   public getServiceInfo = async (): Promise<FesRes.ServiceInfo> => {
-    return await this.request<FesRes.ServiceInfo>('GET', `/api/`);
+    return await this.request<FesRes.ServiceInfo>(`/api/`, undefined, undefined, false);
   };
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
-    const r = await this.request<FesRes.ClientConfiguration>('GET', `/api/${this.apiVersion}/client-configuration?domain=${this.domain}`);
+    const auth = await this.request<AuthenticationConfiguration>(
+      `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`,
+      undefined,
+      undefined,
+      false
+    );
+    await AcctStore.set(this.acctEmail, { authentication: auth });
+    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`, undefined, undefined, false);
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -96,24 +105,26 @@ export class ExternalService extends Api {
   };
 
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request<void>('POST', `/api/${this.apiVersion}/log-collector/exception`, {}, errorReport);
+    await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
+  };
+
+  public helpFeedback = async (email: string, message: string): Promise<unknown> => {
+    return await this.request(`/api/${this.apiVersion}/account/feedback`, { fmt: 'JSON', data: { email, message } });
   };
 
   public reportEvent = async (tags: EventTag[], message: string, details?: string): Promise<void> => {
-    await this.request<void>(
-      'POST',
-      `/api/${this.apiVersion}/log-collector/exception`,
-      {},
-      {
+    await this.request(`/api/${this.apiVersion}/log-collector/exception`, {
+      fmt: 'JSON',
+      data: {
         tags,
         message,
         details,
-      }
-    );
+      },
+    });
   };
 
   public webPortalMessageNewReplyToken = async (): Promise<FesRes.ReplyToken> => {
-    return await this.request<FesRes.ReplyToken>('POST', `/api/${this.apiVersion}/message/new-reply-token`, {}, {});
+    return await this.request<FesRes.ReplyToken>(`/api/${this.apiVersion}/message/new-reply-token`, { fmt: 'JSON', data: {} });
   };
 
   public webPortalMessageUpload = async (
@@ -135,80 +146,56 @@ export class ExternalService extends Api {
         JSON.stringify({
           associateReplyToken,
           from,
-          to: (recipients.to || []).map(Str.formatEmailWithOptionalName),
-          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName),
-          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName),
+          to: (recipients.to || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
+          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
+          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
         })
       ),
     });
     const multipartBody = { content, details };
-    return await this.request<FesRes.MessageUpload>('POST', `/api/${this.apiVersion}/message`, {}, multipartBody, { upload: progressCb });
+    return await this.request<FesRes.MessageUpload>(`/api/${this.apiVersion}/message`, { fmt: 'FORM', data: multipartBody }, { upload: progressCb });
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request<void>(
-      'POST',
-      `/api/${this.apiVersion}/message/${externalId}/gateway`,
-      {},
-      {
+    await this.request(`/api/${this.apiVersion}/message/${externalId}/gateway`, {
+      fmt: 'JSON',
+      data: {
         emailGatewayMessageId,
-      }
-    );
+      },
+    });
   };
 
-  private authHdr = async (): Promise<Dict<string>> => {
-    const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-    if (idToken) {
-      return { Authorization: `Bearer ${idToken}` }; // eslint-disable-line @typescript-eslint/naming-convention
-    }
-    // user will not actually see this message, they'll see a generic login prompt
-    throw new BackendAuthErr('Missing id token, please re-authenticate');
-  };
-
-  private request = async <RT>(method: ReqMethod, path: string, headers: Dict<string> = {}, vals?: Dict<unknown>, progress?: ProgressCbs): Promise<RT> => {
-    let reqFmt: ReqFmt | undefined;
-    if (progress) {
-      reqFmt = 'FORM';
-    } else if (method !== 'GET') {
-      reqFmt = 'JSON';
-    }
-    try {
-      return await ExternalService.apiCall(
-        this.url,
-        path,
-        vals,
-        reqFmt,
-        progress,
-        {
-          ...headers,
-          ...(await this.authHdr()),
-        },
-        'json',
-        method
-      );
-    } catch (firstAttemptErr) {
-      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      if (ApiErr.isAuthErr(firstAttemptErr) && idToken) {
-        // force refresh token
-        const { email } = GoogleAuth.parseIdToken(idToken);
-        if (email) {
-          return await ExternalService.apiCall(
-            this.url,
-            path,
-            vals,
-            reqFmt,
-            progress,
-            {
-              ...headers,
-              // eslint-disable-next-line @typescript-eslint/naming-convention
-              Authorization: await GoogleAuth.googleApiAuthHeader(email, true),
-            },
-            'json',
-            method
-          );
+  private request = async <RT>(
+    path: string,
+    vals?:
+      | {
+          data: Dict<string | Attachment>;
+          fmt: 'FORM';
         }
-      }
-      throw firstAttemptErr;
-    }
+      | { data: Dict<Serializable>; fmt: 'JSON' },
+    progress?: ProgressCbs,
+    shouldThrowErrorForEmptyIdToken = true
+  ): Promise<RT> => {
+    const values:
+      | {
+          data: Dict<string | Attachment>;
+          fmt: 'FORM';
+          method: 'POST';
+        }
+      | { data: Dict<Serializable>; fmt: 'JSON'; method: 'POST' }
+      | undefined = vals
+      ? {
+          ...vals,
+          method: 'POST',
+        }
+      : undefined;
+    return await ExternalService.apiCall(
+      this.url,
+      path,
+      values,
+      progress,
+      await ConfiguredIdpOAuth.authHdr(this.acctEmail, shouldThrowErrorForEmptyIdToken),
+      'json'
+    );
   };
 }

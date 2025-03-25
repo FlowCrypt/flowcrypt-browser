@@ -6,7 +6,7 @@ import { Assert } from '../../../js/common/assert.js';
 import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { GoogleAuth } from '../../../js/common/api/email-provider/gmail/google-auth.js';
+import { GoogleOAuth } from '../../../js/common/api/authentication/google/google-oauth.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Ui } from '../../../js/common/browser/ui.js';
@@ -100,7 +100,7 @@ View.run(
 
     private acctEmailChangedHandler = async () => {
       if (await Ui.modal.confirm(Lang.setup.confirmManualAcctEmailChange(this.acctEmail))) {
-        const response = await GoogleAuth.newAuthPopup({ acctEmail: this.acctEmail });
+        const response = await GoogleOAuth.newAuthPopup({ acctEmail: this.acctEmail });
         if (response.result === 'Success' && response.acctEmail) {
           if (response.acctEmail === this.acctEmail) {
             await Ui.modal.info(`Account email address seems to be the same, nothing to update: ${this.acctEmail}`);

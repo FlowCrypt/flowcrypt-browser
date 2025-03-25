@@ -10,13 +10,13 @@ import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { BrowserMsg } from './browser/browser-msg.js';
 import { Catch } from './platform/catch.js';
-import { MsgBlock, MsgBlockType } from './core/msg-block.js';
-import { MsgBlockParser } from './core/msg-block-parser.js';
+import { MsgBlock } from './core/msg-block.js';
 import { PgpArmor } from './core/crypto/pgp/pgp-armor.js';
 import { Ui } from './browser/ui.js';
 import { WebMailName, WebMailVersion } from './browser/env.js';
 import { Xss } from './platform/xss.js';
-import { SendAsAlias } from './platform/store/acct-store.js';
+import { Buf } from './core/buf.js';
+import { ReplyOption } from '../../chrome/elements/compose-modules/compose-reply-btn-popover-module.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
@@ -24,9 +24,9 @@ export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draf
 export type FactoryReplyParams = {
   replyMsgId?: string;
   draftId?: string;
-  sendAs?: Dict<SendAsAlias>;
   subject?: string;
   removeAfterClose?: boolean;
+  replyOption?: ReplyOption;
 };
 
 export class XssSafeFactory {
@@ -60,41 +60,30 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean) => {
     if (block.type === 'plainText') {
-      return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
+      return XssSafeFactory.renderPlainContent(block.content);
     } else if (block.type === 'plainHtml') {
-      return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
-    } else if (block.type === 'encryptedMsg') {
-      return factory.embeddedMsg(
-        'encryptedMsg',
-        block.complete ? PgpArmor.normalize(block.content.toString(), 'encryptedMsg') : '',
-        msgId,
-        isOutgoing,
-        senderEmail
-      );
-    } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg('signedMsg', block.content.toString(), msgId, isOutgoing, senderEmail);
+      return Xss.htmlSanitizeAndStripAllTags(Str.with(block.content), '<br>') + '<br><br>';
     } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(PgpArmor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
+      return factory.embeddedPubkey(PgpArmor.normalize(Str.with(block.content), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(PgpArmor.normalize(block.content.toString(), 'privateKey'));
+      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'));
     } else if (block.type === 'certificate') {
-      return factory.embeddedPubkey(block.content.toString());
+      return factory.embeddedPubkey(Str.with(block.content), isOutgoing);
     } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
       return block.attachmentMeta
         ? factory.embeddedAttachment(new Attachment(block.attachmentMeta), block.type === 'encryptedAttachment')
         : '[missing encrypted attachment details]';
-    } else if (block.type === 'signedHtml') {
-      return factory.embeddedMsg('signedHtml', '', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
-    } else if (block.type === 'signedText') {
-      return factory.embeddedMsg('signedText', '', msgId, isOutgoing, senderEmail, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else {
       Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
       return '';
     }
   };
 
+  public static renderPlainContent = (content: string | Buf) => {
+    return Xss.escape(Str.with(content)).replace(/\n/g, '<br>') + '<br><br>';
+  };
   /**
    * XSS WARNING
    *
@@ -102,24 +91,20 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId: string, senderEmail: string, isOutgoing?: boolean) => {
-    const { blocks } = MsgBlockParser.detectBlocks(origText);
-    if (blocks.length === 1 && blocks[0].type === 'plainText') {
-      return undefined; // only has single block which is plain text - meaning
-    }
-    let r = '';
-    for (const block of blocks) {
-      r += (r ? '\n\n' : '') + XssSafeFactory.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
-    }
-    return r;
-  };
 
   public srcImg = (relPath: string) => {
     return this.extUrl(`img/${relPath}`);
   };
 
-  public srcComposeMsg = (draftId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId });
+  public srcComposeMsg = (draftId?: string, useFullScreenSecureCompose?: boolean, thunderbirdMsgId?: number, replyOption?: string, replyMsgId?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), {
+      frameId: this.newId(),
+      draftId,
+      useFullScreenSecureCompose,
+      thunderbirdMsgId,
+      replyOption,
+      replyMsgId,
+    });
   };
 
   public srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType, initiatorFrameId?: string) => {
@@ -160,15 +145,14 @@ export class XssSafeFactory {
     );
   };
 
-  public srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, signature?: string | boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), {
-      frameId: this.newId(),
-      message,
-      msgId,
-      senderEmail,
-      isOutgoing,
-      signature,
-    });
+  public srcPgpBlockIframe = () => {
+    const frameId = this.newId();
+    return {
+      frameId,
+      frameSrc: this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), {
+        frameId,
+      }),
+    };
   };
 
   public srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoing?: boolean) => {
@@ -192,6 +176,7 @@ export class XssSafeFactory {
       replyMsgId: convoParams.replyMsgId,
       draftId: convoParams.draftId,
       removeAfterClose: convoParams.removeAfterClose,
+      replyOption: convoParams.replyOption,
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   };
@@ -208,7 +193,7 @@ export class XssSafeFactory {
     const result = await Ui.modal.iframe(this.srcPassphraseDialog(longids, type, initiatorFrameId), 500, 'dialog-passphrase');
     if (result.dismiss) {
       // dialog is dismissed by user interaction, not by closeDialog()
-      BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
+      BrowserMsg.send.passphraseEntry({ entered: false });
     }
   };
 
@@ -216,10 +201,10 @@ export class XssSafeFactory {
     await Ui.modal.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), undefined, 'dialog-add-pubkey');
   };
 
-  public embeddedCompose = (draftId?: string) => {
-    const srcComposeMsg = this.srcComposeMsg(draftId);
+  public embeddedCompose = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, replyOption?: string, replyMsgId?: string) => {
+    const srcComposeMsg = this.srcComposeMsg(draftId, openInFullScreen, thunderbirdMsgId, replyOption, replyMsgId);
     return Ui.e('div', {
-      class: 'secure_compose_window',
+      class: openInFullScreen ? 'secure_compose_window active full_window' : 'secure_compose_window',
       html: this.iframe(srcComposeMsg, [], { scrolling: 'no' }),
       'data-frame-id': String(Url.parse(['frameId'], srcComposeMsg).frameId),
       'data-test': 'container-new-message',
@@ -233,8 +218,11 @@ export class XssSafeFactory {
     });
   };
 
-  public embeddedMsg = (type: MsgBlockType, armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, signature?: string | boolean) => {
-    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, signature), ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification;
+  public embeddedMsg = (
+    type: string // for diagnostic purposes
+  ) => {
+    const { frameId, frameSrc } = this.srcPgpBlockIframe();
+    return { frameId, frameXssSafe: this.iframe(frameSrc, ['pgp_block', type]) + this.hideGmailNewMsgInThreadNotification }; // xss-safe-factory
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
@@ -258,22 +246,18 @@ export class XssSafeFactory {
   };
 
   public btnCompose = (webmailName: WebMailName, webmailVersion: WebMailVersion) => {
-    const btnCls = 'new_secure_compose_window_button';
     if (webmailName === 'outlook') {
-      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button" title="New Secure Email"><img src="${this.srcImg(
+      const btn = `<div class="new_secure_compose_window_button" id="flowcrypt_secure_compose_button_icon" title="New Secure Email"><img src="${this.srcImg(
         'logo-19-19.png'
       )}"></div>`;
-      return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
+      return `<div id="flowcrypt_secure_compose_button" class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      const elAttrs =
-        'role="button" tabindex="0" data-test="action-secure-compose" data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button"';
+      const elAttrs = 'data-tooltip="Secure Compose" aria-label="Secure Compose" id="flowcrypt_secure_compose_button_icon"';
       const title = 'Secure Compose';
       const btnEl =
-        webmailVersion === 'gmail2022'
-          ? `<div class="${btnCls} compose_button_simple only-icon" ${elAttrs}></div><div class="apW">${title}</div>`
-          : `<div class="${btnCls} small" ${elAttrs}>${title}</div>`;
+        webmailVersion === 'gmail2022' ? `<div class="compose_icon_simple" ${elAttrs}></div><div class="apW">${title}</div>` : `<div ${elAttrs}>${title}</div>`;
       const containerCls = webmailVersion === 'gmail2022' ? 'pb-25px' : 'z0';
-      return `<div class="${this.destroyableCls} ${containerCls}">${btnEl}</div>`;
+      return `<div class="${this.destroyableCls} ${containerCls}" id="flowcrypt_secure_compose_button" role="button" tabindex="0" data-test="action-secure-compose" >${btnEl}</div>`;
     }
   };
 
@@ -282,6 +266,19 @@ export class XssSafeFactory {
       this.destroyableCls
     } reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
       <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
+      </div>`;
+  };
+
+  public btnSecureMenuBtn = (replyOption: ReplyOption) => {
+    const replyOptionText = replyOption.replace('a_', '').replace('_', ' ');
+    const htmlAttrib = {
+      className: replyOptionText.replace(' ', '_'),
+      testName: replyOptionText.replace(' ', '-'),
+    };
+    const displayText = replyOptionText === 'reply all' ? replyOptionText.replace('all', 'to all') : replyOptionText;
+    // * The action_${action.underscore}_message_button is used as an identifier in GmailElementReplacer.actionActivateSecureReplyHandler()
+    return `<div class="action_${htmlAttrib.className}_message_button action_menu_message_button" data-test="action-${htmlAttrib.testName}-message-button">
+    <img src="${this.srcImg(`svgs/${htmlAttrib.testName}-icon.svg`)}" /><span>secure ${displayText}</span>
     </div>`;
   };
 
@@ -294,7 +291,7 @@ export class XssSafeFactory {
 
   public btnWithoutFc = () => {
     const span = `<span>see original</span>`;
-    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
+    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-test="action-show-original-conversation" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
   };
 
   public btnWithFc = () => {

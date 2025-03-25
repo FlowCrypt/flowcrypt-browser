@@ -10,7 +10,7 @@ export class BrowserMsgCommonHandlers {
 
   public static setCss = async (data: Bm.SetCss) => {
     let el = $(data.selector);
-    const traverseUpLevels = (data.traverseUp as number) || 0;
+    const traverseUpLevels = data.traverseUp || 0;
     for (let i = 0; i < traverseUpLevels; i++) {
       el = el.parent();
     }

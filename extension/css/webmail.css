@@ -1,11 +1,11 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /* Secure Compose button */
-#flowcrypt_secure_compose_button {
+#flowcrypt_secure_compose_button_icon {
   display: inline-flex;
   align-items: center;
   width: auto;
-  height: 48px;
+  height: 56px;
   margin: 0;
   padding: 0 24px 0 0;
   transition: box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -15,8 +15,10 @@
   line-height: 32px;
   background-color: #fff;
   border: none;
-  border-radius: 24px;
-  box-shadow: 0 1px 2px 0 rgb(60 64 67 / 30%), 0 1px 3px 1px rgb(60 64 67 / 15%);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px 0 rgb(60 64 67 / 30%),
+    0 1px 3px 1px rgb(60 64 67 / 15%);
   color: #3c4043;
   font-weight: 500;
   white-space: nowrap;
@@ -27,11 +29,11 @@
   outline: 0;
 }
 
-.small #flowcrypt_secure_compose_button {
+.small #flowcrypt_secure_compose_button_icon {
   height: 40px;
 }
 
-#flowcrypt_secure_compose_button::before {
+#flowcrypt_secure_compose_button_icon::before {
   display: block;
   content: '';
   background-size: 24px;
@@ -44,48 +46,37 @@
   background-repeat: no-repeat;
 }
 
-.compose_button_simple {
+.compose_icon_simple {
   height: 33px !important;
   margin: 0 12px !important;
   display: block !important;
 }
 
-.compose_button_simple::before {
+.compose_icon_simple::before {
   left: -6px;
   position: relative;
 }
 
-.only-icon #flowcrypt_secure_compose_button {
-  height: 40px;
-  width: 16px;
-  border-radius: 20px;
-}
-
-.only-icon #flowcrypt_secure_compose_button::before {
-  background-position-x: 9px !important;
-  background-position-y: 12px !important;
-}
-
-#flowcrypt_secure_compose_button:hover,
-#flowcrypt_secure_compose_button:focus {
+#flowcrypt_secure_compose_button_icon:hover,
+#flowcrypt_secure_compose_button_icon:focus {
   box-shadow: 0 5px 10px 2px rgb(60 64 67 / 20%);
 }
 
-.bhZ:not(.bym) #flowcrypt_secure_compose_button {
+.bhZ:not(.bym) #flowcrypt_secure_compose_button_icon {
   width: 56px;
   height: 56px;
-  border-radius: 28px;
+  border-radius: 16px;
   font-size: 0;
   padding: 0;
 }
 
-.bhZ:not(.bym) .small #flowcrypt_secure_compose_button {
+.bhZ:not(.bym) .small #flowcrypt_secure_compose_button_icon {
   width: 40px;
   height: 40px;
   border-radius: 20px;
 }
 
-.bhZ:not(.bym) .small #flowcrypt_secure_compose_button::before {
+.bhZ:not(.bym) .small #flowcrypt_secure_compose_button_icon::before {
   min-width: 42px;
 }
 
@@ -97,7 +88,7 @@
   padding-bottom: 25px;
 }
 
-[class*="_destroyable"].z0:not(.small) {
+[class*='_destroyable'].z0:not(.small) {
   margin-bottom: 0 !important;
   display: initial;
 }
@@ -120,7 +111,7 @@ div.webmail_notifications div.webmail_notification {
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12.8px;
   font-weight: bold;
   line-height: 16px;
@@ -204,11 +195,30 @@ body.cryptup_gmail .inserted div.reply_message_button {
   height: auto;
 }
 
-@-moz-document url-prefix('') {
+@supports (-moz-appearance: none) {
   /* Firefox specific */
   body.cryptup_gmail .inserted div.reply_message_button {
     padding-bottom: 4px;
   }
+}
+
+body.cryptup_gmail div.action_menu_message_button {
+  display: flex;
+  align-items: center;
+  text-transform: capitalize;
+  cursor: pointer;
+  padding: 4px;
+}
+
+body.cryptup_gmail div.action_menu_message_button:hover {
+  background-color: #eee; /* mimic Gmail hover. uses exact color pallete from Gmail */
+}
+
+body.cryptup_gmail div.action_menu_message_button > img {
+  height: 20px;
+  width: 20px;
+  padding: 0 12px;
+  object-fit: contain;
 }
 
 body.cryptup_gmail.firefox .inserted div.reply_message_button {
@@ -242,7 +252,7 @@ body.cryptup_gmail_new div.new_secure_compose_window_button:hover {
   background-color: #fafafb;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button > img {
   border: 2px solid #31a217;
   width: 10px;
   margin: 4px;
@@ -251,7 +261,7 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > img {
   opacity: 0.8;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button > span {
   text-transform: uppercase;
   font-size: 9.5px;
   color: white;
@@ -259,21 +269,23 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span {
   padding: 2px 3px;
   display: inline-block;
   border-radius: 2px;
-  cursor: default;
+  cursor: pointer;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img,
-div.ade.appended span.cryptup_convo_button:hover > span {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button:hover > img,
+div.hj.appended span.cryptup_convo_button:hover > span {
   opacity: 1;
 }
 
-body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) {
+body.cryptup_gmail div.hj.appended span.cryptup_convo_button:not(:first-child) {
   margin-left: 5px;
 }
 
-body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button {
+body.cryptup_gmail.cryptup_gmail_new div.hj.appended span.cryptup_convo_button {
   margin-left: 18px;
   zoom: 1.2;
+  float: left;
+  margin-top: 2px;
 }
 
 /* The 'End Pass Phrase Session' button */
@@ -360,16 +372,16 @@ body.cryptup_outlook ._fce_i {
   pointer-events: none;
 }
 
-.secure_compose_window[data-order="1"] {
+.secure_compose_window[data-order='1'] {
   right: 30px;
 }
 
-.secure_compose_window[data-order="2"] {
+.secure_compose_window[data-order='2'] {
   left: 50%;
   margin-left: -270px;
 }
 
-.secure_compose_window[data-order="3"] {
+.secure_compose_window[data-order='3'] {
   left: 30px;
 }
 
@@ -394,7 +406,7 @@ body.cryptup_outlook ._fce_i {
   height: 100%;
 }
 
-@media screen and (max-height: 600px) {
+@media screen and (height <= 600px) {
   .secure_compose_window,
   .secure_compose_window iframe {
     height: 450px;
@@ -462,6 +474,15 @@ span.pgp_attachment > iframe {
   margin: 0;
   border: none;
   overflow: hidden;
+}
+
+div.attachment_loader {
+  line-height: 24px;
+}
+
+div.attachment_loader > i {
+  position: relative;
+  top: 6px;
 }
 
 div.reply_message_iframe_container {

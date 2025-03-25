@@ -92,7 +92,7 @@ body {
   width: 250px;
   height: 120px;
   background: #f3f3f3;
-  content: "";
+  content: '';
 }
 
 .profile-row .action_open_settings {
@@ -117,7 +117,7 @@ body {
 .profile-row .action_open_settings::before {
   background: rgba(0, 0, 0, 0.052);
   position: absolute;
-  content: "";
+  content: '';
   margin-left: -6px;
   left: 0;
   top: -5px;

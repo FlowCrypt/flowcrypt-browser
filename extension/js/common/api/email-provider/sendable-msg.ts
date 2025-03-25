@@ -52,11 +52,11 @@ export class SendableMsg {
     public type: MimeEncodeType,
     public externalId?: string // for binding a password-protected message
   ) {
-    const allEmails = this.getAllRecipients();
-    if (!allEmails.length && !isDraft) {
+    const allRecipients = this.getAllRecipients();
+    if (!allRecipients.length && !isDraft) {
       throw new Error('The To:, Cc: and Bcc: fields are empty. Please add recipients and try again');
     }
-    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email.email));
+    const invalidEmails = allRecipients.map(recipient => recipient.email).filter(email => !Str.isEmailValid(email));
     // todo: distinguish To:, Cc: and Bcc: in error report?
     if (invalidEmails.length) {
       throw new InvalidRecipientError(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
@@ -127,11 +127,11 @@ export class SendableMsg {
     acctEmail: string,
     headers: SendableMsgHeaders,
     attachments: Attachment[],
-    options?: SendableMsgOptions
+    options: SendableMsgOptions
   ): Promise<SendableMsg> => {
     return await SendableMsg.createSendableMsg(acctEmail, headers, {}, attachments, {
-      type: options ? 'pgpMimeEncrypted' : undefined,
-      isDraft: options ? options.isDraft : undefined,
+      type: 'pgpMimeEncrypted',
+      isDraft: options.isDraft,
     });
   };
 
@@ -193,8 +193,7 @@ export class SendableMsg {
       this.headers['Reply-To'] = this.replyTo;
     }
     for (const [recipientType, value] of Object.entries(this.recipients)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (value && value!.length) {
+      if (value?.length) {
         // todo - properly escape/encode this header using emailjs
         this.headers[recipientType[0].toUpperCase() + recipientType.slice(1)] = value
           .map(h => Str.formatEmailWithOptionalName(h).replace(/[,]/g, ''))

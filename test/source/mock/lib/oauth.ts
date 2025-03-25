@@ -4,10 +4,14 @@ import { HttpClientErr, Status } from './api';
 
 import { Buf } from '../../core/buf';
 import { Str } from '../../core/common';
+import { issuedCustomIDPIdTokens, issuedGoogleIDPIdTokens } from '../fes/customer-url-fes-endpoints';
+import { MOCK_PORT } from '../../core/const';
 
-const authURL = 'https://localhost:8001';
+const authURL = `https://localhost:${MOCK_PORT}`;
 
 export class OauthMock {
+  public static customIDPClientId = 'custom-test-idp-client-id';
+  public static customIDPClientSecret = 'test-secret';
   public clientId = '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com';
   public expiresIn = 2 * 60 * 60; // 2hrs in seconds
 
@@ -19,11 +23,21 @@ export class OauthMock {
   private acctByIdToken: { [acct: string]: string } = {};
   private issuedIdTokensByAcct: { [acct: string]: string[] } = {};
 
+  public static getCustomIDPOAuthConfig = (port: number | undefined) => {
+    return {
+      clientId: OauthMock.customIDPClientId,
+      clientSecret: OauthMock.customIDPClientSecret,
+      redirectUrl: `custom-redirect-url`, // This won't be used as we use our https://{id}.chromiumapp.org with chrome.identity.getRedirectURL
+      authCodeUrl: `https://localhost:${port}/o/oauth2/auth`,
+      tokensUrl: `https://localhost:${port}/token`,
+    };
+  };
   public renderText = (text: string) => {
     return this.htmlPage(text, text);
   };
 
-  public successResult = (port: string, acct: string, state: string, scope: string) => {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  public successResult = (port: string, acct: string, state: string, scope: string, redirect_uri?: string) => {
     const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -32,7 +46,7 @@ export class OauthMock {
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
     this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
-    const url = new URL(`https://google.localhost:${port}/robots.txt`);
+    const url = new URL(redirect_uri ?? `https://google.localhost:${port}/robots.txt`);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
     // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
@@ -40,12 +54,12 @@ export class OauthMock {
     return url.href;
   };
 
-  public getRefreshTokenResponse = (code: string) => {
+  public getRefreshTokenResponse = (code: string, isCustomIDPAuth: boolean) => {
     /* eslint-disable @typescript-eslint/naming-convention */
     const refresh_token = this.refreshTokenByAuthCode[code];
     const access_token = this.getAccessToken(refresh_token);
     const acct = this.acctByAccessToken[access_token];
-    const id_token = this.generateIdToken(acct);
+    const id_token = this.generateIdToken(acct, isCustomIDPAuth);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
     /* eslint-enable @typescript-eslint/naming-convention */
   };
@@ -59,15 +73,15 @@ export class OauthMock {
     };
   };
 
-  public getTokenResponse = (refreshToken: string) => {
+  public getTokenResponse = (refreshToken: string, isCustomIDPAuth: boolean) => {
     try {
       /* eslint-disable @typescript-eslint/naming-convention */
       const access_token = this.getAccessToken(refreshToken);
       const acct = this.acctByAccessToken[access_token];
-      const id_token = this.generateIdToken(acct);
+      const id_token = this.generateIdToken(acct, isCustomIDPAuth);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
       /* eslint-enable @typescript-eslint/naming-convention */
-    } catch (e) {
+    } catch {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
     }
   };
@@ -92,7 +106,13 @@ export class OauthMock {
       throw new HttpClientErr('Missing mock bearer authorization header', Status.UNAUTHORIZED);
     }
     const accessToken = authorization.replace(/^Bearer /, '');
-    const acct = this.acctByIdToken[accessToken];
+    let acct = this.acctByIdToken[accessToken];
+    if (!acct) {
+      // After logging in to a mock google account, the browser submits google's access token to some other endpoints
+      // Specifying an idtoken in `Authorization` header doesn't help, it gets overriden with the access token by the browser
+      // todo: Inspect how we should solve this
+      acct = this.acctByAccessToken[accessToken];
+    }
     if (!acct) {
       throw new HttpClientErr('Invalid idToken token', Status.UNAUTHORIZED);
     }
@@ -132,13 +152,18 @@ export class OauthMock {
 
   // -- private
 
-  private generateIdToken = (email: string): string => {
+  private generateIdToken = (email: string, isCustomIDPAuth: boolean): string => {
     const newIdToken = MockJwt.new(email, this.expiresIn);
     if (!this.issuedIdTokensByAcct[email]) {
       this.issuedIdTokensByAcct[email] = [];
     }
     this.issuedIdTokensByAcct[email].push(newIdToken);
     this.acctByIdToken[newIdToken] = email;
+    if (isCustomIDPAuth) {
+      issuedCustomIDPIdTokens.push(newIdToken);
+    } else {
+      issuedGoogleIDPIdTokens.push(newIdToken);
+    }
     return newIdToken;
   };
 
@@ -186,5 +211,3 @@ export class MockJwt {
     return email; // eslint-disable-line @typescript-eslint/no-unsafe-return
   };
 }
-
-export const oauth = new OauthMock();

@@ -3,7 +3,7 @@
 import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
 
 import { AvaContext } from '../tooling/';
-import { ElementHandle, JSHandle } from 'puppeteer';
+import { ElementHandle } from 'puppeteer';
 import { Util } from '../../util';
 
 type ModalOpts = {
@@ -15,11 +15,11 @@ type ModalOpts = {
 type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export abstract class PageRecipe {
-  public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => {
-    return (await ((await elem.getProperty(property)) as JSHandle).jsonValue()) as string;
+  public static getElementPropertyJson = async (elem: ElementHandle, property: string) => {
+    return (await (await elem.getProperty(property)).jsonValue()) as string;
   };
 
-  public static getElementAttribute = async (elem: ElementHandle<Element>, attribute: string) => {
+  public static getElementAttribute = async (elem: ElementHandle, attribute: string) => {
     return await elem.evaluate((el, attribute) => el.getAttribute(attribute), attribute);
   };
 
@@ -27,7 +27,7 @@ export abstract class PageRecipe {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('.swal2-html-container');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const actualContent = await PageRecipe.getElementPropertyJson(contentElement!, 'textContent');
       if (!actualContent.includes(contentToCheck)) {
         throw new Error(`Expected modal to contain "${contentToCheck}" but contained "${actualContent}"`);
@@ -36,6 +36,16 @@ export abstract class PageRecipe {
     if (clickOn) {
       const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
       await button?.click();
+    }
+  };
+
+  public static checkModalLink = async (controllable: Controllable, type: ModalType, linktoCheck: string) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout: 15 });
+    const contentElement = await modalContainer.$('.swal2-html-container a');
+
+    const actualLink = await PageRecipe.getElementPropertyJson(contentElement!, 'textContent');
+    if (!actualLink.includes(linktoCheck)) {
+      throw new Error(`Expected link "${linktoCheck}" not found. Actual content: "${actualLink}"`);
     }
   };
 
@@ -60,16 +70,6 @@ export abstract class PageRecipe {
         }),
       msg
     );
-  };
-
-  public static getTabId = async (controllable: Controllable): Promise<string> => {
-    const result = await PageRecipe.sendMessage(controllable, {
-      name: '_tab_',
-      data: { bm: {}, objUrls: {} },
-      to: null, // eslint-disable-line no-null/no-null
-      uid: '1',
-    });
-    return (result as { result: { tabId: string } }).result.tabId;
   };
 
   public static addPubkey = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, pubkey: string, email?: string) => {

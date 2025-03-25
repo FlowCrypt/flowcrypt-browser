@@ -65,7 +65,7 @@ with open('./tooling/release-firefox-latest-update.json', 'w') as outfile:
             "update_hash": f"sha256:{get_hash(ff_path_saved)}",
             "applications": {
               "gecko": {
-                "strict_min_version": "60.0"
+                "strict_min_version": "112.0"
               }
             }
           }
@@ -78,7 +78,7 @@ with open('./tooling/release-firefox-latest-update.json', 'w') as outfile:
 
 ff_path = conf["firefox"]["path"]["upload"]
 replace_version_in_web_files = [
-  '../flowcrypt-web/source/blog/page/download.markdown',
+  '../flowcrypt-web/source/docs/blog/download.markdown',
   '../flowcrypt-web/source/html/js/pages/index.js'
 ]
 
@@ -88,4 +88,5 @@ for filepath in replace_version_in_web_files:
   with open(filepath, 'w') as wp:
     wp.write(replaced)
 
-os.system('cd ../flowcrypt-web && git pull && git commit -a --message=\'firefox v%s links updated\' && git push && cd ../flowcrypt-browser' % version)
+os.system('cd ../flowcrypt-web && git pull && git checkout -b release-%s && git commit -a --message=\'firefox v%s links updated\' && git push origin release-%s && cd ../flowcrypt-browser' % dashed_version, version, dashed_version))
+

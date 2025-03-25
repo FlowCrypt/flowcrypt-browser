@@ -65,35 +65,35 @@ export class PgpArmor {
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
   };
 
-  public static isEncryptedMsg = (msg: string): boolean => {
-    return !!msg.match(new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`));
-  };
+  public static isEncryptedMsg(msg: string): boolean {
+    return !!new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`).exec(msg);
+  }
 
-  public static clipIncomplete = (text: string): string | undefined => {
+  public static clipIncomplete(text: string): string | undefined {
     const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/gm);
-    return match && match.length ? match[0] : undefined;
-  };
+    return match?.length ? match[0] : undefined;
+  }
 
-  public static clip = (text: string): string | undefined => {
+  public static clip(text: string): string | undefined {
     if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
       const match = text.match(
         /(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm
       );
-      return match && match.length ? match[0] : undefined;
+      return match?.length ? match[0] : undefined;
     }
     return undefined;
-  };
+  }
 
-  public static headers = (blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition => {
+  public static headers(blockType: ReplaceableMsgBlockType | 'null', format = 'string'): CryptoArmorHeaderDefinition {
     const h = PgpArmor.ARMOR_HEADER_DICT[blockType];
     return {
       begin: typeof h.begin === 'string' && format === 're' ? h.begin.replace(/ /g, '\\s') : h.begin,
       end: typeof h.end === 'string' && format === 're' ? h.end.replace(/ /g, '\\s') : h.end,
       replace: h.replace,
     };
-  };
+  }
 
-  public static normalize = (armored: string, type: ReplaceableMsgBlockType | 'key') => {
+  public static normalize(armored: string, type: ReplaceableMsgBlockType | 'key') {
     armored = Str.normalize(armored).replace(/\n /g, '\n');
     if (['encryptedMsg', 'publicKey', 'privateKey', 'key'].includes(type)) {
       armored = armored.replace(/\r?\n/g, '\n').trim();
@@ -112,10 +112,10 @@ export class PgpArmor {
     // check for and fix missing a mandatory empty line
     if (lines.length > 5 && lines[0].includes(h.begin) && lines[lines.length - 1].includes(String(h.end)) && !lines.includes('')) {
       for (let i = 1; i < 5; i++) {
-        if (lines[i].match(/^[a-zA-Z0-9\-_. ]+: .+$/)) {
+        if (/^[a-zA-Z0-9\-_. ]+: .+$/.exec(lines[i])) {
           continue; // skip comment lines, looking for first data line
         }
-        if (lines[i].match(/^[a-zA-Z0-9\/+]{32,77}$/)) {
+        if (/^[a-zA-Z0-9\/+]{32,77}$/.exec(lines[i])) {
           // insert empty line before first data line
           armored = `${lines.slice(0, i).join('\n')}\n\n${lines.slice(i).join('\n')}`;
           break;
@@ -124,13 +124,13 @@ export class PgpArmor {
       }
     }
     return armored;
-  };
+  }
 
-  public static cryptoMsgPrepareForDecrypt = async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
+  public static async cryptoMsgPrepareForDecrypt(encrypted: Uint8Array | string): Promise<PreparedForDecrypt> {
     if (!encrypted.length) {
       throw new Error('Encrypted message could not be parsed because no data was provided');
     }
-    const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
+    const utfChunk = typeof encrypted === 'string' ? encrypted.substring(0, 100) : new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
     if (utfChunk.includes(PgpArmor.headers('pkcs7').begin)) {
       const p7 = SmimeKey.readArmoredPkcs7Message(encrypted);
       if (p7.type !== ENVELOPED_DATA_OID) {
@@ -146,25 +146,25 @@ export class PgpArmor {
         isArmored,
         isCleartext: true,
         isPkcs7: false,
-        message: await opgp.readCleartextMessage({ cleartextMessage: new Buf(encrypted).toUtfStr() }),
+        message: await opgp.readCleartextMessage({ cleartextMessage: Str.with(encrypted) }),
       };
     } else if (isArmoredEncrypted) {
-      const message = await opgp.readMessage({ armoredMessage: new Buf(encrypted).toUtfStr() });
+      const message = await opgp.readMessage({ armoredMessage: Str.with(encrypted) });
       const isCleartext = !!message.getLiteralData() && !!message.getSigningKeyIDs().length && !message.getEncryptionKeyIDs().length;
       return { isArmored: true, isCleartext, isPkcs7: false, message };
     } else if (encrypted instanceof Uint8Array) {
       return { isArmored, isCleartext: false, isPkcs7: false, message: await opgp.readMessage({ binaryMessage: encrypted }) };
     }
     throw new Error('Message does not have armor headers');
-  };
+  }
 
-  public static dearmor = async (text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> => {
+  public static async dearmor(text: string): Promise<{ type: OpenPGP.enums.armor; data: Uint8Array }> {
     const decoded = await opgp.unarmor(text);
     const data = await Stream.readToEnd(decoded.data);
     return { type: decoded.type, data };
-  };
+  }
 
-  public static armor = (messagetype: OpenPGP.enums.armor, body: object): string => {
-    return opgp.armor(messagetype, body, undefined, undefined, undefined, opgp.config);
-  };
+  public static armor(messagetype: OpenPGP.enums.armor, body: object): string {
+    return opgp.armor(messagetype, body, undefined, undefined, undefined, false, opgp.config);
+  }
 }

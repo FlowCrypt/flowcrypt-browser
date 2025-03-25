@@ -6,7 +6,7 @@ import { Browser } from '../../../js/common/browser/browser.js';
 import { BrowserEventErrHandler, Ui } from '../../../js/common/browser/ui.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { NewMsgData, SendBtnTexts, SendMsgsResult } from './compose-types.js';
-import { ApiErr } from '../../../js/common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserExtension } from '../../../js/common/browser/browser-extension.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -16,12 +16,14 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { AjaxErrMsgs } from '../../../js/common/api/shared/api-error.js';
 import { Lang } from '../../../js/common/lang.js';
+import linkifyHtml from 'linkifyHtml';
+import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 
 export class ComposerUserError extends Error {}
 class ComposerNotReadyError extends ComposerUserError {}
 export class ComposerResetBtnTrigger extends Error {}
 
-export const PUBKEY_LOOKUP_RESULT_FAIL = 'fail' as const;
+export const PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
 
 export class ComposeErrModule extends ViewModule<ComposeView> {
   private debugId = Str.sloppyRandom();
@@ -44,7 +46,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         } else if (typeof e === 'object' && e && typeof (e as { stack: string }).stack === 'undefined') {
           try {
             (e as { stack: string }).stack = `[compose action: ${couldNotDoWhat}]`;
-          } catch (e) {
+          } catch {
             // no need
           }
         }
@@ -57,8 +59,8 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   public debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
       this.view.S.cached(selName)
-        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
-        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
+        .on('focusin', e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? (e.relatedTarget as HTMLElement).outerHTML : undefined})`))
+        .on('focusout', e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? (e.relatedTarget as HTMLElement).outerHTML : undefined})`));
     }
   };
 
@@ -82,6 +84,9 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
           '(This may also be caused by <a href="https://flowcrypt.com/docs/help/network-error.html" target="_blank">missing extension permissions</a>).';
       }
       await Ui.modal.error(netErrMsg, true);
+    } else if (e instanceof EnterpriseServerAuthErr) {
+      BrowserMsg.send.notificationShowCustomIDPAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
+      Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
     } else if (ApiErr.isAuthErr(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
       Settings.offerToLoginWithPopupShowModalOnErr(this.view.acctEmail, () => this.view.sendBtnModule.extractProcessSendMsg());
@@ -157,6 +162,11 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
   };
 
   public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string; pwd?: string }) => {
+    const disallowedPasswordMessageTerms = this.view.clientConfiguration.getDisallowPasswordMessagesForTerms();
+    const disallowedPasswordMessageErrorText = this.view.clientConfiguration.getDisallowPasswordMessagesErrorText();
+    if (disallowedPasswordMessageErrorText && disallowedPasswordMessageTerms && !MsgUtil.isPasswordMessageEnabled(subject, disallowedPasswordMessageTerms)) {
+      throw new ComposerUserError(linkifyHtml(disallowedPasswordMessageErrorText, { target: '_blank' }));
+    }
     // When DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES present, and recipients are missing a public key, and the user is using flowcrypt.com/shared-tenant-fes (not FES)
     if (this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed()) {
       throw new ComposerUserError(Lang.compose.addMissingRecipientPubkeys);
@@ -188,7 +198,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
         throw new ComposerUserError(pwdErrText.split('\n').join('<br />'));
       }
     } else {
-      this.view.S.cached('input_password').focus();
+      this.view.S.cached('input_password').trigger('focus');
       throw new ComposerUserError("Some recipients don't have encryption set up. Please add a password.");
     }
   };

@@ -18,6 +18,7 @@ import { Settings } from '../../js/common/settings.js';
 import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Lang } from '../../js/common/lang.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
+import { BruteForceProtection } from '../../js/common/brute-force-protection.js';
 
 const passPhraseTypes = stringTuple('embedded', 'sign', 'message', 'draft', 'attachment', 'quote', 'backup', 'update_key');
 type PassPhraseType = (typeof passPhraseTypes)[number];
@@ -25,11 +26,12 @@ type PassPhraseType = (typeof passPhraseTypes)[number];
 View.run(
   class PassphraseView extends View {
     public fesUrl?: string;
+    public readonly parentTabId: string;
     private readonly acctEmail: string;
-    private readonly parentTabId: string;
     private readonly longids: string[];
     private readonly type: PassPhraseType;
     private readonly initiatorFrameId?: string;
+    private readonly bruteForceProtection: BruteForceProtection;
     private keysWeNeedPassPhraseFor: KeyInfoWithIdentity[] | undefined;
     private clientConfiguration!: ClientConfiguration;
 
@@ -42,11 +44,13 @@ View.run(
       this.longids = longidsParam ? longidsParam.split(',') : [];
       this.type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', passPhraseTypes);
       this.initiatorFrameId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'initiatorFrameId');
+      this.bruteForceProtection = new BruteForceProtection(this.acctEmail);
     }
 
     public render = async () => {
       Ui.event.protect();
       const storage = await AcctStore.get(this.acctEmail, ['fesUrl']);
+      await this.bruteForceProtection.init();
       this.fesUrl = storage.fesUrl;
       this.clientConfiguration = await ClientConfiguration.newInstance(this.acctEmail);
       if (!this.clientConfiguration.forbidStoringPassPhrase()) {
@@ -95,7 +99,7 @@ View.run(
           break;
       }
       $('.passphrase_text').text(passphraseText);
-      $('#passphrase').focus();
+      $('#passphrase').trigger('focus');
       if (allPrivateKeys.length > 1) {
         let html: string;
         if (this.keysWeNeedPassPhraseFor.length === 1) {
@@ -115,7 +119,10 @@ View.run(
     };
 
     public setHandlers = () => {
-      $('#passphrase').keyup(this.setHandler(() => this.renderNormalPpPrompt()));
+      $('#passphrase').on(
+        'keyup',
+        this.setHandler(() => this.renderNormalPpPrompt())
+      );
       $('.action_close').on(
         'click',
         this.setHandler(() => this.closeDialog())
@@ -161,7 +168,8 @@ View.run(
           );
         })
       );
-      $('#passphrase').keydown(
+      $('#passphrase').on(
+        'keydown',
         this.setHandler((el, ev) => {
           if (ev.key === 'Enter') {
             $('.action_ok').trigger('click');
@@ -181,7 +189,7 @@ View.run(
     private renderNormalPpPrompt = () => {
       $('#passphrase').css('border-color', '');
       $('#passphrase').css('color', 'black');
-      $('#passphrase').focus();
+      $('#passphrase').trigger('focus');
     };
 
     private renderFailedEntryPpPrompt = () => {
@@ -192,11 +200,26 @@ View.run(
     };
 
     private closeDialog = (entered = false, initiatorFrameId?: string) => {
-      BrowserMsg.send.closeDialog(this.parentTabId);
-      BrowserMsg.send.passphraseEntry('broadcast', { entered, initiatorFrameId });
+      BrowserMsg.send.closeDialog(this);
+      BrowserMsg.send.passphraseEntry({ entered, initiatorFrameId });
+    };
+
+    private closeDialogPageOpenedExternally = async () => {
+      if (Catch.isThunderbirdMail() && window.top === window.self) {
+        const currentTab = await messenger.tabs.query({ active: true, currentWindow: true });
+        if (currentTab.length > 0) {
+          const tabId = currentTab[0].id;
+          if (tabId) {
+            await messenger.tabs.remove(tabId);
+          }
+        }
+      }
     };
 
     private submitHandler = async () => {
+      if (await this.bruteForceProtection.shouldDisablePassphraseCheck()) {
+        return;
+      }
       const pass = String($('#passphrase').val());
       const storageType: StorageType =
         $('.forget-pass-phrase-checkbox').prop('checked') || this.clientConfiguration.forbidStoringPassPhrase() ? 'session' : 'local';
@@ -207,7 +230,7 @@ View.run(
         // if passphrase matches more keys, it will save the pass phrase for all keys
         const prv = await KeyUtil.parse(keyinfo.private);
         try {
-          if ((await KeyUtil.decrypt(prv, pass)) === true) {
+          if (await KeyUtil.decrypt(prv, pass)) {
             unlockCount++;
             await PassphraseStore.set(storageType, this.acctEmail, keyinfo, pass);
             if (this.longids.includes(keyinfo.longid)) {
@@ -230,10 +253,14 @@ View.run(
       }
       if (unlockCount && allPrivateKeys.length > 1) {
         Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
+        await this.closeDialogPageOpenedExternally();
       }
       if (atLeastOneMatched) {
+        await this.bruteForceProtection.passphraseCheckSucceed();
         this.closeDialog(true, this.initiatorFrameId);
+        await this.closeDialogPageOpenedExternally();
       } else {
+        await this.bruteForceProtection.passphraseCheckFailed();
         this.renderFailedEntryPpPrompt();
         Catch.setHandledTimeout(() => this.renderNormalPpPrompt(), 1500);
       }

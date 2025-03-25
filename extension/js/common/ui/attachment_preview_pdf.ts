@@ -3,17 +3,17 @@
 'use strict';
 
 import { Catch } from '../platform/catch.js';
-import { PDFDocumentProxy } from '../../../types/pdf.js';
+import { PDFDocumentProxy } from 'pdfjs';
 
 export class AttachmentPreviewPdf {
-  private attachmentPreviewContainer: JQuery<HTMLElement>;
+  private attachmentPreviewContainer: JQuery;
   private pdf: PDFDocumentProxy;
   private currentZoomLevel: number;
   private zoomLevels: number[];
   private fitToWidthZoomLevelDetected: boolean;
   private fitToWidthZoomLevel: number;
 
-  public constructor(attachmentPreviewContainer: JQuery<HTMLElement>, pdf: PDFDocumentProxy) {
+  public constructor(attachmentPreviewContainer: JQuery, pdf: PDFDocumentProxy) {
     this.attachmentPreviewContainer = attachmentPreviewContainer;
     this.pdf = pdf;
     this.currentZoomLevel = 1;
@@ -61,7 +61,8 @@ export class AttachmentPreviewPdf {
     const viewport = page.getViewport({ scale: this.currentZoomLevel });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    await page.render({ canvasContext: canvas.getContext('2d') as CanvasRenderingContext2D, viewport }).promise;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
   };
 
   private renderControls = () => {
@@ -84,8 +85,11 @@ export class AttachmentPreviewPdf {
     this.attachmentPreviewContainer.append(controls); // xss-escaped
     // Page X of Y
     this.attachmentPreviewContainer.on('scroll', () => {
-      const pageHeight = this.attachmentPreviewContainer.find('canvas').outerHeight(true) as number;
-      const scrollTop = this.attachmentPreviewContainer.scrollTop() as number;
+      const pageHeight = this.attachmentPreviewContainer.find('canvas').outerHeight(true);
+      const scrollTop = this.attachmentPreviewContainer.scrollTop() ?? 0;
+      if (!pageHeight) {
+        return;
+      }
       const currentPage = Math.round(scrollTop / pageHeight) + 1;
       this.attachmentPreviewContainer.find('#pdf-preview-current-page-number').text(currentPage);
     });
@@ -121,11 +125,11 @@ export class AttachmentPreviewPdf {
     // fit to width
     container.find('#pdf-preview-fit-to-width').on('click', async () => {
       if (!this.fitToWidthZoomLevelDetected) {
-        let containerWidth = container.width() as number;
-        if (Catch.browser().name === 'firefox') {
+        let containerWidth = container.width() ?? 0;
+        if (Catch.isFirefox()) {
           containerWidth -= this.getScrollbarWidth();
         }
-        this.fitToWidthZoomLevel = containerWidth / (container.find('.attachment-preview-pdf-page').width() as number);
+        this.fitToWidthZoomLevel = containerWidth / (container.find('.attachment-preview-pdf-page').width() ?? 1);
         this.zoomLevels.push(this.fitToWidthZoomLevel);
         this.zoomLevels = this.zoomLevels.sort();
         this.fitToWidthZoomLevelDetected = true;

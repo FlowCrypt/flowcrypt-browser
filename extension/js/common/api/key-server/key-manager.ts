@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { Api, ReqMethod } from './../shared/api.js';
-import { Dict } from '../../core/common.js';
+import { Api } from './../shared/api.js';
+import { Url } from '../../core/common.js';
+import { ConfiguredIdpOAuth } from '../authentication/configured-idp-oauth.js';
 
 type LoadPrvRes = { privateKeys: { decryptedPrivateKey: string }[] };
 
@@ -12,27 +13,20 @@ export class KeyManager extends Api {
 
   public constructor(url: string) {
     super();
-    this.url = url.replace(/\/$/, ''); // remove trailing space
+    this.url = Url.removeTrailingSlash(url);
   }
 
-  public getPrivateKeys = async (idToken: string): Promise<LoadPrvRes> => {
-    return (await this.request('GET', '/v1/keys/private', undefined, idToken)) as LoadPrvRes;
+  public getPrivateKeys = async (acctEmail: string): Promise<LoadPrvRes> => {
+    return await Api.apiCall(this.url, '/v1/keys/private', undefined, undefined, await ConfiguredIdpOAuth.authHdr(acctEmail, false), 'json');
   };
 
-  public storePrivateKey = async (idToken: string, privateKey: string): Promise<void> => {
-    return await this.request('PUT', '/v1/keys/private', { privateKey }, idToken);
-  };
-
-  private request = async <RT>(method: ReqMethod, path: string, vals?: Dict<unknown> | undefined, idToken?: string): Promise<RT> => {
-    return await Api.apiCall(
+  public storePrivateKey = async (acctEmail: string, privateKey: string): Promise<void> => {
+    await Api.apiCall(
       this.url,
-      path,
-      vals,
-      vals ? 'JSON' : undefined,
+      '/v1/keys/private',
+      { data: { privateKey }, fmt: 'JSON', method: 'PUT' },
       undefined,
-      idToken ? { Authorization: `Bearer ${idToken}` } : undefined, // eslint-disable-line @typescript-eslint/naming-convention
-      undefined,
-      method
+      await ConfiguredIdpOAuth.authHdr(acctEmail, false)
     );
   };
 }

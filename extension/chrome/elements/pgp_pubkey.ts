@@ -13,6 +13,8 @@ import { Url } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
+import { Buf } from '../../js/common/core/buf.js';
+import { OpenPGPKey } from '../../js/common/core/crypto/pgp/openpgp-key.js';
 
 // todo - this should use KeyImportUI for consistency.
 View.run(
@@ -54,7 +56,7 @@ View.run(
       this.firstParsedPublicKey = this.parsedPublicKeys ? this.parsedPublicKeys[0] : undefined;
       $('.pubkey').text(this.armoredPubkey);
       if (this.compact) {
-        $('.hide_if_compact').remove();
+        $('.hide_if_compact').hide();
         $('body').css({ border: 'none', padding: 0 });
         $('.line').removeClass('line');
       }
@@ -71,11 +73,8 @@ View.run(
           !this.firstParsedPublicKey.usableForEncryption &&
           !this.firstParsedPublicKey.usableForSigning
         ) {
-          this.showKeyNotUsableError();
+          await this.showKeyNotUsableError();
         } else {
-          if (this.compact) {
-            $('.hide_if_compact_and_not_error').remove();
-          }
           let emailText = '';
           if (this.parsedPublicKeys.length === 1) {
             const email = this.firstParsedPublicKey.emails[0];
@@ -119,7 +118,7 @@ View.run(
             frameId: this.frameId,
           });
         } else {
-          this.showKeyNotUsableError();
+          await this.showKeyNotUsableError();
         }
       }
       this.sendResizeMsg();
@@ -130,11 +129,33 @@ View.run(
         'click',
         this.setHandler(btn => this.addContactHandler(btn))
       );
-      $('.input_email').keyup(this.setHandler(() => this.setBtnText()));
+      $('.input_email').on(
+        'keyup',
+        this.setHandler(() => this.setBtnText())
+      );
       $('.action_show_full').on(
         'click',
         this.setHandler(btn => this.showFullKeyHandler(btn))
       );
+    };
+
+    private getErrorText = async () => {
+      let errorStr = '';
+      const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(this.armoredPubkey));
+      errorStr = errs.join('\n');
+      for (const key of keys) {
+        const errorMessage = await OpenPGPKey.checkPublicKeyError(key);
+        if (errorMessage) {
+          const match = new RegExp(/Error encrypting message: (.+)$/).exec(errorMessage);
+          // remove `error: error encrypting message: part`, so error message will begin directly from error reason
+          if (match) {
+            errorStr += match[1];
+          } else {
+            errorStr += errorMessage;
+          }
+        }
+      }
+      return errorStr;
     };
 
     private sendResizeMsg = () => {
@@ -159,19 +180,25 @@ View.run(
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
       } else {
         const contactWithPubKeys = await ContactStore.getOneWithAllPubkeys(undefined, String($('.input_email').val()));
+        const isExistingKey =
+          contactWithPubKeys?.sortedPubkeys?.some(existing => this.parsedPublicKeys?.some(parsedPubkey => existing.pubkey.id === parsedPubkey.id)) ?? false;
         $('.action_add_contact')
-          .text(
-            contactWithPubKeys && contactWithPubKeys.sortedPubkeys && contactWithPubKeys.sortedPubkeys.length > 0
-              ? 'update key'
-              : `import ${this.isExpired ? 'expired ' : ''}key`
-          )
+          .text(isExistingKey ? 'update key' : `import ${this.isExpired ? 'expired ' : ''}key`)
           .css('background-color', this.isExpired ? '#989898' : '');
       }
     };
 
-    private showKeyNotUsableError = () => {
+    private showKeyNotUsableError = async () => {
+      $('.error_container').removeClass('hidden');
+      $('.error_introduce_label').html(`This OpenPGP key is not usable.<br/><small>(${await this.getErrorText()})</small>`); // xss-escaped
+      $('.hide_if_error').hide();
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
-      $('#pgp_block.pgp_pubkey .result').prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
+      const email = this.firstParsedPublicKey?.emails[0];
+      if (email) {
+        $('.error_container .input_error_email').val(`${this.firstParsedPublicKey?.emails[0]}`);
+      } else {
+        $('.error_container .input_error_email').hide();
+      }
       $('.pubkey').addClass('bad');
     };
 
@@ -205,14 +232,14 @@ View.run(
           BrowserMsg.send.reRenderRecipient('broadcast', { email });
         } else {
           await Ui.modal.error('This email is invalid, please check for typos. Not added.');
-          $('.input_email').focus();
+          $('.input_email').trigger('focus');
         }
       }
     };
 
     private showFullKeyHandler = (showFullBtn: HTMLElement) => {
-      $(showFullBtn).css('display', 'none');
-      $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
+      $(showFullBtn).hide();
+      $('pre.pubkey, .line.fingerprints, .line.add_contact').show();
       this.sendResizeMsg();
     };
   }

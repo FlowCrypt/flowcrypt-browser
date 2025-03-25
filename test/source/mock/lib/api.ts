@@ -1,13 +1,25 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import * as https from 'https';
-import * as http from 'http';
+import * as http2 from 'http2';
 import { Util } from '../../util';
 import { readFileSync } from 'fs';
+import { AttesterConfig, getMockAttesterEndpoints } from '../attester/attester-endpoints';
+import { HandlersRequestDefinition } from '../all-apis-mock';
+import { KeysOpenPGPOrgConfig, getMockKeysOpenPGPOrgEndpoints } from '../keys-openpgp-org/keys-openpgp-org-endpoints';
+import { OauthMock } from './oauth';
+import { GoogleConfig, getMockGoogleEndpoints } from '../google/google-endpoints';
+import { KeyManagerConfig, getMockKeyManagerEndpoints } from '../key-manager/key-manager-endpoints';
+import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant-fes-endpoints';
+import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
+import { SksConfig, getMockSksEndpoints } from '../sks/sks-endpoints';
+import { getMockCustomerUrlFesEndpoints } from '../fes/customer-url-fes-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
-  public constructor(message: string, public statusCode = 400) {
+  public constructor(
+    message: string,
+    public statusCode = 400
+  ) {
     super(message);
   }
 }
@@ -20,30 +32,75 @@ export enum Status {
   UNAUTHORIZED = 401,
   FORBIDDEN = 403,
   NOT_FOUND = 404,
+  NOT_ALLOWED = 405,
   CONFLICT = 409, // conflicts with key on record - request needs to be verified
   SERVER_ERROR = 500,
   NOT_IMPLEMENTED = 501,
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 
-export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http.IncomingMessage) => Promise<RES>;
+export type RequestHandler<REQ, RES> = (parsedReqBody: REQ, req: http2.Http2ServerRequest) => Promise<RES>;
 export type Handlers<REQ, RES> = { [request: string]: RequestHandler<REQ, RES> };
 
+interface ConfigurationOptions {
+  attester?: AttesterConfig;
+  keysOpenPgp?: KeysOpenPGPOrgConfig;
+  ekm?: KeyManagerConfig;
+  fes?: FesConfig;
+  wkd?: WkdConfig;
+  google?: GoogleConfig;
+  sks?: SksConfig;
+}
+
+interface ConfigurationProviderInterface<REQ, RES> {
+  config: ConfigurationOptions;
+  getHandlers(): Handlers<REQ, RES>;
+}
+
+export class ConfigurationProvider implements ConfigurationProviderInterface<HandlersRequestDefinition, unknown> {
+  private oauth = new OauthMock();
+
+  public constructor(public config: ConfigurationOptions) {}
+
+  public getHandlers(): Handlers<HandlersRequestDefinition, unknown> {
+    let handlers: Handlers<HandlersRequestDefinition, unknown> = {};
+    if (this.config.attester) {
+      handlers = { ...handlers, ...getMockAttesterEndpoints(this.oauth, this.config.attester) };
+    }
+    handlers = {
+      ...handlers,
+      ...getMockGoogleEndpoints(this.oauth, this.config.google),
+      ...getMockCustomerUrlFesEndpoints(this.config.fes),
+      ...getMockSharedTenantFesEndpoints(this.config.fes),
+      ...getMockWkdEndpoints(this.config.wkd),
+      ...getMockSksEndpoints(this.config.sks),
+      ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
+      ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
+    };
+    return handlers;
+  }
+}
+
 export class Api<REQ, RES> {
-  public server: https.Server;
+  public server: http2.Http2Server;
+  public configProvider: ConfigurationProviderInterface<REQ, RES> | undefined;
   protected apiName: string;
   protected maxRequestSizeMb = 0;
   protected maxRequestSizeBytes = 0;
   protected throttleChunkMsUpload = 0;
   protected throttleChunkMsDownload = 0;
 
-  public constructor(apiName: string, protected handlers: Handlers<REQ, RES>, protected urlPrefix = '') {
+  public constructor(
+    apiName: string,
+    protected handlers: Handlers<REQ, RES>,
+    protected urlPrefix = ''
+  ) {
     this.apiName = apiName;
     const opt = {
       key: readFileSync(`./test/mock_cert/key.pem.mock`),
       cert: readFileSync(`./test/mock_cert/cert.pem.mock`),
     };
-    this.server = https.createServer(opt, (request, response) => {
+    this.server = http2.createSecureServer(opt, (request, response) => {
       const start = Date.now();
       this.handleReq(request, response)
         .then(data => this.throttledResponse(response, data))
@@ -55,7 +112,7 @@ export class Api<REQ, RES> {
             process.exit(1);
           }
         })
-        .catch(e => {
+        .catch((e: unknown) => {
           if (e instanceof HttpAuthErr) {
             response.statusCode = Status.UNAUTHORIZED;
             response.setHeader('WWW-Authenticate', `Basic realm="${this.apiName}"`);
@@ -95,30 +152,31 @@ export class Api<REQ, RES> {
           const address = this.server.address();
           const port = typeof address === 'object' && address ? address.port : undefined;
           const msg = `${this.apiName} listening on ${port}`;
-          console.log(msg);
+          console.debug(msg);
           resolve();
         });
         this.server.on('error', e => {
           console.error('failed to start mock server', e);
-          reject(e);
+          reject(e as Error);
         });
       } catch (e) {
         console.error('exception when starting mock server', e);
-        reject(e);
+        reject(e as Error);
       }
     });
   };
 
   public close = (): Promise<void> => {
-    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(err) : resolve())));
+    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(err as Error) : resolve())));
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected log = (ms: number, req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+  protected log = (ms: number, req: http2.Http2ServerRequest, res: http2.Http2ServerResponse, errRes?: Buffer) => {
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     return undefined as void;
   };
 
-  protected handleReq = async (req: http.IncomingMessage, res: http.ServerResponse): Promise<Buffer> => {
+  protected handleReq = async (req: http2.Http2ServerRequest, res: http2.Http2ServerResponse): Promise<Buffer> => {
     if (req.method === 'OPTIONS') {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', '*');
@@ -140,23 +198,25 @@ export class Api<REQ, RES> {
     throw new HttpClientErr(`unknown MOCK path ${req.url}`);
   };
 
-  protected chooseHandler = (req: http.IncomingMessage): RequestHandler<REQ, RES> | undefined => {
-    if (!req.url) {
-      throw new Error('no url');
-    }
-    if (this.handlers[req.url]) {
+  protected chooseHandler = (req: { url: string }): RequestHandler<REQ, RES> | undefined => {
+    const configHandlers = this.configProvider?.getHandlers() ?? {};
+    const allHandlers: Handlers<REQ, RES> = {
+      ...configHandlers,
+      ...this.handlers,
+    };
+    if (allHandlers[req.url]) {
       // direct handler name match
-      return this.handlers[req.url];
+      return allHandlers[req.url];
     }
     const url = req.url.split('?')[0];
-    if (this.handlers[url]) {
+    if (allHandlers[url]) {
       // direct handler name match - ignoring query
-      return this.handlers[url];
+      return allHandlers[url];
     }
     // handler match where definition url ends with "/?" - incomplete path definition
-    for (const handlerPathDefinition of Object.keys(this.handlers).filter(def => /\/\?$/.test(def))) {
+    for (const handlerPathDefinition of Object.keys(allHandlers).filter(def => def.endsWith('/?'))) {
       if (req.url.startsWith(handlerPathDefinition.replace(/\?$/, ''))) {
-        return this.handlers[handlerPathDefinition];
+        return allHandlers[handlerPathDefinition];
       }
     }
   };
@@ -172,10 +232,10 @@ export class Api<REQ, RES> {
     );
   };
 
-  protected fmtHandlerRes = (handlerRes: RES, serverRes: http.ServerResponse): Buffer => {
-    if (typeof handlerRes === 'string' && handlerRes.match(/^<!DOCTYPE HTML><html>/)) {
+  protected fmtHandlerRes = (handlerRes: RES, serverRes: http2.Http2ServerResponse): Buffer => {
+    if (typeof handlerRes === 'string' && /^<!DOCTYPE HTML><html>/.exec(handlerRes)) {
       serverRes.setHeader('content-type', 'text/html');
-    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && handlerRes.match(/^\{/) && handlerRes.match(/\}$/))) {
+    } else if (typeof handlerRes === 'object' || (typeof handlerRes === 'string' && /^\{/.exec(handlerRes) && /\}$/.exec(handlerRes))) {
       serverRes.setHeader('content-type', 'application/json');
     } else if (typeof handlerRes === 'string') {
       serverRes.setHeader('content-type', 'text/plain');
@@ -196,7 +256,7 @@ export class Api<REQ, RES> {
     return Buffer.from(json);
   };
 
-  protected collectReq = (req: http.IncomingMessage): Promise<Buffer> => {
+  protected collectReq = (req: http2.Http2ServerRequest): Promise<Buffer> => {
     return new Promise((resolve, reject) => {
       const body: Buffer[] = [];
       let byteLength = 0;
@@ -216,39 +276,37 @@ export class Api<REQ, RES> {
         try {
           resolve(Buffer.concat(body));
         } catch (e) {
-          reject(e);
+          reject(e as Error);
         }
       });
     });
   };
 
-  protected parseReqBody = (body: Buffer, req: http.IncomingMessage): REQ => {
+  protected parseReqBody = (body: Buffer, req: http2.Http2ServerRequest): REQ => {
     let parsedBody: string | undefined;
-    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     if (body.length) {
       if (
-        req.url!.startsWith('/upload/') || // gmail message send
-        (req.url!.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
-        req.url!.startsWith('/api/v1/message') || // FES pwd msg
-        req.url!.startsWith('/shared-tenant-fes/api/v1/message') // Shared TENANT FES pwd msg
+        req.url.startsWith('/upload/') || // gmail message send
+        (req.url.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
+        req.url.startsWith('/api/v1/message') || // FES pwd msg
+        req.url.startsWith('/shared-tenant-fes/api/v1/message') // Shared TENANT FES pwd msg
       ) {
         parsedBody = body.toString();
       } else {
         parsedBody = JSON.parse(body.toString());
       }
     }
-    return { query: this.parseUrlQuery(req.url!), body: parsedBody } as unknown as REQ;
-    /* eslint-enable @typescript-eslint/no-non-null-assertion */
+    return { query: this.parseUrlQuery(req.url), body: parsedBody } as unknown as REQ;
   };
 
-  private throttledResponse = async (response: http.ServerResponse, data: Buffer) => {
-    // If google oauth2 login, then redirect to url
-    if (/^https:\/\/google\.localhost:[0-9]+\/robots\.txt/.test(data.toString())) {
+  private throttledResponse = async (response: http2.Http2ServerResponse, data: Buffer) => {
+    // If google oauth2 or custom oauth login, then redirect to url
+    if (/^https:\/\/(google\.localhost:[0-9]+\/robots\.txt|[a-zA-Z0-9]+\.chromiumapp\.org)/.test(data.toString())) {
       response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention
     } else {
       const chunkSize = 100 * 1024;
       for (let i = 0; i < data.length; i += chunkSize) {
-        const chunk = data.slice(i, i + chunkSize);
+        const chunk = data.subarray(i, i + chunkSize);
         response.write(chunk);
         if (i > 0) {
           await Util.sleep(this.throttleChunkMsDownload / 1000);
@@ -269,7 +327,7 @@ export class Api<REQ, RES> {
     for (const valuePair of valuePairs) {
       if (valuePair) {
         const equalSignSeparatedParts = valuePair.split('=');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         params[equalSignSeparatedParts.shift()!] = decodeURIComponent(equalSignSeparatedParts.join('='));
       }
     }

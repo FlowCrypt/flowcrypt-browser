@@ -1,11 +1,11 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { GoogleAuth } from '../../api/email-provider/gmail/google-auth.js';
+import { OAuth } from '../../api/authentication/generic/oauth.js';
+import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
-import { BgNotReadyErr, BrowserMsg } from '../../browser/browser-msg.js';
-import { storageLocalGet, storageLocalRemove, storageLocalSet } from '../../browser/chrome.js';
-import { Env } from '../../browser/env.js';
-import { Ui } from '../../browser/ui.js';
+import { AuthenticationConfiguration } from '../../authentication-configuration.js';
+import { BrowserMsg } from '../../browser/browser-msg.js';
+import { storageGet, storageRemove, storageSet } from '../../browser/chrome.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { Dict } from '../../core/common.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
@@ -14,7 +14,7 @@ import { AbstractStore, RawStore } from './abstract-store.js';
 import { InMemoryStore } from './in-memory-store.js';
 
 export type EmailProvider = 'gmail';
-type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
+type GoogleAuthScopesNames = [keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.scopes, keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes][number];
 
 export type Scopes = {
   openid: boolean;
@@ -32,20 +32,23 @@ export type AccountIndex =
   | 'notification_setup_needed_dismissed'
   | 'email_provider'
   | 'google_token_refresh'
+  | 'custom_idp_token_refresh'
   | 'hide_message_password'
   | 'sendAs'
   | 'pubkey_sent_to'
   | 'full_name'
   | 'cryptup_enabled'
   | 'setup_done'
-  | 'successfully_received_at_leat_one_message'
   | 'notification_setup_done_seen'
   | 'picture'
   | 'outgoing_language'
   | 'setup_date'
   | 'use_rich_text'
   | 'rules'
-  | 'fesUrl';
+  | 'fesUrl'
+  | 'failedPassphraseAttempts'
+  | 'lastUnsuccessfulPassphraseAttempt'
+  | 'authentication';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -60,6 +63,7 @@ export type AcctStoreDict = {
   notification_setup_needed_dismissed?: boolean;
   email_provider?: EmailProvider;
   google_token_refresh?: string;
+  custom_idp_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   sendAs?: Dict<SendAsAlias>;
   addresses?: string[];
@@ -67,7 +71,6 @@ export type AcctStoreDict = {
   full_name?: string;
   cryptup_enabled?: boolean;
   setup_done?: boolean;
-  successfully_received_at_leat_one_message?: boolean;
   notification_setup_done_seen?: boolean;
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
@@ -75,6 +78,9 @@ export type AcctStoreDict = {
   use_rich_text?: boolean;
   rules?: ClientConfigurationJson;
   fesUrl?: string; // url where FlowCrypt External Service is deployed
+  failedPassphraseAttempts?: number;
+  lastUnsuccessfulPassphraseAttempt?: number;
+  authentication?: AuthenticationConfiguration;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -82,43 +88,22 @@ export type AcctStoreDict = {
  * Local storage of data related to a particular email account
  */
 export class AcctStore extends AbstractStore {
-  public static get = async (acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> => {
-    if (Env.isContentScript()) {
-      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // go through bg script to avoid such errors
-      for (let i = 0; i < 10; i++) {
-        // however backend may not be immediately ready to respond - retry
-        try {
-          return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
-        } catch (e) {
-          if (!(e instanceof BgNotReadyErr) || i === 9) {
-            throw e;
-          }
-          await Ui.time.sleep(300);
-        }
-      }
-      throw new BgNotReadyErr('this should never happen');
-    }
-    const storageObj = (await storageLocalGet(AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
-    const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AcctStoreDict;
+  public static async get(acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> {
+    const storageObj = (await storageGet('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
+    const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj);
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
-  };
+  }
 
-  public static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> => {
-    const storageObj = (await storageLocalGet(AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
+  public static async getAccounts(acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> {
+    const storageObj = (await storageGet('local', AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
     const resultsByAcct: Dict<AcctStoreDict> = {};
     for (const account of acctEmails) {
       resultsByAcct[account] = AcctStore.buildSingleAccountStoreFromRawResults(account, storageObj);
     }
     return resultsByAcct;
-  };
+  }
 
-  public static set = async (acctEmail: string, values: AcctStoreDict): Promise<void> => {
-    if (Env.isContentScript()) {
-      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // always go through bg script to avoid such errors
-      return await BrowserMsg.send.bg.await.storeAcctSet({ acctEmail, values });
-    }
+  public static async set(acctEmail: string, values: AcctStoreDict): Promise<void> {
     const indexedUpdateFields: RawStore = {};
     const indexedRemoveFields: string[] = [];
     for (const key of Object.keys(values)) {
@@ -130,19 +115,19 @@ export class AcctStore extends AbstractStore {
       }
     }
     if (Object.keys(indexedUpdateFields).length) {
-      await storageLocalSet(indexedUpdateFields);
+      await storageSet('local', indexedUpdateFields);
     }
     if (indexedRemoveFields.length) {
-      await storageLocalRemove(indexedRemoveFields);
+      await storageRemove('local', indexedRemoveFields);
     }
-  };
+  }
 
-  public static remove = async (acctEmail: string, keys: AccountIndex[]) => {
-    await storageLocalRemove(AcctStore.singleScopeRawIndexArr(acctEmail, keys));
-  };
+  public static async remove(acctEmail: string, keys: AccountIndex[]) {
+    await storageRemove('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys));
+  }
 
-  public static getScopes = async (acctEmail: string): Promise<Scopes> => {
-    const accessToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
+  public static async getScopes(acctEmail: string): Promise<Scopes> {
+    const accessToken = await InMemoryStore.getUntilAvailable(acctEmail, InMemoryStoreKeys.GOOGLE_TOKEN_ACCESS);
     // const { google_token_scopes } = await AcctStore.get(acctEmail, ['google_token_scopes']);
     const result: { [key in GoogleAuthScopesNames]: boolean } = {
       email: false,
@@ -159,29 +144,29 @@ export class AcctStore extends AbstractStore {
     }
     let allowedScopes: string[] = [];
     try {
-      const { scope } = await GoogleAuth.getTokenInfo(accessToken);
+      const { scope } = await GoogleOAuth.getTokenInfo(accessToken);
       allowedScopes = scope.split(' ');
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded('broadcast', { acctEmail });
       }
     }
-    for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
+    for (const key of Object.keys({ ...OAuth.GOOGLE_OAUTH_CONFIG.scopes, ...OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes })) {
       const scopeName = key as GoogleAuthScopesNames;
-      if (scopeName in GoogleAuth.OAUTH.scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
-      } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
-        result[scopeName] = allowedScopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
+      if (scopeName in OAuth.GOOGLE_OAUTH_CONFIG.scopes) {
+        result[scopeName] = allowedScopes.includes(OAuth.GOOGLE_OAUTH_CONFIG.scopes[scopeName as keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.scopes]);
+      } else if (scopeName in OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes) {
+        result[scopeName] = allowedScopes.includes(OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes[scopeName as keyof typeof OAuth.GOOGLE_OAUTH_CONFIG.legacy_scopes]);
       }
     }
     return result;
-  };
+  }
 
-  private static fixAcctStorageResult = (acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict => {
+  private static fixAcctStorageResult(acctEmail: string, acctStore: AcctStoreDict, keys: AccountIndex[]): AcctStoreDict {
     if (keys.includes('sendAs') && !acctStore.sendAs) {
       const sendAs = new Map<string, SendAsAlias>([[acctEmail, { isPrimary: true, isDefault: true }]]);
       acctStore.sendAs = Object.fromEntries(sendAs);
     }
     return acctStore;
-  };
+  }
 }

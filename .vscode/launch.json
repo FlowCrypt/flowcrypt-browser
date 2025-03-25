@@ -24,6 +24,16 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Debug buf",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "preLaunchTask": "npm: pretest-incremental",
+      "runtimeArgs": ["build/test/test/source/buf.js", "--verbose", "--concurrency=1"],
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Debug unit_enterprise",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
       "preLaunchTask": "npm: pretest-incremental",
@@ -84,6 +94,25 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Debug chrome_content_scripts",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "preLaunchTask": "npm: pretest-incremental",
+      "runtimeArgs": [
+        "build/test/test/source/test.js",
+        "--verbose",
+        "--concurrency=1",
+        "--",
+        "CONTENT-SCRIPT-TESTS",
+        "--retry=false",
+        "--debug",
+        "--pool-size=1"
+      ],
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Debug chrome_consumer_live_gmail",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
       "preLaunchTask": "npm: pretest-incremental",
@@ -118,6 +147,39 @@
         "--debug",
         "--pool-size=1"
       ],
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug tsc-compiler",
+      "program": "${workspaceFolder}/build/tooling/tsc-compiler.js",
+      "cwd": "${workspaceFolder}",
+      "args": ["--project", "conf/tsconfig.streams.json"],
+      "stopOnEntry": true,
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug resolve-modules",
+      "program": "${workspaceFolder}/build/tooling/resolve-modules.js",
+      "cwd": "${workspaceFolder}",
+      "args": ["--project", "./tsconfig.json"],
+      "stopOnEntry": true,
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug bundle-content-scripts",
+      "program": "${workspaceFolder}/build/tooling/bundle-content-scripts.js",
+      "cwd": "${workspaceFolder}",
+      "args": [],
+      "stopOnEntry": true,
       "outputCapture": "std",
       "skipFiles": ["<node_internals>/**/*.js"]
     }

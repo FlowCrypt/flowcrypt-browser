@@ -14,6 +14,7 @@ import { PassphraseStore } from './platform/store/passphrase-store.js';
 
 type Host = {
   gmail: string;
+  thunderbird: string;
   outlook: string;
   settings: string;
 };
@@ -26,11 +27,13 @@ export class Injector {
   private container: { [key: string]: Host } = {
     composeBtnSel: {
       gmail: 'div.aeN, div.aBO', // .aeN for normal look, .aBO for new look https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
+      thunderbird: '', // todo in another issue
       outlook: 'div._fce_b',
       settings: '#does_not_have',
     },
     finishSesionBtnSel: {
       gmail: 'body',
+      thunderbird: '', // todo in another issue
       outlook: '#does_not_have',
       settings: '#settings > div.header',
     },
@@ -54,15 +57,17 @@ export class Injector {
   }
 
   public meta = () => {
-    this.S.cached('body')
-      .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
-      .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
+    if (this.webmailName === 'gmail') {
+      this.S.cached('body')
+        .addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
+        .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer()); // xss-safe-factory
+    }
   };
 
-  public openComposeWin = (draftId?: string): boolean => {
+  public openComposeWin = (draftId?: string, openInFullScreen?: boolean, thunderbirdMsgId?: number, replyOption?: string, replyMsgId?: string): boolean => {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
-      const composeWin = $(this.factory.embeddedCompose(draftId));
+      const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, thunderbirdMsgId, replyOption, replyMsgId));
       composeWin.attr('data-order', alreadyOpenedCount + 1);
       this.S.cached('body').append(composeWin); // xss-safe-factory
       return true;
@@ -124,21 +129,19 @@ export class Injector {
           el.remove();
         })
       )
-      .hover(
-        e => {
-          $(e.target).css('z-index', 4);
-        },
-        e => {
-          $(e.target).css('z-index', '');
-        }
-      );
+      .on('mouseenter', e => {
+        $(e.target).css('z-index', 4);
+      })
+      .on('mouseleave', e => {
+        $(e.target).css('z-index', '');
+      });
   };
 
   private determineWebmailVersion = (): WebMailVersion => {
     if (this.webmailName !== 'gmail') {
       return 'generic';
     }
-    if (this.webmailName === 'gmail' && $('.V6.CL.W9').length === 1 && ($('.V6.CL.W9').width() as number) <= 28) {
+    if (this.webmailName === 'gmail' && $('.V6.CL.W9').length === 1 && ($('.V6.CL.W9').width() ?? 0) <= 28) {
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/4099
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/4349
       return 'gmail2022';

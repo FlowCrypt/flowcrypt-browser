@@ -4,10 +4,9 @@
 
 import * as DOMPurify from 'dompurify';
 
-import { Str } from '../core/common.js';
+import { checkValidURL, CID_PATTERN, Str } from '../core/common.js';
 
-export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK' | 'IMG-TO-PLAIN-URL';
-
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-PLAIN-TEXT';
 /**
  * This class is in platform/ folder because most of it depends on platform specific code
  *  - in browser the implementation uses DOMPurify
@@ -44,28 +43,31 @@ export class Xss {
     'fieldset',
     'a',
     'font',
+    'colgroup',
+    'col',
   ];
-  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint'];
+  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
+  private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
-  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizeAppend = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizePrepend = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
 
-  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => {
+  public static sanitizeReplace = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
     return $(selector as HTMLElement).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
   };
@@ -77,12 +79,13 @@ export class Xss {
    * Typically we will only use this method for internally generated content,
    * content that we already believe is safe but want to have a second layer of defense.
    */
-  public static htmlSanitize = (dirtyHtml: string): string => {
+  public static htmlSanitize = (dirtyHtml: string, tagCheck = false): string => {
     Xss.throwIfNotSupported();
     /* eslint-disable @typescript-eslint/naming-convention */
     return DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
+      ...(tagCheck && { ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS }),
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
@@ -98,84 +101,79 @@ export class Xss {
    * @property {string} imgHandling   - how should images be treated, with the following options:
    *   - IMG-DEL: remove images, only leaving text
    *   - IMG-KEEP: keep images as they are
-   *   - IMG-TO-LINK: transform images to clickable links that display the images inline upon click, as follows:
-   *          from: <img src="there" title="that">
-   *          to:   <a href="data:image/..." title="that" class="image_src_link" target="_blank" style="...">show image</a>
-   *          or:   <a href="https://..." title="that" class="image_src_link" target="_blank" style="...">show image (remote)</a>
-   *          (when rendered, we add event handler to `.image_src_link` that responds to a click and render the image)
    */
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, imgHandling: SanitizeImgHandling = 'IMG-KEEP'): string => {
     Xss.throwIfNotSupported();
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
-      if (!node) {
+      // Ensure the node is an Element
+      if (!(node instanceof Element)) {
         return;
       }
-      if ('style' in node) {
+
+      // Handle style attributes
+      if (node.hasAttribute('style')) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        const style = (node as Element).getAttribute('style')?.toLowerCase();
+        const style = node.getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
-          (node as Element).removeAttribute('style'); // don't want any leaks through css url()
+          node.removeAttribute('style'); // don't want any leaks through css url()
         }
         // strip css styles that could use to overlap with the extension UI
         if (style && Xss.FORBID_CSS_STYLE.test(style)) {
           const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
-          (node as HTMLElement).setAttribute('style', updatedStyle);
+          node.setAttribute('style', updatedStyle);
         }
       }
-      if ('src' in node) {
-        const img: Element = node;
+
+      // Handle image attributes
+      if (node.tagName === 'IMG') {
+        const img = node as HTMLImageElement; // Narrow type to HTMLImageElement
         const src = img.getAttribute('src');
         if (imgHandling === 'IMG-DEL') {
           img.remove(); // just skip images
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
-        } else if (imgHandling === 'IMG-TO-LINK') {
-          // replace images with a link that points to that image
-          if (src.startsWith('data:image/')) {
-            const title = img.getAttribute('title');
-            img.removeAttribute('src');
-            const a = document.createElement('a');
-            a.href = src;
-            a.className = 'image_src_link';
-            a.target = '_blank';
-            a.innerText = title || 'show image';
-            const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${
-              img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'
-            };max-width:98%;`;
-            a.setAttribute(
-              'style',
-              `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`
-            );
-            a.setAttribute('data-test', 'show-inline-image');
-            Xss.replaceElementDANGEROUSLY(img, a.outerHTML); // xss-safe-value - "a" was build using dom node api
-          } else {
-            img.setAttribute('data-src', img.getAttribute('src') ?? '');
-            img.classList.add('replace_to_base64_image');
-            img.setAttribute('src', '/img/svgs/spinner-green-small.svg');
-          }
-        } else if (imgHandling === 'IMG-TO-PLAIN-URL') {
-          Xss.replaceElementDANGEROUSLY(img, img.getAttribute('data-src') ?? ''); // xss-safe-value
+        } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
+          // replace remote image with remote_image_container
+          const remoteImgEl = `
+        <div class="remote_image_container" data-src="${src}" data-test="remote-image-container">
+          <span>Authenticity of this remote image cannot be verified.</span>
+        </div>`;
+          Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
         }
       }
-      if ('target' in node) {
-        // open links in new window
-        (node as Element).setAttribute('target', '_blank');
-        // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
-        (node as Element).setAttribute('rel', 'noopener noreferrer');
+
+      // Handle custom containers or CID-patterned src
+      if ((node.classList.contains('remote_image_container') || CID_PATTERN.test(node.getAttribute('src') ?? '')) && imgHandling === 'IMG-TO-PLAIN-TEXT') {
+        const replacement = node.getAttribute('data-src') ?? node.getAttribute('alt') ?? '';
+        Xss.replaceElementDANGEROUSLY(node, replacement); // xss-safe-value
+      }
+
+      // Handle links (target and rel attributes)
+      if (node.tagName === 'A') {
+        node.setAttribute('target', '_blank'); // prevents https://www.owasp.org/index.php/Reverse_Tabnabbing
+        node.setAttribute('rel', 'noopener noreferrer');
       }
     });
-    /* eslint-disable @typescript-eslint/naming-convention */
-    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
-      ADD_ATTR: Xss.ADD_ATTR,
-      FORBID_ATTR: Xss.FORBID_ATTR,
-      ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
-    });
-    /* eslint-enable @typescript-eslint/naming-convention */
+
+    const cleanHtml = Xss.htmlSanitize(dirtyHtml, true);
     DOMPurify.removeAllHooks();
     return cleanHtml;
+  };
+
+  /**
+   * Append the remote image `img` element to the remote_image_container.
+   * We couldn't add it directly to htmlSanitizeKeepBasicTags because doing so would cause an infinite loop.
+   */
+  public static appendRemoteImagesToContainer = () => {
+    const imageContainerList = $('#pgp_block .remote_image_container');
+    for (const imageContainer of imageContainerList) {
+      const imgUrl = imageContainer.dataset.src;
+      if (imgUrl) {
+        Xss.sanitizeAppend(imageContainer, `<img src="${imgUrl}"/>`);
+      }
+    }
   };
 
   /**
@@ -186,12 +184,23 @@ export class Xss {
    */
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, trim = true): string => {
     Xss.throwIfNotSupported();
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-URL');
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, 'IMG-TO-PLAIN-TEXT');
     const random = Str.sloppyRandom(5);
+    // DOMParser trims html when parsing, so we'll pad it at the beginning and/or the end when needed
+    const beginPadding = !trim && /^\s/.test(html) ? '1' : '';
+    const endPadding = !trim && /\s$/.test(html) ? '1' : '';
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
     const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
+    // Preserve newlines inside of <pre> tags.
+    const messageDomParser = new DOMParser();
+    const messageDom = messageDomParser.parseFromString(`${beginPadding}${html}${endPadding}`, 'text/html');
+    const preTags = messageDom.getElementsByTagName('pre');
+    for (const pre of preTags) {
+      pre.innerHTML = pre.innerHTML.replace(/\n/g, br); // xss-direct
+    }
+    html = messageDom.body.innerHTML;
     html = html.replace(/\n/g, '');
     html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
     html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockStart);
@@ -218,6 +227,10 @@ export class Xss {
     text = DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
     if (trim) {
       text = text.trim();
+    } else if (text.startsWith(beginPadding) && text.endsWith(endPadding)) {
+      text = text.slice(beginPadding.length, -endPadding.length || undefined);
+    } else {
+      throw Error('Unexpected failure in htmlSanitizeAndStripAllTags: missing padding');
     }
     if (outputNl !== '\n') {
       text = text.replace(/\n/g, outputNl);
@@ -227,6 +240,10 @@ export class Xss {
 
   public static escape = (str: string) => {
     return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  };
+
+  public static stripEmojis = (str: string) => {
+    return str.replace(Xss.EMOJI_REGEX, '');
   };
 
   public static htmlUnescape = (str: string) => {
@@ -262,14 +279,10 @@ export class Xss {
    */
   private static sanitizeHrefRegexp = () => {
     if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
-      if (window?.location?.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Xss.HREF_REGEX_CACHE = new RegExp(
-          `^(?:(http|https|cid):|data:image/|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
-          'i'
-        );
-      } else {
-        Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
-      }
+      Xss.HREF_REGEX_CACHE = new RegExp(
+        `^(?:(http|https|cid):|data:image/|${Str.regexEscape(chrome.runtime.getURL('/'))}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`,
+        'i'
+      );
     }
     return Xss.HREF_REGEX_CACHE;
   };

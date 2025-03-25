@@ -6,7 +6,7 @@ import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { Str, Url, UrlParams } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/shared/api-error.js';
+import { ApiErr, EnterpriseServerAuthErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 
 import { Catch } from '../../js/common/platform/catch.js';
@@ -39,21 +39,22 @@ View.run(
     private readonly advanced: boolean;
 
     private readonly gmail: Gmail | undefined;
-    private tabId!: string;
+    private readonly tabId = BrowserMsg.generateTabId();
     private notifications!: Notifications;
     private clientConfiguration: ClientConfiguration | undefined;
     private acctServer: AccountServer | undefined;
 
-    private altAccounts: JQuery<HTMLElement>;
+    private altAccounts: JQuery;
 
     public constructor() {
       super();
       const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
       this.acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
       this.page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      if (this.page && !/^(\/chrome|modules)/.test!(this.page as string)) {
-        Ui.modal.error('An unexpected value was found for the page parameter').catch(err => console.log(err));
+      if (this.page && !/^(\/chrome|modules)/.test(this.page)) {
+        Ui.modal.error('An unexpected value was found for the page parameter').catch((err: unknown) => {
+          console.log(err);
+        });
         this.page = undefined;
       }
       this.page = this.page === 'undefined' ? undefined : this.page; // in case an "undefined" string slipped in
@@ -69,11 +70,11 @@ View.run(
     }
 
     public render = async () => {
-      $('#status-row #status_version').text(`v:${VERSION}`);
+      const isDevMode = !('update_url' in chrome.runtime.getManifest());
+      $('#status-row #status_version').text(`v:${VERSION}${isDevMode ? '-dev' : ''}`);
       for (const webmailLName of await Env.webmails()) {
         $('.signin_button.' + webmailLName).css('display', 'inline-block');
       }
-      this.tabId = await BrowserMsg.requiredTabId();
       this.notifications = new Notifications();
       await this.acctServer?.initialize();
       if (this.acctEmail) {
@@ -82,7 +83,7 @@ View.run(
       if (this.clientConfiguration && !this.clientConfiguration.canSubmitPubToAttester()) {
         $('.public_profile_indicator_container').hide(); // contact page is useless if user cannot submit to attester
       }
-      if (this.clientConfiguration && this.clientConfiguration.usesKeyManager()) {
+      if (this.clientConfiguration?.usesKeyManager()) {
         $('.add_key').hide(); // users which a key manager should not be adding keys manually
       }
       $('#status-row #status_version').on(
@@ -121,26 +122,26 @@ View.run(
         window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
       });
       BrowserMsg.addListener('notification_show', async ({ notification, group }: Bm.NotificationShow) => {
-        this.notifications!.show(notification, {}, group);
+        this.notifications.show(notification, {}, group);
         let cleared = false;
         const clear = () => {
           if (!cleared) {
-            this.notifications!.clear(group);
+            this.notifications.clear(group);
             cleared = true;
           }
         };
         Catch.setHandledTimeout(clear, 10000);
         $('.webmail_notifications').one('click', clear);
       });
-      BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
-        await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, acctEmail, scopes);
-      });
       BrowserMsg.addListener('passphrase_dialog', async ({ longids, type, initiatorFrameId }: Bm.PassphraseDialog) => {
         const factory = new XssSafeFactory(this.acctEmail!, this.tabId);
         await factory.showPassphraseDialog(longids, type, initiatorFrameId);
       });
       BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
-        this.notifications!.showAuthPopupNeeded(acctEmail);
+        this.notifications.showAuthPopupNeeded(acctEmail);
+      });
+      BrowserMsg.addListener('notification_show_custom_idp_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+        this.notifications.showCustomIDPAuthPopupNeeded(acctEmail);
       });
       BrowserMsg.addListener('close_dialog', async () => {
         Swal.close();
@@ -151,7 +152,7 @@ View.run(
         this.setHandler(async target => {
           const page = $(target).attr('page');
           if (page) {
-            await Settings.renderSubPage(this.acctEmail!, this.tabId, page, $(target).attr('addurltext') || '');
+            await Settings.renderSubPage(this.acctEmail, this.tabId, page, $(target).attr('addurltext') || '');
           } else {
             Catch.report(`Unknown target page in element: ${target.outerHTML}`);
           }
@@ -163,7 +164,7 @@ View.run(
           const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail!));
           const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'EVEN-IF-UNUSABLE');
           const escapedFp = Xss.escape(mostUsefulPrv!.key.id);
-          await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
         })
       );
       $('.action_show_encrypted_inbox').on(
@@ -175,11 +176,15 @@ View.run(
       /* eslint-enable @typescript-eslint/no-non-null-assertion */
       $('.action_add_account').on(
         'click',
-        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId))
+        this.setHandlerPrevent('double', async () => {
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId);
+        })
       );
       $('.action_google_auth').on(
         'click',
-        this.setHandlerPrevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail))
+        this.setHandlerPrevent('double', async () => {
+          await Settings.newGoogleAcctAuthPromptThenAlertOrForward(this.tabId, this.acctEmail);
+        })
       );
       // $('.action_microsoft_auth').on('click', this.setHandlerPrevent('double', function() {
       //   new_microsoft_account_authentication_prompt(account_email);
@@ -207,7 +212,7 @@ View.run(
             this.altAccounts.removeClass('visible');
           } else {
             this.altAccounts.addClass('visible');
-            this.altAccounts.find('a').first().focus();
+            this.altAccounts.find('a').first().trigger('focus');
           }
           $('.ion-ios-arrow-down').toggleClass('up');
           $('.add-account').toggleClass('hidden');
@@ -217,36 +222,38 @@ View.run(
           }, 500);
         })
       );
-      this.altAccounts.keydown(this.setHandler((el, ev) => this.accountsMenuKeydownHandler(ev)));
+      this.altAccounts.on(
+        'keydown',
+        this.setHandler((el, ev) => {
+          this.accountsMenuKeydownHandler(ev);
+        })
+      );
       this.altAccounts.find('a').on(
         'mouseenter',
         Ui.event.handle(target => {
           if (!preventAccountsMenuMouseenter) {
-            $(target).focus();
+            $(target).trigger('focus');
           }
         })
       );
       $('#status-row #status_google').on(
         'click',
-        this.setHandler(
-          async () =>
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', {
-              which: 'google_account',
-            })
-        )
+        this.setHandler(async () => {
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', {
+            which: 'google_account',
+          });
+        })
       );
       $('#status-row #status_local_store').on(
         'click',
         this.setHandler(async () => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          await Settings.renderSubPage(this.acctEmail!, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/debug_api.htm', { which: 'local_store' });
         })
       );
       Ui.activateModalPageLinkTags();
     };
 
-    private accountsMenuKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+    private accountsMenuKeydownHandler = (e: JQuery.TriggeredEvent<HTMLElement>): void => {
       const currentActive = this.altAccounts.find(':focus');
       const accounts = this.altAccounts.find('a');
       if (e.key === 'Escape') {
@@ -258,14 +265,14 @@ View.run(
         if (!prev.length) {
           prev = accounts.last();
         }
-        prev.focus();
+        prev.trigger('focus');
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
         let next = currentActive.next();
         if (!next.length) {
           next = accounts.first();
         }
-        next.focus();
+        next.trigger('focus');
       }
     };
 
@@ -321,7 +328,7 @@ View.run(
         }
       } else {
         const acctEmails = await GlobalStore.acctEmailsGet();
-        if (acctEmails && acctEmails[0]) {
+        if (acctEmails?.[0]) {
           window.location.href = Url.create('index.htm', { acctEmail: acctEmails[0] });
         } else {
           $('.show_if_setup_not_done').css('display', 'initial');
@@ -333,9 +340,9 @@ View.run(
         .then(posts => {
           // do not await because may take a while
           for (const post of posts) {
-            const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(
-              post.title.trim()
-            )}</a> ${Xss.escape(post.date.trim())}</div>`;
+            const html = `<div class="line"><a href="${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(
+              post.date.trim()
+            )}</div>`;
             Xss.sanitizeAppend('.blog_post_list', html);
           }
         })
@@ -373,19 +380,26 @@ View.run(
           await this.acctServer!.fetchAndSaveClientConfiguration();
           $('#status-row #status_flowcrypt').text(`fc:ok`);
         } catch (e) {
-          if (ApiErr.isAuthErr(e)) {
+          if (e instanceof EnterpriseServerAuthErr) {
+            Settings.offerToLoginCustomIDPWithPopupShowModalOnErr(this.acctEmail, () => {
+              window.location.reload();
+            });
+          } else if (ApiErr.isAuthErr(e)) {
             const authNeededLink = $('<a class="bad" href="#">Auth Needed</a>');
             authNeededLink.on(
               'click',
               this.setHandler(async () => {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+                await Settings.loginWithPopupShowModalOnErr(this.acctEmail!, false, () => {
+                  window.location.reload();
+                });
               })
             );
             statusContainer.empty().append(authNeededLink); // xss-direct
             $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad');
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail!, () => window.location.reload());
+            Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail, () => {
+              window.location.reload();
+            });
           } else if (ApiErr.isNetErr(e)) {
             Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>')
               .find('a')
@@ -481,7 +495,7 @@ View.run(
 
     private addKeyRowsHtml = async (privateKeys: KeyInfoWithIdentity[]) => {
       let html = '';
-      const canRemoveKey = !this.clientConfiguration || !this.clientConfiguration.usesKeyManager();
+      const canRemoveKey = !this.clientConfiguration?.usesKeyManager();
       for (let i = 0; i < privateKeys.length; i++) {
         const ki = privateKeys[i];
         const prv = await KeyUtil.parse(ki.private);
@@ -489,14 +503,14 @@ View.run(
         const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
         let removeKeyBtn = '';
         if (canRemoveKey && privateKeys.length > 1) {
-          removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+          removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-fingerprint=${ki.fingerprints[0]} data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
         }
         const escapedEmail = Xss.escape(prv.emails[0] || '');
         const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
         const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
         const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
         html += `<div class="row key-content-row">`;
-        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${removeKeyBtn}</div>`;
+        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${KeyUtil.statusHtml(ki.id, prv)}${space}${removeKeyBtn}</div>`;
         html += `</div>`;
       }
       Xss.sanitizeAppend('.key_list', html);
@@ -505,7 +519,7 @@ View.run(
         this.setHandler(async target => {
           /* eslint-disable @typescript-eslint/no-non-null-assertion */
           // the UI below only gets rendered when account_email is available
-          await Settings.renderSubPage(this.acctEmail!, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+          await Settings.renderSubPage(this.acctEmail, this.tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
         })
       );
@@ -513,19 +527,22 @@ View.run(
         $('.action_remove_key').on(
           'click',
           this.setHandler(async target => {
-            // the UI below only gets rendered when account_email is available
-            const family = $(target).data('type') as string;
-            const id = $(target).data('id') as string;
-            const longid = $(target).data('longid') as string;
-            if (family === 'openpgp' || family === 'x509') {
-              /* eslint-disable @typescript-eslint/no-non-null-assertion */
-              await KeyStore.remove(this.acctEmail!, { family, id });
-              await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
-              await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
-              /* eslint-enable @typescript-eslint/no-non-null-assertion */
-              this.reload(true);
-            } else {
-              Catch.report(`unexpected key family: ${family}`);
+            const fingerprint = $(target).data('fingerprint') as string;
+            if (await Ui.modal.confirm(Lang.settings.deleteKeyConfirm(Str.spaced(Xss.escape(fingerprint))))) {
+              // the UI below only gets rendered when account_email is available
+              const family = $(target).data('type') as string;
+              const id = $(target).data('id') as string;
+              const longid = $(target).data('longid') as string;
+              if (family === 'openpgp' || family === 'x509') {
+                /* eslint-disable @typescript-eslint/no-non-null-assertion */
+                await KeyStore.remove(this.acctEmail!, { family, id });
+                await PassphraseStore.set('local', this.acctEmail!, { longid }, undefined);
+                await PassphraseStore.set('session', this.acctEmail!, { longid }, undefined);
+                /* eslint-enable @typescript-eslint/no-non-null-assertion */
+                this.reload(true);
+              } else {
+                Catch.report(`unexpected key family: ${family}`);
+              }
             }
           })
         );

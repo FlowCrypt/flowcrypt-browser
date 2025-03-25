@@ -10,7 +10,6 @@ import { ClientConfiguration } from './client-configuration.js';
 import { ContactStore } from './platform/store/contact-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { PassphraseStore } from './platform/store/passphrase-store.js';
-import { Bm } from './browser/browser-msg.js';
 import { PgpPwd } from './core/crypto/pgp/pgp-password.js';
 
 export const isCustomerUrlFesUsed = async (acctEmail: string) => {
@@ -21,14 +20,26 @@ export const isCustomerUrlFesUsed = async (acctEmail: string) => {
 export const setPassphraseForPrvs = async (clientConfiguration: ClientConfiguration, acctEmail: string, prvs: Key[], ppOptions: PassphraseOptions) => {
   const storageType = ppOptions.passphrase_save && !clientConfiguration.forbidStoringPassPhrase() ? 'local' : 'session';
   for (const prv of prvs) {
-    await PassphraseStore.set(storageType, acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, ppOptions.passphrase);
+    const keyInfo = { longid: KeyUtil.getPrimaryLongid(prv) };
+    await PassphraseStore.set(storageType, acctEmail, keyInfo, ppOptions.passphrase);
+    if (ppOptions.passphrase_ensure_single_copy) {
+      // delete from the other storage
+      await PassphraseStore.set(storageType === 'local' ? 'session' : 'local', acctEmail, { longid: KeyUtil.getPrimaryLongid(prv) }, undefined);
+    }
   }
 };
 
 // note: for `replaceKeys = true` need to make sure that `prvs` don't have duplicate identities,
 // they is currently guaranteed by filterKeysToSave()
 // todo: perhaps split into two different functions for add or replace as part of #4545?
-const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions, replaceKeys = false) => {
+const addOrReplaceKeysAndPassPhrase = async (
+  acctEmail: string,
+  prvs: Key[],
+  ppOptions?: PassphraseOptions,
+  submitKeyForAddrs: string[] = [],
+  cameFromRecoveryPage = false,
+  replaceKeys = false
+) => {
   if (replaceKeys) {
     // track longids to remove related passhprases
     const existingKeys = await KeyStore.get(acctEmail);
@@ -42,14 +53,13 @@ const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppO
     }
   }
   if (ppOptions !== undefined) {
-    // todo: it would be good to check that the passphrase isn't present in the other storage type
-    //    though this situation is not possible with current use cases
     await setPassphraseForPrvs(await ClientConfiguration.newInstance(acctEmail), acctEmail, prvs, ppOptions);
   }
   const { sendAs, full_name: name } = await AcctStore.get(acctEmail, ['sendAs', 'full_name']);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const myOwnEmailsAddrs: string[] = [acctEmail].concat(Object.keys(sendAs!));
-  for (const email of myOwnEmailsAddrs) {
+  const emailsInContacts = cameFromRecoveryPage ? myOwnEmailsAddrs : (submitKeyForAddrs.push(acctEmail), submitKeyForAddrs);
+  for (const email of emailsInContacts) {
     if (ppOptions !== undefined) {
       // first run, update `name`, todo: refactor in #4545
       await ContactStore.update(undefined, email, { name });
@@ -60,7 +70,13 @@ const addOrReplaceKeysAndPassPhrase = async (acctEmail: string, prvs: Key[], ppO
   }
 };
 
-export const saveKeysAndPassPhrase: (acctEmail: string, prvs: Key[], ppOptions?: PassphraseOptions) => Promise<void> = addOrReplaceKeysAndPassPhrase;
+export const saveKeysAndPassPhrase: (
+  acctEmail: string,
+  prvs: Key[],
+  ppOptions?: PassphraseOptions,
+  submitKeyForAddrs?: string[],
+  cameFromRecoveryPage?: boolean
+) => Promise<void> = addOrReplaceKeysAndPassPhrase;
 
 const parseAndCheckPrivateKeys = async (decryptedPrivateKeys: string[]) => {
   const unencryptedPrvs: Key[] = [];
@@ -111,9 +127,11 @@ export const processAndStoreKeysFromEkmLocally = async ({
   acctEmail,
   decryptedPrivateKeys,
   ppOptions: originalOptions,
-}: Bm.ProcessAndStoreKeysFromEkmLocally & {
+}: {
+  acctEmail: string;
+  decryptedPrivateKeys: string[];
   ppOptions?: PassphraseOptions;
-}): Promise<Bm.Res.ProcessAndStoreKeysFromEkmLocally> => {
+}) => {
   const { unencryptedPrvs } = await parseAndCheckPrivateKeys(decryptedPrivateKeys);
   const existingKeys = await KeyStore.get(acctEmail);
   let { keysToRetain, newUnencryptedKeysToSave } = await filterKeysToSave(unencryptedPrvs, existingKeys);
@@ -124,7 +142,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   let ppOptions: PassphraseOptions | undefined; // the options to pass to saveKeysAndPassPhrase
   if (!originalOptions?.passphrase && (await ClientConfiguration.newInstance(acctEmail)).mustAutogenPassPhraseQuietly()) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true };
+    ppOptions = { passphrase: PgpPwd.random(), passphrase_save: true, passphrase_ensure_single_copy: true };
   } else {
     ppOptions = originalOptions;
   }
@@ -156,13 +174,13 @@ export const processAndStoreKeysFromEkmLocally = async ({
   }
   // stage 1. Clear all existingKeys, except for keysToRetain
   if (existingKeys.length !== keysToRetain.length) {
-    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, true);
+    await addOrReplaceKeysAndPassPhrase(acctEmail, keysToRetain, undefined, [], false, true);
   }
   // stage 2. Adding new keys
   if (encryptedKeys?.keys.length) {
     // new keys are about to be added, they must be accompanied with the passphrase setting
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const effectivePpOptions = { passphrase: encryptedKeys.passphrase, passphrase_save: passphraseInLocalStorage };
+    const effectivePpOptions = { passphrase: encryptedKeys.passphrase, passphrase_save: passphraseInLocalStorage, passphrase_ensure_single_copy: true };
     // ppOptions have special meaning in saveKeysAndPassPhrase(), they trigger `name` updates, todo: refactor in #4545
     await saveKeysAndPassPhrase(acctEmail, encryptedKeys.keys, ppOptions ? effectivePpOptions : undefined);
     if (!ppOptions) {
@@ -175,7 +193,7 @@ export const processAndStoreKeysFromEkmLocally = async ({
   };
 };
 
-export const getLocalKeyExpiration = async ({ acctEmail }: Bm.GetLocalKeyExpiration): Promise<Bm.Res.GetLocalKeyExpiration> => {
+export const getLocalKeyExpiration = async (acctEmail: string): Promise<number> => {
   const kis = await KeyStore.get(acctEmail);
   const expirations = await Promise.all(kis.map(async ki => (await KeyUtil.parse(ki.public))?.expiration ?? Number.MAX_SAFE_INTEGER));
   return Math.max(...expirations);

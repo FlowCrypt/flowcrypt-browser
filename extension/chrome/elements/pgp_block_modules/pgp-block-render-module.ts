@@ -2,143 +2,18 @@
 
 'use strict';
 
-import { VerifyRes } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { Attachment } from '../../../js/common/core/attachment.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Mime } from '../../../js/common/core/mime.js';
-import { MsgBlock } from '../../../js/common/core/msg-block.js';
 import { PgpBlockView } from '../pgp_block.js';
 import { Ui } from '../../../js/common/browser/ui.js';
+import { Lang } from '../../../js/common/lang.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
-import { GmailParser } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
-import { getBase64FromUrl, Str } from '../../../js/common/core/common.js';
+import linkifyHtml from 'linkifyHtml';
 
 export class PgpBlockViewRenderModule {
-  public doNotSetStateAsReadyYet = false;
-
   private heightHist: number[] = [];
-  private printMailInfoHtml!: string;
 
   public constructor(private view: PgpBlockView) {}
-
-  public initPrintView = async () => {
-    const fullName = await AcctStore.get(this.view.acctEmail, ['full_name']);
-    Xss.sanitizeRender('.print_user_email', `<b>${fullName.full_name}</b> &lt;${this.view.acctEmail}&gt;`);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const gmailMsg = await this.view.gmail.msgGet(this.view.msgId!, 'metadata', undefined);
-      const sentDate = new Date(GmailParser.findHeader(gmailMsg, 'date') ?? '');
-      const sentDateStr = Str.fromDate(sentDate).replace(' ', ' at ');
-      const from = Str.parseEmail(GmailParser.findHeader(gmailMsg, 'from') ?? '');
-      const fromHtml = from.name ? `<b>${Xss.htmlSanitize(from.name)}</b> &lt;${from.email}&gt;` : from.email;
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      const ccString = GmailParser.findHeader(gmailMsg, 'cc')
-        ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(gmailMsg, 'cc')!)}</span><br/>`
-        : '';
-      const bccString = GmailParser.findHeader(gmailMsg, 'bcc') ? `Bcc: <span>${Xss.escape(GmailParser.findHeader(gmailMsg, 'bcc')!)}</span><br/>` : '';
-      /* eslint-enable @typescript-eslint/no-non-null-assertion */
-      this.printMailInfoHtml = `
-      <hr>
-      <p class="subject-label" data-test="print-subject">${Xss.htmlSanitize(GmailParser.findHeader(gmailMsg, 'subject') ?? '')}</p>
-      <hr>
-      <br/>
-      <div>
-        <div class="inline-block">
-          <span data-test="print-from">From: ${fromHtml}</span>
-        </div>
-        <div class="float-right">
-          <span>${sentDateStr}</span>
-        </div>
-      </div>
-      <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(gmailMsg, 'to') ?? '')}</span><br/>
-      ${ccString}
-      ${bccString}
-      <br/><hr>
-    `;
-    } catch (e) {
-      this.view.errorModule.debug(`Error while getting gmail message for ${this.view.msgId} message. ${e}`);
-    }
-  };
-
-  public printPGPBlock = async () => {
-    const w = window.open();
-    const html = `
-      <!DOCTYPE html>
-      <html lang="en-us">
-      <head>
-        <style>
-          #action_show_quoted_content {
-            display: none;
-          }
-          .print_header_info {
-            color: #777777;
-            font-weight: bold;
-            -webkit-print-color-adjust: exact;
-          }
-          .print_encrypted_with_label {
-            display: table-cell;
-            vertical-align: middle;
-            padding-right: 5px;
-          }
-          .subject-label {
-            font-weight: bold;
-            font-size: 20px;
-          }
-          .inline-block {
-            display: inline-block;
-          }
-          .display-table {
-            display: table;
-          }
-          .float-right {
-            float: right;
-          }
-          .quoted_content {
-            display: none;
-          }
-          #attachments a.preview-attachment {
-            display: inline-flex;
-            color: #333 !important;
-            align-items: center;
-            height: 36px;
-            background: #f8f8f8;
-            border: 1px solid #ccc;
-            border-left: 4px solid #31a217 !important;
-            font-family: inherit;
-            font-size: inherit;
-            margin-bottom: 8px;
-            cursor: pointer;
-            margin-right: 12px;
-            padding: 0 8px;
-            text-decoration: none;
-          }
-          #attachments a.preview-attachment .download-attachment {
-            display: none;
-          }
-        </style>
-      </head>
-      <body data-test-view-state="loaded">
-        ${$('#print-header').html()}
-        <br>
-        ${Xss.htmlSanitize(this.printMailInfoHtml)}
-        <br>
-        <div data-test="print-content">
-          ${Xss.htmlSanitize($('#pgp_block').html())}
-        </div>
-      </body>
-      </html>
-    `;
-    w?.document.write(html);
-    // Give some time for above dom to load in print dialog
-    // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
-    await Ui.time.sleep(250);
-    w?.window.print();
-    w?.document.close();
-  };
 
   public renderText = (text: string) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -171,24 +46,35 @@ export class PgpBlockViewRenderModule {
     });
   };
 
-  public renderContent = async (htmlContent: string, isErr: boolean) => {
-    if (!isErr && !this.view.isOutgoing) {
-      // successfully opened incoming message
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      await AcctStore.set(this.view.acctEmail, { successfully_received_at_leat_one_message: true });
+  public renderContent = (htmlContent: string, isErr: boolean, isChecksumInvalid = false) => {
+    let contentWithLink = linkifyHtml(htmlContent);
+    if (isChecksumInvalid) {
+      contentWithLink = `<div class="pgp-invalid-checksum">${Lang.pgpBlock.invalidCheckSum}</div>${contentWithLink}`;
     }
+    // Temporary workaround for an issue where 'cryptup_reply' divs are not being hidden when replying to all
+    // messages from the FES. The root cause is that FES currently returns the body of
+    // password message replies as 'text/plain', which does not hide the divs as intended.
+    // This workaround can be safely removed once the FES is updated to return the body of message replies as 'text/html'.
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5004
+    const regEx = /&lt;div[^&]*class="[^"]*cryptup_reply[^"]*"[^&]*&gt;&lt;\/div&gt;/g;
+    contentWithLink = contentWithLink.replace(regEx, match => {
+      return match.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    });
+
     if (!isErr) {
       // rendering message content
       $('.pgp_print_button').show();
-      const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent, 'IMG-TO-LINK')); // xss-sanitized
-      void this.replaceToBase64Images(); // we don't need to await for remote images to be loaded as they need to run in background
-      pgpBlock.find('a.image_src_link').one(
-        'click',
-        this.view.setHandler((el, ev) => this.displayImageSrcLinkAsImg(el as HTMLAnchorElement, ev as JQuery.Event<HTMLAnchorElement, null>))
+      $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(contentWithLink)); // xss-sanitized
+      Xss.appendRemoteImagesToContainer();
+      $('#pgp_block .remote_image_container img').on(
+        'load',
+        this.view.setHandler(() => {
+          this.resizePgpBlockFrame();
+        })
       );
     } else {
       // rendering our own ui
-      Xss.sanitizeRender('#pgp_block', htmlContent);
+      Xss.sanitizeRender('#pgp_block', contentWithLink);
     }
     if (isErr) {
       $('.action_show_raw_pgp_block').on(
@@ -202,7 +88,12 @@ export class PgpBlockViewRenderModule {
     }
     this.resizePgpBlockFrame(); // resize window now
     Catch.setHandledTimeout(() => {
-      $(window).resize(this.view.setHandlerPrevent('spree', () => this.resizePgpBlockFrame()));
+      window.addEventListener(
+        'resize',
+        this.view.setHandlerPrevent('spree', () => {
+          this.resizePgpBlockFrame();
+        })
+      );
     }, 1000); // start auto-resizing the window after 1s
   };
 
@@ -216,163 +107,54 @@ export class PgpBlockViewRenderModule {
     }
   };
 
-  public renderAsRegularContent = async (content: string) => {
+  public renderAsRegularContent = (content: string) => {
     this.setFrameColor('gray');
     this.renderSignatureStatus('not signed');
     this.renderEncryptionStatus('not encrypted');
-    await this.renderContent(content, false);
+    this.renderContent(content, false);
+    Ui.setTestState('ready');
   };
 
-  public renderErrorStatus = (status: string): JQuery<HTMLElement> => {
+  public renderPassphraseNeeded = (longids: string[]) => {
+    const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
+    this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
+    $('.enter_passphrase').on(
+      'click',
+      this.view.setHandler(() => {
+        Ui.setTestState('waiting');
+        BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
+          type: 'message',
+          longids,
+        });
+      })
+    );
+  };
+  public renderErrorStatus = (status: string): JQuery => {
     return $('#pgp_error').text(status).show();
   };
 
-  public clearErrorStatus = (): JQuery<HTMLElement> => {
+  public clearErrorStatus = (): JQuery => {
     return $('#pgp_error').hide();
   };
 
-  public renderEncryptionStatus = (status: string): JQuery<HTMLElement> => {
+  public renderEncryptionStatus = (status: string): JQuery => {
     return $('#pgp_encryption')
       .addClass(status === 'encrypted' ? 'green_label' : 'red_label')
       .text(status);
   };
 
-  public renderSignatureStatus = (status: string): JQuery<HTMLElement> => {
+  public renderSignatureStatus = (status: string): JQuery => {
     return $('#pgp_signature')
       .addClass(status === 'signed' ? 'green_label' : 'red_label')
       .text(status);
   };
 
-  public decideDecryptedContentFormattingAndRender = async (
-    decryptedBytes: Buf,
-    isEncrypted: boolean,
-    sigResult: VerifyRes | undefined,
-    verificationPubs: string[],
-    retryVerification: (verificationPubs: string[]) => Promise<VerifyRes | undefined>,
-    plainSubject?: string
-  ) => {
-    if (isEncrypted) {
-      this.renderEncryptionStatus('encrypted');
-      this.setFrameColor('green');
-    } else {
-      this.renderEncryptionStatus('not encrypted');
-      this.setFrameColor('gray');
-    }
-    const publicKeys: string[] = [];
-    let renderableAttachments: Attachment[] = [];
-    let decryptedContent = decryptedBytes.toUtfStr();
-    let isHtml = false;
-    // todo - replace with MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks, then the extract/strip methods could be private?
-    if (!Mime.resemblesMsg(decryptedBytes)) {
-      const fcAttachmentBlocks: MsgBlock[] = [];
-      decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
-      decryptedContent = MsgBlockParser.stripFcTeplyToken(decryptedContent);
-      decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
-      if (fcAttachmentBlocks.length) {
-        renderableAttachments = fcAttachmentBlocks.map(
-          attachmentBlock => new Attachment(attachmentBlock.attachmentMeta!) // eslint-disable-line @typescript-eslint/no-non-null-assertion
-        );
-      }
-    } else {
-      this.renderText('Formatting...');
-      const decoded = await Mime.decode(decryptedBytes);
-      if (typeof decoded.html !== 'undefined') {
-        decryptedContent = decoded.html;
-        isHtml = true;
-      } else if (typeof decoded.text !== 'undefined') {
-        decryptedContent = decoded.text;
-      } else {
-        decryptedContent = '';
-      }
-      if (
-        decoded.subject &&
-        isEncrypted &&
-        (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))
-      ) {
-        // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
-        decryptedContent = this.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
-      }
-      for (const attachment of decoded.attachments) {
-        if (attachment.treatAs() !== 'publicKey') {
-          renderableAttachments.push(attachment);
-        } else {
-          publicKeys.push(attachment.getData().toUtfStr());
-        }
-      }
-    }
-    await this.view.quoteModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
-    await this.view.signatureModule.renderPgpSignatureCheckResult(sigResult, verificationPubs, retryVerification);
-    if (isEncrypted && publicKeys.length) {
-      BrowserMsg.send.renderPublicKeys(this.view.parentTabId, { afterFrameId: this.view.frameId, publicKeys });
-    }
-    if (renderableAttachments.length) {
-      this.view.attachmentsModule.renderInnerAttachments(renderableAttachments, isEncrypted);
-    }
-    this.resizePgpBlockFrame();
-    if (!this.doNotSetStateAsReadyYet) {
-      // in case async tasks are still being worked at
-      Ui.setTestState('ready');
-    }
-  };
-
-  private replaceToBase64Images = async () => {
-    const replaceImages = $('#pgp_block .replace_to_base64_image');
-    for (const image of replaceImages) {
-      const imgUrl = image.dataset.src;
-      try {
-        if (imgUrl) {
-          const data = await getBase64FromUrl(imgUrl);
-          image.classList.remove('replace_to_base64_image');
-          image.setAttribute('src', data);
-          // Resize pgp bloc frame after windows is loaded
-          image.addEventListener('load', () => this.resizePgpBlockFrame());
-        }
-      } catch (e) {
-        this.view.errorModule.debug(`Error while getting base64 data for ${imgUrl}. ${e}`);
-      }
-    }
-  };
-
-  private displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
-    const img = document.createElement('img');
-    img.setAttribute('style', a.getAttribute('style') || '');
-    img.style.background = 'none';
-    img.style.border = 'none';
-    img.addEventListener('load', () => this.resizePgpBlockFrame());
-    if (a.href.startsWith('cid:')) {
-      // image included in the email
-      const contentId = a.href.replace(/^cid:/g, '');
-      const content = this.view.attachmentsModule.includedAttachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
-      if (content) {
-        img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
-        Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-      } else {
-        Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
-      }
-    } else if (a.href.startsWith('https://') || a.href.startsWith('http://')) {
-      // image referenced as url
-      img.src = a.href;
-      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else if (a.href.startsWith('data:image/')) {
-      // image directly inlined
-      img.src = a.href;
-      Xss.replaceElementDANGEROUSLY(a, img.outerHTML); // xss-safe-value - img.outerHTML was built using dom node api
-    } else {
-      Xss.replaceElementDANGEROUSLY(a, Xss.escape(`[broken link: ${a.href}]`)); // xss-escaped
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-  };
-
-  private getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
-    if (isHtml) {
-      return `<div style="white-space: normal"> Encrypted Subject:
-                <b> ${Xss.escape(subject)}</b>
-              </div>
-              <hr/>`;
-    } else {
-      return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
-    }
+  public renderSignatureOffline = () => {
+    this.renderSignatureStatus('error verifying signature: offline, click to retry').on(
+      'click',
+      this.view.setHandler(() => {
+        BrowserMsg.send.pgpBlockRetry(this.view, { frameId: this.view.frameId, messageSender: this.view.getDest() });
+      })
+    );
   };
 }

@@ -48,6 +48,10 @@ export const Lang = {
       'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.',
     ppMatchAllSet: "Your pass phrase matches. Good job! You're all set.",
     noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
+    prvBackupToDesignatedMailboxEmailSubject: (acctEmail: string, fingerprint: string) =>
+      `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${fingerprint}`,
+    prvBackupToDesignatedMailboxEmailBody:
+      "Please keep this email and attachment in the mailbox for safekeeping. It will be needed if the user ever needs to set up FlowCrypt again or forgets their pass phrase. Without this, the user won't be able to read their emails.\n\nSee https://flowcrypt.com/docs/technical/enterprise/configuration/backup-to-designated-mailbox.html#account-recovery.",
   },
   account: {
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
@@ -75,6 +79,9 @@ export const Lang = {
     dontKnowHowOpen: (isCustomerUrlFesUsed: boolean) =>
       `Please ${contactMinimalSubsentence(isCustomerUrlFesUsed)} to submit a bug report, and mention what software was used to send this message to you. `,
     enterPassphrase: 'Enter passphrase',
+    passphraseAttemptIntroduce: (attemptsLeft: string) =>
+      `For your protection and data security, there are currently only ${attemptsLeft} left.<br />If attempts are exceeded, there will a 5-minute cooldown period before you may try again.`,
+    passphraseAntiBruteForceProtectionHint: `To protect you and your data, the next attempt will only be possible after the timer below finishes. Please wait until then before trying again.`,
     toOpenMsg: 'to open this message.',
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
     updateChromeSettings: 'Need to update chrome settings to view encrypted messages. ',
@@ -86,12 +93,16 @@ export const Lang = {
     cannotLocate: 'Could not locate this message.',
     brokenLink: 'It seems it contains a broken link.',
     pwdMsgAskSenderUsePubkey: 'This appears to be a password-protected message. Please ask the sender to encrypt messages for your Public Key instead.',
+    invalidCheckSum:
+      'Warning: Checksum mismatch detected.\nThis indicates the message may have been altered or corrupted during transmission.\nDecryption may still succeed, but verify the message source and integrity if possible.',
   },
   compose: {
     abortSending: 'A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?',
     addMissingRecipientPubkeys: `Some recipients don't have encryption set up. Please import their public keys or ask them to install Flowcrypt.`,
     pleaseReconnectAccount:
       'Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
+    pleaseReconnectCustomIDPAccount:
+      'Please reconnect FlowCrypt to your custom IDP Account. This is typically needed after a long time of no use, a password change, or similar account changes. ',
     msgEncryptedHtml: (lang: string, senderEmail: string) =>
       lang === 'DE'
         ? `${senderEmail}&nbsp;hat&nbsp;Ihnen&nbsp;eine&nbsp;passwortverschlüsselte&nbsp;E-Mail&nbsp;gesendet `
@@ -106,7 +117,7 @@ export const Lang = {
     },
     openMsg: { EN: 'Click here to Open Message', DE: 'Klicken Sie hier, um die Nachricht zu öffnen' }, // eslint-disable-line @typescript-eslint/naming-convention
     includePubkeyIconTitle:
-      'Include your Public Key with this message.\n\nIf enabled, your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
+      'Include your public key in this email.\n\nIf enabled, your public key will be included.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     headers: {
       encrypted: 'New Secure Message',
       encryptedAndSigned: 'New Signed Secure Message',
@@ -119,7 +130,7 @@ export const Lang = {
     addMissingPermission: 'Add missing permission',
     enterprisePasswordPolicy:
       'Please use password with the following properties:\n - one uppercase\n - one lowercase\n - one number\n - one special character eg &"#-\'_%-@,;:!*()\n - 8 characters length',
-    consumerPasswordPolicy: 'Please use a password at least 8 characters long',
+    consumerPasswordPolicy: 'Please use a password at least 8 characters long.',
     inputLimitExceededOnPaste: "The paste operation can't be completed because the resulting text size would exceed the allowed limit of 50K.",
   },
   general: {
@@ -130,10 +141,6 @@ export const Lang = {
     contactForSupportSubsentence,
     contactForSupportSentence: (isCustomerUrlFesUsed = false) => contactForSupportSubsentence(isCustomerUrlFesUsed, 'for support.'),
     writeMeToFixIt: (isCustomerUrlFesUsed: boolean) => contactForSupportSubsentence(isCustomerUrlFesUsed, 'to fix it.'),
-    restartBrowserAndTryAgain: (isCustomerUrlFesUsed: boolean) =>
-      `Unexpected error occured. Please restart your browser and try again. If this persists after a restart, ${contactForSupportSubsentence(
-        isCustomerUrlFesUsed
-      )}.`,
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
   },
   passphraseRequired: {
@@ -144,5 +151,11 @@ export const Lang = {
     backup: 'Enter FlowCrypt pass phrase to back up',
     updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
     email: 'Enter FlowCrypt pass phrase to read encrypted email',
+  },
+  settings: {
+    deleteKeyConfirm: (fingerprint: string) => `Are you sure you want to remove encryption key with fingerprint ${fingerprint}?`,
+  },
+  attachment: {
+    executableFileWarning: 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?', // xss-escaped
   },
 };

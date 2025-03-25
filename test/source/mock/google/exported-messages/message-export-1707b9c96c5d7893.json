@@ -1,0 +1,63 @@
+{
+  "acctEmail": "flowcrypt.compatibility@gmail.com",
+  "full": {
+    "id": "1707b9c96c5d7893",
+    "threadId": "1707b9c222f75ad8",
+    "labelIds": [
+      "IMPORTANT",
+      "STARRED",
+      "Label_15",
+      "SENT",
+      "INBOX"
+    ],
+    "snippet": "-----BEGIN PGP MESSAGE----- owGbwMvMwMVYfy8j1GPd8g7GNXlJHCWpFSV6JRUlcSH3akoyMosVyhOLFVLzkosq C0pSUxTKM0syFNIL0rm4gISCrm5xZnoekEosys0vUtAtUkjLyS8Hq9VLzs8tSCzJ",
+    "payload": {
+      "partId": "",
+      "mimeType": "text/plain",
+      "filename": "",
+      "headers": [
+        {
+          "name": "MIME-Version",
+          "value": "1.0"
+        },
+        {
+          "name": "Date",
+          "value": "Tue, 25 Feb 2020 09:10:23 +0000"
+        },
+        {
+          "name": "Subject",
+          "value": "gpg: signed only but armored"
+        },
+        {
+          "name": "From",
+          "value": "sender@domain.com"
+        },
+        {
+          "name": "To",
+          "value": "flowcrypt.compatibility@gmail.com"
+        },
+        {
+          "name": "Content-Type",
+          "value": "text/plain; charset=\"UTF-8\""
+        }
+      ],
+      "body": {
+        "size": 1027,
+        "data": "LS0tLS1CRUdJTiBQR1AgTUVTU0FHRS0tLS0tDQoNCm93R2J3TXZNd01WWWZ5OGoxR1BkOGc3R05YbEpIQ1dwRlNWNkpSVWxjU0gzYWtveU1vc1Z5aE9MRlZMemtvc3ENCkMwcFNVeFRLTTBzeUZOSUwwcm00Z0lTQ3JtNXhabm9la0Vvc3lzMHZVdEF0VWtqTHlTOEhxOVZMenM4dFNDekoNClRNck15U3lwZEVqUFRjek1BWWtwNk9uRHJPRHFaREptWVdEa1lwQVZVMlFKVlRoMVRtZWIzSExocHh0WVlRNWkNClpRSzVnb0dMVXdBbVlsOG13REMzeXFKM1JxWGVheDJuMTA4YjQyc2MrSTI5ekUxZkx2ZGdxMVR6M1pMMGEyWjUNClhTVERvYlh5b2lHbmo3NDhrLzhpWDdkSlljNUMrVFRtUE1YdFBtWUpLbWQ3Vjd2Mng2Njc1QmZSK20yNWVkbnINClBmRUI5ays0N2lROXlOc2d1OVRHOE5DL2hoY2NhbE1rVDFVVWN2N1YwN21XMlpSYmZ2U29wMVpTVS9iWG0zYy8NCjhuZCtaU2hmbXJIUVlNTWZlM1htaWxkbWJoczJmN1M2SThHK3lhbWhySDFYc25YS2xjL2NhNjNTNTNUVTd1NWUNCitYN3ZpbDk3elRjM2NEZ3RQL3V3NkdCNm1tVG84bXFsYjIwR3l0RzFMdVl6WmZ0UDU1WFlMN1h5TzVNOFJ6eDINClpjTEJQVHNmenM4bzZiZ3h0MGZCdWNJbGRzN256TE95S2xkK0cydSt1U3F6dWo5d2dwZU9TWDE0OWYrOHk3Ti8NCmhsNW5iWElvM3FMM1FYYVd3c1h2aDdmSVRWcDE1NS9ieFNYS1g2NWZ1TG1oK0VUMjRaOUM3VjhpR2Y5TTd2NzYNCnRJK2pTTlJ1N2NuQXR0eGxYNHRPR0hodHVNSCtUVThuTnYxY1BFYzFYL0gxVlJ2OTVtV2FibDNsUCtIVm1vdS8NCnJreU4xL3NXbDd0Uy9mWlAzdlZscDNNU1B2cXkvUDZUM1ZLaFhTWWRXRnpoeWJsQjZLaHF6QWJCdXVWZi8yYlkNCktSeDEyMzl2OXVack0zeUVaT2MwSnR6Tno3TGg3eGI2ZTg5dEluZTRibHg4MWFSVDdiODZZcm9VSEdmZTBQRjQNCnNIalJuUVdkbWVVMmtnY21IK0xVRWR4ZDRiSmd4L1NRd1ByYis2emllUTBtTGJEc3ZabTdnSEZQZXE1WlcrL2UNCkJVOC9jTmMyYmQ0OUtXcmRUOC96S3BKOUttdlY5dXo0QVFBPQ0KPXI4U28NCi0tLS0tRU5EIFBHUCBNRVNTQUdFLS0tLS0NCg=="
+      }
+    },
+    "sizeEstimate": 1384,
+    "historyId": "1405958",
+    "internalDate": "1582621823000"
+  },
+  "attachments": {},
+  "raw": {
+    "id": "1707b9c96c5d7893",
+    "threadId": "1707b9c222f75ad8",
+    "labelIds": ["IMPORTANT", "STARRED", "Label_15", "SENT", "INBOX"],
+    "snippet": "-----BEGIN PGP MESSAGE----- owGbwMvMwMVYfy8j1GPd8g7GNXlJHCWpFSV6JRUlcSH3akoyMosVyhOLFVLzkosq C0pSUxTKM0syFNIL0rm4gISCrm5xZnoekEosys0vUtAtUkjLyS8Hq9VLzs8tSCzJ",
+    "sizeEstimate": 1384,
+    "historyId": "1405958",
+    "internalDate": "1582621823000"
+  }
+}

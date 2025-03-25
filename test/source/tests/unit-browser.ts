@@ -7,6 +7,11 @@ import { CommonAcct, TestWithBrowser } from '../test';
 import { readdirSync, readFileSync } from 'fs';
 import { Buf } from '../core/buf';
 import { testConstants } from './tooling/consts';
+import { BrowserRecipe } from './tooling/browser-recipe';
+import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
+import { somePubkey } from '../mock/attester/attester-key-constants';
+import { aliceKey, jackAdvancedKey, johnDoeDirectKey, johnDoeAdvancedKey } from '../mock/wkd/wkd-constants';
+import { johnDoeExampleComKey } from '../mock/sks/sks-constants';
 
 type UnitTest = { title: string; code: string; acct?: CommonAcct; only: boolean };
 
@@ -18,8 +23,46 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
       // eslint-disable-next-line no-only-tests/no-only-tests
       (flag !== 'only' ? test : test.only)(
         title,
-        testWithBrowser(acct, async (t, browser) => {
-          const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        testWithBrowser(async (t, browser) => {
+          if (acct) {
+            t.context.mockApi!.configProvider = new ConfigurationProvider({
+              attester: {
+                pubkeyLookup: {
+                  'ci.tests.gmail@flowcrypt.test': {
+                    pubkey: somePubkey,
+                  },
+                  'flowcrypt.compatibility@gmail.com': {
+                    pubkey: somePubkey,
+                  },
+                },
+              },
+            });
+            await BrowserRecipe.setUpCommonAcct(t, browser, acct);
+          } else {
+            t.context.mockApi!.configProvider = new ConfigurationProvider({
+              wkd: {
+                directLookup: {
+                  'john.doe': { pubkeys: [johnDoeDirectKey] },
+                  'jack.advanced': { pubkeys: [jackAdvancedKey] },
+                },
+                advancedLookup: {
+                  'john.doe': { pubkeys: [johnDoeAdvancedKey] },
+                  incorrect: { pubkeys: [aliceKey] },
+                  'some.revoked': { pubkeys: [testConstants.somerevokedRevoked1, testConstants.somerevokedValid, testConstants.somerevokedRevoked2] },
+                },
+              },
+              sks: {
+                'john.doe@example.com': {
+                  pubkey: johnDoeExampleComKey,
+                },
+                'nobody@example.com': {
+                  returnError: new HttpClientErr('Pubkey not found', Status.NOT_FOUND),
+                },
+              },
+            });
+          }
+          /* The "test" parameter is utilized by the unit test named "Catcher does not include query string on report." */
+          const hostPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm?test=1');
           // update host page h1
           await hostPage.target.evaluate(title => {
             window.document.getElementsByTagName('h1')[0].textContent = title;
@@ -30,11 +73,10 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             (window as any).testConstants = object;
           }, testConstants);
           // prepare code to run
-          const testCodeWithMockPort = testCode.replace(/\:8001/g, ':' + t.urls?.port);
           const runThisCodeInBrowser = `
             (async () => {
               try {
-                return await ${testCodeWithMockPort}
+                return await ${testCode}
               } catch (e) {
                 return "unit test threw something:" + String(e) + "\\n\\n" + e.stack;
               }
@@ -79,7 +121,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
           throw Error(`Test case does not end with '})();'. Did you put code outside of the async functions? (forbidden)`);
         }
         const testCodeLines = code.split('\n');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         let thisUnitTestTitle = testCodeLines.shift()!.trim();
         if (thisUnitTestTitle.endsWith(';')) {
           thisUnitTestTitle = thisUnitTestTitle.slice(0, -1);

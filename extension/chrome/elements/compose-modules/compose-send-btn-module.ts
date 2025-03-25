@@ -37,7 +37,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
 
   public setHandlers = (): void => {
     const ctrlEnterHandler = Ui.ctrlEnter(() => !this.view.sizeModule.composeWindowIsMinimized && this.extractProcessSendMsg());
-    this.view.S.cached('subject').add(this.view.S.cached('compose')).keydown(ctrlEnterHandler);
+    this.view.S.cached('subject').add(this.view.S.cached('compose')).on('keydown', ctrlEnterHandler);
     this.view.S.cached('send_btn').on(
       'click',
       this.view.setHandlerPrevent('double', () => this.extractProcessSendMsg())
@@ -179,8 +179,9 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
         return;
       }
       if ('src' in node) {
-        const img: Element = node;
-        const src = img.getAttribute('src') as string;
+        const img = node as HTMLImageElement;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const src = img.getAttribute('src')!;
         const { mimeType, data } = this.parseInlineImageSrc(src);
         if (mimeType && data) {
           const imgAttachment = new Attachment({
@@ -211,7 +212,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
     let mimeType;
     let data = '';
     const parts = src.split(/[:;,]/);
-    if (parts.length === 4 && parts[0] === 'data' && parts[1].match(/^image\/\w+/) && parts[2] === 'base64') {
+    if (parts.length === 4 && parts[0] === 'data' && /^image\/\w+/.exec(parts[1]) && parts[2] === 'base64') {
       mimeType = parts[1];
       data = parts[3];
     }
@@ -271,6 +272,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
       } catch (e) {
         failures.push(
           ...msgRecipients.map(recipient => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             return { recipient, e };
           })
         );

@@ -46,7 +46,8 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(
+      window.addEventListener(
+        'resize',
         this.view.setHandlerPrevent(this.view.isReplyBox ? 'veryslowspree' : 'spree', () => {
           this.windowResized().catch(Catch.reportErr);
         })
@@ -104,7 +105,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight = false) => {
-    if (!this.view.isReplyBox && Catch.browser().name === 'firefox') {
+    if (!this.view.isReplyBox && Catch.isFirefox()) {
       this.view.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
       for (const cell of this.view.S.cached('all_cells_except_text')) {
@@ -124,7 +125,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
     }
   };
 
-  public resizeInput = (inputs?: JQuery<HTMLElement>) => {
+  public resizeInput = (inputs?: JQuery) => {
     if (!inputs) {
       inputs = this.view.S.cached('recipients_inputs'); // Resize All Inputs
     }

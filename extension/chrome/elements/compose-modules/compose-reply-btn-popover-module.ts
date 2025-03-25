@@ -6,11 +6,11 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 
-export type ReplyOptions = 'a_reply' | 'a_reply_all' | 'a_forward';
+export type ReplyOption = 'a_reply' | 'a_reply_all' | 'a_forward';
 
 export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
   /* eslint-disable @typescript-eslint/naming-convention */
-  private popoverItems: Record<ReplyOptions, { text: string; iconPath: string }> = {
+  private popoverItems: Record<ReplyOption, { text: string; iconPath: string }> = {
     a_reply: { text: 'Reply', iconPath: '/img/reply-icon.png' },
     a_reply_all: { text: 'Reply All', iconPath: '/img/reply-all-icon.png' },
     a_forward: { text: 'Forward', iconPath: '/img/forward-icon.png' },
@@ -29,7 +29,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
       $('.reply-container').hide();
     }
     for (const key of Object.keys(this.popoverItems)) {
-      const option = key as ReplyOptions;
+      const option = key as ReplyOption;
       const item = this.popoverItems[option];
       const elem = $(`
         <div class="action-toggle-key-reply-option reply-option" id="popover_${key}_option" data-test="action-toggle-${Xss.escape(key)}">
@@ -44,21 +44,24 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     }
   };
 
-  public changeOptionImage = (option: ReplyOptions) => {
-    $('.reply-options-icon').attr('src', this.popoverItems[option].iconPath);
+  public changeOptionImage = (option: ReplyOption) => {
+    if (!this.view.useFullScreenSecureCompose) {
+      $('.reply-options-icon').attr('src', this.popoverItems[option].iconPath);
+    }
   };
 
-  private didOptionClick = async (option: ReplyOptions) => {
+  private didOptionClick = async (option: ReplyOption) => {
     await this.view.renderModule.changeReplyOption(option);
     this.changeOptionImage(option);
   };
 
-  private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
+  private toggleVisible = (event: JQuery.TriggeredEvent<HTMLElement>) => {
     event.stopPropagation();
     const replyContainer = $('.reply-container');
     replyContainer.toggleClass('popover-opened');
     const popoverClickHandler = this.view.setHandler((elem, event) => {
-      if (!this.view.S.cached('reply_options_container')[0].contains(event.relatedTarget)) {
+      const ev = event as JQuery.BlurEvent<HTMLElement>;
+      if (!this.view.S.cached('reply_options_container')[0].contains(ev.relatedTarget as HTMLElement)) {
         replyContainer.removeClass('popover-opened');
         $('body').off('click', popoverClickHandler);
       }
@@ -66,7 +69,7 @@ export class ComposeReplyBtnPopoverModule extends ViewModule<ComposeView> {
     if (replyContainer.hasClass('popover-opened')) {
       $('body').on('click', popoverClickHandler);
       const replyOptions = this.view.S.cached('reply_options_container').find('.reply-option');
-      replyOptions.hover(function () {
+      replyOptions.on('hover', function () {
         replyOptions.removeClass('active');
         $(this).addClass('active');
       });

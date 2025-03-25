@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { AvaContext, newTimeoutPromise } from '../tests/tooling';
-import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page } from 'puppeteer';
+import { ConsoleMessage, Dialog, ElementHandle, Frame, KeyInput, Page, WaitForOptions } from 'puppeteer';
 import { PageRecipe } from '../tests/page-recipe/abstract-page-recipe';
 import {
   TIMEOUT_DESTROY_UNEXPECTED_ALERT,
@@ -15,8 +15,8 @@ import { Util } from '../util';
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import mkdirp from 'mkdirp';
-import { Dict } from '../core/common';
+import { mkdirp } from 'mkdirp';
+import { Dict, asyncFilter } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const jQuery: any;
@@ -34,7 +34,7 @@ abstract class ControllableBase {
   }
 
   public isElementPresent = async (selector: string) => {
-    return Boolean(await this.element(selector));
+    return Boolean(await this.firstElement(selector));
   };
 
   public isElementVisible = async (selector: string) => {
@@ -51,7 +51,7 @@ abstract class ControllableBase {
   public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
     try {
       await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: undefined });
-    } catch (e) {
+    } catch {
       throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
     }
   };
@@ -64,18 +64,18 @@ abstract class ControllableBase {
       this.log(`wait_all:2:${selector}`);
       if (this.isXpath(selector)) {
         this.log(`wait_all:3:${selector}`);
-        await this.target.waitForXPath(selector, { timeout: timeout * 1000 });
+        await this.target.waitForSelector(`xpath/.${selector}`, { timeout: timeout * 1000 });
         this.log(`wait_all:4:${selector}`);
       } else {
         this.log(`wait_all:5:${selector}`);
         await this.target.waitForSelector(selector, { timeout: timeout * 1000 });
         this.log(`wait_all:6:${selector}`);
       }
-      if (visible === false && (await this.isElementVisibleInternal(selector))) {
+      if (!visible && (await this.isElementVisibleInternal(selector))) {
         throw Error(`waiting failed: Element was expected to be hidden: ${selector}`);
       }
     }
-    if (visible === true) {
+    if (visible) {
       await Promise.all(selectors.map(selector => this.waitAnyInternal([selector], { timeout, visible })));
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
@@ -128,7 +128,7 @@ abstract class ControllableBase {
   public waitUntilFocused = async (selector: string) => {
     const start = Date.now();
     while (Date.now() - start < TIMEOUT_ELEMENT_APPEAR * 1000) {
-      const e = (await this.element(selector)) as ElementHandle;
+      const e = await this.singleElement(selector);
       const activeElement = (await this.target.evaluateHandle(() => document.activeElement)) as ElementHandle;
       const activeElementHtml = await PageRecipe.getElementPropertyJson(activeElement, 'outerHTML');
       const testedElementHtml = await PageRecipe.getElementPropertyJson(e, 'outerHTML');
@@ -142,12 +142,8 @@ abstract class ControllableBase {
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
-    const e = await this.element(selector);
+    const e = await this.singleElement(selector);
     this.log(`click:2:${selector}`);
-    if (!e) {
-      throw Error(`Element not found: ${selector}`);
-    }
-    this.log(`click:4:${selector}`);
     try {
       await e.click();
     } catch (e) {
@@ -157,7 +153,7 @@ abstract class ControllableBase {
       }
       throw e;
     }
-    this.log(`click:5:${selector}`);
+    this.log(`click:3:${selector}`);
   };
 
   public clickIfPresent = async (selector: string): Promise<boolean> => {
@@ -169,7 +165,7 @@ abstract class ControllableBase {
   };
 
   public type = async (selector: string, text: string, letterByLetter = false) => {
-    const e = await this.element(selector);
+    const e = await this.singleElement(selector);
     if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
@@ -178,7 +174,7 @@ abstract class ControllableBase {
     } else {
       const typeLastTenChars = await this.target.evaluate(
         (s, t) => {
-          const el = document.querySelector(s) as HTMLInputElement;
+          const el = document.querySelector<HTMLInputElement>(s)!;
           if (el.contentEditable === 'true') {
             el.innerText = t;
             el.selectionEnd = el.innerText.length;
@@ -205,7 +201,7 @@ abstract class ControllableBase {
   public attr = async (selector: string, attr: string): Promise<string | null> => {
     return await this.target.evaluate(
       (selector, attr) => {
-        const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
+        const el = document.querySelector(selector)!; // this will get evaluated in the browser
         return el.getAttribute(attr);
       },
       this.selector(selector),
@@ -216,8 +212,8 @@ abstract class ControllableBase {
   public value = async (selector: string): Promise<string> => {
     await this.waitAll(selector);
     return await this.target.evaluate(s => {
-      const e = document.querySelector(s) as HTMLSelectElement; // this will get evaluated in the browser
-      if (e.tagName === 'SELECT') {
+      const e = document.querySelector<HTMLInputElement | HTMLSelectElement>(s)!; // this will get evaluated in the browser
+      if (e.tagName === 'SELECT' && e instanceof HTMLSelectElement) {
         return e.options[e.selectedIndex].value;
       } else {
         return e.value;
@@ -226,22 +222,22 @@ abstract class ControllableBase {
   };
 
   public isDisabled = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).disabled, this.selector(selector));
+    return await this.target.evaluate(s => document.querySelector<HTMLInputElement>(s)!.disabled, this.selector(selector));
   };
 
   public isChecked = async (selector: string): Promise<boolean> => {
-    return await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).checked, this.selector(selector));
+    return await this.target.evaluate(s => document.querySelector<HTMLInputElement>(s)!.checked, this.selector(selector));
   };
 
   public hasClass = async (selector: string, className: string): Promise<boolean> => {
-    const classList = await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).classList, this.selector(selector));
+    const classList = await this.target.evaluate(s => document.querySelector(s)!.classList, this.selector(selector));
     return Object.values(classList).includes(className);
   };
 
   // Get the current computed outer height (including padding, border)
   public getOuterHeight = async (selector: string): Promise<string> => {
     return await this.target.evaluate(s => {
-      const computedStyle = getComputedStyle(document.querySelector(s) as HTMLElement);
+      const computedStyle = getComputedStyle(document.querySelector(s)!);
       const paddings = parseInt(computedStyle.getPropertyValue('padding-top')) + parseInt(computedStyle.getPropertyValue('padding-bottom'));
       const border = parseInt(computedStyle.getPropertyValue('border-top-width')) + parseInt(computedStyle.getPropertyValue('border-bottom-width'));
       const outerHeight = parseInt(computedStyle.getPropertyValue('height')) + paddings + border;
@@ -249,22 +245,27 @@ abstract class ControllableBase {
     }, this.selector(selector));
   };
 
-  public read = async (selector: string, onlyVisible = false): Promise<string> => {
-    selector = this.selector(selector);
+  public read = async (selector: string, onlyVisible = false): Promise<string | undefined> => {
+    const translatedSelector = this.selector(selector);
     if (onlyVisible) {
-      /* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any, no-null/no-null */
-      return await this.target.evaluate(
-        s => ([].slice.call(document.querySelectorAll(s))!.find((el: HTMLElement) => el.offsetParent !== null) as any).innerText,
-        selector
-      );
-      /* eslint-enable */
+      return (await this.readAll(translatedSelector)).find(el => el.visible)?.innerText;
     } else {
-      return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerText, selector);
+      return await this.target.evaluate(s => document.querySelector<HTMLElement>(s)!.innerText, translatedSelector);
     }
   };
 
+  public readAll = async (selector: string) => {
+    return await this.target.evaluate(
+      s =>
+        ([].slice.call(document.querySelectorAll(s)) as HTMLElement[]).map(el => {
+          return { innerText: el.innerText, visible: Boolean(el.offsetParent) };
+        }),
+      this.selector(selector)
+    );
+  };
+
   public readHtml = async (selector: string): Promise<string> => {
-    return await this.target.evaluate(s => (document.querySelector(s) as HTMLElement).innerHTML, this.selector(selector));
+    return await this.target.evaluate(s => document.querySelector(s)!.innerHTML, this.selector(selector));
   };
 
   public selectOption = async (selector: string, choice: string) => {
@@ -275,7 +276,7 @@ abstract class ControllableBase {
 
   public checkElementColor = async (selector: string, color: string) => {
     const elementColor = await this.target.evaluate(selector => {
-      const el = document.querySelector(selector) as HTMLElement; // this will get evaluated in the browser
+      const el = document.querySelector<HTMLElement>(selector)!; // this will get evaluated in the browser
       return el.style.color;
     }, this.selector(selector));
     expect(elementColor).to.equal(color);
@@ -327,12 +328,13 @@ abstract class ControllableBase {
         await this.click(selector);
         this.log(`wait_and_click(i${i}):5:${selector}`);
         break;
-      } catch (e) {
+      } catch (e: unknown) {
         this.log(`wait_and_click(i${i}):6:err(${String(e)}):${selector}`);
         if (
-          e.message === 'Node is either not visible or not an HTMLElement' ||
-          e.message === 'Node is either not clickable or not an HTMLElement' ||
-          e.message === 'Node is detached from document'
+          e instanceof Error &&
+          ['Node is either not visible or not an HTMLElement', 'Node is either not clickable or not an HTMLElement', 'Node is detached from document'].includes(
+            e.message
+          )
         ) {
           // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
@@ -366,18 +368,18 @@ abstract class ControllableBase {
       const currentText = await this.read(selector, true);
       if (typeof needle === 'string') {
         // str
-        if (currentText.includes(needle)) {
+        if (currentText?.includes(needle)) {
           return;
         }
       } else {
         // regex
-        if (currentText.match(needle)) {
+        if (currentText?.match(needle)) {
           return;
         }
       }
       const lastText = observedContentHistory[observedContentHistory.length - 1];
       if (typeof lastText !== 'undefined' && currentText !== lastText) {
-        observedContentHistory.push(currentText);
+        observedContentHistory.push(currentText || '(undefined)');
       }
       await Util.sleep(testLoopLengthMs / 1000);
     }
@@ -393,7 +395,7 @@ abstract class ControllableBase {
     const start = Date.now();
     const values: string[] = [];
     while (Date.now() - start < timeoutSec * 1000) {
-      const value = await this.target.evaluate(s => (document.querySelector(s) as HTMLInputElement).value, selector);
+      const value = await this.target.evaluate(s => document.querySelector<HTMLInputElement>(s)!.value, selector);
       if (typeof needle === 'string') {
         // str
         if (value.includes(needle)) {
@@ -415,8 +417,11 @@ abstract class ControllableBase {
 
   public checkIfImageIsDisplayedCorrectly = async (selector: string) => {
     const isImageDisplayedCorrectly = await this.target.evaluate(selector => {
-      const img = document.querySelector(selector) as HTMLImageElement;
-      return img.naturalWidth !== 0 && img.naturalHeight !== 0;
+      const pgpBlock = document.querySelector<HTMLElement>('#pgp_block')!;
+      const img = document.querySelector<HTMLImageElement>(selector)!;
+      const imgWidth = img.offsetWidth;
+      const pgpBlockWidth = pgpBlock.offsetWidth;
+      return img.naturalWidth !== 0 && img.naturalHeight !== 0 && imgWidth <= pgpBlockWidth;
     }, selector);
     expect(isImageDisplayedCorrectly).to.be.true;
   };
@@ -430,13 +435,13 @@ abstract class ControllableBase {
     const start = Date.now();
     const sleepMs = 250;
     let presentForMs = 0;
-    let actualText = '';
+    let actualText: string | undefined;
     const history: string[] = [];
     let round = 1;
     while (Date.now() - start < timeoutSec * 1000) {
       await Util.sleep(sleepMs / 1000);
       actualText = await this.read(selector, true);
-      if (!actualText.includes(expectedText)) {
+      if (!actualText?.includes(expectedText)) {
         presentForMs = 0;
       } else {
         presentForMs += sleepMs;
@@ -450,6 +455,20 @@ abstract class ControllableBase {
     throw new Error(
       `selector ${selector} not continuously containing "${expectedText}" for ${expectPresentForMs}ms within ${timeoutSec}s, last content:${actualText}`
     );
+  };
+
+  public verifyContentIsNotPresentContinuously = async (selector: string, expectedText: string, timeoutSec = 10) => {
+    await this.waitAll(selector);
+    const start = Date.now();
+    let actualText: string | undefined;
+    let round = 1;
+    while (Date.now() - start < timeoutSec * 1000) {
+      actualText = await this.read(selector, true);
+      if (actualText?.includes(expectedText)) {
+        throw new Error(`selector ${selector} contained "${expectedText}" for ${round}th attemp, last content:${actualText}`);
+      }
+      round += 1;
+    }
   };
 
   public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number; appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
@@ -480,24 +499,12 @@ abstract class ControllableBase {
     }
     let passes = Math.max(2, Math.round(timeout)); // 1 second per pass, 2 pass minimum
     while (passes--) {
-      let frames: Frame[];
-      if (this.target.constructor.name.endsWith('Page')) {
-        frames = (this.target as Page).frames();
-      } else if (this.target.constructor.name === 'Frame') {
-        frames = (this.target as Frame).childFrames();
-      } else {
-        throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
-      }
-      const frame = frames.find(frame => {
-        for (const fragment of urlMatchables) {
-          if (frame.url().indexOf(fragment) === -1) {
-            return false;
-          }
-        }
-        return true;
-      });
-      if (frame) {
-        return new ControllableFrame(frame);
+      const frames = 'frames' in this.target ? this.target.frames() : this.target.childFrames();
+      const matchingFrames = frames.filter(frame => urlMatchables.every(fragment => frame.url().includes(fragment)));
+      if (matchingFrames.length > 1) {
+        throw Error(`More than one frame found: ${urlMatchables.join(',')}`);
+      } else if (matchingFrames.length === 1) {
+        return new ControllableFrame(matchingFrames[0], this.getPage());
       }
       await Util.sleep(1);
     }
@@ -512,8 +519,9 @@ abstract class ControllableBase {
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
       mkdirp.sync(downloadPath);
+      const page = this.getPage().target;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
-      await (this.target as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
+      await (page as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
       if (typeof selector === 'string') {
         await this.waitAndClick(selector);
       } else {
@@ -521,14 +529,25 @@ abstract class ControllableBase {
       }
       while (Object.keys(files).length < expectFileCount) {
         const newFilenames = await this.waitForFilesToDownload(downloadPath);
-        for (const filename of newFilenames) {
-          files[filename] = fs.readFileSync(path.resolve(downloadPath, filename));
+        if (newFilenames.length) {
+          for (const filename of newFilenames) {
+            const filepath = path.resolve(downloadPath, filename);
+            files[filename] = fs.readFileSync(filepath);
+            fs.unlinkSync(filepath);
+          }
+        } else {
+          // Give a turn to other promises, including timeoutPromise
+          await Util.sleep(0.5);
         }
       }
     })();
     const timeoutPromise = newTimeoutPromise(`awaitDownloadTriggeredByClicking timeout for ${selector}`, 20);
     await Promise.race([resolvePromise, timeoutPromise]);
     return files;
+  };
+
+  public keyboard = () => {
+    return 'keyboard' in this.target ? this.target.keyboard : this.target.page().keyboard;
   };
 
   protected log = (msg: string) => {
@@ -538,7 +557,7 @@ abstract class ControllableBase {
   };
 
   protected isXpath = (selector: string): boolean => {
-    return selector.match(/^\/\//) !== null; // eslint-disable-line no-null/no-null
+    return selector.startsWith('//');
   };
 
   protected selector = (customSelLanguageQuery: string): string => {
@@ -546,34 +565,52 @@ abstract class ControllableBase {
     let m: RegExpMatchArray | null;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
-    } else if ((m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/))) {
+    } else if ((m = /@(ui-modal-[a-z\-]+)\:message/.exec(customSelLanguageQuery))) {
       return `.${m[1]} .swal2-html-container`; // message inside the modal
-    } else if ((m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/))) {
+    } else if ((m = /@(ui-modal-[a-z\-]+)/.exec(customSelLanguageQuery))) {
       return `.${m[1]}`; // represented as a class
-    } else if ((m = customSelLanguageQuery.match(/@([a-z0-9\-_]+)$/i))) {
+    } else if ((m = /@([a-z0-9\-_]+)$/i.exec(customSelLanguageQuery))) {
       return customSelLanguageQuery.replace(/@([a-z0-9\-_]+)$/i, `[data-test="${m[1]}"]`);
-    } else if ((m = customSelLanguageQuery.match(/^@([a-z0-9\-_]+)\(([^()]*)\)$/i))) {
-      return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
+    } else if ((m = /^@([a-z0-9\-_]+)\(([^()]*)\)$/i.exec(customSelLanguageQuery))) {
+      return `//*[@data-test='${m[1]}' and (contains(text(),'${m[2]}') or contains(*/following-sibling::text(),'${m[2]}'))]`;
     } else {
       return customSelLanguageQuery;
     }
   };
 
-  protected element = async (selector: string): Promise<ElementHandle | null> => {
+  protected firstElement = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector))[0] as ElementHandle<Element>;
+      return (await this.target.$$(`xpath/.${selector}`))[0];
     } else {
       return await this.target.$(selector);
     }
   };
 
+  protected singleElement = async (selector: string): Promise<ElementHandle> => {
+    const elements = await this.elements(selector);
+    if (!elements.length) {
+      throw Error(`Element not found: ${selector}`);
+    } else if (elements.length > 1) {
+      const visibleElements = await asyncFilter(elements, Util.isVisible);
+      if (visibleElements.length === 1) {
+        return visibleElements[0];
+      }
+      throw Error(`More than one element found: ${selector}`);
+    }
+    return elements[0];
+  };
+
   protected elementCount = async (selector: string): Promise<number> => {
+    return (await this.elements(selector)).length;
+  };
+
+  protected elements = async (selector: string) => {
     selector = this.selector(selector);
     if (this.isXpath(selector)) {
-      return (await this.target.$x(selector)).length;
+      return await this.target.$$(`xpath/.${selector}`);
     } else {
-      return (await this.target.$$(selector)).length;
+      return await this.target.$$(selector);
     }
   };
 
@@ -587,17 +624,16 @@ abstract class ControllableBase {
     while (timeout-- > 0) {
       try {
         for (const selector of processedSelectors) {
-          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          const elements = await (this.isXpath(selector) ? this.target.$$(`xpath/.${selector}`) : this.target.$$(selector));
           for (const element of elements) {
-            // eslint-disable-next-line no-null/no-null
-            if ((await element.boundingBox()) !== null || !visible) {
+            if (!visible || (await Util.isVisible(element))) {
               // element is visible
-              return element as ElementHandle<Element>;
+              return element;
             }
           }
         }
       } catch (e) {
-        if (e instanceof Error && e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+        if (e instanceof Error && !e.message.includes('Cannot find context with specified id undefined')) {
           throw e;
         }
       }
@@ -618,7 +654,7 @@ abstract class ControllableBase {
     for (const iframe of await this.target.$$('iframe')) {
       const src = await PageRecipe.getElementPropertyJson(iframe, 'src');
       const visible = !!(await iframe.boundingBox()); // elements without bounding box are not visible
-      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length && visible) {
+      if (urlMatchables.filter(m => src.includes(m)).length === urlMatchables.length && visible) {
         matchingLinks.push(src);
       }
     }
@@ -634,6 +670,8 @@ abstract class ControllableBase {
       await Util.sleep(0.2);
     }
   };
+
+  public abstract getPage(): ControllablePage;
 }
 
 export class ControllableAlert {
@@ -656,15 +694,23 @@ export class ControllableAlert {
 }
 
 class ConsoleEvent {
-  public constructor(public type: string, public text: string) {}
+  public constructor(
+    public type: string,
+    public text: string
+  ) {}
 }
 
 export class ControllablePage extends ControllableBase {
+  public target: Page;
   public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
   private preventclose = false;
+  private acceptUnloadAlert = false;
 
-  public constructor(public t: AvaContext, public page: Page) {
+  public constructor(
+    public t: AvaContext,
+    public page: Page
+  ) {
     super(page);
     page.on('console', console => {
       this.consoleMsgs.push(console);
@@ -673,8 +719,8 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      const extensionUrl = t.urls?.extension('');
-      if ((extensionUrl && url.indexOf(extensionUrl) !== 0) || fail) {
+      const extensionUrl = t.context.urls?.extension('');
+      if ((extensionUrl && !url.startsWith(extensionUrl)) || fail) {
         // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
@@ -687,38 +733,53 @@ export class ControllablePage extends ControllableBase {
     });
     // page.on('error', e => this.consoleMsgs.push(`[error]${e.stack}[/error]`)); // this is Node event emitter error. Maybe just let it go crash the process / test
     page.on('dialog', alert => {
+      if (this.acceptUnloadAlert && alert.type() === 'beforeunload') {
+        alert.accept().catch((e: unknown) => t.log(`${t.context.attemptText} Err auto-accepting unload alert ${String(e)}`));
+        return;
+      }
       const controllableAlert = new ControllableAlert(alert);
       this.alerts.push(controllableAlert);
       setTimeout(() => {
         if (controllableAlert.active) {
-          t.retry = true;
+          t.context.retry = true;
           this.preventclose = true;
-          t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
+          t.log(`${t.context.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch((e: unknown) => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
+            alert.dismiss().catch((e: unknown) => t.log(`${t.context.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
-            t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
+            t.log(`${t.context.attemptText} Err2 dismissing alert ${String(e)}`);
           }
         }
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
     });
   }
 
+  public reload = async (options?: WaitForOptions, acceptUnloadAlert?: boolean) => {
+    this.acceptUnloadAlert = Boolean(acceptUnloadAlert);
+    try {
+      await this.page.reload(options);
+    } finally {
+      this.acceptUnloadAlert = false;
+    }
+  };
+
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
-    const dialogPromise: Promise<ControllableAlert> = new Promise((resolve, reject) => {
+    const dialogPromise = new Promise<ControllableAlert>((resolve, reject) => {
       this.page.on('dialog', () => resolve(this.alerts[this.alerts.length - 1])); // we need it as a ControllableAlert so that we know if it was dismissed or not
       setTimeout(() => reject(new Error('new alert timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
     });
-    triggeringAction().catch(console.error);
+    triggeringAction().catch((e: unknown) => {
+      console.error(e);
+    });
     return await dialogPromise;
   };
 
   public waitForNavigationIfAny = async (triggeringAction: () => Promise<void>, seconds = 5) => {
     try {
       await Promise.all([this.page.waitForNavigation({ timeout: seconds * 1000 }), triggeringAction()]);
-    } catch (e) {
+    } catch (e: unknown) {
       // can be "Navigation Timeout Exceeded" or "Navigation timeout of 5000 ms exceeded"
-      if (new RegExp('^Navigation timeout .*xceeded$').test(e.message)) {
+      if (new RegExp('^Navigation timeout .*xceeded$').test((e as Error).message)) {
         return;
       }
       throw e;
@@ -726,14 +787,14 @@ export class ControllablePage extends ControllableBase {
   };
 
   public goto = async (url: string) => {
-    if (this.t.urls) {
-      const extensionUrl = this.t.urls.extension('');
-      url = url.indexOf('https://') === 0 || url.indexOf(extensionUrl) === 0 ? url : this.t.urls.extension(url);
+    if (this.t.context.urls) {
+      const extensionUrl = this.t.context.urls.extension('');
+      url = url.startsWith('https://') || url.startsWith(extensionUrl) ? url : this.t.context.urls.extension(url);
     }
 
     await Util.sleep(1);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
-    this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
+    this.page.goto(url).catch((e: unknown) => this.t.log(`goto: ${(e as Error).message}: ${url}`));
     await Promise.race([
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
       this.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
@@ -757,7 +818,7 @@ export class ControllablePage extends ControllableBase {
 
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
-    return await Promise.race([this.page.screenshot({ encoding: 'base64' }) as Promise<string>, newTimeoutPromise('screenshot', 20)]);
+    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
   };
 
   public html = async (): Promise<string> => {
@@ -803,7 +864,7 @@ export class ControllablePage extends ControllableBase {
 
   // passing (keys = null) will return all entries
   public getFromLocalStorage = async (keys: string[] | null): Promise<Dict<unknown>> => {
-    const result = await (this.target as Page).evaluate(
+    const result = await this.target.evaluate(
       async keys =>
         await new Promise(resolve => {
           chrome.storage.local.get(keys, resolve);
@@ -811,6 +872,14 @@ export class ControllablePage extends ControllableBase {
       keys
     );
     return result as Dict<unknown>;
+  };
+
+  public setLocalStorage = async (key: string, value: string | null): Promise<void> => {
+    await this.target.evaluate(async (key, value) => await chrome.storage.local.set({ [key]: value }), key, value);
+  };
+
+  public getPage = () => {
+    return this;
   };
 
   private dismissActiveAlerts = async (): Promise<void> => {
@@ -829,12 +898,20 @@ export class ControllablePage extends ControllableBase {
 }
 
 export class ControllableFrame extends ControllableBase {
+  public target: Frame;
   public frame: Frame;
 
-  public constructor(frame: Frame) {
+  public constructor(
+    frame: Frame,
+    private page: ControllablePage
+  ) {
     super(frame);
     this.frame = frame;
   }
+
+  public getPage = () => {
+    return this.page;
+  };
 }
 
 export type Controllable = ControllableFrame | ControllablePage;

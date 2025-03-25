@@ -8,21 +8,26 @@ import { ApiErr } from './api/shared/api-error.js';
 import { Xss } from './platform/xss.js';
 
 export abstract class View {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   public static run<VIEW extends View>(viewClass: new () => VIEW) {
     try {
       const view = new viewClass();
-      (async () => {
-        await view.render();
-        await Promise.resolve(view.setHandlers()); // allow both sync and async
-        View.setTestViewStateLoaded();
-      })().catch(View.reportAndRenderErr);
+      window.addEventListener('load', async () => {
+        try {
+          await view.render();
+          await Promise.resolve(view.setHandlers()); // allow both sync and async
+          View.setTestViewStateLoaded();
+        } catch (e) {
+          View.reportAndRenderErr(e);
+        }
+      });
     } catch (e) {
       View.reportAndRenderErr(e);
     }
   }
 
   private static setTestViewStateLoaded = () => {
-    $('body').attr('data-test-view-state', 'loaded');
+    document.querySelector('body')?.setAttribute('data-test-view-state', 'loaded');
   };
 
   private static reportAndRenderErr = (e: unknown) => {
@@ -42,7 +47,7 @@ export abstract class View {
     View.setTestViewStateLoaded();
   };
 
-  public setHandler = (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
+  public setHandler = (cb: (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
     return Ui.event.handle(cb, errHandlers, this);
   };
 
@@ -55,7 +60,7 @@ export abstract class View {
   };
 
   public setEnterHandlerThatClicks = (selector: string) => {
-    return (event: JQuery.Event<HTMLElement, null>) => {
+    return (event: JQuery.Event) => {
       if (event.which === 13) {
         $(selector).trigger('click');
       }

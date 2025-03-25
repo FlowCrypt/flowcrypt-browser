@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP' | 'IMG-TO-LINK';
+export type SanitizeImgHandling = 'IMG-DEL' | 'IMG-KEEP';
 
 /**
  * Look at https://github.com/FlowCrypt/flowcrypt-mobile-core/blob/master/TypeScript/source/platform/xss.ts if node implementation is ever needed for tests.

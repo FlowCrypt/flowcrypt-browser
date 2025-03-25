@@ -1,11 +1,23 @@
 version: 2
 updates:
 
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "20:00"
+
   - package-ecosystem: "npm"
     directory: "/"
-    open-pull-requests-limit: 1
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "sunday"
+      time: "22:00"
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
     ignore:
       # ignore all bootstrap major updates
       - dependency-name: "bootstrap"
@@ -13,6 +25,12 @@ updates:
       # TODO: upgrade iso-8859-2 when ava will have ESM support: https://github.com/orgs/avajs/projects/2
       # https://github.com/FlowCrypt/flowcrypt-browser/pull/3961#issuecomment-921335748
       - dependency-name: "iso-8859-2"
+        versions: [ ">=1.0.1" ]
+      - dependency-name: "ava"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "openpgp"
+      - dependency-name: "chai"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "chai-as-promised"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "filesize"
+        versions: [ ">= 10.1.3" ]

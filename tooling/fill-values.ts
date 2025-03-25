@@ -3,14 +3,11 @@
 'use strict';
 
 import { readFileSync, writeFileSync } from 'fs';
+import { TSConfig } from './resolve-modules';
 
-const {
-  compilerOptions: { outDir: targetDirExtension },
-} = JSON.parse(readFileSync('./tsconfig.json').toString());
-const {
-  compilerOptions: { outDir: targetDirContentScripts },
-} = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
-const { version } = JSON.parse(readFileSync(`./package.json`).toString());
+const targetDirExtension = (JSON.parse(readFileSync('./tsconfig.json').toString()) as TSConfig).compilerOptions.outDir;
+const targetDirContentScripts = (JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString()) as TSConfig).compilerOptions.outDir;
+const { version } = JSON.parse(readFileSync(`./package.json`).toString()) as { version: string };
 
 // mock values for a consumer-mock or enterprise-mock test builds are regex-replaced later in `build-types-and-manifests.ts`
 const replaceables: { needle: RegExp; val: string }[] = [
@@ -23,6 +20,7 @@ const replaceables: { needle: RegExp; val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST\]/g, val: 'https://accounts.google.com' },
   { needle: /\[BUILD_REPLACEABLE_BACKEND_API_HOST\]/g, val: 'https://flowcrypt.com/api/' },
   { needle: /\[BUILD_REPLACEABLE_ATTESTER_API_HOST\]/g, val: 'https://flowcrypt.com/attester/' },
+  { needle: /\[BUILD_REPLACEABLE_KEYS_OPENPGP_ORG_API_HOST\]/g, val: 'https://keys.openpgp.org/' },
   { needle: /\[BUILD_REPLACEABLE_SHARED_TENANT_API_HOST\]/g, val: 'https://flowcrypt.com/shared-tenant-fes' },
 ];
 

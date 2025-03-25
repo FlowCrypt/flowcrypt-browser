@@ -11,7 +11,7 @@ import { OpenPGPKey } from './pgp/openpgp-key.js';
 import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
-import { EmailParts } from '../common.js';
+import { EmailParts, Str } from '../common.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -20,6 +20,12 @@ import { EmailParts } from '../common.js';
  * all dates are expressed as number of milliseconds since Unix Epoch.
  * This is what `Date.now()` returns and `new Date(x)` accepts.
  */
+
+type KeyStatus = {
+  state: 'active' | 'revoked' | 'expired' | 'sign only' | 'unusable';
+  statusIndicator: 'light-gray' | 'green' | 'orange' | 'yellow' | 'red';
+};
+
 export interface Key extends KeyIdentity {
   allIds: string[]; // a list of fingerprints, including those for subkeys
   created: number;
@@ -106,15 +112,15 @@ export interface ArmoredKeyIdentityWithEmails extends KeyIdentity {
 }
 
 export class KeyUtil {
-  public static identityEquals = (keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) => {
+  public static identityEquals(keyIdentity1: KeyIdentity, keyIdentity2: KeyIdentity) {
     return keyIdentity1.id === keyIdentity2.id && keyIdentity1.family === keyIdentity2.family;
-  };
+  }
 
   public static filterKeysByIdentity<T extends KeyIdentity>(kis: T[], ids: KeyIdentity[]): T[] {
     return kis.filter(ki => ids.some(i => KeyUtil.identityEquals(i, ki)));
   }
 
-  public static filterKeysByTypeAndSenderEmail = (keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] => {
+  public static filterKeysByTypeAndSenderEmail(keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] {
     let foundKeys: KeyInfoWithIdentity[] = [];
     if (type) {
       foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.family === type);
@@ -128,7 +134,7 @@ export class KeyUtil {
       }
     }
     return foundKeys;
-  };
+  }
 
   public static groupByType<T extends { type: string }>(items: T[]): { [type: string]: T[] } {
     return items.reduce((rv: { [type: string]: T[] }, x: T) => {
@@ -137,19 +143,19 @@ export class KeyUtil {
     }, {});
   }
 
-  public static isWithoutSelfCertifications = async (key: Key) => {
+  public static async isWithoutSelfCertifications(key: Key) {
     // all non-OpenPGP keys are automatically considered to be not
     // "without self certifications"
     if (key.family !== 'openpgp') {
       return false;
     }
     return await OpenPGPKey.isWithoutSelfCertifications(key);
-  };
+  }
 
   /**
    * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
    */
-  public static readMany = async (fileData: Buf): Promise<{ keys: Key[]; errs: Error[] }> => {
+  public static async readMany(fileData: Buf): Promise<{ keys: Key[]; errs: Error[] }> {
     const allKeys: Key[] = [];
     const allErrs: Error[] = [];
     const { blocks } = MsgBlockParser.detectBlocks(fileData.toUtfStr('ignore'));
@@ -158,7 +164,7 @@ export class KeyUtil {
     const pushKeysAndErrs = async (content: string | Buf, isArmored: boolean) => {
       try {
         if (isArmored) {
-          allKeys.push(...(await KeyUtil.parseMany(content.toString())));
+          allKeys.push(...(await KeyUtil.parseMany(Str.with(content))));
         } else {
           const buf = typeof content === 'string' ? Buf.fromUtfStr(content) : content;
           const { keys, err } = await KeyUtil.readBinary(buf);
@@ -177,18 +183,18 @@ export class KeyUtil {
       await pushKeysAndErrs(fileData, false);
     }
     return { keys: allKeys, errs: allErrs };
-  };
+  }
 
-  public static parse = async (text: string): Promise<Key> => {
+  public static async parse(text: string): Promise<Key> {
     const keys = await KeyUtil.parseMany(text);
     const keysLength = keys.length;
     if (keysLength > 1) {
       throw new Error(`Found ${keysLength} keys, expected one`);
     }
     return keys[0];
-  };
+  }
 
-  public static parseMany = async (text: string): Promise<Key[]> => {
+  public static async parseMany(text: string): Promise<Key[]> {
     const keyType = KeyUtil.getKeyFamily(text);
     if (keyType === 'openpgp') {
       return await OpenPGPKey.parseMany(text);
@@ -197,9 +203,9 @@ export class KeyUtil {
       return [SmimeKey.parse(text)];
     }
     throw new UnexpectedKeyTypeError(`Key type is ${keyType}, expecting OpenPGP or x509 S/MIME`);
-  };
+  }
 
-  public static readBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<{ keys: Key[]; err: Error[] }> => {
+  public static async readBinary(key: Uint8Array, passPhrase?: string): Promise<{ keys: Key[]; err: Error[] }> {
     const allKeys: Key[] = [],
       allErr: Error[] = [];
     let uncheckedOpgpKeyCount = 0;
@@ -237,32 +243,32 @@ export class KeyUtil {
       }
     }
     return { keys: allKeys, err: allErr };
-  };
+  }
 
-  public static parseBinary = async (key: Uint8Array, passPhrase?: string | undefined): Promise<Key[]> => {
+  public static async parseBinary(key: Uint8Array, passPhrase?: string): Promise<Key[]> {
     const { keys, err } = await KeyUtil.readBinary(key, passPhrase);
     if (keys.length > 0) {
       return keys;
     }
     throw new Error(err.length ? err.map((e, i) => i + 1 + '. ' + e.message).join('\n') : 'Should not happen: no keys and no errors.');
-  };
+  }
 
-  public static armor = (key: Key): string => {
+  public static armor(key: Key): string {
     const armored = (key as unknown as { rawArmored: string }).rawArmored;
     if (!armored) {
       throw new Error('The Key object has no rawArmored field.');
     }
     return armored;
-  };
+  }
 
   // remove crypto-library objects (useful when sending the object to/from background)
-  public static pack = (key: Key): void => {
+  public static pack(key: Key): void {
     if (key.family === 'openpgp') {
       OpenPGPKey.pack(key);
     }
-  };
+  }
 
-  public static diagnose = async (key: Key, passphrase: string): Promise<Map<string, string>> => {
+  public static async diagnose(key: Key, passphrase: string): Promise<Map<string, string>> {
     let result = new Map<string, string>();
     result.set(`Key type`, key.family);
     if (key.family === 'openpgp') {
@@ -271,47 +277,73 @@ export class KeyUtil {
     }
     result.set(`expiration`, KeyUtil.formatResult(key.expiration));
     result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
+    result.set(`internal usableForEncryption`, KeyUtil.formatResult(key.usableForEncryption));
+    result.set(`internal usableForSigning`, KeyUtil.formatResult(key.usableForSigning));
     result.set(`internal usableForEncryptionButExpired`, KeyUtil.formatResult(key.usableForEncryptionButExpired));
     result.set(`internal usableForSigningButExpired`, KeyUtil.formatResult(key.usableForSigningButExpired));
     return result;
-  };
+  }
 
-  public static formatResultAsync = async (f: () => Promise<unknown>): Promise<string> => {
+  public static async formatResultAsync(f: () => Promise<unknown>): Promise<string> {
     try {
       return KeyUtil.formatResult(await f());
     } catch (e) {
       return `[${String(e)}]`;
     }
-  };
+  }
 
-  public static formatResult = (value: unknown): string => {
+  public static formatResult(value: unknown): string {
     return `[-] ${String(value)}`;
-  };
+  }
 
-  public static asPublicKey = async (key: Key): Promise<Key> => {
+  public static async asPublicKey(key: Key): Promise<Key> {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.asPublicKey(key);
     } else if (key.family === 'x509') {
       return SmimeKey.asPublicKey(key);
     }
     throw new UnexpectedKeyTypeError(`Key type is ${key.family}, expecting OpenPGP or x509 S/MIME`);
-  };
+  }
 
-  public static expired = (key: Key): boolean => {
+  public static expired(key: Key): boolean {
     const exp = key.expiration;
     if (!exp) {
       return false;
     }
     return Date.now() > exp;
-  };
+  }
 
-  public static dateBeforeExpirationIfAlreadyExpired = (key: Key): Date | undefined => {
+  public static status(key: Key | undefined): KeyStatus {
+    if (!key) {
+      return { state: 'unusable', statusIndicator: 'red' };
+    }
+    let keyStatus: KeyStatus;
+    if (key.revoked) {
+      keyStatus = { state: 'revoked', statusIndicator: 'light-gray' };
+    } else if (key.usableForEncryption) {
+      keyStatus = { state: 'active', statusIndicator: 'green' };
+    } else if (key.usableForEncryptionButExpired) {
+      keyStatus = { state: 'expired', statusIndicator: 'orange' };
+    } else if (key.usableForSigning) {
+      keyStatus = { state: 'sign only', statusIndicator: 'yellow' };
+    } else {
+      keyStatus = { state: 'unusable', statusIndicator: 'red' };
+    }
+    return keyStatus;
+  }
+
+  public static statusHtml(keyid: string, key: Key | undefined): string {
+    const keyStatus = KeyUtil.status(key);
+    return `<span class="fc-badge fc-badge-${keyStatus.statusIndicator}" data-test="container-key-status-${keyid}">${keyStatus.state}</span>`;
+  }
+
+  public static dateBeforeExpirationIfAlreadyExpired(key: Key): Date | undefined {
     const expiration = key.expiration;
     return expiration && KeyUtil.expired(key) ? new Date(expiration - 1000) : undefined;
-  };
+  }
 
   // todo - this should be made to tolerate smime keys
-  public static normalize = async (type: 'publicKey' | 'privateKey', armored: string): Promise<{ normalized: string; keys: OpenPGP.Key[] }> => {
+  public static async normalize(type: 'publicKey' | 'privateKey', armored: string): Promise<{ normalized: string; keys: OpenPGP.Key[] }> {
     try {
       let keys: OpenPGP.Key[] = [];
       armored = PgpArmor.normalize(armored, 'key');
@@ -333,16 +365,16 @@ export class KeyUtil {
       Catch.reportErr(error);
       return { normalized: '', keys: [] };
     }
-  };
+  }
 
-  public static checkPassPhrase = async (pkey: string, passphrase: string): Promise<boolean> => {
+  public static async checkPassPhrase(pkey: string, passphrase: string): Promise<boolean> {
     // decrypt will change the key in place so it's important to parse the key here
     // because passing an object from the caller could have unexpected consequences
     const key = await KeyUtil.parse(pkey);
     return await KeyUtil.decrypt(key, passphrase);
-  };
+  }
 
-  public static getKeyFamily = (pubkey: string): KeyFamily | 'unknown' => {
+  public static getKeyFamily(pubkey: string): KeyFamily | 'unknown' {
     if (pubkey.includes(PgpArmor.headers('certificate').begin)) {
       return 'x509';
     } else if (pubkey.startsWith(PgpArmor.headers('pkcs12').begin)) {
@@ -354,14 +386,9 @@ export class KeyUtil {
     } else {
       return 'unknown';
     }
-  };
+  }
 
-  public static decrypt = async (
-    key: Key,
-    passphrase: string,
-    optionalKeyid?: OpenPGP.KeyID,
-    optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'
-  ): Promise<boolean> => {
+  public static async decrypt(key: Key, passphrase: string, optionalKeyid?: OpenPGP.KeyID, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.decryptKey(key, passphrase, optionalKeyid, optionalBehaviorFlag);
     } else if (key.family === 'x509') {
@@ -369,9 +396,9 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.decrypt does not support key family ${key.family}`);
     }
-  };
+  }
 
-  public static encrypt = async (key: Key, passphrase: string) => {
+  public static async encrypt(key: Key, passphrase: string) {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.encryptKey(key, passphrase);
     } else if (key.family === 'x509') {
@@ -379,30 +406,30 @@ export class KeyUtil {
     } else {
       throw new Error(`KeyUtil.encrypt does not support key family ${key.family}`);
     }
-  };
+  }
 
-  public static reformatKey = async (
+  public static async reformatKey(
     privateKey: Key,
     passphrase: string | undefined,
     userIds: { email: string | undefined; name: string }[],
     expireSeconds: number
-  ) => {
+  ) {
     if (privateKey.family === 'openpgp') {
       return await OpenPGPKey.reformatKey(privateKey, passphrase, userIds, expireSeconds);
     } else {
       throw new Error(`KeyUtil.reformatKey does not support key family ${privateKey.family}`);
     }
-  };
+  }
 
-  public static getOrCreateRevocationCertificate = async (key: Key): Promise<string | undefined> => {
+  public static async getOrCreateRevocationCertificate(key: Key): Promise<string | undefined> {
     if (key.family === 'openpgp') {
       return await OpenPGPKey.getOrCreateRevocationCertificate(key);
     } else {
       throw new Error(`KeyUtil.getOrCreateRevocationCertificate does not support key family ${key.family}`);
     }
-  };
+  }
 
-  public static keyInfoObj = async (prv: Key): Promise<KeyInfoWithIdentity> => {
+  public static async keyInfoObj(prv: Key): Promise<KeyInfoWithIdentity> {
     if (!prv.isPrivate) {
       throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');
     }
@@ -416,34 +443,34 @@ export class KeyUtil {
       id: prv.id,
       family: prv.family,
     };
-  };
+  }
 
-  public static getPubkeyLongids = (pubkey: Key): string[] => {
+  public static getPubkeyLongids(pubkey: Key): string[] {
     if (pubkey.family !== 'x509') {
       return pubkey.allIds.map(id => OpenPGPKey.fingerprintToLongid(id));
     }
     return [KeyUtil.getPrimaryLongid(pubkey)];
-  };
+  }
 
-  public static getPrimaryLongid = (pubkey: Key): string => {
+  public static getPrimaryLongid(pubkey: Key): string {
     if (pubkey.family !== 'x509') {
       return OpenPGPKey.fingerprintToLongid(pubkey.id);
     }
     return SmimeKey.getKeyLongid(pubkey);
-  };
+  }
 
-  public static getKeyInfoLongids = (ki: KeyInfoWithIdentityAndOptionalPp): string[] => {
+  public static getKeyInfoLongids(ki: KeyInfoWithIdentityAndOptionalPp): string[] {
     if (ki.family !== 'x509') {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));
     }
     return [ki.longid];
-  };
+  }
 
   /**
    * Used for comparing public keys that were fetched vs the stored ones
    * Soon also for private keys: https://github.com/FlowCrypt/flowcrypt-browser/issues/2602
    */
-  public static isFetchedNewer = ({ stored, fetched }: { stored: Key; fetched: Key }) => {
+  public static isFetchedNewer({ stored, fetched }: { stored: Key; fetched: Key }) {
     if (!stored.lastModified) {
       return !!fetched.lastModified;
     }
@@ -451,20 +478,98 @@ export class KeyUtil {
       return false;
     }
     return fetched.lastModified > stored.lastModified;
-  };
+  }
 
-  public static sortPubkeyInfos = (pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] => {
+  public static sortPubkeyInfos(pubkeyInfos: PubkeyInfo[]): PubkeyInfo[] {
     return pubkeyInfos.sort((a, b) => KeyUtil.getSortValue(b) - KeyUtil.getSortValue(a));
-  };
+  }
 
-  public static parseAndArmorKeys = async (binaryKeysData: Uint8Array): Promise<ArmoredKeyIdentityWithEmails[]> => {
+  public static async parseAndArmorKeys(binaryKeysData: Uint8Array): Promise<ArmoredKeyIdentityWithEmails[]> {
     const { keys } = await KeyUtil.readMany(Buf.fromUint8(binaryKeysData));
     return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
+  }
+
+  public static validateChecksum(armoredText: string): boolean {
+    // Regex to capture any PGP armor block, e.g. SIGNATURE, MESSAGE, etc.
+    // It captures: the block type in group (1), and the content in group (2)
+    const pgpBlockRegex = /-----BEGIN PGP ([A-Z ]+)-----([\s\S]*?)-----END PGP \1-----/g;
+
+    let match: RegExpExecArray | null;
+    let validFound = false;
+
+    // Iterate over all PGP blocks in the text
+    while ((match = pgpBlockRegex.exec(armoredText))) {
+      const blockContent = match[2] || ''; // the captured block text
+      const lines = blockContent.split('\n').map(l => l.trim());
+
+      // Filter out known non-base64 lines
+      const dataCandidates = lines.filter(
+        line => line.length > 0 && !line.startsWith('Version:') && !line.startsWith('Comment:') && !line.startsWith('Hash:') && !line.startsWith('-----')
+      );
+
+      // Find the checksum line (starts with '=')
+      const checksumIndex = dataCandidates.findIndex(line => line.startsWith('='));
+      if (checksumIndex === -1) {
+        continue; // No checksum line found in this block, skip
+      }
+
+      // Get the base64 after the '='
+      const checksumLine = dataCandidates[checksumIndex].slice(1);
+      let providedBytes: string;
+      try {
+        providedBytes = atob(checksumLine);
+      } catch {
+        continue; // Not valid base64, skip
+      }
+
+      // Check that decoded checksum is 3 bytes for CRC24
+      if (providedBytes.length !== 3) {
+        continue;
+      }
+      const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
+
+      // Decode all lines before the checksum line
+      const dataLines = dataCandidates.slice(0, checksumIndex);
+      const decodedChunks: string[] = [];
+      for (const line of dataLines) {
+        try {
+          decodedChunks.push(atob(line));
+        } catch {
+          // skip lines that aren't valid base64
+        }
+      }
+
+      if (!decodedChunks.length) {
+        continue;
+      }
+
+      // Join all decoded base64 data and calculate its CRC
+      const rawData = decodedChunks.join('');
+      // eslint-disable-next-line @typescript-eslint/no-misused-spread
+      const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+      if (KeyUtil.crc24(dataBytes) === providedCRC) {
+        validFound = true;
+      }
+    }
+
+    return validFound;
+  }
+
+  private static crc24 = (dataBytes: Uint8Array): number => {
+    let crc = 0xb704ce;
+    for (const dataByte of dataBytes) {
+      crc ^= dataByte << 16;
+      for (let j = 0; j < 8; j++) {
+        crc <<= 1;
+        if (crc & 0x1000000) crc ^= 0x1864cfb;
+      }
+    }
+    return crc & 0xffffff;
   };
 
-  private static getSortValue = (pubinfo: PubkeyInfo): number => {
-    const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  private static getSortValue(pubinfo: PubkeyInfo): number {
+    const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration;
     // sort non-revoked first, then non-expired
     return pubinfo.revoked || pubinfo.pubkey.revoked ? -Infinity : expirationSortValue;
-  };
+  }
 }

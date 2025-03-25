@@ -7,11 +7,12 @@ import { InvalidRecipientError, SendableMsg } from '../../../js/common/api/email
 import { AjaxErr, ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { Env } from '../../../js/common/browser/env.js';
+import { Time } from '../../../js/common/browser/time.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Str, Url } from '../../../js/common/core/common.js';
 import { DecryptErrTypes, MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
-import { Mime, MimeContent, MimeProccesedMsg } from '../../../js/common/core/mime.js';
+import { Mime, MimeContentWithHeaders, MimeProccesedMsg } from '../../../js/common/core/mime.js';
 import { MsgBlockParser } from '../../../js/common/core/msg-block-parser.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { GlobalStore } from '../../../js/common/platform/store/global-store.js';
@@ -28,7 +29,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private currentlySavingDraft = false;
   private disableSendingDrafts = false;
   private saveDraftInterval?: number;
-  private lastDraftBody?: string;
+  private lastDraftBody = '';
   private lastDraftSubject = '';
   private SAVE_DRAFT_FREQUENCY = 3000;
   private localDraftPrefix = 'local-draft-';
@@ -49,7 +50,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       'click',
       this.view.setHandler(() => this.deleteDraftClickHandler(), this.view.errModule.handle('delete draft'))
     );
-    this.view.recipientsModule.onRecipientAdded(async () => await this.draftSave(true));
+    this.view.recipientsModule.onRecipientAdded(async () => {
+      await this.draftSave(true);
+    });
   };
 
   /**
@@ -83,7 +86,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.view.isReplyBox && ApiErr.isNotFound(e)) {
         console.info('about to reload reply_message automatically: get draft 404', this.view.acctEmail);
-        await Ui.time.sleep(500);
+        await Time.sleep(500);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.view.draftId = '';
         window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams());
@@ -97,7 +100,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
 
   public draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => (!this.currentlySavingDraft ? true : undefined));
+    await Time.wait(() => (!this.currentlySavingDraft ? true : undefined));
     if (this.view.draftId) {
       try {
         if (!this.isLocalDraftId(this.view.draftId)) {
@@ -115,6 +118,10 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         }
       }
     }
+  };
+
+  public setLastDraftBody = (draftBody: string): void => {
+    this.lastDraftBody = draftBody;
   };
 
   public draftSave = async (forceSave = false): Promise<void> => {
@@ -157,11 +164,11 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         if (ApiErr.isAuthErr(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
           this.view.S.cached('send_btn_note').text('Not saved (reconnect)');
-        } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
+        } else if (e instanceof Error && e.message.includes('Could not find valid key packet for encryption in key')) {
           this.view.S.cached('send_btn_note').text('Not saved (bad key)');
         } else if (
           this.view.draftId &&
-          (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))
+          (ApiErr.isNotFound(e) || (e instanceof AjaxErr && e.status === 400 && e.responseText.includes('Message not a draft')))
         ) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
@@ -272,6 +279,7 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     const draftId = this.getLocalDraftId();
     const storage = await GlobalStore.get(['local_drafts']);
     if (typeof storage.local_drafts !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete storage.local_drafts[draftId];
       await GlobalStore.set(storage);
     }
@@ -293,12 +301,13 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
     }
   };
 
-  private fillAndRenderDraftHeaders = async (decoded: MimeContent) => {
+  private fillAndRenderDraftHeaders = async (decoded: MimeContentWithHeaders) => {
     this.view.recipientsModule.addRecipientsAndShowPreview({ to: decoded.to, cc: decoded.cc, bcc: decoded.bcc });
     if (decoded.from) {
       this.view.S.now('input_from').val(decoded.from);
     }
     if (decoded.subject) {
+      this.lastDraftSubject = decoded.subject;
       this.view.S.cached('input_subject').val(decoded.subject);
     }
   };
@@ -306,12 +315,12 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   private decryptAndRenderDraft = async (encrypted: MimeProccesedMsg): Promise<void> => {
     const rawBlock = encrypted.blocks.find(b => ['encryptedMsg', 'signedMsg', 'pkcs7'].includes(b.type));
     if (!rawBlock) {
-      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
+      await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!rawBlock');
+      return;
     }
-    const encryptedData = rawBlock.content instanceof Buf ? rawBlock.content : Buf.fromUtfStr(rawBlock.content);
     const decrypted = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-      encryptedData,
+      encryptedData: rawBlock.content,
       verificationPubs: [],
     });
     if (!decrypted.success) {
@@ -320,28 +329,25 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
         await this.renderPPDialogAndWaitWhenPPEntered(decrypted.longids.needPassphrase);
         await this.decryptAndRenderDraft(encrypted);
       }
-      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
+      await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!decrypted.success');
+      return;
     }
     this.wasMsgLoadedFromDraft = true;
     this.view.S.cached('prompt').css({ display: 'none' });
     const { blocks, isRichText } = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(decrypted.content, 'IMG-KEEP');
     const sanitizedContent = blocks.find(b => b.type === 'decryptedHtml')?.content;
     if (!sanitizedContent) {
-      return await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+      await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!sanitizedContent');
+      return;
     }
     if (isRichText) {
       this.view.sendBtnModule.popover.toggleItemTick($('.action-toggle-richtext-sending-option'), 'richtext', true);
     }
-    this.view.inputModule.inputTextHtmlSetSafely(sanitizedContent.toString());
+    this.view.inputModule.inputTextHtmlSetSafely(Str.with(sanitizedContent));
     this.view.inputModule.squire.focus();
   };
 
   private hasBodyChanged = (msgBody: string) => {
-    if (this.lastDraftBody === undefined) {
-      // first check
-      this.lastDraftBody = msgBody;
-      return false;
-    }
     if (msgBody && msgBody !== this.lastDraftBody) {
       this.lastDraftBody = msgBody;
       return true;
@@ -362,15 +368,15 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
   };
 
   private renderPPDialogAndWaitWhenPPEntered = async (longids: string[]) => {
-    const promptText = `<div style="font-size: 18px">Waiting for pass phrase to open draft...</div>`;
     if (this.view.isReplyBox) {
-      Xss.sanitizeRender(this.view.S.cached('prompt'), promptText).css({ display: 'block' });
+      const promptHtml = `<div class="draft-passphrase-container"><a class="action_open_passphrase_dialog" href="#">Enter passphrase</a> to open this draft.</div>`;
+      Xss.sanitizeRender(this.view.S.cached('prompt'), promptHtml).css({ display: 'block' });
       this.view.sizeModule.resizeComposeBox();
     } else {
       Xss.sanitizeRender(
         this.view.S.cached('prompt'),
         `
-        ${promptText}
+        <div style="font-size: 18px">Waiting for pass phrase to open draft...</div>
         <div class="mt-20">
           <button href="#" data-test="action-open-passphrase-dialog" class="button long green action_open_passphrase_dialog">Enter pass phrase</button>
           <button href="#" class="button gray action_close">close</button>
@@ -387,12 +393,14 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
           BrowserMsg.send.passphraseDialog(this.view.parentTabId, { type: 'draft', longids });
         })
       )
-      .focus();
+      .trigger('focus');
     this.view.S.cached('prompt')
       .find('.action_close')
       .on(
         'click',
-        this.view.setHandler(() => this.view.renderModule.closeMsg())
+        this.view.setHandler(() => {
+          this.view.renderModule.closeMsg();
+        })
       );
     const setActiveWindow = this.view.setHandler(async () => {
       BrowserMsg.send.setActiveWindow(this.view.parentTabId, { frameId: this.view.frameId });

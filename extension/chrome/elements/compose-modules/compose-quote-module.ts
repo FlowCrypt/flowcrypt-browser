@@ -3,7 +3,7 @@
 'use strict';
 
 import { Bm, BrowserMsg } from '../../../js/common/browser/browser-msg.js';
-import { FormatError, MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
+import { MsgUtil, DecryptErrTypes } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Catch } from '../../../js/common/platform/catch.js';
@@ -17,6 +17,7 @@ import { ViewModule } from '../../../js/common/view-module.js';
 import { ComposeView } from '../compose.js';
 import { MessageToReplyOrForward } from './compose-types.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
+import { Time } from '../../../js/common/browser/time.js';
 
 export class ComposeQuoteModule extends ViewModule<ComposeView> {
   public tripleDotSanitizedHtmlContent: { quote: string | undefined; footer: string | undefined } | undefined;
@@ -51,32 +52,24 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       this.view.S.cached('triple_dot').find('#loader').remove();
       this.view.S.cached('triple_dot').removeClass('progress');
     }
-    let sanitizedQuote = '';
-    if (this.messageToReplyOrForward?.text) {
-      const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
-      if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
-        sanitizedQuote += `<br><br>${this.generateHtmlPreviousMsgQuote(
-          this.messageToReplyOrForward.text,
-          sentDate,
-          this.messageToReplyOrForward.headers.from
-        )}`;
-      }
-      if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
-        for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          this.view.attachmentsModule.attachment.addFile(file);
-        }
-      }
-    }
     const textFooter = await this.view.footerModule.getFooterFromStorage(this.view.senderModule.getSender());
     const sanitizedFooter = textFooter && !this.view.draftModule.wasMsgLoadedFromDraft ? this.view.footerModule.createFooterHtml(textFooter) : undefined;
-    if (!sanitizedQuote && !sanitizedFooter) {
-      this.view.S.cached('triple_dot').hide();
-      return;
-    }
-    this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: sanitizedQuote };
+    const msgQuote = this.generateHtmlPreviousMsgQuote(method);
     if (method === 'forward') {
-      this.actionRenderTripleDotContentHandle(this.view.S.cached('triple_dot')[0]);
+      this.view.S.cached('triple_dot').hide();
+      for (const file of this.messageToReplyOrForward?.decryptedFiles ?? []) {
+        this.view.attachmentsModule.attachment.addFile(file);
+      }
+      let inputHtml = `<br>${msgQuote}`;
+      if (sanitizedFooter) {
+        inputHtml += `<br><br>${sanitizedFooter}`;
+      }
+      Xss.sanitizeAppend(this.view.S.cached('input_text'), inputHtml);
+      this.view.draftModule.setLastDraftBody(inputHtml);
+      this.view.sizeModule.resizeComposeBox();
     } else {
+      const sanitizedQuote = `<br><br>${msgQuote}`;
+      this.tripleDotSanitizedHtmlContent = { footer: sanitizedFooter, quote: sanitizedQuote };
       this.view.S.cached('triple_dot').on(
         'click',
         this.view.setHandler(el => this.actionRenderTripleDotContentHandle(el))
@@ -88,13 +81,18 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     try {
       const { raw } = await this.view.emailProvider.msgGet(msgId, 'raw', progress => this.setQuoteLoaderProgress(progress));
       this.setQuoteLoaderProgress('processing...');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
+      if (!raw) {
+        return;
+      }
+      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw));
       const headers = {
-        date: String(decoded.headers.date),
+        subject: decoded.subject,
+        date: decoded.headers.date as string,
         from: decoded.from,
-        references: String(decoded.headers.references || ''),
-        'message-id': String(decoded.headers['message-id'] || ''),
+        to: decoded.to,
+        cc: decoded.cc,
+        references: (decoded.headers.references as string) || '',
+        'message-id': (decoded.headers['message-id'] as string) || '',
       };
       const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
@@ -107,7 +105,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
           this.setQuoteLoaderProgress('decrypting...');
-          const decrypted = await this.decryptMessage(Buf.fromUtfStr(block.content.toString()));
+          const decrypted = await this.decryptMessage(block.content);
           const msgBlocks = await MsgBlockParser.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
@@ -117,35 +115,37 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
       for (const block of readableBlocks) {
-        const stringContent = block.content.toString();
+        const stringContent = Str.with(block.content);
         if (block.type === 'decryptedHtml') {
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n', false);
+          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(stringContent || 'No Content', '\n', false);
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n', false)));
-        } else if (['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)) {
-          if (block.attachmentMeta?.data) {
-            let attachmentMeta: { content: Buf; filename?: string } | undefined;
-            if (block.type === 'encryptedAttachment') {
-              this.setQuoteLoaderProgress('decrypting...');
-              const result = await MsgUtil.decryptMessage({
-                kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
-                encryptedData: block.attachmentMeta.data,
-                verificationPubs: [], // todo: #4158 signature verification of attachments
-              });
-              if (result.success) {
-                attachmentMeta = { content: result.content, filename: result.filename };
-              }
-            } else {
-              attachmentMeta = {
-                content: Buf.fromUint8(block.attachmentMeta.data),
-                filename: block.attachmentMeta.name,
-              };
+        } else if (
+          block.attachmentMeta &&
+          'data' in block.attachmentMeta &&
+          ['encryptedAttachment', 'decryptedAttachment', 'plainAttachment'].includes(block.type)
+        ) {
+          let attachmentMeta: { content: Buf; filename?: string } | undefined;
+          if (block.type === 'encryptedAttachment') {
+            this.setQuoteLoaderProgress('decrypting...');
+            const result = await MsgUtil.decryptMessage({
+              kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
+              encryptedData: block.attachmentMeta.data,
+              verificationPubs: [], // todo: #4158 signature verification of attachments
+            });
+            if (result.success) {
+              attachmentMeta = { content: result.content, filename: result.filename };
             }
-            if (attachmentMeta) {
-              const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
-              decryptedFiles.push(file);
-            }
+          } else {
+            attachmentMeta = {
+              content: Buf.fromUint8(block.attachmentMeta.data),
+              filename: block.attachmentMeta.name,
+            };
+          }
+          if (attachmentMeta) {
+            const file = new File([attachmentMeta.content], attachmentMeta.filename || '');
+            decryptedFiles.push(file);
           }
         } else {
           decryptedAndFormatedContent.push(stringContent);
@@ -158,9 +158,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
         decryptedFiles,
       };
     } catch (e) {
-      if (e instanceof FormatError) {
-        Xss.sanitizeAppend(this.view.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
-      } else if (ApiErr.isNetErr(e)) {
+      if (ApiErr.isNetErr(e)) {
         // todo: retry
       } else if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.view.parentTabId, { acctEmail: this.view.acctEmail });
@@ -171,7 +169,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
+  private decryptMessage = async (encryptedData: Uint8Array | string): Promise<string> => {
     const decryptRes = await MsgUtil.decryptMessage({
       kisWithPp: await KeyStore.getAllWithOptionalPassPhrase(this.view.acctEmail),
       encryptedData,
@@ -180,6 +178,9 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
+      if (Catch.isThunderbirdMail() && this.view.useFullScreenSecureCompose) {
+        await Time.sleep(2300);
+      }
       BrowserMsg.send.passphraseDialog(this.view.parentTabId, {
         type: 'quote',
         longids: decryptRes.longids.needPassphrase,
@@ -197,26 +198,48 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
   };
 
-  private quoteText = (text: string) => {
+  private convertLineBreakToBr = (text: string, shouldQuote: boolean) => {
     return text
       .split('\n')
-      .map(line => `<br>&gt; ${line}`.trim())
+      .map(line => `<br>${shouldQuote ? '&gt; ' : ''}${line}`.trim())
       .join('');
   };
 
-  private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
-    let onDateUserWrote = `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:`;
-    const rtl = text.match(new RegExp('[' + Str.rtlChars + ']'));
-    if (rtl) {
-      onDateUserWrote = `<div dir="ltr">${onDateUserWrote}</div>`;
+  private generateHtmlPreviousMsgQuote = (method: 'reply' | 'forward') => {
+    if (!this.messageToReplyOrForward?.text || !this.messageToReplyOrForward.headers.date) {
+      return;
     }
-    const sanitizedQuote = Xss.htmlSanitize(onDateUserWrote + this.quoteText(Xss.escape(text)));
-    return `<blockquote${rtl ? ' dir="rtl"' : ''}>${sanitizedQuote}</blockquote>`;
+    const text = this.messageToReplyOrForward.text;
+    const from = Str.parseEmail(this.messageToReplyOrForward.headers.from || '').email;
+    const date = new Date(String(this.messageToReplyOrForward.headers.date));
+    const dateStr = Str.fromDate(date).replace(' ', ' at ');
+    const rtl = new RegExp('[' + Str.rtlChars + ']').exec(text);
+    const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;
+    const escapedText = this.convertLineBreakToBr(Xss.escape(text), method === 'reply');
+    if (method === 'reply') {
+      const header = `<div ${dirAttr}>On ${dateStr}, ${from ?? ''} wrote:</div>`;
+      const sanitizedQuote = Xss.htmlSanitize(header + escapedText);
+      const thunderbirdClass = this.view.useFullScreenSecureCompose ? 'class="height-0"' : ''; // fix long quoted email UI issue happens in fullscreen
+      return `<blockquote ${thunderbirdClass} ${dirAttr}>${sanitizedQuote}</blockquote>`;
+    } else {
+      const header =
+        `<div ${dirAttr}>` +
+        `---------- Forwarded message ---------<br/>` +
+        `From: ${from}<br>` +
+        `Date: ${dateStr}<br>` +
+        `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
+        `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
+        (this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc?.join(', ')}` : '') +
+        `</div>`;
+      return `${header}<br><br>${escapedText}`;
+    }
   };
 
   private actionRenderTripleDotContentHandle = (el: HTMLElement) => {
     $(el).remove();
-    Xss.sanitizeAppend(this.view.S.cached('input_text'), this.getTripleDotSanitizedFormattedHtmlContent());
+    const inputEl = this.view.S.cached('input_text');
+    Xss.sanitizeAppend(inputEl, this.getTripleDotSanitizedFormattedHtmlContent());
+    this.view.draftModule.setLastDraftBody(inputEl.html());
     this.tripleDotSanitizedHtmlContent = undefined;
     this.view.sizeModule.resizeComposeBox();
   };

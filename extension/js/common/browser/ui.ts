@@ -4,16 +4,53 @@
 
 import { ApiErr } from '../api/shared/api-error.js';
 import { Catch } from '../platform/catch.js';
-import { Dict, Url } from '../core/common.js';
+import { Dict, Str, Url } from '../core/common.js';
 import Swal, { SweetAlertIcon, SweetAlertPosition, SweetAlertResult } from 'sweetalert2';
 import { Xss } from '../platform/xss.js';
+import { Bm, BrowserMsg, ChildFrame, ScreenDimensions } from './browser-msg.js';
 
-type NamedSels = Dict<JQuery<HTMLElement>>;
-type ProvidedEventHandler = (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>;
+type NamedSels = Dict<JQuery>;
+
+type ProvidedEventHandler = (e: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) => void | Promise<void>;
+
+export interface BrowserMsgResponseTracker extends ChildFrame {
+  getDest: () => string;
+}
+
+export type ConfirmationResultTracker = BrowserMsgResponseTracker;
+
+export class CommonHandlers {
+  protected static respondMap = new Map<string, (result: unknown) => void>();
+
+  public static createAsyncResultHandler = <T>() => {
+    return async ({ payload, requestUid }: Bm.AsyncResult<T>) => {
+      const respond = CommonHandlers.respondMap.get(requestUid);
+      if (respond) {
+        respond(payload);
+        CommonHandlers.respondMap.delete(requestUid);
+      }
+    };
+  };
+
+  public static sendRequestAndHandleAsyncResult = async <T>(send: (requestUid: string) => void): Promise<T> => {
+    const requestUid = Str.sloppyRandom(10);
+    const p = new Promise((resolve: (value: T) => void) => {
+      CommonHandlers.respondMap.set(requestUid, resolve);
+    });
+    send(requestUid);
+    return await p;
+  };
+
+  // for specific types
+  public static showConfirmationHandler: Bm.AsyncRespondingHandler = async ({ text, isHTML, footer, requestUid }: Bm.ShowConfirmation) => {
+    const payload = await Ui.modal.confirm(text, isHTML, footer);
+    return { requestUid, payload };
+  };
+}
 
 export type SelCache = {
-  cached: (name: string) => JQuery<HTMLElement>;
-  now: (name: string) => JQuery<HTMLElement>;
+  cached: (name: string) => JQuery;
+  now: (name: string) => JQuery;
   sel: (name: string) => string;
 };
 export type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
@@ -31,7 +68,7 @@ export class Ui {
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
   public static event = {
-    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> =>
+    clicked: (selector: string | JQuery): Promise<HTMLElement> =>
       new Promise(resolve =>
         $(selector as string).one('click', function () {
           resolve(this);
@@ -56,12 +93,12 @@ export class Ui {
       });
     },
     handle: (cb: ProvidedEventHandler, errHandlers?: BrowserEventErrHandler, originalThis?: unknown) => {
-      return function uiEventHandle(this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
+      return function uiEventHandle(this: HTMLElement, event: JQuery.TriggeredEvent<HTMLElement>) {
         try {
-          const r = cb.bind(originalThis)(this, event) as void | Promise<void>;
+          const r = cb.bind(originalThis)(this, event);
           if (typeof r === 'object' && typeof r.catch === 'function') {
             // eslint-disable-next-line no-underscore-dangle
-            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
+            r.catch((e: unknown) => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
           // eslint-disable-next-line no-underscore-dangle
@@ -70,16 +107,17 @@ export class Ui {
       };
     },
     _dispatchErr: (e: unknown, errHandlers?: BrowserEventErrHandler) => {
-      if (ApiErr.isNetErr(e) && errHandlers && errHandlers.network) {
+      if (ApiErr.isNetErr(e) && errHandlers?.network) {
         errHandlers.network().catch(Catch.reportErr);
-      } else if (ApiErr.isAuthErr(e) && errHandlers && errHandlers.auth) {
+      } else if (ApiErr.isAuthErr(e) && errHandlers?.auth) {
         errHandlers.auth().catch(Catch.reportErr);
-      } else if (errHandlers && errHandlers.other) {
+      } else if (errHandlers?.other) {
         errHandlers.other(e).catch(Catch.reportErr);
       } else {
         Catch.reportErr(e);
       }
     },
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type, @typescript-eslint/no-unnecessary-type-parameters
     prevent: <THIS extends HTMLElement | void>(
       evName: PreventableEventName,
       cb: (el: HTMLElement, event: Event | undefined, resetTimer: () => void) => void | Promise<void>,
@@ -94,10 +132,11 @@ export class Ui {
       };
       const cbWithErrsHandled = (el: HTMLElement) => {
         try {
-          const r = cb.bind(originalThis)(el, event, cbResetTimer) as void | Promise<void>;
+          // eslint-disable-next-line @typescript-eslint/no-deprecated
+          const r = cb.bind(originalThis)(el, event, cbResetTimer);
           if (typeof r === 'object' && typeof r.catch === 'function') {
             // eslint-disable-next-line no-underscore-dangle
-            r.catch(e => Ui.event._dispatchErr(e, errHandler));
+            r.catch((e: unknown) => Ui.event._dispatchErr(e, errHandler));
           }
         } catch (e) {
           // eslint-disable-next-line no-underscore-dangle
@@ -131,28 +170,6 @@ export class Ui {
         }
       };
     },
-  };
-
-  public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined): Promise<void> =>
-      new Promise((success, error) => {
-        const interval = Catch.setHandledInterval(() => {
-          const result = untilThisFunctionEvalsTrue();
-          if (result === true) {
-            clearInterval(interval);
-            if (success) {
-              success();
-            }
-          } else if (result === false) {
-            clearInterval(interval);
-            if (error) {
-              error();
-            }
-          }
-        }, 50);
-      }),
-    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout): Promise<void> =>
-      new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static modal = {
@@ -252,7 +269,7 @@ export class Ui {
       }
       const userResponsePromise = Ui.swal().fire({
         didOpen: () => {
-          Swal.getCloseButton()!.blur(); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          Swal.getCloseButton()?.blur();
         },
         html,
         width: 750,
@@ -274,7 +291,7 @@ export class Ui {
       return await Ui.swal().fire({
         didOpen: () => {
           $(Swal.getPopup()!).attr('data-test', dataTest || 'dialog');
-          $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').blur();
+          $(Swal.getCloseButton()!).attr('data-test', 'dialog-close').trigger('blur');
         },
         /* eslint-enable @typescript-eslint/no-non-null-assertion */
         willClose: () => {
@@ -326,7 +343,40 @@ export class Ui {
     },
   };
 
-  public static testCompatibilityLink = '<a href="/chrome/settings/modules/compatibility.htm" target="_blank">Test your OpenPGP key compatibility</a>';
+  public static getTestCompatibilityLink = (acctEmail: string): string => {
+    return `<a href="/chrome/settings/modules/compatibility.htm?acctEmail=${acctEmail}" target="_blank">Test your OpenPGP key compatibility</a>`;
+  };
+
+  public static getScreenDimensions = (): ScreenDimensions => {
+    const { availLeft, availTop } = window.screen as unknown as { availLeft?: number; availTop?: number };
+
+    return {
+      width: window.screen.width,
+      height: window.screen.height,
+      availLeft: availLeft ?? 0,
+      availTop: availTop ?? 0,
+    };
+  };
+
+  public static modalInParentTab = (confirmationResultTracker: ConfirmationResultTracker) => {
+    return {
+      /**
+       * Presents a modal where user can respond with confirm or cancel.
+       * Awaiting this will give you the users choice as a boolean.
+       */
+      confirm: (text: string, isHTML = false, footer?: string): Promise<boolean> => {
+        return CommonHandlers.sendRequestAndHandleAsyncResult(requestUid => {
+          BrowserMsg.send.showConfirmation(confirmationResultTracker, {
+            text,
+            isHTML,
+            footer,
+            messageSender: confirmationResultTracker.getDest(),
+            requestUid,
+          });
+        });
+      },
+    };
+  };
 
   public static activateModalPageLinkTags = () => {
     $('[data-swal-page]').on(
@@ -353,7 +403,8 @@ export class Ui {
 
   public static spinner = (color: string, placeholderCls: 'small_spinner' | 'large_spinner' = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
-    const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
+
+    const url = typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   };
 
@@ -407,7 +458,7 @@ export class Ui {
   };
 
   public static escape = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
         callback();
@@ -415,8 +466,8 @@ export class Ui {
     };
   };
 
-  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => {
+  public static tab = (callback: (e: JQuery.Event) => void) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
         callback(e);
@@ -424,8 +475,8 @@ export class Ui {
     };
   };
 
-  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => {
-    return (e: JQuery.Event<HTMLElement>) => {
+  public static shiftTab = (callback: (e: JQuery.Event) => void) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
         callback(e);
@@ -434,7 +485,7 @@ export class Ui {
   };
 
   public static enter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
         callback();
@@ -443,10 +494,11 @@ export class Ui {
   };
 
   public static ctrlEnter = (callback: () => void) => {
-    return (e: JQuery.Event<HTMLElement, null>) => {
+    return (e: JQuery.Event) => {
       // returns a function
       if (
         (e.metaKey || e.ctrlKey) &&
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         (e.key === 'Enter' || e.keyCode === 10) // https://bugs.chromium.org/p/chromium/issues/detail?id=79407
       ) {
         callback();
@@ -455,7 +507,7 @@ export class Ui {
   };
 
   public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
-    $('body').attr('data-test-state', state); // for automated tests
+    document.querySelector('body')?.setAttribute('data-test-state', state); // for automated tests
   };
 
   public static buildJquerySels = (sels: Dict<string>): SelCache => {
@@ -485,7 +537,7 @@ export class Ui {
     };
   };
 
-  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
+  public static scroll = (sel: string | JQuery, repeat: number[] = []) => {
     const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();

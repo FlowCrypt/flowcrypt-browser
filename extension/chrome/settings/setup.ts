@@ -2,43 +2,42 @@
 
 'use strict';
 
-import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
-import { asyncSome, Url } from '../../js/common/core/common.js';
-import { ApiErr } from '../../js/common/api/shared/api-error.js';
-import { Assert } from '../../js/common/assert.js';
-import { Catch, CompanyLdapKeyMismatchError } from '../../js/common/platform/catch.js';
-import { KeyInfoWithIdentity, KeyUtil } from '../../js/common/core/crypto/key.js';
+import Swal from 'sweetalert2';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { Google } from '../../js/common/api/email-provider/gmail/google.js';
-import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
-import { Lang } from '../../js/common/lang.js';
-import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
+import { PubLookup } from '../../js/common/api/pub-lookup.js';
+import { Assert } from '../../js/common/assert.js';
+import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
+import { Ui } from '../../js/common/browser/ui.js';
 import { ClientConfiguration } from '../../js/common/client-configuration.js';
+import { Url } from '../../js/common/core/common.js';
+import { KeyStoreUtil } from '../../js/common/core/crypto/key-store-util.js';
+import { KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
+import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { Lang } from '../../js/common/lang.js';
+import { Catch, CompanyLdapKeyMismatchError } from '../../js/common/platform/catch.js';
+import { AcctStore, AcctStoreDict } from '../../js/common/platform/store/acct-store.js';
+import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { Xss } from '../../js/common/platform/xss.js';
 import { Settings } from '../../js/common/settings.js';
+import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
+import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
+import { initPassphraseToggle, shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
+import { View } from '../../js/common/view.js';
+import { BgUtils } from '../../js/service_worker/bgutils.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
 import { SetupImportKeyModule } from './setup/setup-import-key.js';
+import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
 import { SetupRecoverKeyModule } from './setup/setup-recover-key.js';
 import { SetupRenderModule } from './setup/setup-render.js';
-import { Ui } from '../../js/common/browser/ui.js';
-import { View } from '../../js/common/view.js';
-import { Xss } from '../../js/common/platform/xss.js';
-import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
-import { PubLookup } from '../../js/common/api/pub-lookup.js';
-import { AcctStoreDict, AcctStore } from '../../js/common/platform/store/acct-store.js';
-import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { KeyStoreUtil } from '../../js/common/core/crypto/key-store-util.js';
-import { KeyManager } from '../../js/common/api/key-server/key-manager.js';
-import { SetupWithEmailKeyManagerModule } from './setup/setup-key-manager-autogen.js';
-import { shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
-import Swal from 'sweetalert2';
-import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
-import { InMemoryStoreKeys } from '../../js/common/core/const.js';
-import { InMemoryStore } from '../../js/common/platform/store/in-memory-store.js';
+import { submitPublicKeyIfNeeded } from '../../js/common/key-helper.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface PassphraseOptions {
   passphrase: string;
-  passphrase_save: boolean;
+  passphrase_save: boolean; // if true and not forbidden by OrgRules, save to the local storage, otherwise to session
+  passphrase_ensure_single_copy: boolean; // make sure the passphrase isn't both in local storage and session
 }
 
 export interface SetupOptions extends PassphraseOptions {
@@ -63,7 +62,7 @@ export class SetupView extends View {
   public readonly setupWithEmailKeyManager: SetupWithEmailKeyManagerModule;
   public readonly backupUi: BackupUi;
 
-  public tabId!: string;
+  public readonly tabId = BrowserMsg.generateTabId();
   public storage!: AcctStoreDict;
   public clientConfiguration!: ClientConfiguration;
   public pubLookup!: PubLookup;
@@ -79,10 +78,7 @@ export class SetupView extends View {
     super();
     const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'idToken', 'parentTabId']);
     this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'update_from_ekm', undefined]) as
-      | 'add_key'
-      | 'update_from_ekm'
-      | undefined;
+    this.action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'update_from_ekm', undefined]);
     if (this.action === 'add_key') {
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     } else {
@@ -95,8 +91,7 @@ export class SetupView extends View {
     }
     this.submitKeyForAddrs = [];
     this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
-    this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
-    this.keyImportUi.renderPassPhraseStrengthValidationInput($('#step_2a_manual_create .input_password'), $('#step_2a_manual_create .action_proceed_private'));
+    this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').trigger('focus');
     this.keyImportUi.renderPassPhraseStrengthValidationInput(
       $('#step_2_ekm_choose_pass_phrase .input_password'),
       $('#step_2_ekm_choose_pass_phrase .action_proceed_private')
@@ -114,6 +109,7 @@ export class SetupView extends View {
   public isCustomerUrlFesUsed = () => Boolean(this.storage.fesUrl);
 
   public render = async () => {
+    await this.keyImportUi.renderKeyManualCreateView('#step_2a_manual_create_container');
     await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
     await initPassphraseToggle([
       'step_2a_manual_create_input_password',
@@ -158,7 +154,6 @@ export class SetupView extends View {
       $('.input_backup_inbox').prop('checked', false).prop('disabled', true);
       $('.remove_if_backup_not_allowed').remove();
     }
-    this.tabId = await BrowserMsg.requiredTabId();
     await this.setupRender.renderInitial();
   };
 
@@ -170,13 +165,13 @@ export class SetupView extends View {
       await Ui.modal.info(notification);
     });
     BrowserMsg.listen(this.tabId);
-    $('.action_send').attr('href', Google.webmailUrl(this.acctEmail));
+    $('.action_send').on(
+      'click',
+      this.setHandler(async () => await this.actionComposeEncryptedEmailHandler())
+    );
     $('.action_show_help').on(
       'click',
-      this.setHandler(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        async () => await Settings.renderSubPage(this.acctEmail, this.tabId!, '/chrome/settings/modules/help.htm')
-      )
+      this.setHandler(async () => await Settings.renderSubPage(this.acctEmail, this.tabId, '/chrome/settings/modules/help.htm'))
     );
     $('#button-go-back')
       .off()
@@ -209,6 +204,14 @@ export class SetupView extends View {
     $('.input_submit_key').on(
       'click',
       this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
+    );
+    $('#step_0_backup_to_designated_mailbox .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
+      'click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2a_manual_create'))
+    );
+    $('#step_0_backup_to_designated_mailbox .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').on(
+      'click',
+      this.setHandler(() => this.setupRender.displayBlock('step_2b_manual_enter'))
     );
     $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
       'click',
@@ -309,7 +312,10 @@ export class SetupView extends View {
   public submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
-      await this.submitPublicKeyIfNeeded(mostUsefulPrv?.keyInfo.public, { submit_main, submit_all });
+      await submitPublicKeyIfNeeded(this.clientConfiguration, this.acctEmail, this.submitKeyForAddrs, this.pubLookup.attester, mostUsefulPrv?.keyInfo.public, {
+        submit_main,
+        submit_all,
+      });
     } catch (e) {
       return await Settings.promptToRetry(
         e,
@@ -325,35 +331,22 @@ export class SetupView extends View {
   };
   /* eslint-enable @typescript-eslint/naming-convention */
 
-  public shouldSubmitPubkey = (checkboxSelector: string) => {
-    if (this.clientConfiguration.mustSubmitToAttester() && !this.clientConfiguration.canSubmitPubToAttester()) {
-      throw new Error('Organisation rules are misconfigured: ENFORCE_ATTESTER_SUBMIT not compatible with NO_ATTESTER_SUBMIT');
-    }
-    if (!this.clientConfiguration.canSubmitPubToAttester()) {
-      return false;
-    }
-    if (this.clientConfiguration.mustSubmitToAttester()) {
-      return true;
-    }
-    return Boolean($(checkboxSelector).prop('checked'));
-  };
-
   public isCreatePrivateFormInputCorrect = async (section: string): Promise<boolean> => {
     const password1 = $(`#${section} .input_password`);
     const password2 = $(`#${section} .input_password2`);
     if (!password1.val()) {
       await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
-      password1.focus();
+      password1.trigger('focus');
       return false;
     }
     if ($(`#${section} .action_proceed_private`).hasClass('gray')) {
       await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
-      password1.focus();
+      password1.trigger('focus');
       return false;
     }
     if (password1.val() !== password2.val()) {
       await Ui.modal.warning('The pass phrases do not match. Please try again.');
-      password2.val('').focus();
+      password2.val('').trigger('focus');
       return false;
     }
     let notePp = String(password1.val());
@@ -373,73 +366,10 @@ export class SetupView extends View {
     return true;
   };
 
-  /**
-   * empty pubkey means key not usable
-   */
-  private submitPublicKeyIfNeeded = async (
-    armoredPubkey: string | undefined,
-    options: { submit_main: boolean; submit_all: boolean } // eslint-disable-line @typescript-eslint/naming-convention
-  ) => {
-    if (!options.submit_main) {
-      return;
-    }
-    if (!this.clientConfiguration.canSubmitPubToAttester()) {
-      if (!this.clientConfiguration.usesKeyManager) {
-        // users who use EKM get their setup automated - no need to inform them of this
-        // other users chose this manually - let them know it's not allowed
-        await Ui.modal.error('Not submitting public key to Attester - disabled for your org');
-      }
-      return;
-    }
-    if (!armoredPubkey) {
-      await Ui.modal.warning('Public key not usable - not sumbitting to Attester');
-      return;
-    }
-    const pub = await KeyUtil.parse(armoredPubkey);
-    if (pub.usableForEncryption) {
-      const idToken = await InMemoryStore.get(this.acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      this.pubLookup.attester.welcomeMessage(this.acctEmail, armoredPubkey, idToken).catch(ApiErr.reportIfSignificant);
-    }
-    let addresses;
-    if (this.submitKeyForAddrs.length && options.submit_all) {
-      addresses = [...this.submitKeyForAddrs];
-    } else {
-      addresses = [this.acctEmail];
-    }
-    await this.submitPubkeys(addresses, armoredPubkey);
-  };
-
-  private submitPubkeys = async (addresses: string[], pubkey: string) => {
-    if (this.clientConfiguration.setupEnsureImportedPrvMatchLdapPub()) {
-      // this will generally ignore errors if conflicting key already exists, except for certain orgs
-      const result = await this.pubLookup.attester.doLookupLdap(this.acctEmail);
-      if (result.pubkeys.length) {
-        const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail));
-        const parsedPubKeys = await KeyUtil.parseMany(result.pubkeys.join('\n'));
-        const hasMatchingKey = await asyncSome(prvs, async privateKey => {
-          return parsedPubKeys.some(parsedPubKey => privateKey.key.id === parsedPubKey.id);
-        });
-        if (!hasMatchingKey) {
-          const keyIds = prvs.map(prv => prv.key.id).join(', ');
-          const pubKeyIds = parsedPubKeys.map(pub => pub.id).join(', ');
-          throw new CompanyLdapKeyMismatchError(
-            `Imported private key with ids ${keyIds} does not match public keys on company LDAP server with ids ${pubKeyIds} for ${this.acctEmail}. Please ask your help desk.`
-          );
-        }
-      } else {
-        throw new CompanyLdapKeyMismatchError(
-          `Your organization requires public keys to be present on company LDAP server, but no public key was found for ${this.acctEmail}. Please ask your internal help desk.`
-        );
-      }
-    } else {
-      // this will actually replace the submitted public key if there was a conflict, better ux
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.pubLookup.attester.submitPrimaryEmailPubkey(this.acctEmail, pubkey, this.idToken!);
-    }
-    const aliases = addresses.filter(a => a !== this.acctEmail);
-    if (aliases.length) {
-      await Promise.all(aliases.map(a => this.pubLookup.attester.submitPubkeyWithConditionalEmailVerification(a, pubkey)));
-    }
+  private actionComposeEncryptedEmailHandler = async () => {
+    const inboxUrl = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail });
+    const redirectUrl = Catch.isThunderbirdMail() ? inboxUrl : Google.webmailUrl(this.acctEmail);
+    await BgUtils.openExtensionTab(redirectUrl, true);
   };
 }
 

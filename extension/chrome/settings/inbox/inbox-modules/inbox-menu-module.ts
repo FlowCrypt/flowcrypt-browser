@@ -118,10 +118,13 @@ export class InboxMenuModule extends ViewModule<InboxView> {
 
   private renderNavbartTop = async () => {
     $('.action_open_webmail').attr('href', Google.webmailUrl(this.view.acctEmail));
-    $('.action_choose_account').get(0).title = this.view.acctEmail;
-    if (this.view.storage.picture) {
+    const chooseAccountEl = $('.action_choose_account').get(0);
+    if (chooseAccountEl) {
+      chooseAccountEl.title = this.view.acctEmail;
+    }
+    if (this.view.picture) {
       $('img.main-profile-img')
-        .attr('src', this.view.storage.picture)
+        .attr('src', this.view.picture)
         .on(
           'error',
           this.view.setHandler(self => {
@@ -146,7 +149,7 @@ export class InboxMenuModule extends ViewModule<InboxView> {
 
   private renderFolder = (labelEl: HTMLSpanElement) => {
     for (const cls of labelEl.classList) {
-      const labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
+      const labelId = (/^label_([a-zA-Z0-9_]+)$/.exec(cls) || [])[1];
       if (labelId) {
         this.view.redirectToUrl({ acctEmail: this.view.acctEmail, labelId });
         return;

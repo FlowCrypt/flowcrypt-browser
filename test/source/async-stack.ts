@@ -5,7 +5,7 @@
 
   const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-invalid-void-type
   const acceptCb = (cb: () => Promise<number | void>) => {
     // nothing
   };
@@ -28,7 +28,8 @@
     if (type === 'error') {
       throw new Error('this failed');
     } else if (type === 'object') {
-      throw { nonsense: 'yes' }; // eslint-disable-line no-throw-literal
+      // eslint-disable-next-line @typescript-eslint/only-throw-error, no-throw-literal,
+      throw { nonsense: 'yes' };
     }
   };
 
@@ -88,7 +89,7 @@
           return process.exit(1);
         }
         for (const statement of expectedStackStatements) {
-          if ((e.stack || '').indexOf(statement) === -1) {
+          if (!(e.stack || '').includes(statement)) {
             console.error(`Unexpected stack format for type ${type}:\n${e.stack}\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`);
             process.exit(1);
           }
@@ -108,14 +109,13 @@
         'Error: this failed',
         ' at thisWillFail ',
         ' at func ',
-        ' at Function.Class.staticConstAttr ',
-        ' at Function.staticFunc ',
+        ' at Class.staticConstAttr ',
+        ' at Class.staticFunc ',
         ' at asyncArrowConst ',
-        ' at <async> asyncArrowConst ',
-        ' at <async> asyncFunc ',
-        ' at <async> paramFunc ',
-        ' at <async> staticConstAttrAsync ',
-        ' at <async> staticAsyncFunc ',
+        ' at async asyncFunc ',
+        ' at async Object.paramFunc ',
+        ' at async ClassAsync.staticConstAttrAsync ',
+        ' at async ClassAsync.staticAsyncFunc ',
       ]);
       await doTestWith('object', [
         'Error: Thrown[object][object Object]',
@@ -130,7 +130,7 @@
       console.error(e);
       return process.exit(1);
     }
-  })().catch(e => {
+  })().catch((e: unknown) => {
     console.error(e);
     process.exit(1);
   });

@@ -4,12 +4,82 @@
 
 import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
+import { Buf } from './buf.js';
+import { MOCK_PORT } from './const.js';
 
 export type Dict<T> = { [key: string]: T };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 export type EmailParts = { email: string; name?: string };
+
+export const CID_PATTERN = /^cid:(.+)/;
+
+export const HTTP_STATUS_TEXTS: { [code: number]: string } = {
+  [100]: 'Continue',
+  [101]: 'Switching Protocols',
+  [102]: 'Processing',
+  [103]: 'Early Hints',
+  [200]: 'OK',
+  [201]: 'Created',
+  [202]: 'Accepted',
+  [203]: 'Non-Authoritative Information',
+  [204]: 'No Content',
+  [205]: 'Reset Content',
+  [206]: 'Partial Content',
+  [207]: 'Multi-Status',
+  [208]: 'Already Reported',
+  [226]: 'IM Used',
+  [300]: 'Multiple Choices',
+  [301]: 'Moved Permanently',
+  [302]: 'Found',
+  [303]: 'See Other',
+  [304]: 'Not Modified',
+  [305]: 'Use Proxy',
+  [306]: 'Switch Proxy',
+  [307]: 'Temporary Redirect',
+  [308]: 'Permanent Redirect',
+  [400]: 'Bad Request',
+  [401]: 'Unauthorized',
+  [402]: 'Payment Required',
+  [403]: 'Forbidden',
+  [404]: 'Not Found',
+  [405]: 'Method Not Allowed',
+  [406]: 'Not Acceptable',
+  [407]: 'Proxy Authentication Required',
+  [408]: 'Request Timeout',
+  [409]: 'Conflict',
+  [410]: 'Gone',
+  [411]: 'Length Required',
+  [412]: 'Precondition Failed',
+  [413]: 'Payload Too Large',
+  [414]: 'URI Too Long',
+  [415]: 'Unsupported Media Type',
+  [416]: 'Range Not Satisfiable',
+  [417]: 'Expectation Failed',
+  [418]: "I'm a teapot",
+  [421]: 'Misdirected Request',
+  [422]: 'Unprocessable Entity',
+  [423]: 'Locked',
+  [424]: 'Failed Dependency',
+  [425]: 'Too Early',
+  [426]: 'Upgrade Required',
+  [428]: 'Precondition Required',
+  [429]: 'Too Many Requests',
+  [431]: 'Request Header Fields Too Large',
+  [451]: 'Unavailable For Legal Reasons',
+  [500]: 'Internal Server Error',
+  [501]: 'Not Implemented',
+  [502]: 'Bad Gateway',
+  [503]: 'Service Unavailable',
+  [504]: 'Gateway Timeout',
+  [505]: 'HTTP Version Not Supported',
+  [506]: 'Variant Also Negotiates',
+  [507]: 'Insufficient Storage',
+  [508]: 'Loop Detected',
+  [510]: 'Not Extended',
+  [511]: 'Network Authentication Required',
+};
 
 export class Str {
   // ranges are taken from https://stackoverflow.com/a/14824756
@@ -51,6 +121,13 @@ export class Str {
     return str.replace(/[.~!$%^*=?]/gi, '');
   };
 
+  public static replaceAccentedChars = (str: string) => {
+    /*
+     * hotfix for issue https://github.com/FlowCrypt/enterprise-server/issues/6264
+     */
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  };
+
   public static formatEmailWithOptionalName = (emailParts: EmailParts): string => {
     return Str.formatEmailWithOptionalNameEx(emailParts);
   };
@@ -60,7 +137,7 @@ export class Str {
   };
 
   public static prettyPrint = (obj: unknown) => {
-    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj as unknown);
   };
 
   public static normalizeSpaces = (str: string) => {
@@ -83,15 +160,32 @@ export class Str {
     return text.length <= length ? text : text.substring(0, length) + '...';
   };
 
-  public static isEmailValid = (email: string) => {
-    if (email.indexOf(' ') !== -1) {
+  public static isEmailValid = (email: string | undefined) => {
+    if (!email) {
       return false;
     }
-    email = email.replace(/\:8001$/, ''); // for MOCK tests, todo: remove from production
+    if (email.includes(' ')) {
+      return false;
+    }
+    email = email.replace(new RegExp(`:${MOCK_PORT}$`), ''); // for MOCK tests, todo: remove from production
     // `localhost` is a valid top-level domain for an email address, otherwise we require a second-level domain to be present
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|localhost|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
       email
     );
+  };
+
+  public static is7bit = (content: string | Uint8Array): boolean => {
+    for (let i = 0; i < content.length; i++) {
+      const code = typeof content === 'string' ? content.charCodeAt(i) : (content[i] ?? 0);
+      if (!(code >= 0 && code <= 127)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  public static with = (data: Uint8Array | string): string => {
+    return typeof data === 'string' ? data : Buf.with(data).toUtfStr();
   };
 
   public static monthName = (monthIndex: number) => {
@@ -148,7 +242,7 @@ export class Str {
   public static htmlAttrDecode = (encoded: string): unknown => {
     try {
       return JSON.parse(Str.base64urlUtfDecode(encoded));
-    } catch (e) {
+    } catch {
       return undefined;
     }
   };
@@ -170,7 +264,7 @@ export class Str {
   };
 
   public static datetimeToDate = (date: string) => {
-    return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    return date.substring(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
   };
 
   public static fromDate = (date: Date) => {
@@ -184,6 +278,15 @@ export class Str {
     const rtlCount = string.match(new RegExp('[' + Str.rtlChars + ']', 'g'))?.length || 0;
     const lrtCount = string.match(new RegExp('[' + Str.ltrChars + ']', 'g'))?.length || 0;
     return rtlCount > lrtCount;
+  };
+
+  // the regex has the most votes https://stackoverflow.com/a/4250408
+  public static getFilenameWithoutExtension = (filename: string): string => {
+    return filename.replace(/\.[^/.]+$/, '');
+  };
+
+  public static stripPgpOrGpgExtensionIfPresent = (filename: string) => {
+    return filename.replace(/\.(pgp|gpg)$/i, '');
   };
 
   private static formatEmailWithOptionalNameEx = ({ email, name }: EmailParts, forceBrackets?: boolean): string => {
@@ -253,7 +356,7 @@ export class Value {
       }
       return result;
     },
-    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as unknown[]).indexOf(value) !== -1),
+    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as unknown[]).includes(value)),
     intersection: <T>(array1: T[], array2: T[]): T[] => array1.filter(value => array2.includes(value)),
     hasIntersection: <T>(array1: T[], array2: T[]): boolean => array1.some(value => array2.includes(value)),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
@@ -278,6 +381,15 @@ export class Value {
     hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60,
   };
 
+  public static getPercentage = (percent: number | undefined, loaded: number, total: number, expectedTransferSize: number) => {
+    if (typeof percent === 'undefined') {
+      if (total || expectedTransferSize) {
+        percent = Math.round((loaded / (total || expectedTransferSize)) * 100);
+      }
+    }
+    return percent;
+  };
+
   public static noop = (): void => undefined;
 }
 
@@ -295,8 +407,8 @@ export class Url {
    */
   public static parse = (expectedKeys: string[], parseThisUrl?: string) => {
     const url = parseThisUrl || window.location.search.replace('?', '');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
+
+    const valuePairs = url.split('?').pop()?.split('&') ?? []; // str.split('?') string[].length will always be >= 1
     const rawParams = new Map<string, string>();
     const rawParamNameDict = new Map<string, string>();
     for (const valuePair of valuePairs) {
@@ -311,11 +423,11 @@ export class Url {
     return processedParams;
   };
 
-  public static create = (link: string, params: UrlParams) => {
+  public static create = (link: string, params: UrlParams, transform = true) => {
     for (const key of Object.keys(params)) {
       const value = params[key];
       if (typeof value !== 'undefined') {
-        const transformed = Value.obj.keyByValue(Url.URL_PARAM_DICT, value);
+        const transformed = transform ? Value.obj.keyByValue(Url.URL_PARAM_DICT, value) : undefined;
         link +=
           (link.includes('?') ? '&' : '?') +
           encodeURIComponent(key) +
@@ -333,12 +445,16 @@ export class Url {
       return url;
     }
     let queryParams = urlParts[1];
-    queryParams = queryParams[queryParams.length - 1] === '#' ? queryParams.slice(0, -1) : queryParams;
+    queryParams = queryParams.endsWith('#') ? queryParams.slice(0, -1) : queryParams;
     const params = new URLSearchParams(queryParams);
     for (const p of paramsToDelete) {
       params.delete(p);
     }
     return `${urlParts[0]}?${params.toString()}`;
+  };
+
+  public static removeTrailingSlash = (url: string) => {
+    return url.replace(/\/$/, '');
   };
 
   public static replaceUrlParam = (url: string, key: string, value: string) => {
@@ -383,26 +499,47 @@ export const emailKeyIndex = (scope: string, key: string): string => {
   return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
 };
 
-export const asyncSome = async <T>(arr: Array<T>, predicate: (e: T) => Promise<boolean>) => {
+export const asyncSome = async <T>(arr: T[], predicate: (e: T) => Promise<boolean>) => {
   for (const e of arr) {
     if (await predicate(e)) return true;
   }
   return false;
 };
 
+export const asyncFilter = async <T>(arr: T[], predicate: (e: T) => Promise<boolean>) => {
+  return (
+    await Promise.all(
+      arr.map(async e => {
+        return { e, flag: await predicate(e) };
+      })
+    )
+  )
+    .filter(o => o.flag)
+    .map(o => o.e);
+};
+
 export const stringTuple = <T extends string[]>(...data: T): T => {
   return data;
 };
 
-export const getBase64FromUrl = async (url: string): Promise<string> => {
-  const data = await fetch(url);
-  const blob = await data.blob();
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      resolve(base64data as string);
-    };
-  });
+export const checkValidURL = (url: string): boolean => {
+  const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@\-\/]))?/;
+  return pattern.test(url);
+};
+
+/**
+ * Executes multiple promises concurrently with a limit to the number of promises running simultaneously.
+ * Resolves when all promises are resolved or rejects when any promise is rejected.
+ *
+ * @param concurrency - The maximum number of promises to run at the same time.
+ * @param tasks - An array of functions that return promises.
+ * @returns A Promise that resolves to an array of the resolved values of the input promises.
+ */
+export const promiseAllWithLimit = async <V>(concurrency: number, tasks: (() => Promise<V>)[]): Promise<V[]> => {
+  let results: V[] = [];
+  while (tasks.length) {
+    const currentTasks = tasks.splice(0, concurrency).map(task => task());
+    results = results.concat(await Promise.all(currentTasks));
+  }
+  return results;
 };
