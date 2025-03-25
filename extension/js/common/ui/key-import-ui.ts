@@ -79,39 +79,32 @@ export class KeyImportUi {
 
   public renderEmailAliasView = async (acctEmail: string) => {
     await Settings.refreshSendAs(acctEmail);
-    const storage = await AcctStore.get(acctEmail, ['email_provider']);
-    if (storage.email_provider === 'gmail') {
-      const { sendAs } = await AcctStore.get(acctEmail, ['sendAs']);
-      const addresses = this.filterAddressesForSubmittingKeys(Object.keys(sendAs ?? {}));
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { email_provider, sendAs } = await AcctStore.get(acctEmail, ['email_provider', 'sendAs']);
+    if (email_provider !== 'gmail') return;
+    const addresses = this.filterAddressesForSubmittingKeys(Object.keys(sendAs ?? {}));
 
-      const emailAliases = Value.arr.withoutVal(addresses, acctEmail);
-      for (const e of emailAliases) {
-        for (const option of ['generate_private_key', 'submit_pubkey']) {
-          $(`.${option}_addresses`).append(
-            `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-name="${sendAs?.[e].name ?? ''}" data-test="input-email-alias-${option}-${e.replace(
-              /[^a-z0-9]+/g,
-              ''
-            )}" />${Xss.escape(e)}</label><br/>`
-          ); // xss-escaped
-        }
+    const emailAliases = Value.arr.withoutVal(addresses, acctEmail);
+    for (const e of emailAliases) {
+      for (const option of ['generate_private_key', 'submit_pubkey']) {
+        const dataTestValue = `input-email-alias-${option}-${e.replace(/[^a-z0-9]+/g, '')}`;
+        $(`.${option}_addresses`).append(
+          `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-name="${sendAs?.[e].name ?? ''}" data-test="${dataTestValue}" />${Xss.escape(e)}</label><br/>`
+        ); // xss-escaped
       }
-      if (emailAliases.length > 0) {
-        $('.also_submit_alias_key_view').show();
-      }
-      $('.manual .input_submit_all').prop({ checked: true, disabled: false });
+    }
+    if (emailAliases.length > 0) {
+      $('.also_submit_alias_key_view').show();
     }
   };
 
   public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
     // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
-    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
+    const aliasCheckboxes = $('.input_email_alias_submit_pubkey');
     if ($(target).prop('checked')) {
-      if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        $('.input_email_alias_submit_pubkey').prop({ disabled: false });
-      }
+      aliasCheckboxes.prop({ disabled: false });
     } else {
-      $('.input_email_alias_submit_pubkey').prop({ checked: false });
-      $('.input_email_alias_submit_pubkey').prop({ disabled: true });
+      aliasCheckboxes.prop({ checked: false, disabled: true });
     }
   };
 
@@ -131,21 +124,19 @@ export class KeyImportUi {
   };
 
   public getSelectedEmailAliases = (type: 'generate_private_key' | 'submit_pubkey'): { name: string; email: string }[] => {
-    const selectedEmails = [];
-    for (const el of $(`.input_email_alias_${type}:visible:checked`)) {
-      selectedEmails.push({
+    return $(`.input_email_alias_${type}:visible:checked`)
+      .toArray()
+      .map(el => ({
         name: $(el).data('name') as string,
         email: $(el).data('email') as string,
-      });
-    }
-    return selectedEmails;
+      }));
   };
 
   public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
     $('input[type=radio][name=source]')
       .off()
-      .on('change', function () {
-        const selectedValue = (this as HTMLInputElement).value;
+      .on('change', ev => {
+        const selectedValue = (ev.target as HTMLInputElement).value;
         switch (selectedValue) {
           case 'file':
             $('.input_private_key').val('').trigger('change').prop('disabled', true);
@@ -172,7 +163,7 @@ export class KeyImportUi {
           case 'generate':
             $('.source_paste_container').hide();
             $('.source_generate_container').show();
-            $('.generate_alias_key_view').show();
+            if ($('.input_email_alias_generate_private_key').length > 0) $('.generate_alias_key_view').show();
             break;
           default:
             break;

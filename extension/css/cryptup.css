@@ -3469,7 +3469,17 @@ body#select_account .action_add_account::before {
 }
 
 .generate_alias_key_view .generate_private_key_addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   margin-top: 10px;
+}
+
+.submit_pubkey_addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
 }
 
 code {

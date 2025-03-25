@@ -42,7 +42,6 @@ export interface PassphraseOptions {
 
 export interface SetupOptions extends PassphraseOptions {
   submit_main: boolean;
-  submit_all: boolean;
   recovered?: boolean;
 }
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -296,7 +295,7 @@ export class SetupView extends View {
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  public submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
+  public submitPublicKeys = async ({ submit_main }: { submit_main: boolean }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
       await submitPublicKeyIfNeeded(
@@ -307,14 +306,13 @@ export class SetupView extends View {
         mostUsefulPrv?.keyInfo.public,
         {
           submit_main,
-          submit_all,
         }
       );
     } catch (e) {
       return await Settings.promptToRetry(
         e,
         e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
-        () => this.submitPublicKeys({ submit_main, submit_all }),
+        () => this.submitPublicKeys({ submit_main }),
         Lang.general.contactIfNeedAssistance(this.isCustomerUrlFesUsed())
       );
     }

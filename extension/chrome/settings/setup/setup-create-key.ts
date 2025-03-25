@@ -34,7 +34,6 @@ export class SetupCreateKeyModule {
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         passphrase_ensure_single_copy: false, // there can't be any saved passphrases for the new key
         submit_main: this.view.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2a_manual_create .input_submit_key'),
-        submit_all: this.view.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2a_manual_create .input_submit_all'),
         recovered: false,
       };
       /* eslint-enable @typescript-eslint/naming-convention */

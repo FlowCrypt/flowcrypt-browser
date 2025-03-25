@@ -76,7 +76,6 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         passphrase_ensure_single_copy: false, // there can't be any saved passphrases for the new key
         submit_main: this.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2a_manual_create .input_submit_key'),
-        submit_all: this.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2a_manual_create .input_submit_all'),
         recovered: false,
       };
       /* eslint-enable @typescript-eslint/naming-convention */
@@ -145,18 +144,17 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  private submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
+  private submitPublicKeys = async ({ submit_main }: { submit_main: boolean }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.view.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
       await submitPublicKeyIfNeeded(this.view.clientConfiguration, this.view.acctEmail, [], this.pubLookup.attester, mostUsefulPrv?.keyInfo.public, {
         submit_main,
-        submit_all,
       });
     } catch (e) {
       return await Settings.promptToRetry(
         e,
         e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
-        () => this.submitPublicKeys({ submit_main, submit_all }),
+        () => this.submitPublicKeys({ submit_main }),
         Lang.general.contactIfNeedAssistance(Boolean(this.view.fesUrl))
       );
     }
