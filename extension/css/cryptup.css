@@ -3461,6 +3461,27 @@ body#select_account .action_add_account::before {
   display: inline-block;
 }
 
+.generate_alias_key_view {
+  display: none;
+  font-size: 14px;
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+.generate_alias_key_view .generate_private_key_addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.submit_pubkey_addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+}
+
 code {
   padding: 0.2em 0.4em;
   margin: 0;

@@ -23,7 +23,7 @@ export const submitPublicKeyIfNeeded = async (
   submitKeyForAddrs: string[],
   attester: Attester,
   armoredPubkey: string | undefined,
-  options: { submit_main: boolean; submit_all: boolean } // eslint-disable-line @typescript-eslint/naming-convention
+  options: { submit_main: boolean } // eslint-disable-line @typescript-eslint/naming-convention
 ) => {
   if (!options.submit_main) {
     return;
@@ -46,7 +46,7 @@ export const submitPublicKeyIfNeeded = async (
     attester.welcomeMessage(acctEmail, armoredPubkey, idToken).catch(ApiErr.reportIfSignificant);
   }
   let addresses;
-  if (submitKeyForAddrs.length && options.submit_all) {
+  if (submitKeyForAddrs.length) {
     addresses = [...submitKeyForAddrs];
   } else {
     addresses = [acctEmail];

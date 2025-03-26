@@ -80,6 +80,7 @@ export class BackupUi {
       return;
     }
     $('#add_key_option_container').hide();
+    $('.generate_alias_key_view').hide();
     if (this.action === 'setup_automatic') {
       $('#button-go-back').css('display', 'none');
       await this.automaticModule.simpleSetupAutoBackupRetryUntilSuccessful();

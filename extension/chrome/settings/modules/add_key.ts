@@ -56,23 +56,31 @@ export class AddKeyView extends View {
       <br><br>
       `
       );
-    } else {
-      $('#content').show();
-      if (!this.clientConfiguration.forbidStoringPassPhrase()) {
-        $('.import_input_passphrase_save').prop('checked', true).prop('disabled', false);
-      }
-      await initPassphraseToggle(['input_passphrase']);
-      this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
-      Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
-      await this.loadAndRenderKeyBackupsOrRenderError();
-      $('.source_selector').css('display', 'block');
-      $('#spinner_container').text('');
+      return;
     }
+    $('#content').show();
+    if (!this.clientConfiguration.forbidStoringPassPhrase()) {
+      $('.import_input_passphrase_save').prop('checked', true).prop('disabled', false);
+    }
+    if (this.clientConfiguration.mustSubmitToAttester() || !this.clientConfiguration.canSubmitPubToAttester()) {
+      $('.remove_if_pubkey_submitting_not_user_configurable').remove();
+    }
+    await initPassphraseToggle(['input_passphrase']);
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId);
+    Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
+    await this.loadAndRenderKeyBackupsOrRenderError();
+    $('.source_selector').css('display', 'block');
+    $('#spinner_container').text('');
+    await this.keyImportUi.renderEmailAliasView(this.acctEmail);
   };
 
   public setHandlers = () => {
     $('.action_add_private_key').on('click', this.setHandlerPrevent('double', this.addPrivateKeyHandler));
     $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_add_private_key'));
+    $('.input_submit_key').on(
+      'click',
+      this.setHandler(el => this.keyImportUi.actionSubmitPublicKeyToggleHandler(el))
+    );
     this.addKeyGenerateModule.setHandlers();
   };
 
