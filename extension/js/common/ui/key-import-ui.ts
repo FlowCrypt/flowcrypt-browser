@@ -357,17 +357,19 @@ export class KeyImportUi {
       const privateKeysIds = keyinfos.map(ki => ki.fingerprints[0]);
       if (privateKeysIds.includes(k.id)) {
         const key = keyinfos.find(ki => ki.id === k.id);
-        /* eslint-disable @typescript-eslint/no-non-null-assertion */
-        const existingKey = await KeyUtil.parse(key!.public);
-        const hasNewerExpiration = !!(k.expiration && existingKey.expiration && k.expiration > existingKey.expiration);
-        if (hasNewerExpiration) {
-          const updateKeyMessage =
-            "The key you're trying to import is a newer version of one you already have, based on its expiry date.\n" +
-            'Follow the <a href="https://flowcrypt.com/docs/getting-started/common-tasks/update-private-key.html">guide</a> \n' +
-            'to update it or contact your FlowCrypt admin.';
-          await Ui.modal.info(updateKeyMessage, true);
-        } else {
-          throw new UserAlert('This is one of your current keys, try another one.');
+        if (key) {
+          const existingKey = await KeyUtil.parse(key.public);
+          const hasNewerExpiration = !!(k.expiration && existingKey.expiration && k.expiration > existingKey.expiration);
+          if (hasNewerExpiration) {
+            const updateKeyMessage =
+              "The key you're trying to import is a newer version of one you already have, based on its expiry date.\n\n" +
+              "We'll redirect you to the key update page to manage your key.";
+            if (await Ui.modal.confirm(updateKeyMessage, true)) {
+              window.location.href = Url.create('/chrome/settings/modules/my_key_update.htm', { acctEmail, fingerprint: k.id, parentTabId: '' });
+            }
+          } else {
+            throw new UserAlert('This is one of your current keys, try another one.');
+          }
         }
       }
     }
