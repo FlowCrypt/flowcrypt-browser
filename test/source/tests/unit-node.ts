@@ -2002,11 +2002,11 @@ jA==
       expect(result.get('Primary key expiration?')).to.equal('[-] -');
       expect(
         result.has(
-          'Encrypt/Decrypt test: Got error performing encryption/decryption test: Error: Error encrypting message: Could not find valid encryption key packet in key 672c24e138a037f4: RSA keys shorter than 2047 bits are considered too weak.'
+          'Encrypt/Decrypt test: Got error performing encryption/decryption test: Error: Error encrypting message: Could not verify primary key: RSA keys shorter than 2047 bits are considered too weak.'
         )
       ).to.be.true;
       expect(result.get('Sign/Verify test')).to.equal(
-        '[-] Exception: Error: Could not find valid signing key packet in key 672c24e138a037f4: RSA keys shorter than 2047 bits are considered too weak.'
+        '[-] Exception: Error: Could not verify primary key: RSA keys shorter than 2047 bits are considered too weak.'
       );
       expect(result.get('SK 0 > LongId')).to.equal('[-] 2C322F7709C13B10');
       expect(result.get('SK 0 > Created')).to.equal('[-] 1611140946 or 2021-01-20T11:09:06.000Z');
