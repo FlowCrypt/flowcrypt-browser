@@ -362,7 +362,7 @@ export class KeyImportUi {
           const hasNewerExpiration = !!(k.expiration && existingKey.expiration && k.expiration > existingKey.expiration);
           if (hasNewerExpiration) {
             const updateKeyMessage =
-              "The key you're trying to import is a newer version of one you already have, based on its expiry date.\n\n" +
+              "The key you're trying to import is a newer version of one you already have, based on its expiry date. " +
               "We'll redirect you to the key update page to manage your key.";
             if (await Ui.modal.confirm(updateKeyMessage, true)) {
               window.location.href = Url.create('/chrome/settings/modules/my_key_update.htm', { acctEmail, fingerprint: k.id, parentTabId: '' });

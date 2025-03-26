@@ -839,9 +839,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPage.waitAndType('@input-passphrase', 'passphrase');
         await addKeyPage.waitAndClick('@action-add-private-key-btn');
         const expectedInfoMsg =
-          "The key you're trying to import is a newer version of one you already have, based on its expiry date.\n\n" +
+          "The key you're trying to import is a newer version of one you already have, based on its expiry date. " +
           "We'll redirect you to the key update page to manage your key.";
-        await addKeyPage.waitAndRespondToModal('info', 'confirm', expectedInfoMsg);
+        await addKeyPage.waitAndRespondToModal('confirm', 'confirm', expectedInfoMsg);
         const myKeyUpdatePage = await settingsPage.getFrame(['my_key_update.htm']);
         await myKeyUpdatePage.waitAndClick('@source-paste');
         await myKeyUpdatePage.waitAndType('@input-prv-key', testConstants.keyWith80yearsExpiry);
