@@ -833,13 +833,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
         });
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
-        await addKeyPopup.waitAndClick('@source-paste');
-        await addKeyPopup.waitAndType('@input-armored-key', testConstants.keyWith80yearsExpiry);
-        await addKeyPopup.waitAndType('@input-passphrase', 'passphrase');
-        await addKeyPopup.waitAndClick('@action-add-private-key-btn');
-        const expectedInfoMsg = "The key you're trying to import is a newer version of one you already have, based on its expiry date";
-        await addKeyPopup.waitAndRespondToModal('info', 'confirm', expectedInfoMsg);
+        const addKeyPage = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPage.waitAndClick('@source-paste');
+        await addKeyPage.waitAndType('@input-armored-key', testConstants.keyWith80yearsExpiry);
+        await addKeyPage.waitAndType('@input-passphrase', 'passphrase');
+        await addKeyPage.waitAndClick('@action-add-private-key-btn');
+        const expectedInfoMsg =
+          "The key you're trying to import is a newer version of one you already have, based on its expiry date.\n\n" +
+          "We'll redirect you to the key update page to manage your key.";
+        await addKeyPage.waitAndRespondToModal('info', 'confirm', expectedInfoMsg);
+        const myKeyUpdatePage = await settingsPage.getFrame(['my_key_update.htm']);
+        await myKeyUpdatePage.waitAndClick('@source-paste');
+        await myKeyUpdatePage.waitAndType('@input-prv-key', testConstants.keyWith80yearsExpiry);
+        await myKeyUpdatePage.waitAndType('@input-passphrase', 'passphrase');
+        await myKeyUpdatePage.waitAndClick('@action-update-key');
+        await myKeyUpdatePage.waitAndRespondToModal('confirm', 'confirm', 'Public and private key updated locally.');
       })
     );
     test(
