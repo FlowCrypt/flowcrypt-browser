@@ -1267,7 +1267,7 @@ ddhikgp3CccIHuNtdw4QW1ztV0gA/08a7beHiY/ykDX5e19zDw+03o4cS/QKQnnD
 0vwB+w8P
 =XEhj
 -----END PGP PUBLIC KEY BLOCK-----`,
-  privateKeyWithEmbeddedImage: `-----BEGIN PGP PRIVATE KEY BLOCK-----
+  keyWithEmbeddedImage: `-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: passphrase is "passphrase"
 
 lIYEZ+OhNBYJKwYBBAHaRw8BAQdAvkDZuNOSbMl9+DpWz/rUvSQjkDXYLQzwT75M

@@ -1071,6 +1071,22 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - fix and import keypair with embedded image generated from gpg2',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+          key: {
+            title: '?',
+            armored: testConstants.keyWithEmbeddedImage,
+            passphrase: 'passphrase',
+            longid: '1ABCEBCA0A4FB17C',
+          },
+          fixKey: true,
+        });
+      })
+    );
+    test(
       'settings - my key page - update private key from file',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
