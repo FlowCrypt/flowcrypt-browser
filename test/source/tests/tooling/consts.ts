@@ -1268,6 +1268,7 @@ ddhikgp3CccIHuNtdw4QW1ztV0gA/08a7beHiY/ykDX5e19zDw+03o4cS/QKQnnD
 =XEhj
 -----END PGP PUBLIC KEY BLOCK-----`,
   privateKeyWithEmbeddedImage: `-----BEGIN PGP PRIVATE KEY BLOCK-----
+Comment: passphrase is "passphrase"
 
 lIYEZ+OhNBYJKwYBBAHaRw8BAQdAvkDZuNOSbMl9+DpWz/rUvSQjkDXYLQzwT75M
 GpvsNqj+BwMChQNhw+7e+SP7K7h43FiMknKkWG7P7vfdT2HvTQxSKIbgg641DCSV
