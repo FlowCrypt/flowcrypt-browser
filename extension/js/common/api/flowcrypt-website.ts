@@ -30,7 +30,7 @@ export class FlowCryptWebsite extends Api {
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {
       const children = Browser.arrFromDomNodeList(post.childNodes);
       const title = children.find(n => n.nodeName.toLowerCase() === 'title')?.textContent;
-      const date = children.find(n => n.nodeName.toLowerCase() === 'published')?.textContent?.substr(0, 10);
+      const date = children.find(n => n.nodeName.toLowerCase() === 'published')?.textContent?.substring(0, 10);
       const url = (children.find(n => n.nodeName.toLowerCase() === 'link') as HTMLAnchorElement).getAttribute('href');
       if (title && date && url) {
         posts.push({ title, date, url });

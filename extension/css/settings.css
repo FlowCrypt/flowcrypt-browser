@@ -124,7 +124,6 @@ a.gray_link {
   cursor: pointer;
   height: auto;
   border: 1px solid #f3f3f3;
-  letter-spacing: 0.35;
 }
 
 #alt-accounts.accounts-row .row.alt-accounts .contains_email {

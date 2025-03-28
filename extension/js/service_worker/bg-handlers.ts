@@ -72,8 +72,10 @@ export class BgHandlers {
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
     const acctEmails = await GlobalStore.acctEmailsGet();
+
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       const email = acctEmails?.length ? acctEmails[0] : undefined;
+
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // eslint-disable-line no-null/no-null
     }
   };
@@ -84,6 +86,7 @@ export class BgHandlers {
         if (activeTabs.length) {
           if (activeTabs[0].id !== undefined) {
             type ScriptRes = { acctEmail: string | undefined; sameWorld: boolean | undefined };
+
             chrome.scripting.executeScript(
               {
                 target: { tabId: activeTabs[0].id },

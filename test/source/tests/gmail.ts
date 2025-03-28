@@ -301,7 +301,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test.serial(
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769, originally uses test.serial
+    test.skip(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -402,6 +403,33 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5906
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
+      'mail.google.com - Keep original reply message when switching to secure mode',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
+        await Util.sleep(30);
+        await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 }); // click first message of thread
+        await Util.sleep(3);
+        const messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
+        const plainReplyButton = await messages[0].$('[data-tooltip="Reply"]');
+        await Util.sleep(1);
+        await plainReplyButton!.click();
+        await gmailPage.waitAndClick('#switch_to_encrypted_reply'); // Switch to encrypted compose
+        await Util.sleep(2);
+        await gmailPage.waitAll('.reply_message');
+        await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&skipClickPrompt=___cu_true___'], { sleep: 5 });
+        await replyBox.waitAll(['@action-expand-quoted-text']);
+        await replyBox.waitAndClick('@action-expand-quoted-text');
+        // Check if quoted message doesn't contain last message
+        expect(await replyBox.read('@input-body')).to.not.contain(`Here's reply`);
+      })
+    );
+
     test(
       'mail.google.com - switch to encrypted reply for middle message',
       testWithBrowser(async (t, browser) => {
@@ -454,6 +482,72 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
         await Util.sleep(3);
         expect(await replyBox.read('@recipients-preview')).to.equal(['flowcrypt.compatibility@gmail.com', 'e2e.enterprise.test@flowcrypt.com'].join(''));
+      })
+    );
+
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5933
+    test(
+      'mail.google.com - test reply all for password protected message',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzQZTMHNLflWQjRcSvWlMsKbLhpr');
+        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAll('.action_reply_all_message_button');
+      })
+    );
+
+    // skipped temporarily as per https://github.com/FlowCrypt/flowcrypt-browser/issues/5934#issuecomment-2664926769
+    test.skip(
+      'mail.google.com - switch to encrypted forward',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
+        await Util.sleep(5);
+        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAndClick('[act="25"]', { delay: 1 }); // click forward
+        await Util.sleep(3);
+        await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
+        await gmailPage.waitForContent(
+          '.reply_message_evaluated .error_notification',
+          'The last message was encrypted, but you are composing a message without encryption. Switch to encrypted compose'
+        );
+        await gmailPage.waitAndClick('#switch_to_encrypted_reply'); // Switch to encrypted compose
+        await Util.sleep(3);
+        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await Util.sleep(3);
+        await replyBox2.waitForContent('@input-body', '---------- Forwarded message ---------');
+      })
+    );
+
+    test(
+      'mail.google.com - secure reply and forward in dot menu',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
+        const gmailContextMenu = '.J-J5-Ji.aap';
+        await gmailPage.waitAndClick(gmailContextMenu);
+        await Util.sleep(1);
+        expect(await gmailPage.isElementPresent('@action-reply-message-button'));
+        await gmailPage.waitAndClick('@action-reply-message-button');
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await replyBox.waitForContent('@input-body', '');
+        await gmailPage.waitAndClick(gmailContextMenu);
+        await Util.sleep(1);
+        expect(await gmailPage.isElementPresent('@action-reply-all-message-button'));
+        await gmailPage.waitAndClick('@action-reply-all-message-button');
+        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await replyBox2.waitForContent('@input-body', '');
+        const recipientsCount = await replyBox2.target.$$eval('.email_address', elements => elements.length);
+        expect(recipientsCount).to.equal(2);
+        await gmailPage.waitAndClick(gmailContextMenu);
+        await Util.sleep(1);
+        expect(await gmailPage.isElementPresent('@action-forward-message-button'));
+        await gmailPage.waitAndClick('@action-forward-message-button');
+        const replyBox3 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await replyBox3.waitForContent('@input-body', '---------- Forwarded message ---------');
       })
     );
 

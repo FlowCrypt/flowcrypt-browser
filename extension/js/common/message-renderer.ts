@@ -83,14 +83,17 @@ export class MessageRenderer {
     const inlineCIDAttachments = new Set<Attachment>();
 
     // Define the hook function for DOMPurify to process image elements after sanitizing attributes
-    const processImageElements = (node: Element | null) => {
-      // Ensure the node exists and has a 'src' attribute
-      if (!node || !('src' in node)) return;
-      const imageSrc = node.getAttribute('src');
+    DOMPurify.addHook('afterSanitizeAttributes', currentNode => {
+      // Ensure the node is an Element
+      if (!(currentNode instanceof Element)) return;
+
+      // Check if the node has a 'src' attribute
+      const imageSrc = currentNode.getAttribute('src');
       if (!imageSrc) return;
+
       const matches = imageSrc.match(CID_PATTERN);
 
-      // Check if the src attribute contains a CID
+      // If the src attribute contains a CID
       if (matches?.[1]) {
         const contentId = matches[1];
         const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
@@ -98,13 +101,10 @@ export class MessageRenderer {
         // Replace the src attribute with a base64 encoded string
         if (contentIdAttachment) {
           inlineCIDAttachments.add(contentIdAttachment);
-          node.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
+          currentNode.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
         }
       }
-    };
-
-    // Add the DOMPurify hook
-    DOMPurify.addHook('afterSanitizeAttributes', processImageElements);
+    });
 
     // Sanitize the HTML and remove the DOMPurify hooks
     const sanitizedHtml = Xss.htmlSanitize(html);
@@ -521,7 +521,8 @@ export class MessageRenderer {
     sigResult: VerifyRes | undefined,
     renderModule: RenderInterface,
     retryVerification: (() => Promise<VerifyRes | undefined>) | undefined,
-    plainSubject: string | undefined
+    plainSubject: string | undefined,
+    isChecksumInvalid = false
   ): Promise<{ publicKeys?: string[] }> => {
     if (isEncrypted) {
       renderModule.renderEncryptionStatus('encrypted');
@@ -603,7 +604,7 @@ export class MessageRenderer {
       );
     }
     decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
-    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml);
+    renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml, isChecksumInvalid);
     await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, Boolean(signerEmail), retryVerification);
     if (renderableAttachments.length) {
       renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
@@ -743,7 +744,8 @@ export class MessageRenderer {
         result.signature,
         renderModule,
         this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs))),
-        plainSubject
+        plainSubject,
+        !KeyUtil.validateChecksum(encryptedData.toString())
       );
     } else if (result.error.type === DecryptErrTypes.format) {
       if (fallbackToPlainText) {

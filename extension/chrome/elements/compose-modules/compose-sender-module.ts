@@ -51,10 +51,13 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       emailAliases.sort((a, b) => (sendAs![a].isDefault === sendAs![b].isDefault ? 0 : sendAs![a].isDefault ? -1 : 1));
-      Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() =>
+      Xss.sanitizeRender(fromContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).on('change', () =>
         this.view.myPubkeyModule.reevaluateShouldAttachOrNot()
       );
-      this.view.S.now('input_from').change(this.view.setHandler(() => this.actionInputFromChangeHandler()));
+      this.view.S.now('input_from').on(
+        'change',
+        this.view.setHandler(() => this.actionInputFromChangeHandler())
+      );
       if (this.view.isReplyBox) {
         this.view.sizeModule.resizeComposeBox();
       }

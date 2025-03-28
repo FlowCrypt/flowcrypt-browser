@@ -222,7 +222,8 @@ View.run(
           }, 500);
         })
       );
-      this.altAccounts.keydown(
+      this.altAccounts.on(
+        'keydown',
         this.setHandler((el, ev) => {
           this.accountsMenuKeydownHandler(ev);
         })

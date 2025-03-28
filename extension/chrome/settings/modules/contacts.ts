@@ -60,7 +60,7 @@ View.run(
       $('#bulk_import .action_process').off().on('click', this.setHandlerPrevent('double', this.actionProcessBulkImportTextInput));
       $('.action_export_all').off().on('click', this.setHandlerPrevent('double', this.actionExportAllKeysHandler));
       $('.action_view_bulk_import').off().on('click', this.setHandlerPrevent('double', this.actionRenderBulkImportPageHandler));
-      $('.input-search-contacts').off().keyup(this.setHandlerPrevent('double', this.loadAndRenderContactList));
+      $('.input-search-contacts').off().on('keyup', this.setHandlerPrevent('double', this.loadAndRenderContactList));
     };
 
     // --- PRIVATE

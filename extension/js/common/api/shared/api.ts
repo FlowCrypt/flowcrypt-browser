@@ -246,7 +246,14 @@ export class Api {
       } else if (resFmt === 'json') {
         try {
           const transformed = transformResponseWithProgressAndTimeout();
-          return (await Promise.all([transformed.response.json(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+          return (
+            await Promise.all([
+              transformed.response.text().then(text => {
+                return (text ? JSON.parse(text) : {}) as T; // Handle empty response body
+              }),
+              transformed.pipe(),
+            ])
+          )[0] as FetchResult<T, RT>;
         } catch (e) {
           // handle empty response https://github.com/FlowCrypt/flowcrypt-browser/issues/5601
           if (e instanceof SyntaxError && (e.message === 'Unexpected end of JSON input' || e.message.startsWith('JSON.parse: unexpected end of data'))) {
@@ -314,7 +321,7 @@ export class Api {
           .then(data => {
             resolve(data as FetchResult<T, RT>);
           })
-          // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+
           .catch(reject);
       });
     } catch (e) {
@@ -410,6 +417,7 @@ export class Api {
       // as of October 2023 fetch upload progress (through ReadableStream)
       // is supported only by Chrome and requires HTTP/2 on backend
       // as temporary solution we use XMLHTTPRequest for such requests
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       const result = await Api.ajaxWithJquery(req, resFmt, formattedData);
       return result as FetchResult<T, RT>;
     } else {

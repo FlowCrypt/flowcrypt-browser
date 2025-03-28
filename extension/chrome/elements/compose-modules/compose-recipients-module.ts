@@ -44,6 +44,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
   private uniqueRecipientIndex = 0;
+  private inputContainerPaddingBottom = '30px';
 
   public constructor(view: ComposeView) {
     super(view);
@@ -91,6 +92,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.now('cc').on(
       'click',
       this.view.setHandler(target => {
+        $('#input-container-to').css('padding-bottom', 0);
         const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
         this.copyCcBccActionsClickHandler(target, newContainer);
       })
@@ -98,6 +100,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.now('bcc').on(
       'click',
       this.view.setHandler(target => {
+        $('#input-container-cc').css('padding-bottom', 0);
         const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
         this.copyCcBccActionsClickHandler(target, newContainer);
       })
@@ -106,11 +109,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       'click',
       this.view.setHandler(() => {
         this.view.S.cached('input_to').trigger('focus');
+        this.setCorrectPaddingForInputContainer();
       })
     );
-    this.view.S.cached('input_to').focus(this.view.setHandler(() => this.focusRecipients()));
-    this.view.S.cached('cc').focus(this.view.setHandler(() => this.focusRecipients()));
-    this.view.S.cached('bcc').focus(this.view.setHandler(() => this.focusRecipients()));
+    this.view.S.cached('input_to').on(
+      'focus',
+      this.view.setHandler(() => this.focusRecipients())
+    );
+    this.view.S.cached('cc').on(
+      'focus',
+      this.view.setHandler(() => this.focusRecipients())
+    );
+    this.view.S.cached('bcc').on(
+      'focus',
+      this.view.setHandler(() => this.focusRecipients())
+    );
     this.view.S.cached('compose_table').on(
       'click',
       this.view.setHandler(() => this.hideContacts(), this.view.errModule.handle(`hide contact box`))
@@ -396,6 +409,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
     this.view.S.cached('recipients_placeholder').css('display', 'flex');
+    $('.input-container').css('padding-bottom', '0');
     this.setEmailsPreview();
     this.hideContacts();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
@@ -568,7 +582,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }
       }
       return false;
-    } else if (e.keyCode === 32) {
+    } else if (e.key === 'Space') {
       // Handle 'Space' key
       const target = $(e.target);
       const emails = String(target.val())
@@ -808,7 +822,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           displayEmail = contact.email;
         } else {
           const parts = contact.email.split('@');
-          displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
+          displayEmail = parts[0].replace(/<\/?b>/g, '').substring(0, 10) + '...@' + parts[1];
         }
         displayEmail = '<div class="select_contact_email" data-test="action-select-contact-email">' + Xss.escape(displayEmail) + '</div>';
         if (contact.name) {
@@ -835,7 +849,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           this.view.errModule.handle(`select contact`)
         )
       );
-      contactItems.hover(function () {
+      contactItems.on('hover', function () {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
@@ -905,6 +919,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     sendingType: RecipientType,
     status: RecipientStatus
   ): RecipientElement[] => {
+    // Do not add padding-bottom for reply box
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5935
+    if (!container.hasClass('input-container')) {
+      if (sendingType === 'to') {
+        if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
+      }
+      if (sendingType === 'cc') {
+        if ($('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
+      }
+    }
+
     const result: RecipientElement[] = [];
     for (const { email, name, invalid } of emails) {
       const recipientId = this.generateRecipientId();
@@ -1147,12 +1176,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private removeRecipient = (element: HTMLElement) => {
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
-    this.addedRecipients[index].element.remove();
+    const recipient = this.addedRecipients[index];
+    // Adjust padding when the last recipient of a specific type is removed
+    if (this.addedRecipients.filter(r => r.sendingType === recipient.sendingType).length === 1) {
+      $(`#input-container-${recipient.sendingType}`).css('padding-bottom', '0');
+    }
+    recipient.element.remove();
     const container = element.parentElement?.parentElement; // Get Container, e.g. '.input-container-cc'
     if (container) {
       this.view.sizeModule.resizeInput($(container).find('input'));
     }
-    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).trigger('focus');
+    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${recipient.sendingType} input`).trigger('focus');
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
@@ -1241,6 +1275,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         child.parentElement?.removeChild(child);
         break;
       }
+    }
+  };
+
+  private setCorrectPaddingForInputContainer = () => {
+    if (this.addedRecipients.some(r => r.sendingType === 'to') && !this.addedRecipients.some(r => r.sendingType === 'cc')) {
+      $('#input-container-to').css('padding-bottom', this.inputContainerPaddingBottom);
+    } else if (this.addedRecipients.some(r => r.sendingType === 'cc') && !this.addedRecipients.some(r => r.sendingType === 'bcc')) {
+      $('#input-container-cc').css('padding-bottom', this.inputContainerPaddingBottom);
     }
   };
 

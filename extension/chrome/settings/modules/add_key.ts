@@ -72,7 +72,7 @@ export class AddKeyView extends View {
 
   public setHandlers = () => {
     $('.action_add_private_key').on('click', this.setHandlerPrevent('double', this.addPrivateKeyHandler));
-    $('#input_passphrase').keydown(this.setEnterHandlerThatClicks('.action_add_private_key'));
+    $('#input_passphrase').on('keydown', this.setEnterHandlerThatClicks('.action_add_private_key'));
     this.addKeyGenerateModule.setHandlers();
   };
 

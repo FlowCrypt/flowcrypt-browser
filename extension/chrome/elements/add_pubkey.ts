@@ -76,7 +76,10 @@ View.run(
           }
         },
       });
-      $('select.copy_from_email').change(this.setHandler(el => this.copyFromEmailHandler(el)));
+      $('select.copy_from_email').on(
+        'change',
+        this.setHandler(el => this.copyFromEmailHandler(el))
+      );
       $('.action_ok').on(
         'click',
         this.setHandler(() => this.submitHandler())

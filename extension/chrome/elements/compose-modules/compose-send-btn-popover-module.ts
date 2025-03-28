@@ -115,7 +115,7 @@ export class ComposeSendBtnPopoverModule extends ViewModule<ComposeView> {
         this.view.setHandler(async (target, e) => this.keydownHandler(e))
       );
       const sendingOptions = this.view.S.cached('sending_options_container').find('.sending-option');
-      sendingOptions.hover(function () {
+      sendingOptions.on('hover', function () {
         sendingOptions.removeClass('active');
         $(this).addClass('active');
       });

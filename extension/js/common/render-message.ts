@@ -23,7 +23,7 @@ export type MessageInfo = {
 export type RenderMessage = {
   done?: true;
   resizePgpBlockFrame?: true;
-  separateQuotedContentAndRenderText?: { decryptedContent: string; isHtml: boolean };
+  separateQuotedContentAndRenderText?: { decryptedContent: string; isHtml: boolean; isChecksumInvalid: boolean };
   renderText?: string;
   progressOperation?: { operationId: string; text: string; perc?: number; init?: boolean };
   setFrameColor?: 'green' | 'gray' | 'red';

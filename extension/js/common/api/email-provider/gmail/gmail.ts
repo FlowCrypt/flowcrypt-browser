@@ -253,7 +253,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
           // Depending on your needs, you might throw an error or handle this scenario differently.
           throw new Error('Failed to meet the minimum byte requirement or condition.');
         })
-        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
+
         .catch(reject);
     });
   };

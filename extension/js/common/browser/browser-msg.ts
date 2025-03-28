@@ -29,6 +29,7 @@ export interface ChildFrame {
 
 export namespace Bm {
   export type Dest = string;
+
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = unknown;
   export type RawResponse = { result: unknown; exception?: Bm.ErrAsJson };
@@ -428,9 +429,10 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static createIntervalAlarm(action: string, periodInMinutes: number) {
-    const alarmName = `${action}_interval_${Date.now()}`;
-    void chrome.alarms.create(alarmName, { periodInMinutes });
+  public static async createIntervalAlarm(action: string, periodInMinutes: number) {
+    const alarmName = `${action}_interval`;
+
+    await chrome.alarms.create(alarmName, { periodInMinutes });
   }
 
   public static intervalAddListener(name: string, handler: IntervalHandler) {
@@ -642,6 +644,7 @@ export class BrowserMsg {
           resolve(undefined);
         } else if (!r || typeof r !== 'object') {
           // r can be null if we sent a message to a non-existent window id
+
           const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
           let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {

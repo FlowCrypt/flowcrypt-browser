@@ -88,6 +88,7 @@ export class GmailWebmailStartup {
 
   private injectFCVarScript = () => {
     const scriptElement = document.createElement('script');
+
     scriptElement.src = chrome.runtime.getURL('/js/common/core/feature-config-injector.js');
     (document.head || document.documentElement).appendChild(scriptElement);
   };
@@ -131,7 +132,7 @@ export class GmailWebmailStartup {
   private hijackGmailHotkeys = () => {
     const keys = Env.keyCodes();
     const unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
-    $(document).keypress(e => {
+    $(document).on('keypress', e => {
       Catch.try(() => {
         const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
         if (

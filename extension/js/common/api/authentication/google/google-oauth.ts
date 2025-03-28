@@ -88,6 +88,7 @@ export class GoogleOAuth extends OAuth {
     const performAjaxRequest = async <RT>(req: Ajax): Promise<RT> => {
       // temporary use jquery for upload requests https://github.com/FlowCrypt/flowcrypt-browser/issues/5612
       if (req.progress?.upload) {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         return (await Api.ajaxWithJquery(req, 'json')) as RT;
       } else {
         return (await Api.ajax(req, 'json')) as RT;

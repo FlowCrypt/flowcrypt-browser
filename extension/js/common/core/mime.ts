@@ -228,7 +228,7 @@ export class Mime {
               }
             }
             const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
-            mimeContent.subject = String(mimeContent.subject || mimeContent.headers.subject || '');
+            mimeContent.subject = mimeContent.subject || (mimeContent.headers.subject as string) || '';
             mimeContent = Object.assign(mimeContent, headers);
             resolve(mimeContent);
           } catch (e) {

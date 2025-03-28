@@ -146,7 +146,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     // re-query the storage, which is now updated
     const updatedContact = await ContactStore.getOneWithAllPubkeys(undefined, email);
     this.view.errModule.debug(`getUpToDatePubkeys.updatedContact.sortedPubkeys.length(${updatedContact?.sortedPubkeys.length})`);
-    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${updatedContact})`);
+    this.view.errModule.debug(`getUpToDatePubkeys.updatedContact(${JSON.stringify(updatedContact)})`);
     return updatedContact;
   };
 

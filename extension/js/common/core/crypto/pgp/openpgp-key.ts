@@ -418,7 +418,7 @@ export class OpenPGPKey {
   public static fingerprintToLongid(fingerprint: string) {
     if (fingerprint.length === 40) {
       // pgp keys
-      return fingerprint.substr(-16).toUpperCase();
+      return fingerprint.substring(fingerprint.length - 16).toUpperCase();
     }
     throw new Error(`Unexpected fingerprint format (len: ${fingerprint.length}): "${fingerprint}"`);
   }
@@ -428,6 +428,19 @@ export class OpenPGPKey {
     return nonDummyPrvPackets.every(p => p.isDecrypted());
   }
 
+  public static async checkPublicKeyError(pubkey: Key): Promise<string | undefined> {
+    try {
+      const key = await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
+      await opgp.encrypt({
+        message: await opgp.createMessage({ text: OpenPGPKey.encryptionText }),
+        encryptionKeys: key.toPublic(),
+        format: 'armored',
+      });
+      return undefined;
+    } catch (err) {
+      return String(err);
+    }
+  }
   public static isFullyEncrypted(key: OpenPGP.PrivateKey): boolean {
     const nonDummyPrvPackets = OpenPGPKey.getPrvPackets(key);
     return nonDummyPrvPackets.every(p => !p.isDecrypted());
@@ -445,7 +458,7 @@ export class OpenPGPKey {
     const opt: OpenPGP.KeyOptions = { userIDs, passphrase };
     if (variant === 'curve25519') {
       opt.type = 'ecc';
-      opt.curve = 'curve25519';
+      opt.curve = 'curve25519Legacy';
     } else if (variant === 'rsa2048') {
       opt.type = 'rsa';
       opt.rsaBits = 2048;
@@ -600,7 +613,7 @@ export class OpenPGPKey {
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.dsa),
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.rsaSign),
         opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.ecdsa),
-        opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsa),
+        opgp.enums.read(opgp.enums.publicKey, opgp.enums.publicKey.eddsaLegacy),
       ].includes(key.getAlgorithmInfo().algorithm)
     ) {
       return this.noKeyFlags; // disallow encryption for these algorithms
@@ -744,6 +757,7 @@ export class OpenPGPKey {
         // todo: we can make it faster by manually collecting expirations from signatures?
         ...(await Promise.all(key.subkeys.map(async subkey => OpenPGPKey.getExpirationAsDateOrUndefined(await subkey.getExpirationTime()))))
           .filter(Boolean)
+
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           .map(expirationTime => expirationTime!.getTime())
           .filter(expiration => !primaryKeyExpiration || expiration < primaryKeyExpiration)
@@ -857,7 +871,7 @@ export class OpenPGPKey {
         [opgp.enums.publicKey.elgamal]: { pub: 3, priv: 1 }, // (p, g, y), (x)
         [opgp.enums.publicKey.ecdsa]: { pub: 2, priv: 1 }, // (oid, Q), (d)
         [opgp.enums.publicKey.ecdh]: { pub: 2, priv: 1 }, // (oid, Q, kdfParams), (d)
-        [opgp.enums.publicKey.eddsa]: { pub: 2, priv: 1 }, // (oid, Q), (seed)
+        [opgp.enums.publicKey.eddsaLegacy]: { pub: 2, priv: 1 }, // (oid, Q), (seed)
       };
     }
     return (

@@ -266,6 +266,19 @@ export class XssSafeFactory {
       this.destroyableCls
     } reply_message_button" data-test="secure-reply-button" role="button" tabindex="0" data-tooltip="Secure Reply" aria-label="Secure Reply">
       <img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" />
+      </div>`;
+  };
+
+  public btnSecureMenuBtn = (replyOption: ReplyOption) => {
+    const replyOptionText = replyOption.replace('a_', '').replace('_', ' ');
+    const htmlAttrib = {
+      className: replyOptionText.replace(' ', '_'),
+      testName: replyOptionText.replace(' ', '-'),
+    };
+    const displayText = replyOptionText === 'reply all' ? replyOptionText.replace('all', 'to all') : replyOptionText;
+    // * The action_${action.underscore}_message_button is used as an identifier in GmailElementReplacer.actionActivateSecureReplyHandler()
+    return `<div class="action_${htmlAttrib.className}_message_button action_menu_message_button" data-test="action-${htmlAttrib.testName}-message-button">
+    <img src="${this.srcImg(`svgs/${htmlAttrib.testName}-icon.svg`)}" /><span>secure ${displayText}</span>
     </div>`;
   };
 

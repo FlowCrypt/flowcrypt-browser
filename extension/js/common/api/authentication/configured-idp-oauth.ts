@@ -100,6 +100,7 @@ export class ConfiguredIdpOAuth extends OAuth {
           grant_type: 'refresh_token',
           refreshToken,
           client_id: authConf.oauth.clientId,
+
           redirect_uri: chrome.identity.getRedirectURL('oauth'),
         },
         dataType: 'JSON',
@@ -119,6 +120,7 @@ export class ConfiguredIdpOAuth extends OAuth {
       access_type: 'offline',
       prompt: 'login',
       state,
+
       redirect_uri: chrome.identity.getRedirectURL('oauth'),
       scope: this.OAUTH_REQUEST_SCOPES.join(' '),
       login_hint: acctEmail,
@@ -130,6 +132,7 @@ export class ConfiguredIdpOAuth extends OAuth {
     /* eslint-disable @typescript-eslint/naming-convention */
     try {
       const redirectUri = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true });
+
       if (chrome.runtime.lastError || !redirectUri || redirectUri?.includes('access_denied')) {
         return { acctEmail, result: 'Denied', error: `Failed to launch web auth flow`, id_token: undefined };
       }
@@ -203,6 +206,7 @@ export class ConfiguredIdpOAuth extends OAuth {
           grant_type: 'authorization_code',
           code,
           client_id: authConf.oauth.clientId,
+
           redirect_uri: chrome.identity.getRedirectURL('oauth'),
         },
         dataType: 'JSON',

@@ -146,9 +146,9 @@ export class ExternalService extends Api {
         JSON.stringify({
           associateReplyToken,
           from,
-          to: (recipients.to || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
-          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
-          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis),
+          to: (recipients.to || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
+          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
+          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
         })
       ),
     });

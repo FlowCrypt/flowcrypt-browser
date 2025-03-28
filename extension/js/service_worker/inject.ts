@@ -46,6 +46,7 @@ const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: bool
 const injectContentScripts = (tabId: number, files: string[], callback?: () => void) => {
   const filesCopy = files.slice();
   const scriptFile = filesCopy.shift();
+
   chrome.scripting.executeScript(
     {
       target: { tabId },

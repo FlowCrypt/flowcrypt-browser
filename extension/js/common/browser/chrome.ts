@@ -21,6 +21,7 @@ const handleFatalErr = async (reason: 'storage_undefined', error: Error) => {
       console.error('Chrome.runtime missing, cannot continue', error);
     } else {
       // extension pages
+
       window.location.href = chrome.runtime.getURL(Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
     }
   } catch (e) {
@@ -68,7 +69,7 @@ export const storageGetAll = async (storageType: ChromeStorageType): Promise<{ [
       void handleFatalErr('storage_undefined', new Error('storage is undefined'));
     } else {
       const storage = chrome.storage[storageType];
-      storage.get(resolve);
+      void storage.get(resolve);
     }
   });
 };

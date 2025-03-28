@@ -382,6 +382,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
         const errorFrame = await contactsFrame.getFrame(['pgp_pubkey.htm', firstFrameId]);
         await errorFrame.waitForContent('@error-introduce-label', 'This OpenPGP key is not usable.');
+        await errorFrame.waitForContent('@error-introduce-label', 'Could not verify primary key: dsa keys are considered too weak');
         await errorFrame.waitForInputValue('@error-email-input', 'dsa@flowcrypt.test');
       })
     );
@@ -582,11 +583,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-        await settingsPage.waitForContent(`@container-key-status-42AAAAD52045B98C74B4052952B2A7FC4171171C`, 'ACTIVE');
+        await settingsPage.waitForContent(`@container-key-status-59C63FE6952D93BC1EC9F9369332CCDBAE607602`, 'ACTIVE');
         // check imported key at index 1
         const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, `@action-show-key-1`, ['my_key.htm', 'placement=settings']);
         await Util.sleep(1);
-        await myKeyFrame.waitForContent(`@container-key-status-13E9D8258B0BD9D4`, 'ACTIVE');
+        await myKeyFrame.waitForContent(`@container-key-status-2601CB2E1902C007`, 'ACTIVE');
         await myKeyFrame.waitAll('@content-fingerprint');
         await myKeyFrame.notPresent('@action-update-prv');
         await myKeyFrame.notPresent('@action-revoke-certificate');
@@ -810,6 +811,43 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const pubkeyExpiration = new Date(pubkey.expiration!).getFullYear();
         expect(pubkey.id.endsWith(longid)).to.equal(true);
         expect(pubkeyExpiration).to.equal(expectedExpiration);
+      })
+    );
+    test(
+      'settings - inform user when importing newer key version',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const key50yearExpiry = testConstants.keyWith50yearsExpiry;
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          key: {
+            title: '?',
+            armored: key50yearExpiry,
+            passphrase: 'passphrase',
+            longid: '6B673BAB02EC3E43',
+          },
+        });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPage = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPage.waitAndClick('@source-paste');
+        await addKeyPage.waitAndType('@input-armored-key', testConstants.keyWith80yearsExpiry);
+        await addKeyPage.waitAndType('@input-passphrase', 'passphrase');
+        await addKeyPage.waitAndClick('@action-add-private-key-btn');
+        const expectedInfoMsg =
+          "The key you're trying to import is a newer version of one you already have, based on its expiry date. " +
+          "We'll redirect you to the key update page to manage your key.";
+        await addKeyPage.waitAndRespondToModal('confirm', 'confirm', expectedInfoMsg);
+        const myKeyUpdatePage = await settingsPage.getFrame(['my_key_update.htm']);
+        await myKeyUpdatePage.waitAndClick('@source-paste');
+        await myKeyUpdatePage.waitAndType('@input-prv-key', testConstants.keyWith80yearsExpiry);
+        await myKeyUpdatePage.waitAndType('@input-passphrase', 'passphrase');
+        await myKeyUpdatePage.waitAndClick('@action-update-key');
+        await myKeyUpdatePage.waitAndRespondToModal('confirm', 'confirm', 'Public and private key updated locally.');
       })
     );
     test(
@@ -1099,7 +1137,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         );
         // test the pubkey in the storage
         const oldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(oldContact.sortedPubkeys.length).to.equal(1);
@@ -1122,7 +1160,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyFrame.waitAndClick('@action-fix-and-import-key');
         // test the pubkey in the storage
         const expectedOldContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
@@ -1142,7 +1180,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // test the pubkey in the storage
         const newContact = await dbPage.page.evaluate(async acctEmail => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/return-await
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return await (window as any).ContactStore.getOneWithAllPubkeys(undefined, acctEmail);
         }, acctEmail);
         expect(newContact.sortedPubkeys.length).to.equal(1);
@@ -1266,7 +1304,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await backupPage.waitAndClick('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]'); // check
         // backing up to file when two keys are checked
         const backupFileRawData2 = await backupPage.awaitDownloadTriggeredByClicking('@action-backup-step3manual-continue', 2);
-        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toString()));
+        const { keys: keys2 } = await KeyUtil.readMany(Buf.fromUtfStr(Buf.concat(Object.values(backupFileRawData2)).toUtfStr()));
         expect(keys2.length).to.equal(2);
         await backupPage.close();
       })
@@ -1457,7 +1495,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await ppFrame.waitAndType('@input-pass-phrase', key.passphrase);
         await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry');
         await Util.sleep(2);
-        expect(ppFrame.frame.isDetached()).to.equal(true);
+        expect(ppFrame.frame.detached).to.equal(true);
         // todo: #4059 we would expect further iteraction with backupFrame here but it is actually wiped out
         await settingsPage.close();
       })

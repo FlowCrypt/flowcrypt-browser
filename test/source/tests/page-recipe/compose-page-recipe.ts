@@ -205,6 +205,6 @@ export class ComposePageRecipe extends PageRecipe {
       await passPhraseFrame.keyboard().press('Escape');
     }
     await page.waitTillGone('@dialog-passphrase');
-    expect(passPhraseFrame.frame.isDetached()).to.equal(true);
+    expect(passPhraseFrame.frame.detached).to.equal(true);
   };
 }

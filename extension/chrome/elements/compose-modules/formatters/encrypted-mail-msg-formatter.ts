@@ -124,7 +124,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
       const pubkeyMsgData = {
         ...newMsg,
         recipients: pubkeyRecipients,
-        // brackets are required for test emails like '@test:8001'
+        // brackets are required for test emails like '@test'
         replyTo: replyToForMessageSentToPubkeyRecipients.length
           ? Str.formatEmailList([newMsg.from, ...replyToForMessageSentToPubkeyRecipients], true)
           : undefined,
@@ -181,10 +181,11 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     { msgUrl, externalId }: { msgUrl: string; externalId?: string },
     signingPrv?: Key
   ) => {
-    // encoded as: PGP/MIME-like structure but with attachments as external files due to email size limit (encrypted for pubkeys only)
+    // encoded as: PGP/MIME-like structure
     const msgBody = this.richtext ? { 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml } : { 'text/plain': newMsg.plaintext };
+    const attachments = await this.view.attachmentsModule.attachment.collectEncryptAttachments(pubs);
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, []); // no attachments, attached to email separately
+    const pgpMimeNoAttachments = await Mime.encode(msgBody, { Subject: newMsg.subject }, attachments);
     const { data: pubEncryptedNoAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeNoAttachments), undefined, pubs, signingPrv); // encrypted only for pubs
     const emailIntroAndLinkBody = await this.formatPwdEncryptedMsgBodyLink(msgUrl);
     return await SendableMsg.createPwdMsg(

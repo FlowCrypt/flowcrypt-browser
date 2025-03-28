@@ -489,6 +489,84 @@ export class KeyUtil {
     return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
   }
 
+  public static validateChecksum(armoredText: string): boolean {
+    // Regex to capture any PGP armor block, e.g. SIGNATURE, MESSAGE, etc.
+    // It captures: the block type in group (1), and the content in group (2)
+    const pgpBlockRegex = /-----BEGIN PGP ([A-Z ]+)-----([\s\S]*?)-----END PGP \1-----/g;
+
+    let match: RegExpExecArray | null;
+    let validFound = false;
+
+    // Iterate over all PGP blocks in the text
+    while ((match = pgpBlockRegex.exec(armoredText))) {
+      const blockContent = match[2] || ''; // the captured block text
+      const lines = blockContent.split('\n').map(l => l.trim());
+
+      // Filter out known non-base64 lines
+      const dataCandidates = lines.filter(
+        line => line.length > 0 && !line.startsWith('Version:') && !line.startsWith('Comment:') && !line.startsWith('Hash:') && !line.startsWith('-----')
+      );
+
+      // Find the checksum line (starts with '=')
+      const checksumIndex = dataCandidates.findIndex(line => line.startsWith('='));
+      if (checksumIndex === -1) {
+        continue; // No checksum line found in this block, skip
+      }
+
+      // Get the base64 after the '='
+      const checksumLine = dataCandidates[checksumIndex].slice(1);
+      let providedBytes: string;
+      try {
+        providedBytes = atob(checksumLine);
+      } catch {
+        continue; // Not valid base64, skip
+      }
+
+      // Check that decoded checksum is 3 bytes for CRC24
+      if (providedBytes.length !== 3) {
+        continue;
+      }
+      const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
+
+      // Decode all lines before the checksum line
+      const dataLines = dataCandidates.slice(0, checksumIndex);
+      const decodedChunks: string[] = [];
+      for (const line of dataLines) {
+        try {
+          decodedChunks.push(atob(line));
+        } catch {
+          // skip lines that aren't valid base64
+        }
+      }
+
+      if (!decodedChunks.length) {
+        continue;
+      }
+
+      // Join all decoded base64 data and calculate its CRC
+      const rawData = decodedChunks.join('');
+      // eslint-disable-next-line @typescript-eslint/no-misused-spread
+      const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+      if (KeyUtil.crc24(dataBytes) === providedCRC) {
+        validFound = true;
+      }
+    }
+
+    return validFound;
+  }
+
+  private static crc24 = (dataBytes: Uint8Array): number => {
+    let crc = 0xb704ce;
+    for (const dataByte of dataBytes) {
+      crc ^= dataByte << 16;
+      for (let j = 0; j < 8; j++) {
+        crc <<= 1;
+        if (crc & 0x1000000) crc ^= 0x1864cfb;
+      }
+    }
+    return crc & 0xffffff;
+  };
+
   private static getSortValue(pubinfo: PubkeyInfo): number {
     const expirationSortValue = typeof pubinfo.pubkey.expiration === 'undefined' ? Infinity : pubinfo.pubkey.expiration;
     // sort non-revoked first, then non-expired

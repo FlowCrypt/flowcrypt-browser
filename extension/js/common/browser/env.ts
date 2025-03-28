@@ -28,6 +28,7 @@ export class Env {
     if (Env.isExtension()) {
       try {
         // Attempt to get the URL of an extension resource. This will succeed if we're in an extension context.
+
         const extensionUrl = chrome.runtime.getURL('');
         // Check if the current page URL is different from the extension's base URL (i.e., it's not an extension page)
         return !window.location.href.startsWith(extensionUrl);
