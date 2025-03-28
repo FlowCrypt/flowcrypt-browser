@@ -1169,7 +1169,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // https://storage.googleapis.com/p8ejr437e40a1hc10jpmsp5q2wfx83/artifacts/jobs/391d1dd0-ceb2-48ad-ab69-73c2c4bdcb84/
         await settingsPage.close();
         await Util.sleep(2);
-        settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
         await settingsPage.waitAndClick('@action-open-pubkey-page');
         const myKeyFrame2 = await settingsPage.getFrame(['my_key.htm']);
         await myKeyFrame2.waitAndClick('@action-update-prv');
