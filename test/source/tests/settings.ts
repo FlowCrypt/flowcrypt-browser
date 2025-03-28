@@ -1170,6 +1170,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await settingsPage.close();
         await Util.sleep(2);
         settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAndClick('@action-open-pubkey-page');
         const myKeyFrame2 = await settingsPage.getFrame(['my_key.htm']);
         await myKeyFrame2.waitAndClick('@action-update-prv');
