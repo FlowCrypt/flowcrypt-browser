@@ -19,7 +19,7 @@ import { KeyInfoWithIdentity, KeyUtil, PubkeyInfoWithLastCheck } from '../core/c
 import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
-import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
+import { KeyWithPrivateFields, OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
@@ -1110,17 +1110,33 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
     test(
       'settings - fix and import keypair with embedded image generated from gpg2',
       testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.compatibility@gmail.com';
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.manualEnter(settingsPage, 'unused', {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          fixKey: true,
           key: {
-            title: '?',
+            title: '',
             armored: testConstants.keyWithEmbeddedImage,
             passphrase: 'passphrase',
             longid: '1ABCEBCA0A4FB17C',
           },
-          fixKey: true,
         });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyFrame = await settingsPage.getFrame(['my_key.htm']);
+        const downloadedFile = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
+        const fileName = 'flowcrypt-backup-flowcryptcompatibilitygmailcom-0x1ABCEBCA0A4FB17C.asc';
+        const parsedKey = (await KeyUtil.parse(downloadedFile[fileName].toString())) as KeyWithPrivateFields;
+        const originalKey = (await KeyUtil.parse(testConstants.keyWithEmbeddedImage)) as KeyWithPrivateFields;
+        expect(originalKey.rawKey?.users[2].userID?.userID === undefined);
+        expect(parsedKey.rawKey?.users[2].userID?.userID === 'user1@example.com <user1@example.com>');
+        expect(originalKey.rawKey?.users.length).to.equal(5);
+        expect(parsedKey.rawKey?.users.length).to.equal(4);
       })
     );
     test(
