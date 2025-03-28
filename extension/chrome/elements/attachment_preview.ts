@@ -36,7 +36,9 @@ View.run(
 
     public render = async () => {
       try {
+        console.log('here');
         Xss.sanitizeRender(this.attachmentPreviewContainer, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
+        console.log('here 2');
         this.attachment = new Attachment({
           ...this.attachmentId,
           name: this.origNameBasedOnFilename,
