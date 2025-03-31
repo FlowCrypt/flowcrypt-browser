@@ -34,6 +34,8 @@ export class BrowserPool {
       `--disable-extensions-except=${extensionDir}`,
       `--load-extension=${extensionDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
+      // https://github.com/puppeteer/puppeteer/issues/5123
+      '--disable-features=site-per-process',
     ];
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
