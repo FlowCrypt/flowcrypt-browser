@@ -26,6 +26,9 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
   for (const id of passphraseInputIds) {
     const passphraseInput = $(`#${id}`);
     passphraseInput.addClass('toggled_passphrase');
+    if (!passphraseInput.attr('data-test')) {
+      passphraseInput.attr('data-test', 'input-passphrase');
+    }
     if (show) {
       passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonHide}</label>`); // xss-direct
       passphraseInput.attr('type', 'text');

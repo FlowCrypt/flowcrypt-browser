@@ -562,6 +562,31 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
         await settingsPage.waitAndClick('@action-remove-key-2'); // Delete newly generated key
+        await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with');
+        await SettingsPageRecipe.ready(settingsPage);
+      })
+    );
+    test(
+      'settings - my key page - generate key with alias',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.ready(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPopup.waitAndClick('@source-generate');
+        const passphrase = 'long enough to suit requirements';
+        // Check alias email so that flowcrypt can generate key for alias too
+        await addKeyPopup.waitAndClick('@input-email-alias-generate_private_key-flowcryptcompatibilitygmailcom');
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
+        await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
       })
     );
@@ -811,6 +836,43 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const pubkeyExpiration = new Date(pubkey.expiration!).getFullYear();
         expect(pubkey.id.endsWith(longid)).to.equal(true);
         expect(pubkeyExpiration).to.equal(expectedExpiration);
+      })
+    );
+    test(
+      'settings - inform user when importing newer key version',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        const key50yearExpiry = testConstants.keyWith50yearsExpiry;
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          key: {
+            title: '?',
+            armored: key50yearExpiry,
+            passphrase: 'passphrase',
+            longid: '6B673BAB02EC3E43',
+          },
+        });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const addKeyPage = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
+        await addKeyPage.waitAndClick('@source-paste');
+        await addKeyPage.waitAndType('@input-armored-key', testConstants.keyWith80yearsExpiry);
+        await addKeyPage.waitAndType('@input-passphrase', 'passphrase');
+        await addKeyPage.waitAndClick('@action-add-private-key-btn');
+        const expectedInfoMsg =
+          "The key you're trying to import is a newer version of one you already have, based on its expiry date. " +
+          "We'll redirect you to the key update page to manage your key.";
+        await addKeyPage.waitAndRespondToModal('confirm', 'confirm', expectedInfoMsg);
+        const myKeyUpdatePage = await settingsPage.getFrame(['my_key_update.htm']);
+        await myKeyUpdatePage.waitAndClick('@source-paste');
+        await myKeyUpdatePage.waitAndType('@input-prv-key', testConstants.keyWith80yearsExpiry);
+        await myKeyUpdatePage.waitAndType('@input-passphrase', 'passphrase');
+        await myKeyUpdatePage.waitAndClick('@action-update-key');
+        await myKeyUpdatePage.waitAndRespondToModal('confirm', 'confirm', 'Public and private key updated locally.');
       })
     );
     test(

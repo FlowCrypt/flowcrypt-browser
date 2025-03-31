@@ -60,7 +60,6 @@ export class SetupRecoverKeyModule {
       /* eslint-disable @typescript-eslint/naming-convention */
       const options: SetupOptions = {
         submit_main: false, // todo - reevaluate submitting when recovering
-        submit_all: false,
         passphrase,
         passphrase_save: true, // todo - reevaluate saving passphrase when recovering
         passphrase_ensure_single_copy: true,
