@@ -23,7 +23,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Settings } from '../../js/common/settings.js';
 import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
-import { initPassphraseToggle, shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { View } from '../../js/common/view.js';
 import { BgUtils } from '../../js/service_worker/bgutils.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -322,41 +322,6 @@ export class SetupView extends View {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
   };
   /* eslint-enable @typescript-eslint/naming-convention */
-
-  public isCreatePrivateFormInputCorrect = async (section: string): Promise<boolean> => {
-    const password1 = $(`#${section} .input_password`);
-    const password2 = $(`#${section} .input_password2`);
-    if (!password1.val()) {
-      await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
-      password1.trigger('focus');
-      return false;
-    }
-    if ($(`#${section} .action_proceed_private`).hasClass('gray')) {
-      await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
-      password1.trigger('focus');
-      return false;
-    }
-    if (password1.val() !== password2.val()) {
-      await Ui.modal.warning('The pass phrases do not match. Please try again.');
-      password2.val('').trigger('focus');
-      return false;
-    }
-    let notePp = String(password1.val());
-    if (await shouldPassPhraseBeHidden()) {
-      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
-    }
-    if (!this.clientConfiguration.usesKeyManager()) {
-      const paperPassPhraseStickyNote = `
-        <div style="font-size: 1.2em">
-          Please write down your pass phrase and store it in safe place or even two.
-          It is needed in order to access your FlowCrypt account.
-        </div>
-        <div class="passphrase-sticky-note">${notePp}</div>
-      `;
-      return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
-    }
-    return true;
-  };
 
   private actionComposeEncryptedEmailHandler = async () => {
     const inboxUrl = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail });
