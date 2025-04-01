@@ -1153,7 +1153,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
         });
         const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
+        let settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
         await SetupPageRecipe.manualEnter(
           settingsPage,
           'unused',
@@ -1201,6 +1201,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         }, acctEmail);
         expect(expectedOldContact.sortedPubkeys.length).to.equal(1);
         expect((expectedOldContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey.lastModified).to.equal(1610024667000);
+        // Try to re-open settings page because of flaky issue
+        // https://storage.googleapis.com/p8ejr437e40a1hc10jpmsp5q2wfx83/artifacts/jobs/391d1dd0-ceb2-48ad-ab69-73c2c4bdcb84/
+        await settingsPage.close();
+        await Util.sleep(2);
+        settingsPage = await browser.newExtensionSettingsPage(t, acctEmail);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         await settingsPage.waitAndClick('@action-open-pubkey-page');
         const myKeyFrame2 = await settingsPage.getFrame(['my_key.htm']);
         await myKeyFrame2.waitAndClick('@action-update-prv');
