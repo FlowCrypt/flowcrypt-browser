@@ -258,23 +258,25 @@ export class Settings {
             await KeyUtil.decrypt(origPrv, passphrase);
             let reformatted;
             let userIds: { email: string | undefined; name: string }[] = [];
-            const originalUsers = (origPrv as KeyWithPrivateFields).rawKey?.users ?? [];
-            for (const u of originalUsers) {
-              if (u.userID) {
-                userIds.push({
-                  email: u.userID.email,
-                  name: u.userID.name || '',
+            const internal = (origPrv as KeyWithPrivateFields).internal;
+            if (typeof internal !== 'string' && internal?.users) {
+              for (const u of internal.users) {
+                if (u.userID) {
+                  userIds.push({
+                    email: u.userID.email,
+                    name: u.userID.name || '',
+                  });
+                }
+              }
+              if (!userIds.length) {
+                userIds = uids.map(uid => {
+                  const parsed = Str.parseEmail(uid);
+                  return {
+                    email: parsed.email,
+                    name: parsed.name || '',
+                  };
                 });
               }
-            }
-            if (!userIds.length) {
-              userIds = uids.map(uid => {
-                const parsed = Str.parseEmail(uid);
-                return {
-                  email: parsed.email,
-                  name: parsed.name || '',
-                };
-              });
             }
             try {
               reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
