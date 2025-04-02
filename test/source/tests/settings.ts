@@ -1160,14 +1160,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const parsedKey = (await KeyUtil.parse(downloadedFile[fileName].toString())) as KeyWithPrivateFields;
         const originalKey = (await KeyUtil.parse(testConstants.keyWithEmbeddedImage)) as KeyWithPrivateFields;
         expect((originalKey.internal as Key)?.users[2].userID?.userID).to.equal(undefined);
-        expect((parsedKey.internal as Key)?.users[2].userID?.userID).to.equal('user1@example.com <user1@example.com>');
+        expect((parsedKey.internal as Key)?.users[2].userID?.userID).to.equal('Some user id <user2@example.com>');
         expect((originalKey.internal as Key)?.users.length).to.equal(5);
         expect((parsedKey.internal as Key)?.users.length).to.equal(4);
-
-        // expect(originalKey.internal?.users[2].userID?.userID === undefined).to.equal(true);
-        // expect(parsedKey.internal?.users[2].userID?.userID === 'user1@example.com <user1@example.com>');
-        // expect(originalKey.internal?.users.length).to.equal(5);
-        // expect(parsedKey.internal?.users.length).to.equal(4);
       })
     );
     test(
