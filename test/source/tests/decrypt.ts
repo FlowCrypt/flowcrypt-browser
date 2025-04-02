@@ -2197,6 +2197,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(Object.entries(downloadedFile4).length).to.equal(1);
         expect(Object.keys(downloadedFile4)[0]).to.match(/demo.*\.bat/);
         const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitForSelTestState('ready');
         await attachmentFrame.waitAndClick('@attachment-container');
         const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
