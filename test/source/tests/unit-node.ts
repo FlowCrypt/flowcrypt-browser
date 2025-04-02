@@ -2023,7 +2023,7 @@ jA==
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
       expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
       expect(result.get('expiration')).to.equal('[-] -');
-      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] -');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
       expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
