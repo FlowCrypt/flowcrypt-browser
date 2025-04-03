@@ -160,14 +160,32 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'mail.google.com - rendering attachments',
+      'mail.google.com - attachments rendered correctly',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDXBWBWBfVKHssLtMqvDQSWN');
+        // Check if rendering attachments coorectly
         await gmailPage.waitForContent('.aVW span:first-child', '36');
         const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls.length).to.equal(36);
+
+        // simple attachments triggering processAttachments() keep "download all" button visible
+        await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
+        await Util.sleep(5);
+        await gmailPage.waitAll('iframe');
+        await gmailPage.waitAll(['.aZi'], { visible: true });
+
+        // attachments which contain emoji in filename are rendered correctly
+        await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
+        await Util.sleep(5);
+        await gmailPage.waitAll('iframe');
+        await gmailPage.waitAll(['.aZo'], { visible: false });
+        const urls2 = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
+        expect(urls2.length).to.equal(2);
+        expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
+        expect(await gmailPage.waitForContent('.aVW span.a2H', ' •  Scanned by Gmail'));
+        await gmailPage.close();
       })
     );
 
@@ -600,19 +618,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      `mail.google.com - simple attachments triggering processAttachments() keep "download all" button visible`,
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
-        await Util.sleep(5);
-        await gmailPage.waitAll('iframe');
-        await gmailPage.waitAll(['.aZi'], { visible: true });
-        await gmailPage.close();
-      })
-    );
-
-    test(
       `mail.google.com - encrypted text inside "message" attachment`,
       testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -647,23 +652,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           signature: 'signed',
         });
         await pageHasSecureReplyContainer(t, browser, gmailPage);
-      })
-    );
-
-    test(
-      `mail.google.com - attachments which contain emoji in filename are rendered correctly`,
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
-        await Util.sleep(5);
-        await gmailPage.waitAll('iframe');
-        await gmailPage.waitAll(['.aZo'], { visible: false });
-        const urls = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
-        expect(urls.length).to.equal(2);
-        expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
-        expect(await gmailPage.waitForContent('.aVW span.a2H', ' •  Scanned by Gmail'));
-        await gmailPage.close();
       })
     );
 
