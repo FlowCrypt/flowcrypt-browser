@@ -275,7 +275,8 @@ export class KeyUtil {
       const opgpresult = await OpenPGPKey.diagnose(key, passphrase);
       result = new Map<string, string>([...result, ...opgpresult]);
     }
-    result.set(`expiration`, KeyUtil.formatResult(key.expiration));
+    const expirationIso = key.expiration ? new Date(key.expiration).toISOString() : undefined;
+    result.set(`expiration`, KeyUtil.formatResult(expirationIso));
     result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
     result.set(`internal usableForEncryption`, KeyUtil.formatResult(key.usableForEncryption));
     result.set(`internal usableForSigning`, KeyUtil.formatResult(key.usableForSigning));
@@ -292,8 +293,9 @@ export class KeyUtil {
     }
   }
 
-  public static formatResult(value: unknown): string {
-    return `[-] ${String(value)}`;
+  public static formatResult(value: unknown | undefined): string {
+    const formattedOutput = value !== undefined ? (value as string) : '-';
+    return `[-] ${formattedOutput}`;
   }
 
   public static async asPublicKey(key: Key): Promise<Key> {
