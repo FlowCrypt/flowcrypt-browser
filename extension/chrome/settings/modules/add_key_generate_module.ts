@@ -20,7 +20,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Settings } from '../../../js/common/settings.js';
 import { BackupUi } from '../../../js/common/ui/backup-ui/backup-ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { initPassphraseToggle, isCreatePrivateFormInputCorrect } from '../../../js/common/ui/passphrase-ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { SetupOptions } from '../setup';
 import { AddKeyView } from './add_key';
@@ -67,6 +67,10 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
   };
 
   public actionCreateKeyHandler = async () => {
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
+    if (!(await isCreatePrivateFormInputCorrect('step_2a_manual_create', this.view.clientConfiguration))) {
+      return;
+    }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_proceed_private', Ui.spinner('white') + 'just a minute');

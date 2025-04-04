@@ -553,12 +553,23 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-generate');
+        // Check if error modal displays correctly when user didn't enter passphrase
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'Pass phrase is needed to protect your private email.');
+        // Check if error modal displays correctly when user enters weak passphrase
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', 'short passphrase');
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'Pass phrase is not strong enough.');
+        // Check if error modal displays correctly when pasphrase doesn't match
         const passphrase = 'long enough to suit requirements';
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'The pass phrases do not match.');
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
         // Uncheck backup_inbox to check if backup view correctly displayed
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
         await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
@@ -586,6 +597,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
         await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
