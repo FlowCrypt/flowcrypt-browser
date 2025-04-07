@@ -318,7 +318,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test.serial(
+    test(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -326,7 +326,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           const gmailPage = await openGmailPage(t, browser);
           const threadId = '181d226b4e69f172'; // 1st message -- thread id
           await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
-          t.timeout(minutes(4)); // extend ava's timeout
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
           await gmailPage.waitAndClick('@secure-reply-button');
           let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
@@ -334,7 +333,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
           await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
-          t.timeout(minutes(4)); // extend ava's timeout
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
