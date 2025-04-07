@@ -19,7 +19,7 @@ import { KeyInfoWithIdentity, KeyUtil, PubkeyInfoWithLastCheck } from '../core/c
 import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
-import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
+import { KeyWithPrivateFields, OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { BrowserHandle, ControllablePage } from '../browser';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
@@ -29,6 +29,7 @@ import { twoKeys1, twoKeys2 } from '../mock/key-manager/key-manager-constants';
 import { getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints';
+import { Key } from 'openpgp';
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -552,12 +553,23 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
         const addKeyPopup = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-add-key-page', ['add_key.htm']);
         await addKeyPopup.waitAndClick('@source-generate');
+        // Check if error modal displays correctly when user didn't enter passphrase
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'Pass phrase is needed to protect your private email.');
+        // Check if error modal displays correctly when user enters weak passphrase
+        await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', 'short passphrase');
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'Pass phrase is not strong enough.');
+        // Check if error modal displays correctly when pasphrase doesn't match
         const passphrase = 'long enough to suit requirements';
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
+        await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'The pass phrases do not match.');
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
         // Uncheck backup_inbox to check if backup view correctly displayed
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
         await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
@@ -585,6 +597,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
+        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
         await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
@@ -1130,6 +1143,38 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         ]);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
+      })
+    );
+    test(
+      'settings - fix and import keypair with embedded image generated from gpg2',
+      testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: {
+            pubkeyLookup: {},
+          },
+        });
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
+        await SetupPageRecipe.manualEnter(settingsPage, '', {
+          fixKey: true,
+          key: {
+            title: '',
+            armored: testConstants.keyWithEmbeddedImage,
+            passphrase: 'passphrase',
+            longid: '1ABCEBCA0A4FB17C',
+          },
+        });
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        await settingsPage.waitAndClick('@action-open-pubkey-page');
+        const myKeyFrame = await settingsPage.getFrame(['my_key.htm']);
+        const downloadedFile = await myKeyFrame.awaitDownloadTriggeredByClicking('@action-download-prv');
+        const fileName = 'flowcrypt-backup-flowcryptcompatibilitygmailcom-0x1ABCEBCA0A4FB17C.asc';
+        const parsedKey = (await KeyUtil.parse(downloadedFile[fileName].toString())) as KeyWithPrivateFields;
+        const originalKey = (await KeyUtil.parse(testConstants.keyWithEmbeddedImage)) as KeyWithPrivateFields;
+        expect((originalKey.internal as Key)?.users[2].userID?.userID).to.equal(undefined);
+        expect((parsedKey.internal as Key)?.users[2].userID?.userID).to.equal('Some user id <user2@example.com>');
+        expect((originalKey.internal as Key)?.users.length).to.equal(5);
+        expect((parsedKey.internal as Key)?.users.length).to.equal(4);
       })
     );
     test(

@@ -16,13 +16,14 @@ import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Attachment } from '../../../js/common/core/attachment.js';
+import { isCreatePrivateFormInputCorrect } from '../../../js/common/ui/passphrase-ui.js';
 
 export class SetupCreateKeyModule {
   public constructor(private view: SetupView) {}
 
   public actionCreateKeyHandler = async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
-    if (!(await this.view.isCreatePrivateFormInputCorrect('step_2a_manual_create'))) {
+    if (!(await isCreatePrivateFormInputCorrect('step_2a_manual_create', this.view.clientConfiguration))) {
       return;
     }
     try {

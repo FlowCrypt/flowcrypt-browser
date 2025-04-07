@@ -15,6 +15,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { isCreatePrivateFormInputCorrect } from '../../../js/common/ui/passphrase-ui.js';
 
 export class SetupWithEmailKeyManagerModule {
   public constructor(private view: SetupView) {}
@@ -27,7 +28,7 @@ export class SetupWithEmailKeyManagerModule {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
       submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
     };
-    if (!(await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase'))) {
+    if (!(await isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase', this.view.clientConfiguration))) {
       return;
     }
     try {

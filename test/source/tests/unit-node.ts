@@ -1638,8 +1638,8 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
       expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
-      expect(result.get('expiration')).to.equal('[-] undefined');
-      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('expiration')).to.equal('[-] -');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] -');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
       expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
@@ -1676,8 +1676,8 @@ ZAvn6PBX7vsaReOVa2zsnuY5g70xCxvzHIwR94POu5cENwRtCkrppFnISALpQ1kA
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
       expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
-      expect(result.get('expiration')).to.equal('[-] undefined');
-      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('expiration')).to.equal('[-] -');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] -');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
       expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
@@ -1983,8 +1983,8 @@ jA==
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1606140328 or 2020-11-23T14:05:28.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
       expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
-      expect(result.get('expiration')).to.equal('[-] undefined');
-      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('expiration')).to.equal('[-] -');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] -');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
       expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
@@ -2022,8 +2022,8 @@ jA==
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1611140947 or 2021-01-20T11:09:07.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
       expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
-      expect(result.get('expiration')).to.equal('[-] undefined');
-      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('expiration')).to.equal('[-] -');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] -');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
       expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
@@ -2059,8 +2059,8 @@ jA==
       expect(result.get('SK 0 > SIG 0 > Sig creation time')).to.equal('[-] 1611500699 or 2021-01-24T15:04:59.000Z');
       expect(result.get('SK 0 > SIG 0 > Sig expiration time')).to.equal('[-] -');
       expect(result.get('SK 0 > SIG 0 > Verify')).to.equal('[-] valid');
-      expect(result.get('expiration')).to.equal('[-] undefined');
-      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] undefined');
+      expect(result.get('expiration')).to.equal('[-] -');
+      expect(result.get('internal dateBeforeExpiration')).to.equal('[-] -');
       expect(result.get('internal usableForEncryptionButExpired')).to.equal('[-] false');
       expect(result.get('internal usableForSigningButExpired')).to.equal('[-] false');
       t.pass();
