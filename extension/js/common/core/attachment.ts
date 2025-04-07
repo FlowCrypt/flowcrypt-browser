@@ -204,7 +204,7 @@ export class Attachment {
     } else if (this.name === 'message' && isBodyEmpty) {
       // treat message as encryptedMsg when empty body for the 'message' attachment
       return 'encryptedMsg';
-    } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) {
+    } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g) && !this.isPublicKey() && !this.isPrivateKey()) {
       // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
       // todo: after #4906 is done we should "decrypt" the encryptedFile here to see if it's a binary 'publicKey' (as in message 1869220e0c8f16dd)
