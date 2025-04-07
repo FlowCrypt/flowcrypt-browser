@@ -110,11 +110,11 @@
         {
           "partId": "1",
           "mimeType": "application/pgp-keys",
-          "filename": "piotr-za.wisniewski@ubs.com.asc",
+          "filename": "peter.xyz@domain.com.asc",
           "headers": [
             {
               "name": "Content-Type",
-              "value": "application/pgp-keys; name=\"piotr-za.wisniewski@ubs.com.asc\""
+              "value": "application/pgp-keys; name=\"peter.xyz@domain.com.asc\""
             },
             {
               "name": "Content-Transfer-Encoding",
@@ -122,7 +122,7 @@
             },
             {
               "name": "Content-Disposition",
-              "value": "attachment; filename=\"piotr-za.wisniewski@ubs.com.asc\""
+              "value": "attachment; filename=\"peter.xyz@domain.com.asc\""
             }
           ],
           "body": {
