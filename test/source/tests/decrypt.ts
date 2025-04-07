@@ -273,6 +273,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - render a plain text email with an ambiguous public key name as its attachment`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '1960e404123e1cbc';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
+        const attachmentsContainer = await inboxPage.waitAny('@container-attachments');
+        const attachments = await attachmentsContainer.$$('.pgp_block.publicKey');
+        expect(attachments.length).to.equal(1);
+      })
+    );
+
+    test(
       `decrypt - outlook message with ATTxxxx encrypted email is correctly decrypted`,
       testWithBrowser(async (t, browser) => {
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
