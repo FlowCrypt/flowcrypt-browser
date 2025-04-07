@@ -118,7 +118,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    // Rich text message sending fails. Seems to be a backend Gmail API issue, possibly related to message formatting
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5971
+    test.skip(
       'mail.google.com - send rich-text encrypted message',
       testWithBrowser(
         async (t, browser) => {
