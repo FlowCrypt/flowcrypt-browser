@@ -326,7 +326,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-          const gmailPage = await openGmailPage(t, browser);
+          let gmailPage = await openGmailPage(t, browser);
           const threadId = '181d226b4e69f172'; // 1st message -- thread id
           await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
@@ -336,8 +336,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
           await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
-          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
-          await Util.sleep(5);
+          // Reopen gmail page because sometimes finding iframe doesn't work
+          // https://storage.googleapis.com/p8ejr437e40a1hc10jpmsp5q2wfx83/artifacts/jobs/441c7fcc-a428-48e4-b659-36dd6e89144b/debugHtmlAttachment-CONSUMER-LIVE-GMAIL-rnvh97cchsb-0.html?Expires=1744106791&GoogleAccessId=artifacthub%40semaphore2-prod-artifacts.iam.gserviceaccount.com&Signature=CFOadlecIIbVy%2BYNLYNKU6frAoALP0N3rwymPjocye8lSiQB%2F8GN8Tslbn58TdfpMHTpdP%2FeVHP%2BfH3DICM5r5Zh7HMISZ82CP%2BRE1Bc3wLt0ZDOQL8uxVBSa27Setb5Gy44AsihpYMQQBUxlTiSBZtTPNRDHzViIT2%2F3lSWItUQeCPyzjUKL6CnBm3gEeyktC8zs9vNXX5QMaD9a%2Fx9sJPsDYvCr1J15GuDjEV7fydhr%2BnA6039x8TlQ3xqo2oh%2BetVmocMOPFVGG3dF4BMBCD%2FIqY14OE2PZ7SVtpUYRfu3DHPlejCQslEV514De1yWqgGe0gnGIu%2FzmPi2a%2FrqA%3D%3D&response-content-disposition=inline&response-content-type=text/html;%20charset=utf-8#
+          await gmailPage.close();
+          gmailPage = await openGmailPage(t, browser);
+          await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+          await Util.sleep(3);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
           await replyBox.waitAndClick('@action-send', { confirmGone: true });
