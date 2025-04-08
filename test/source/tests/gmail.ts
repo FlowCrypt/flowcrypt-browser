@@ -84,6 +84,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const pageHasSecureDraft = async (gmailPage: ControllablePage, expectedContent?: string) => {
       const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId='], { sleep: 5, timeout: 30 });
+      await secureDraftFrame.waitForSelTestState('ready');
       if (expectedContent) {
         await secureDraftFrame.waitForContent('@input-body', expectedContent);
       } else {
