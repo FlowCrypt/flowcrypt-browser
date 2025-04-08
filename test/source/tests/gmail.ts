@@ -336,8 +336,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
           await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
-          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle0' }, true);
-          await Util.sleep(2);
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
+          await Util.sleep(5);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
           await replyBox.waitAndClick('@action-send', { confirmGone: true });
