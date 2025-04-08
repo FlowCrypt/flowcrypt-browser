@@ -45,7 +45,7 @@ export const Lang = {
     creatingKeysNotAllowedPleaseImport: 'Creating keys is not allowed on your domain. Please import your keys.',
     keyBackupsNotAllowed: 'Key backups are not allowed on this domain.',
     prvHasFixableCompatIssue:
-      'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.',
+      'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software.It may be missing user IDs, a self-signature, or have an invalid user ID (e.g., a user ID with image data). It is also possible that the key is simply expired.',
     ppMatchAllSet: "Your pass phrase matches. Good job! You're all set.",
     noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
     prvBackupToDesignatedMailboxEmailSubject: (acctEmail: string, fingerprint: string) =>

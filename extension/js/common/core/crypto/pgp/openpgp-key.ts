@@ -9,7 +9,7 @@ import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 import * as Stream from '@openpgp/web-stream-tools';
 
 type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGP.Data> | OpenPGP.CleartextMessage;
-interface KeyWithPrivateFields extends Key {
+export interface KeyWithPrivateFields extends Key {
   internal: OpenPGP.Key | string; // usable key without weak packets
   rawArmored: string;
 }
