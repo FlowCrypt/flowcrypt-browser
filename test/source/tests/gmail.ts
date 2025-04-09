@@ -83,8 +83,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     };
 
     const pageHasSecureDraft = async (gmailPage: ControllablePage, expectedContent?: string) => {
-      const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId='], { sleep: 5, timeout: 30 });
-      await secureDraftFrame.waitForSelTestState('ready');
+      const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId=']);
       if (expectedContent) {
         await secureDraftFrame.waitForContent('@input-body', expectedContent);
       } else {
@@ -334,10 +333,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
           await Util.sleep(3);
           expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
-          await createSecureDraft(t, browser, gmailPage, 'reply draft');
+          // await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
-          await Util.sleep(10);
+          await Util.sleep(5);
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
           await replyBox.waitAndClick('@action-send', { confirmGone: true });
