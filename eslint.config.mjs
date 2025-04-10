@@ -159,6 +159,7 @@ export default [
   {
     ignores: [
       'build/**',
+      'scripts/**',
       'conf/**',
       'eslint.config.mjs',
       'eslint-local-rules.js',

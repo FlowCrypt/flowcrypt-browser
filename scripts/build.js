@@ -8,7 +8,17 @@ const SOURCE_DIRECTORY = path.resolve(ROOT_DIR, './extension');
 const BUILD_DIRECTORY = path.resolve(ROOT_DIR, './build');
 
 // Helper: execute a command in a specified directory.
-const runCmd = (cmd, cwd = ROOT_DIR) => execSync(cmd, { stdio: 'inherit', cwd });
+const runCmd = (cmd, cwdName = 'default') => {
+  const safeDirs = {
+    default: ROOT_DIR,
+    conf: path.join(ROOT_DIR, 'conf'),
+  };
+
+  const cwd = safeDirs[cwdName];
+  if (!cwd) throw new Error('Invalid working directory requested');
+
+  execSync(cmd, { stdio: 'inherit', cwd });
+};
 
 /**
  * Synchronize specified file types from source to output directories
@@ -133,7 +143,7 @@ const main = async () => {
     path.join(OUTPUT_DIRECTORY, 'lib/openpgp.js'),
   ]);
 
-  runCmd('npx webpack', path.join(ROOT_DIR, 'conf'));
+  runCmd('npx webpack', 'conf');
 
   // to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
   // cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build

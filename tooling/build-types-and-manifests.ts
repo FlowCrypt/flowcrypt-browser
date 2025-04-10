@@ -1,7 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { copySync } from 'fs-extra';
 import { readFileSync, writeFileSync } from 'fs';
-import { execSync as exec } from 'child_process';
 const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 
 /**
