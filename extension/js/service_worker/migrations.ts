@@ -65,8 +65,8 @@ export const migrateGlobal = async () => {
     await GlobalStore.set({ stored_key_info_migrated: true });
     console.info('Migration to KeyInfoWithIdentity completed successfully');
   }
+  // migrate local drafts (https://github.com/FlowCrypt/flowcrypt-browser/pull/3986)
   if (typeof globalStore.local_drafts === 'undefined') {
-    // migrate local drafts (https://github.com/FlowCrypt/flowcrypt-browser/pull/3986)
     console.info('migrating local drafts in old format...');
     globalStore.local_drafts = {};
     const storageLocal = await storageGetAll('local');
