@@ -42,7 +42,7 @@ const addKeyInfoFingerprints = async () => {
 };
 
 export const migrateGlobal = async () => {
-  const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added', 'local_drafts']);
+  const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added', 'local_drafts', 'stored_key_info_migrated']);
   if (!globalStore.key_info_store_fingerprints_added) {
     console.info('migrating KeyStorage to add fingerprints and emails of each key...');
     await addKeyInfoFingerprints();
@@ -50,8 +50,21 @@ export const migrateGlobal = async () => {
     await GlobalStore.set({ key_info_store_fingerprints_added: true });
     console.info('done migrating');
   }
-  // migrate local drafts (https://github.com/FlowCrypt/flowcrypt-browser/pull/3986)
+  // Migrate StoredKeyInfo to KeyInfoWithIdentity format
+  // Ref: https://github.com/FlowCrypt/flowcrypt-browser/issues/4378
+  if (!globalStore.stored_key_info_migrated) {
+    console.info('migrating StoredKeyInfo to KeyInfoWithIdentity format');
+    const acctEmails = await GlobalStore.acctEmailsGet();
+    for (const email of acctEmails) {
+      const updatedKey = await KeyStore.get(email); // Already returns KeyInfoWithIdentity
+      await KeyStore.set(email, updatedKey);
+    }
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    await GlobalStore.set({ stored_key_info_migrated: true });
+    console.info('Migration to KeyInfoWithIdentity completed successfully');
+  }
   if (typeof globalStore.local_drafts === 'undefined') {
+    // migrate local drafts (https://github.com/FlowCrypt/flowcrypt-browser/pull/3986)
     console.info('migrating local drafts in old format...');
     globalStore.local_drafts = {};
     const storageLocal = await storageGetAll('local');

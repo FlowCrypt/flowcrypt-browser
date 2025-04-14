@@ -18,6 +18,7 @@ export type GlobalStoreDict = {
   dev_outlook_allow?: boolean;
   install_mobile_app_notification_dismissed?: boolean;
   key_info_store_fingerprints_added?: boolean;
+  stored_key_info_migrated?: boolean;
   contact_store_x509_fingerprints_and_longids_updated?: boolean;
   contact_store_opgp_revoked_flags_updated?: boolean;
   contact_store_searchable_pruned?: boolean;
@@ -36,7 +37,8 @@ export type GlobalIndex =
   | 'contact_store_x509_fingerprints_and_longids_updated'
   | 'contact_store_opgp_revoked_flags_updated'
   | 'contact_store_searchable_pruned'
-  | 'local_drafts';
+  | 'local_drafts'
+  | 'stored_key_info_migrated';
 
 /**
  * Locally stored data that is not associated with any email account
