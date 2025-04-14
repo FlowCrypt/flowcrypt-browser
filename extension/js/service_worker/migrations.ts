@@ -55,11 +55,13 @@ export const migrateGlobal = async () => {
   if (!globalStore.stored_key_info_migrated) {
     console.info('migrating StoredKeyInfo to KeyInfoWithIdentity format');
     const acctEmails = await GlobalStore.acctEmailsGet();
-    for (const email of acctEmails) {
-      const updatedKey = await KeyStore.get(email); // Already returns KeyInfoWithIdentity
-      await KeyStore.set(email, updatedKey);
-    }
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    await Promise.all(
+      acctEmails.map(async acctEmail => {
+        // KeyStore.get returns updated key with KeyInfoWithIdentity type
+        const updatedKeyWithIdentity = await KeyStore.get(acctEmail);
+        await KeyStore.set(acctEmail, updatedKeyWithIdentity);
+      })
+    ); // eslint-disable-next-line @typescript-eslint/naming-convention
     await GlobalStore.set({ stored_key_info_migrated: true });
     console.info('Migration to KeyInfoWithIdentity completed successfully');
   }
