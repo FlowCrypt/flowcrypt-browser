@@ -22,3 +22,5 @@ npm-debug.log
 /grt.sh
 tooling/release.json
 report.xml
+/test/source/core/*
+/test/source/core
