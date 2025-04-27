@@ -315,7 +315,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await contactsFrame.waitAll('iframe');
         const pubkeyFrame = await contactsFrame.getFrame(['pgp_pubkey.htm']);
         await pubkeyFrame.waitForInputValue('@input-email', 'demo@example.com');
-        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT KEY');
+        await pubkeyFrame.waitForContent('@action-add-contact', 'IMPORT EXPIRED KEY');
       })
     );
     test(
