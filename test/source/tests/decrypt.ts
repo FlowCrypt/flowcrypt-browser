@@ -2065,23 +2065,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - plain text email with noname attachment should not be recognized as an encrypted message',
+      'decrypt - emails with binary "noname" attachment should not be recognized as an encrypted message',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
-        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
-        await inboxPage1.notPresent('iframe.pgp_block');
-        expect(await inboxPage1.isElementPresent('@container-attachments')).to.be.true;
-        await inboxPage1.close();
-      })
-    );
-
-    test(
-      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message and should be hidden in encrypted message',
-      testWithBrowser(async (t, browser) => {
-        const threadId1 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
-        const threadId2 = '191e2735a1cc08c4'; // email attachment "noname" with type message/global
-        const threadId3 = '18b7f6a2b00ad967'; // a password-protected message that is also public key encrypted with noname attachment
+        const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
+        const threadId3 = '191e2735a1cc08c4'; // email attachment "noname" with type message/global
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage1.notPresent('iframe.pgp_block');
@@ -2089,16 +2077,28 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await inboxPage1.close();
         const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId2}`);
         await inboxPage2.notPresent('iframe.pgp_block');
-        const attachmentsContainer = await inboxPage2.waitAny('@container-attachments');
-        const attachments = await attachmentsContainer.$$('.pgp_attachment');
-        expect(attachments.length).to.equal(1);
+        expect(await inboxPage2.isElementPresent('@container-attachments')).to.be.true;
         await inboxPage2.close();
         const inboxPage3 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId3}`);
-        const pgpBlock = await inboxPage3.getFrame(['pgp_block.htm']);
-        await inboxPage3.notPresent('@container-attachments');
-        expect(await inboxPage3.isElementPresent('iframe.pgp_block')).to.equal(true);
-        expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage3.notPresent('iframe.pgp_block');
+        const attachmentsContainer = await inboxPage3.waitAny('@container-attachments');
+        const attachments = await attachmentsContainer.$$('.pgp_attachment');
+        expect(attachments.length).to.equal(1);
         await inboxPage3.close();
+      })
+    );
+
+    test(
+      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message and should be hidden in encrypted message',
+      testWithBrowser(async (t, browser) => {
+        const threadId1 = '18b7f6a2b00ad967'; // a password-protected message that is also public key encrypted with noname attachment
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
+        const pgpBlock = await inboxPage1.getFrame(['pgp_block.htm']);
+        await inboxPage1.notPresent('@container-attachments');
+        expect(await inboxPage1.isElementPresent('iframe.pgp_block')).to.equal(true);
+        expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage1.close();
       })
     );
 
