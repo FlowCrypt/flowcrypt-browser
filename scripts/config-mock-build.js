@@ -32,8 +32,6 @@ function replaceTokenInFiles(dir, token, replacement) {
     } else if (entry.isFile()) {
       let content = fs.readFileSync(fullPath, 'utf8');
       if (content.includes(token)) {
-        // Create a backup of the original file.
-        fs.writeFileSync(fullPath + '.bak', content, 'utf8');
         // Replace all occurrences of the token.
         content = content.split(token).join(replacement);
         fs.writeFileSync(fullPath, content, 'utf8');

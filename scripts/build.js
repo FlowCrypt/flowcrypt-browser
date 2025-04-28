@@ -46,7 +46,7 @@ const buildTS = (useOurCompiler, config, incremental = false, buildInfo = '') =>
 /**
  * Copy node dependencies explicitly to the build output
  */
-const copyDependencies = () => {
+const copyDependencies = async () => {
   const deps = [
     ['dompurify/dist/purify.js', 'lib/purify.js'],
     ['jquery/dist/jquery.min.js', 'lib/jquery.min.js'],
@@ -70,7 +70,7 @@ const copyDependencies = () => {
     ['bootstrap/dist/css/bootstrap.min.css', 'lib/bootstrap/bootstrap.min.css'],
   ];
 
-  deps.forEach(([src, dest]) => fs.copySync(path.join(ROOT_DIR, 'node_modules', src), path.join(OUTPUT_DIRECTORY, dest)));
+  await Promise.all(deps.map(([src, dest]) => fs.copy(path.join(ROOT_DIR, 'node_modules', src), path.join(OUTPUT_DIRECTORY, dest))));
 
   fs.copySync(path.join(ROOT_DIR, 'node_modules/@openpgp/web-stream-tools/lib/'), path.join(OUTPUT_DIRECTORY, 'lib/streams'));
 };
@@ -114,7 +114,7 @@ const main = async () => {
     buildTS(true, './conf/tsconfig.streams.json');
   }
 
-  copyDependencies();
+  await copyDependencies();
 
   // patch imports with .js, e.g. replace './streams' with './streams.js'
   // until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
@@ -129,19 +129,6 @@ const main = async () => {
     '$1return Uint8Array.prototype.isPrototypeOf(input) || globalThis.Uint8Array.prototype.isPrototypeOf(input);',
     [...streamFiles, path.join(OUTPUT_DIRECTORY, 'lib/openpgp.js')]
   );
-
-  // the following patches are until https://github.com/openpgpjs/openpgpjs/issues/1648 is fixed
-
-  // handles patterns like (n instanceof Uint8Array) or (arguments[i] instanceof Uint8Array)
-  // to replace them with (n instanceof Uint8Array || n instanceof globalThis.Uint8Array)
-  applyRegexReplace(/\(([^()\s]+) instanceof Uint8Array\)/g, '($1 instanceof Uint8Array || $1 instanceof globalThis.Uint8Array)', [
-    path.join(OUTPUT_DIRECTORY, 'lib/openpgp.js'),
-  ]);
-
-  // handles direct `return something instanceof Uint8Array;` expressions
-  applyRegexReplace(/return ([^()\s]+) instanceof Uint8Array;/g, 'return ($1 instanceof Uint8Array || $1 instanceof globalThis.Uint8Array);', [
-    path.join(OUTPUT_DIRECTORY, 'lib/openpgp.js'),
-  ]);
 
   runCmd('npx webpack', 'conf');
 
