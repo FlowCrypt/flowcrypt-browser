@@ -2070,6 +2070,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
         const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
         const threadId3 = '191e2735a1cc08c4'; // email attachment "noname" with type message/global
+        const threadId4 = '19647ca5dcfb932d'; // email attachment "noname" with type application/pdf
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage1.notPresent('iframe.pgp_block');
@@ -2085,6 +2086,10 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const attachments = await attachmentsContainer.$$('.pgp_attachment');
         expect(attachments.length).to.equal(1);
         await inboxPage3.close();
+        const inboxPage4 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
+        await inboxPage4.notPresent('iframe.pgp_block');
+        expect(await inboxPage4.isElementPresent('@container-attachments')).to.be.true;
+        await inboxPage4.close();
       })
     );
 
