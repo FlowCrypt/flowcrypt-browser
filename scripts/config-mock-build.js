@@ -1,3 +1,4 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 const fs = require('fs-extra');
 const path = require('path');
 const crypto = require('crypto');
@@ -23,7 +24,7 @@ fs.ensureDirSync(buildPath);
 fs.copySync(srcDir, buildPath);
 
 // Function to recursively search and replace the token in all files.
-function replaceTokenInFiles(dir, token, replacement) {
+const replaceTokenInFiles = (dir, token, replacement) => {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
@@ -38,7 +39,7 @@ function replaceTokenInFiles(dir, token, replacement) {
       }
     }
   }
-}
+};
 
 // Replace the token [TEST_REPLACEABLE_MOCK_PORT] with the provided mockPort.
 replaceTokenInFiles(buildPath, '[TEST_REPLACEABLE_MOCK_PORT]', mockPort);

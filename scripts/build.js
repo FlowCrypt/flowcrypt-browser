@@ -1,3 +1,4 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 const fs = require('fs-extra');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -77,12 +78,12 @@ const copyDependencies = async () => {
 
 // Perform regex replacements for compatibility patches
 const applyRegexReplace = (regex, replacement, files) => {
-  files.forEach(file => {
+  for (const file of files) {
     const filePath = path.resolve(file);
     let content = fs.readFileSync(filePath, 'utf8');
     content = content.replace(regex, replacement);
     fs.writeFileSync(filePath, content);
-  });
+  }
 };
 
 // Main build process
@@ -97,9 +98,9 @@ const main = async () => {
 
   if (args.includes('--incremental')) {
     // Remove specific directories for incremental build
-    ['firefox-consumer', 'thunderbird-consumer', 'chrome-consumer', 'chrome-enterprise', 'generic-extension-wip/js/content_scripts'].forEach(dir =>
-      fs.removeSync(path.join(BUILD_DIRECTORY, dir))
-    );
+    for (const dir of ['firefox-consumer', 'thunderbird-consumer', 'chrome-consumer', 'chrome-enterprise', 'generic-extension-wip/js/content_scripts']) {
+      fs.removeSync(path.join(BUILD_DIRECTORY, dir));
+    }
 
     fs.ensureDirSync(BUILD_DIRECTORY);
     buildTS(false, './tsconfig.json', true, `${BUILD_DIRECTORY}/tsconfig.tsbuildinfo`);
@@ -139,15 +140,17 @@ const main = async () => {
 
   // remaining build steps sequentially
   await synchronizeFiles(OUTPUT_DIRECTORY);
-  ['manifest.json', '.web-extension-id'].forEach(file => fs.copySync(path.join(SOURCE_DIRECTORY, file), path.join(OUTPUT_DIRECTORY, file)));
+  for (const file of ['manifest.json', '.web-extension-id']) {
+    fs.copySync(path.join(SOURCE_DIRECTORY, file), path.join(OUTPUT_DIRECTORY, file));
+  }
 
-  ['resolve-modules --project ./tsconfig.json', 'fill-values', 'bundle-content-scripts'].forEach(cmd =>
-    runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', cmd)}`)
-  );
+  for (const cmd of ['resolve-modules --project ./tsconfig.json', 'fill-values', 'bundle-content-scripts']) {
+    runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', cmd)}`);
+  }
 
-  ['chrome-enterprise', 'chrome-consumer', 'firefox-consumer', 'thunderbird-consumer'].forEach(dir =>
-    fs.copySync(OUTPUT_DIRECTORY, path.join(BUILD_DIRECTORY, dir))
-  );
+  for (const dir of ['chrome-enterprise', 'chrome-consumer', 'firefox-consumer', 'thunderbird-consumer']) {
+    fs.copySync(OUTPUT_DIRECTORY, path.join(BUILD_DIRECTORY, dir));
+  }
 
   runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', 'build-types-and-manifests')}`);
   console.log('✅ Build completed successfully.');

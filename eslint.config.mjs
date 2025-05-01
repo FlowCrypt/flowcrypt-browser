@@ -8,7 +8,69 @@ import noNullPlugin from 'eslint-plugin-no-null';
 import localRulesPlugin from 'eslint-plugin-local-rules';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import pluginJs from '@eslint/js';
+import globals from 'globals';
 
+const mergeConfigs = (configs, key) => configs.reduce((acc, cfg) => ({ ...acc, ...(cfg[key] || {}) }), {});
+const { strictTypeChecked, stylisticTypeChecked } = tseslint.configs;
+
+const strictTypeCheckedPlugins = mergeConfigs(strictTypeChecked, 'plugins');
+const strictTypeCheckedRules = mergeConfigs(strictTypeChecked, 'rules');
+const stylisticPlugins = mergeConfigs(stylisticTypeChecked, 'plugins');
+const stylisticRules = mergeConfigs(stylisticTypeChecked, 'rules');
+
+const jsConfigRules = {
+  complexity: 'off',
+  'constructor-super': 'error',
+  'dot-notation': 'error',
+  eqeqeq: ['error', 'smart'],
+  'guard-for-in': 'error',
+  'header/header': ['error', 'block', ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com '],
+  'id-denylist': 'error',
+  'id-match': 'error',
+  'jsdoc/check-alignment': 'off',
+  'jsdoc/check-indentation': 'off',
+  'jsdoc/newline-after-description': 'off',
+  'max-classes-per-file': 'off',
+  'no-bitwise': 'off',
+  'no-caller': 'error',
+  'no-cond-assign': 'error',
+  'no-console': 'off',
+  'no-constant-condition': 0,
+  'no-control-regex': 0,
+  'no-debugger': 'error',
+  'no-empty': 'error',
+  'no-empty-pattern': 0,
+  'no-eval': 'error',
+  'no-fallthrough': 0,
+  'no-invalid-this': 'off',
+  'no-new-wrappers': 'error',
+  'no-null/no-null': 'error',
+  'no-prototype-builtins': 0,
+  'no-shadow': 'off',
+  'no-throw-literal': 'error',
+  'no-undef': 0,
+  'no-undef-init': 'error',
+  'no-underscore-dangle': 'error',
+  'no-unsafe-finally': 'error',
+  'no-unused-expressions': 'off',
+  'no-unused-labels': 'error',
+  'no-use-before-define': 'off',
+  'no-useless-escape': 0,
+  'no-var': 'error',
+  'object-shorthand': 'error',
+  'one-var': ['off', 'never'],
+  'prefer-arrow/prefer-arrow-functions': 'error',
+  'prefer-const': [
+    'error',
+    {
+      destructuring: 'all',
+    },
+  ],
+  radix: 'off',
+  'require-atomic-updates': 0,
+  'sort-imports': 'off',
+  'local-rules/standard-loops': 'error',
+};
 const commonConfig = {
   plugins: {
     '@typescript-eslint': tseslint.plugin,
@@ -18,6 +80,8 @@ const commonConfig = {
     'prefer-arrow': preferArrowPlugin,
     'no-null': noNullPlugin,
     'local-rules': localRulesPlugin,
+    ...strictTypeCheckedPlugins,
+    ...stylisticPlugins,
   },
   languageOptions: {
     parser: tseslint.parser,
@@ -26,6 +90,8 @@ const commonConfig = {
     },
   },
   rules: {
+    ...strictTypeCheckedRules,
+    ...stylisticRules,
     '@typescript-eslint/consistent-indexed-object-style': 'off',
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/consistent-type-definitions': 'off',
@@ -100,58 +166,8 @@ const commonConfig = {
     '@typescript-eslint/typedef': 'off',
     '@typescript-eslint/unbound-method': ['error', { ignoreStatic: true }],
     '@typescript-eslint/unified-signatures': 'error',
-    complexity: 'off',
-    'constructor-super': 'error',
-    'dot-notation': 'error',
-    eqeqeq: ['error', 'smart'],
-    'guard-for-in': 'error',
-    'header/header': ['error', 'block', ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com '],
-    'id-denylist': 'error',
-    'id-match': 'error',
-    'jsdoc/check-alignment': 'off',
-    'jsdoc/check-indentation': 'off',
-    'jsdoc/newline-after-description': 'off',
-    'max-classes-per-file': 'off',
-    'no-bitwise': 'off',
-    'no-caller': 'error',
-    'no-cond-assign': 'error',
-    'no-console': 'off',
-    'no-constant-condition': 0,
-    'no-control-regex': 0,
-    'no-debugger': 'error',
-    'no-empty': 'error',
-    'no-empty-pattern': 0,
-    'no-eval': 'error',
-    'no-fallthrough': 0,
-    'no-invalid-this': 'off',
-    'no-new-wrappers': 'error',
-    'no-null/no-null': 'error',
     'no-only-tests/no-only-tests': ['error'],
-    'no-prototype-builtins': 0,
-    'no-shadow': 'off',
-    'no-throw-literal': 'error',
-    'no-undef': 0,
-    'no-undef-init': 'error',
-    'no-underscore-dangle': 'error',
-    'no-unsafe-finally': 'error',
-    'no-unused-expressions': 'off',
-    'no-unused-labels': 'error',
-    'no-use-before-define': 'off',
-    'no-useless-escape': 0,
-    'no-var': 'error',
-    'object-shorthand': 'error',
-    'one-var': ['off', 'never'],
-    'prefer-arrow/prefer-arrow-functions': 'error',
-    'prefer-const': [
-      'error',
-      {
-        destructuring: 'all',
-      },
-    ],
-    radix: 'off',
-    'require-atomic-updates': 0,
-    'sort-imports': 'off',
-    'local-rules/standard-loops': 'error',
+    ...jsConfigRules,
   },
 };
 
@@ -159,7 +175,6 @@ export default [
   {
     ignores: [
       'build/**',
-      'scripts/**',
       'conf/**',
       'eslint.config.mjs',
       'eslint-local-rules.js',
@@ -171,8 +186,6 @@ export default [
     ],
   },
   pluginJs.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
   eslintConfigPrettier,
   {
     ...commonConfig,
@@ -220,4 +233,23 @@ export default [
       },
     },
   }),
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: 2020,
+      },
+      globals: {
+        ...globals.node,
+      },
+    },
+    plugins: {
+      header: headerPlugin,
+      jsdoc: jsdocPlugin,
+      'prefer-arrow': preferArrowPlugin,
+      'no-null': noNullPlugin,
+      'local-rules': localRulesPlugin,
+    },
+    rules: { ...pluginJs.configs.recommended.rules, ...jsConfigRules },
+  },
 ];

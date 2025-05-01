@@ -1,3 +1,4 @@
+/* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 const fs = require('fs');
 const path = require('path');
 
