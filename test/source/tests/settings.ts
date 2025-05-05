@@ -301,7 +301,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - import public key which contains null users',
+      'settings - import public key which contains null user id',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
