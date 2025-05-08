@@ -1105,7 +1105,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         };
         await ComposePageRecipe.fillMsg(composePage, { to: recipient }, t.title);
         await composePage.waitForContent('.email_address.unusable', recipient);
-        await Util.sleep(1000);
         await composePage.waitAny('@password-or-pubkey-container');
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
