@@ -194,7 +194,11 @@ export class Attachment {
       return 'signature';
     } else if (this.inline && this.isImage()) {
       return 'inlineImage';
-    } else if (!this.name && !this.isImage() && !['application/octet-stream', 'multipart/mixed', 'message/global'].includes(this.type)) {
+    } else if (!this.name && !['application/octet-stream', 'multipart/mixed', 'message/global'].includes(this.type)) {
+      // this is a noname attachment, but treat them as 'plainFile' if body is not empty. therefore, the attachment can't be concluded as pgp message
+      if (!isBodyEmpty) {
+        return 'plainFile';
+      }
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
