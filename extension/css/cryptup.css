@@ -1807,6 +1807,10 @@ table#compose .input .collapsed .email_preview .email_address.revoked {
   background-color: #d18826;
 }
 
+table#compose .input .collapsed .email_preview .email_address.unusable {
+  background-color: #a44;
+}
+
 table#compose.not-encrypted .input .collapsed .email_preview .email_address {
   border: none !important;
   background-color: #f0f0f0 !important;
@@ -1970,6 +1974,11 @@ table#compose div.recipients-inputs > div#input_addresses_container div .recipie
 
 table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span.no_pgp {
   background: #989898;
+  color: white;
+}
+
+table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span.unusable {
+  background: #a44;
   color: white;
 }
 

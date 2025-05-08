@@ -16,6 +16,7 @@ export enum RecipientStatus {
   REVOKED,
   WRONG,
   FAILED,
+  UNUSABLE,
 }
 /* eslint-enable @typescript-eslint/naming-convention */
 

@@ -66,10 +66,13 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     if (!this.view.recipientsModule.getRecipients().length || !this.view.sendBtnModule.popover.choices.encrypt) {
       this.hideMsgPwdUi(); // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.view.sendBtnModule.enableBtn();
-    } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED].includes(r.status))) {
+    } else if (
+      this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.NO_PGP, RecipientStatus.REVOKED, RecipientStatus.UNUSABLE].includes(r.status))
+    ) {
       await this.showMsgPwdUiAndColorBtn(
         this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.NO_PGP),
-        this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.REVOKED)
+        this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.REVOKED),
+        this.view.recipientsModule.getRecipients().some(r => r.status === RecipientStatus.UNUSABLE)
       ).catch(Catch.reportErr);
     } else if (this.view.recipientsModule.getRecipients().find(r => [RecipientStatus.FAILED, RecipientStatus.WRONG].includes(r.status))) {
       this.view.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
@@ -139,7 +142,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     }
   };
 
-  private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean) => {
+  private showMsgPwdUiAndColorBtn = async (anyNopgp: boolean, anyRevoked: boolean, anyUnusable: boolean) => {
     const isPasswordMessageDisabled = this.view.clientConfiguration.shouldDisableFlowCryptHostedPasswordMessages() && !this.view.isCustomerUrlFesUsed();
     if (!this.isVisible()) {
       await this.initExpirationText();
@@ -152,6 +155,7 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     }
     this.view.S.cached('warning_nopgp').css('display', anyNopgp ? 'inline-block' : 'none');
     this.view.S.cached('warning_revoked').css('display', anyRevoked ? 'inline-block' : 'none');
+    this.view.S.cached('warning_unusable').css('display', anyUnusable ? 'inline-block' : 'none');
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
   };
 
