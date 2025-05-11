@@ -66,17 +66,17 @@ export const isCreatePrivateFormInputCorrect = async (section: string, clientCon
   const password1 = $(`#${section} .input_password`);
   const password2 = $(`#${section} .input_password2`);
   if (!password1.val()) {
-    await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
+    await Ui.modal.warning('passphrase is needed to protect your private email. Please enter a passphrase.');
     password1.trigger('focus');
     return false;
   }
   if ($(`#${section} .action_proceed_private`).hasClass('gray')) {
-    await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
+    await Ui.modal.warning('passphrase is not strong enough. Please make it stronger, by adding a few words.');
     password1.trigger('focus');
     return false;
   }
   if (password1.val() !== password2.val()) {
-    await Ui.modal.warning('The pass phrases do not match. Please try again.');
+    await Ui.modal.warning('The passphrases do not match. Please try again.');
     password2.val('').trigger('focus');
     return false;
   }
@@ -87,7 +87,7 @@ export const isCreatePrivateFormInputCorrect = async (section: string, clientCon
   if (!clientConfiguration.usesKeyManager()) {
     const paperPassPhraseStickyNote = `
         <div style="font-size: 1.2em">
-          Please write down your pass phrase and store it in safe place or even two.
+          Please write down your passphrase and store it in safe place or even two.
           It is needed in order to access your FlowCrypt account.
         </div>
         <div class="passphrase-sticky-note">${notePp}</div>

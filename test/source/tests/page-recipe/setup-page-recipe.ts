@@ -81,7 +81,7 @@ export class SetupPageRecipe extends PageRecipe {
       expect(await settingsPage.isChecked('@input-step2bmanualcreate-save-passphrase')).to.equal(checks.isSavePassphraseChecked);
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
-    await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
+    await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your passphrase');
     if (backup === 'none') {
       await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 90 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
@@ -186,7 +186,7 @@ export class SetupPageRecipe extends PageRecipe {
         await Util.sleep(1);
         const generatedPp = await settingsPage.value('@input-step2bmanualenter-passphrase');
         if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedPp)) {
-          throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generatedPp}`);
+          throw new Error(`Import naked key page did not generate proper passphrase, instead got: ${generatedPp}`);
         }
         const ppValidationExpect = 'GREAT (time to crack: centuries)';
         const ppValidationResult = await settingsPage.read('@container-password-feedback', true);

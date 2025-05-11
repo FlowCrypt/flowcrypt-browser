@@ -131,7 +131,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - test pass phrase',
+      'settings - test passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
@@ -153,27 +153,27 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const baseUrl = `chrome/elements/passphrase.htm?acctEmail=${acctEmail}&longids=${longid}&parentTabId=`;
         let passphrasePage = await browser.newPage(t, baseUrl.concat('&type=sign'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to sign email');
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to sign email');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=message'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to read encrypted email');
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to read encrypted email');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=draft'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load a draft');
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to load a draft');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=attachment'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to decrypt a file');
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to decrypt a file');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=quote'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load quoted content');
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to load quoted content');
         await passphrasePage.close();
         passphrasePage = await browser.newPage(t, baseUrl.concat('&type=backup'));
         await passphrasePage.waitForSelTestState('ready');
-        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to back up');
+        expect(await passphrasePage.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to back up');
         await passphrasePage.close();
       })
     );
@@ -555,21 +555,21 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndClick('@source-generate');
         // Check if error modal displays correctly when user didn't enter passphrase
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
-        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'Pass phrase is needed to protect your private email.');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'passphrase is needed to protect your private email.');
         // Check if error modal displays correctly when user enters weak passphrase
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', 'short passphrase');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
-        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'Pass phrase is not strong enough.');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'passphrase is not strong enough.');
         // Check if error modal displays correctly when pasphrase doesn't match
         const passphrase = 'long enough to suit requirements';
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-1', passphrase);
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
-        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'The pass phrases do not match.');
+        await addKeyPopup.waitAndRespondToModal('warning', 'confirm', 'The passphrases do not match.');
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
         // Uncheck backup_inbox to check if backup view correctly displayed
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
-        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
+        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your passphrase');
         await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
@@ -597,7 +597,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await addKeyPopup.waitAndType('@input-step2bmanualcreate-passphrase-2', passphrase);
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-backup-inbox');
         await addKeyPopup.waitAndClick('@input-step2bmanualcreate-create-and-save');
-        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
+        await addKeyPopup.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your passphrase');
         await addKeyPopup.waitAndClick('@input-backup-step3manual-no-backup'); // choose no_backup so that it doesn't affect other tests.
         await addKeyPopup.waitAndClick('@action-backup-step3manual-continue');
         await SettingsPageRecipe.ready(settingsPage);
@@ -686,13 +686,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         // change pp - should not ask for pp because already in session
         await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
-        // now it will remember the pass phrase so decrypts without asking
+        // now it will remember the passphrase so decrypts without asking
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
           content: ['changed correctly if this can be decrypted'],
         });
-        // test decrypt - should ask for new pass phrase
+        // test decrypt - should ask for new passphrase
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
@@ -753,7 +753,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           threadId: '179f6feb575df213',
           content: ['changed correctly if this can be decrypted'],
         });
-        // test decrypt - should ask for new pass phrase
+        // test decrypt - should ask for new passphrase
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '179f6feb575df213',
@@ -776,13 +776,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passphrase);
         // pp wiped after switching to session - should be needed to change pp
         await SettingsPageRecipe.changePassphrase(settingsPage, passphrase, newPp);
-        // now it will remember the pass phrase so decrypts without asking
+        // now it will remember the passphrase so decrypts without asking
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
           content: ['changed correctly if this can be decrypted'],
         });
-        // test decrypt - should ask for new pass phrase
+        // test decrypt - should ask for new passphrase
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
           acctEmail,
           threadId: '16819bec18d4e011',
@@ -950,7 +950,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - attachment previews with entering pass phrase',
+      'settings - attachment previews with entering passphrase',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const settingsPage = await browser.newExtensionSettingsPage(t, 'flowcrypt.compatibility@gmail.com');
@@ -1314,7 +1314,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - manual backup several keys to file with the same pass phrase',
+      'settings - manual backup several keys to file with the same passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1386,7 +1386,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - manual backup several keys to inbox with the same strong pass phrase',
+      'settings - manual backup several keys to inbox with the same strong passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple.inbox2@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1436,7 +1436,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - manual backup several keys to file with a missing but guessed pass phrase',
+      'settings - manual backup several keys to file with a missing but guessed passphrase',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -1493,7 +1493,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - manual backup several keys to inbox with a missing pass phrase',
+      'settings - manual backup several keys to inbox with a missing passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1534,12 +1534,12 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupFrame.isDisabled('[data-id="CB0485FE44FC22FF09AF0DB31B383D0334E38B28"]')).to.equal(false);
         expect(await backupFrame.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupFrame.waitAndClick('@action-backup-step3manual-continue');
-        await backupFrame.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
+        await backupFrame.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different passphrases');
         await settingsPage.close();
       })
     );
     test(
-      'settings - manual backup a key with a missing pass phrase',
+      'settings - manual backup a key with a missing passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1577,7 +1577,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - manual backup several keys to file with different pass phrases',
+      'settings - manual backup several keys to file with different passphrases',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.multiple@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1619,7 +1619,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(await backupPage.isDisabled('[data-id="515431151DDD3EA232B37A4C98ACFA1EADAB5B92"]')).to.equal(false);
         await backupPage.waitAndClick('@input-backup-step3manual-file');
         await backupPage.waitAndClick('@action-backup-step3manual-continue');
-        await backupPage.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different pass phrases');
+        await backupPage.waitAndRespondToModal('error', 'confirm', 'Your keys are protected with different passphrases');
         await backupPage.close();
       })
     );
@@ -1721,7 +1721,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
-      'settings - manual backup to inbox keys with weak pass phrases results in error',
+      'settings - manual backup to inbox keys with weak passphrases results in error',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {

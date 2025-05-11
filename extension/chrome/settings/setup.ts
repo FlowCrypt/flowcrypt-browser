@@ -260,10 +260,10 @@ export class SetupView extends View {
           still read your encrypted email?</strong></p>
           <p><strong>If yes:</strong> open the working device and go to
           <code>FlowCrypt Settings</code> > <code>Security</code> >
-          <code>Change Pass Phrase</code>.<br>
+          <code>Change passphrase</code>.<br>
           It will let you change it without knowing the previous one.
           When done, <a href="#" class="reload_page">reload this page</a>
-          and use the new pass phrase.
+          and use the new passphrase.
           <p><strong>If no:</strong> unfortunately, you will not be able to
           read previously encrypted emails regardless of what you do.
           You can <a href="#" class="action_skip_recovery">skip recovery

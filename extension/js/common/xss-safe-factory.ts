@@ -283,9 +283,9 @@ export class XssSafeFactory {
   };
 
   public btnEndPPSession = (webmailName: string) => {
-    return `<a href="#" class="action_finish_session" title="End Pass Phrase Session" data-test="action-finish-session">
+    return `<a href="#" class="action_finish_session" title="End passphrase Session" data-test="action-finish-session">
               <img src="${this.srcImg('svgs/unlock.svg')}">
-              ${webmailName === 'gmail' ? 'End Pass Phrase Session' : ''}
+              ${webmailName === 'gmail' ? 'End passphrase Session' : ''}
             </a>`;
   };
 

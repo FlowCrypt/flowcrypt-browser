@@ -237,7 +237,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'setup - import key - naked - choose my own pass phrase',
+      'setup - import key - naked - choose my own passphrase',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -255,7 +255,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     test(
-      'setup - import key - naked - auto-generate a pass phrase',
+      'setup - import key - naked - auto-generate a passphrase',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -272,7 +272,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.todo('setup - import key - naked - do not supply pass phrase gets error');
+    test.todo('setup - import key - naked - do not supply passphrase gets error');
 
     test(
       'setup - import key - fix key self signatures',
@@ -525,7 +525,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - recover with a pass phrase - skip remaining',
+      'setup - recover with a passphrase - skip remaining',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -540,7 +540,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - recover with a pass phrase - 1pp1 then 2pp1',
+      'setup - recover with a passphrase - 1pp1 then 2pp1',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -561,7 +561,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - recover with a pass phrase - 1pp2 then 2pp1',
+      'setup - recover with a passphrase - 1pp2 then 2pp1',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.compatibility@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -577,7 +577,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - recover with a pass phrase - 2pp1 then 1pp1',
+      'setup - recover with a passphrase - 2pp1 then 1pp1',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -598,7 +598,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - recover with a pass phrase - 2pp1 then 1pp2',
+      'setup - recover with a passphrase - 2pp1 then 1pp2',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -619,7 +619,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - recover with a pass phrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1',
+      'setup - recover with a passphrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
           attester: {
@@ -933,8 +933,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
       })
     );
 
-    test.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
-    // test('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
+    test.todo('setup - recover with a passphrase - 1pp1 then wrong, then skip');
+    // test('setup - recover with a passphrase - 1pp1 then wrong, then skip', test_with_browser(async (t, browser) => {
     //   const settingsPage = await BrowserRecipe.open_settings_login_approve(t, browser,'flowcrypt.compatibility@gmail.com');
     //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
     //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
@@ -942,7 +942,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     // }));
 
     test(
-      'setup - recover with a pass phrase - no remaining',
+      'setup - recover with a passphrase - no remaining',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -954,7 +954,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - fail to recover with a wrong pass phrase',
+      'setup - fail to recover with a wrong passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -969,7 +969,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
-      'setup - fail to recover with a wrong pass phrase at first, then recover with good pass phrase',
+      'setup - fail to recover with a wrong passphrase at first, then recover with good passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1445,7 +1445,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(await myKeyFrame.read('@content-fingerprint')).to.contain('00B0 1158 0796 9D75');
         await SettingsPageRecipe.closeDialog(settingsPage);
         await Util.sleep(2);
-        // check that it does not offer any pass phrase options
+        // check that it does not offer any passphrase options
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
         const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
         await Util.sleep(1);
@@ -1548,7 +1548,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
           await Util.sleep(2);
-          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt passphrase to keep your account keys up to date');
           await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
           await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
         }
@@ -1624,7 +1624,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.waitAll('@dialog-passphrase');
         {
           const passphraseDialog = await gmailPage.getFrame(['passphrase.htm']);
-          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to keep your account keys up to date');
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt passphrase to keep your account keys up to date');
           await passphraseDialog.waitAndType('@input-pass-phrase', passphrase);
           await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
         }
@@ -1884,7 +1884,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
         });
         const acct = 'get.key@key-manager-choose-passphrase.flowcrypt.test';
-        const passphrase = 'Long and complicated pass PHRASE';
+        const passphrase = 'Long and complicated passphrase';
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } },
@@ -2075,7 +2075,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         expect(await myKeyFrame.read('@content-key-expiration')).to.equal('Does not expire');
         await SettingsPageRecipe.closeDialog(settingsPage);
         await Util.sleep(2);
-        // check that it does not offer any pass phrase options
+        // check that it does not offer any passphrase options
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
         const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
         await Util.sleep(1);

@@ -132,7 +132,7 @@ export class Settings {
     if (!oldAcctEmailIndexPrefix) {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
-    // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
+    // in case the destination email address was already set up with an account, recover keys and passphrases before it's overwritten
     const oldAccountPrivateKeys = await KeyStore.get(oldAcctEmail);
     const newAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const oldAcctPassPhrases: KeyInfoWithIdentityAndOptionalPp[] = [];
@@ -533,10 +533,10 @@ export class Settings {
       '',
       'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
       '',
-      'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
+      'NOTE DOWN YOUR passphrase IN A SAFE PLACE THAT YOU CAN FIND LATER',
       '',
-      'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
-      'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
+      'If this key was registered on a keyserver (typically they are), you will need this same key (and passphrase!) to replace it.',
+      'In other words, losing this key or passphrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
       '',
       'acctEmail: ' + acctEmail,
     ];

@@ -114,7 +114,7 @@ View.run(
         const passphrase = (await PassphraseStore.get(this.acctEmail, this.keyInfo)) || enteredPP;
         if (passphrase) {
           if (!(await KeyUtil.decrypt(prv, passphrase)) && enteredPP) {
-            await Ui.modal.error('Pass phrase did not match, please try again.');
+            await Ui.modal.error('passphrase did not match, please try again.');
             return;
           }
         } else {

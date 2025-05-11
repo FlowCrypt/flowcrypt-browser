@@ -105,7 +105,7 @@ View.run(
         if (this.keysWeNeedPassPhraseFor.length === 1) {
           html = `For key Fingerprint: <span class="good">${Xss.escape(Str.spaced(this.keysWeNeedPassPhraseFor[0].fingerprints[0] || ''))}</span>`;
         } else {
-          html = 'Pass phrase needed for any of the following keys:';
+          html = 'passphrase needed for any of the following keys:';
           for (const i of this.keysWeNeedPassPhraseFor.keys()) {
             html += `<div>Fingerprint ${String(i + 1)}: <span class="good">${Xss.escape(
               Str.spaced(this.keysWeNeedPassPhraseFor[i].fingerprints[0]) || ''
@@ -143,15 +143,15 @@ View.run(
           you can still read your encrypted email?</strong>
           <p><strong>If yes:</strong> open the working device and go to
           <code>FlowCrypt Settings</code> > <code>Security</code> >
-          <code>Change Pass Phrase</code>.<br>
+          <code>Change passphrase</code>.<br>
           It will let you change it without knowing the previous one. When done,
           <a href class="reset-flowcrypt">reset FlowCrypt on this device</a>
-          and use the new pass phrase during the recovery step when
+          and use the new passphrase during the recovery step when
           you set up FlowCrypt on this device again.
           <p><strong>If no:</strong> unfortunately, you will not be able to read
           previously encrypted emails regardless of what you do.
           You can <a href class="reset-flowcrypt">reset FlowCrypt on this device</a>
-          and then click <code>Lost your pass phrase?</code> during recovery step.
+          and then click <code>Lost your passphrase?</code> during recovery step.
         </div>
       `,
               true
@@ -227,7 +227,7 @@ View.run(
       let unlockCount = 0; // may include non-matching keys
       const allPrivateKeys = await KeyStore.get(this.acctEmail);
       for (const keyinfo of allPrivateKeys) {
-        // if passphrase matches more keys, it will save the pass phrase for all keys
+        // if passphrase matches more keys, it will save the passphrase for all keys
         const prv = await KeyUtil.parse(keyinfo.private);
         try {
           if (await KeyUtil.decrypt(prv, pass)) {
@@ -252,7 +252,7 @@ View.run(
         }
       }
       if (unlockCount && allPrivateKeys.length > 1) {
-        Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this pass phrase`);
+        Ui.toast(`${unlockCount} of ${allPrivateKeys.length} keys ${unlockCount > 1 ? 'were' : 'was'} unlocked by this passphrase`);
         await this.closeDialogPageOpenedExternally();
       }
       if (atLeastOneMatched) {

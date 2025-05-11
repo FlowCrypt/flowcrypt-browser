@@ -36,11 +36,11 @@ export const defineElementTests = (testVariant: TestVariant, testWithBrowser: Te
         );
         await ppPage.waitAndType('@input-pass-phrase', passphrase);
         await ppPage.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
-        await ppPage.waitForContent('.ui-toast-title', '1 of 3 keys was unlocked by this pass phrase');
+        await ppPage.waitForContent('.ui-toast-title', '1 of 3 keys was unlocked by this passphrase');
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testkey0389D3A7, passphrase, {}, false);
         await ppPage.waitAndType('@input-pass-phrase', passphrase);
         await ppPage.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
-        await ppPage.waitForContent('.ui-toast-title', '2 of 4 keys were unlocked by this pass phrase');
+        await ppPage.waitForContent('.ui-toast-title', '2 of 4 keys were unlocked by this passphrase');
       })
     );
 

@@ -288,7 +288,7 @@ body.cryptup_gmail.cryptup_gmail_new div.hj.appended span.cryptup_convo_button {
   margin-top: 2px;
 }
 
-/* The 'End Pass Phrase Session' button */
+/* The 'End passphrase Session' button */
 body.cryptup_gmail .action_finish_session {
   position: fixed;
   bottom: 3px;

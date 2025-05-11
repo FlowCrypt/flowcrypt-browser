@@ -61,7 +61,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndClick('@action-show-confirm-new-pp', { delay: 1 });
     await securityFrame.waitAndType('@input-confirm-new-pp', newPp, { delay: 1 });
     await securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 });
-    await securityFrame.waitAndRespondToModal('info', 'confirm', 'Now that you changed your pass phrase, you should back up your key');
+    await securityFrame.waitAndRespondToModal('info', 'confirm', 'Now that you changed your passphrase, you should back up your key');
     await securityFrame.waitAll('@container-backup-dialog'); // offers a new backup
     await securityFrame.waitAndClick('@input-backup-step3manual-file');
     await securityFrame.waitAndClick('@action-backup-step3manual-continue');

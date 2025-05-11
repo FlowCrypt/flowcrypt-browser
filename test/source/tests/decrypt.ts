@@ -1065,7 +1065,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      `compose - #5125 test pass phrase anti brute force protection`,
+      `compose - #5125 test passphrase anti brute force protection`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const wrongPassphrase = 'wrong';
@@ -1094,7 +1094,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - by entering pass phrase + remember in session',
+      'decrypt - by entering passphrase + remember in session',
       testWithBrowser(async (t, browser) => {
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
@@ -1977,7 +1977,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    test.todo('decrypt - by entering secondary pass phrase');
+    test.todo('decrypt - by entering secondary passphrase');
 
     test(
       `decrypt - signed only - parse error in a badge`,
