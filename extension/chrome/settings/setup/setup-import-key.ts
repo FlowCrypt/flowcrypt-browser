@@ -16,7 +16,7 @@ export class SetupImportKeyModule {
 
   public actionImportPrivateKeyHandle = async (button: HTMLElement) => {
     if (button.className.includes('gray')) {
-      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
+      await Ui.modal.warning('Please double check the passphrase input field for any issues.');
       return;
     }
     /* eslint-disable @typescript-eslint/naming-convention */

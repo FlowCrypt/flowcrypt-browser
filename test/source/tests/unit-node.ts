@@ -1095,7 +1095,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     test('[MsgUtil.decryptMessage] handles long message', async t => {
       const data = Buf.fromUtfStr('The test string concatenated many times to produce large output'.repeat(100000));
-      const passphrase = 'pass phrase';
+      const passphrase = 'passphrase';
       const prv = await KeyUtil.parse(prvEncryptForSubkeyOnly);
       const encrypted = await MsgUtil.encryptMessage({
         pubkeys: [await KeyUtil.asPublicKey(prv)],
@@ -1373,7 +1373,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 
     test('[MsgUtil.encryptMessage] do not decrypt message when encrypted for key not meant for encryption', async t => {
       const data = Buf.fromUtfStr('hello');
-      const passphrase = 'pass phrase';
+      const passphrase = 'passphrase';
       const tmpPrv = await KeyUtil.parse(prvEncryptForSubkeyOnly);
       await KeyUtil.encrypt(tmpPrv, passphrase);
       expect(tmpPrv.fullyEncrypted).to.equal(true);

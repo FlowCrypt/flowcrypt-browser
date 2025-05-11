@@ -174,7 +174,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     if (pwd) {
       if (await this.view.storageModule.isPwdMatchingPassphrase(pwd)) {
         throw new ComposerUserError(
-          'Please do not use your private key pass phrase as a password for this message.\n\n' +
+          'Please do not use your private key passphrase as a password for this message.\n\n' +
             'You should come up with some other unique password that you can share with recipient.'
         );
       }

@@ -32,7 +32,7 @@ View.run(
     }
 
     public render = async () => {
-      // todo - should test all somehow. But each key may have different pass phrase,
+      // todo - should test all somehow. But each key may have different passphrase,
       //   therefore UI will get more complicated
       await this.bruteForceProtection.init();
       this.mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'EVEN-IF-UNUSABLE');
@@ -42,7 +42,7 @@ View.run(
           acctEmail: this.acctEmail,
           parentTabId: this.parentTabId,
         });
-        Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
+        Xss.sanitizeRender('#content', `<div class="line">No passphrase set up yet: <a href="${setUpPpUrl}">set up passphrase</a></div>`);
         return;
       }
     };
@@ -82,7 +82,7 @@ View.run(
       } else {
         await this.bruteForceProtection.passphraseCheckFailed();
         await Ui.modal.warning(
-          "Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don't get locked out of your encrypted messages."
+          "Passphrase did not match. Please try again. If you forgot your passphrase, please change it, so that you don't get locked out of your encrypted messages."
         );
         $('#password').val('').trigger('focus');
       }

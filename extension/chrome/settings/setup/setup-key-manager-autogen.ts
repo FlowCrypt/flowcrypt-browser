@@ -127,6 +127,6 @@ export class SetupWithEmailKeyManagerModule {
       'Failed to store newly generated key on FlowCrypt Email Key Manager',
       Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
     );
-    await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + pass phrase locally
+    await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + passphrase locally
   };
 }

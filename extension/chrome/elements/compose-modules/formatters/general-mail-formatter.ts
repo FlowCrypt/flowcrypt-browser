@@ -85,7 +85,7 @@ export class GeneralMailFormatter {
     if (!parsedSenderPrv) {
       return undefined;
     }
-    // throws ComposerResetBtnTrigger when user closes pass phrase dialog without entering
+    // throws ComposerResetBtnTrigger when user closes passphrase dialog without entering
     return await view.storageModule.decryptSenderKey(parsedSenderPrv);
   }
 
