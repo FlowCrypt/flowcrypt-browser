@@ -106,7 +106,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   });
   const address = mockApi.server.address();
   if (typeof address === 'object' && address) {
-    const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
+    const result = await asyncExec(`node ./scripts/config-mock-build.js ${buildDir} ${address.port}`);
     t.context.extensionDir = result.stdout;
     t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {

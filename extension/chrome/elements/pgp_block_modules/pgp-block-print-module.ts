@@ -90,7 +90,9 @@ export class PgpBlockViewPrintModule {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       html = policy.createHTML(html);
     }
-    w?.document.write(html);
+    if (w?.document?.body) {
+      w.document.body.innerHTML = html; // xss-escaped
+    }
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview
     await Time.sleep(250);

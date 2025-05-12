@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+import { copySync } from 'fs-extra';
 import { readFileSync, writeFileSync } from 'fs';
-import { execSync as exec } from 'child_process';
 const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
 
 /**
@@ -156,7 +156,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
   const mockGmailPageHost = `gmail.localhost:${MOCK_PORT}`;
   const mockGmailPage = `https://${mockGmailPageHost}`;
-  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(mockBuildType)}`);
+  copySync(buildDir(sourceBuildType), buildDir(mockBuildType));
   const editor = (code: string) => {
     return code
       .replace(
@@ -182,7 +182,7 @@ const makeMockBuild = (sourceBuildType: string) => {
 
 const makeLocalFesBuild = (sourceBuildType: string) => {
   const localFesBuildType = `${sourceBuildType}-local-fes`;
-  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(localFesBuildType)}`);
+  copySync(buildDir(sourceBuildType), buildDir(localFesBuildType));
   edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/external-service.js`, code =>
     code.replace('https://fes.${this.domain}', 'http://localhost:32667')
   );
@@ -193,7 +193,7 @@ const makeContentScriptTestsBuild = (sourceBuildType: string) => {
   const testBuildType = sourceBuildType.endsWith('-mock')
     ? sourceBuildType.slice(0, -5) + '-content-script-tests-mock'
     : sourceBuildType + '-content-script-tests';
-  exec(`cp -r ${buildDir(sourceBuildType)} ${buildDir(testBuildType)}`);
+  copySync(buildDir(sourceBuildType), buildDir(testBuildType));
   edit(`${buildDir(testBuildType)}/js/content_scripts/webmail_bundle.js`, code =>
     code.replace(/\/\* ----- [^\r\n]*\/content_scripts\/webmail\/.*}\)\(\);/s, `${testCode}\r\n\r\n})();`)
   );
