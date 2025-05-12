@@ -2,6 +2,7 @@
 import tseslint from 'typescript-eslint';
 import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
 import headerPlugin from 'eslint-plugin-header';
+headerPlugin.rules.header.meta.schema = false;
 import jsdocPlugin from 'eslint-plugin-jsdoc';
 import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
 import noNullPlugin from 'eslint-plugin-no-null';
