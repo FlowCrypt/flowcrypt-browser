@@ -119,7 +119,7 @@ export class AddKeyView extends View {
 
   private addPrivateKeyHandler = async (submitBtn: HTMLElement) => {
     if (submitBtn.className.includes('gray')) {
-      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
+      await Ui.modal.warning('Please double check the passphrase input field for any issues.');
       return;
     }
     try {

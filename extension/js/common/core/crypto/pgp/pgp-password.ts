@@ -35,7 +35,7 @@ export class PgpPwd {
   ];
 
   private static CRACK_TIME_WORDS_PASS_PHRASE = [
-    // the requirements for a pass phrase are meant to be strict
+    // the requirements for a passphrase are meant to be strict
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'great', bar: 80, color: 'green', pass: true },
     { match: 'year', word: 'good', bar: 60, color: 'orange', pass: true },
@@ -81,13 +81,13 @@ export class PgpPwd {
       'words',
       'in',
       'them',
-      'Best pass phrases are long',
+      'Best passphrases are long',
       'have several words',
       'in them',
       'bestpassphrasesarelong',
       'haveseveralwords',
       'inthem',
-      'Loss of this pass phrase',
+      'Loss of this passphrase',
       'cannot be recovered',
       'Note it down',
       'on a paper',
@@ -99,7 +99,7 @@ export class PgpPwd {
       'set password',
       'set pass word',
       'setpassphrase',
-      'set pass phrase',
+      'set passphrase',
       'set passphrase',
     ];
   };

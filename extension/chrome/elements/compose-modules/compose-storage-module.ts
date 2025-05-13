@@ -80,8 +80,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   };
 
   /**
-   * returns decrypted key (potentially using user-entered pass phrase)
-   * otherwise throws ComposerResetBtnTrigger when pass phrase not entered
+   * returns decrypted key (potentially using user-entered passphrase)
+   * otherwise throws ComposerResetBtnTrigger when passphrase not entered
    */
   public decryptSenderKey = async (parsedKey: ParsedKeyInfo): Promise<ParsedKeyInfo> => {
     const passphrase = await this.passphraseGet(parsedKey.keyInfo);
@@ -92,7 +92,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         return await this.decryptSenderKey(parsedKey);
       } else {
         // reset - no passphrase entered
-        throw new ComposerResetBtnTrigger('no pass phrase entered');
+        throw new ComposerResetBtnTrigger('no passphrase entered');
       }
     } else {
       if (!parsedKey.key.fullyDecrypted) {

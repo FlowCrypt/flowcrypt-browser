@@ -207,7 +207,7 @@ export class MsgUtil {
     if (!keys.prvForDecryptDecrypted.length && (!msgPwd || prepared.isPkcs7)) {
       return {
         success: false,
-        error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' },
+        error: { type: DecryptErrTypes.needPassphrase, message: 'Missing passphrase' },
         longids,
         isEncrypted,
       };

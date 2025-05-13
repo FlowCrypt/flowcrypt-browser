@@ -22,7 +22,7 @@ import { BackupUiModule } from './backup-ui-module.js';
 import { Lang } from '../../../../js/common/lang.js';
 import { MsgUtil } from '../../core/crypto/pgp/msg-util.js';
 
-const differentPassphrasesError = `Your keys are protected with different pass phrases.\n\nBacking them up together isn't supported yet.`;
+const differentPassphrasesError = `Your keys are protected with different passphrases.\n\nBacking them up together isn't supported yet.`;
 export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
   private ppChangedPromiseCancellation: PromiseCancellation = { cancel: false };
   private readonly proceedBtn = $('#module_manual .action_manual_backup');
@@ -97,7 +97,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       for (const ki of keyInfosToBackup) {
         if (!(await this.isPrivateKeyEncrypted(ki))) {
           // todo: this check can also be moved to encryptForBackup method when we solve the same passphrase issue (#4060)
-          await Ui.modal.error("Sorry, cannot back up private key because it's not protected with a pass phrase.");
+          await Ui.modal.error("Sorry, cannot back up private key because it's not protected with a passphrase.");
           return;
         }
       }
@@ -145,15 +145,15 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
       return undefined;
     }
     if (checks.checkStrength && distinctPassphrases[0] && !Settings.evalPasswordStrength(distinctPassphrases[0]).word.pass) {
-      await Ui.modal.warning("Please change your pass phrase first.\n\nIt's too weak for this backup method.");
-      // Actually, until #956 is resolved, we can only modify the pass phrase of the first key
+      await Ui.modal.warning("Please change your passphrase first.\n\nIt's too weak for this backup method.");
+      // Actually, until #956 is resolved, we can only modify the passphrase of the first key
       if (this.ui.parentTabId && kisWithPp[0].passphrase === distinctPassphrases[0]) {
         Settings.redirectSubPage(this.ui.acctEmail, this.ui.parentTabId, '/chrome/settings/modules/change_passphrase.htm');
       }
       return undefined;
     }
     if (distinctPassphrases.length === 1) {
-      // trying to apply the known pass phrase
+      // trying to apply the known passphrase
       for (const ki of kisWithPp.filter(ki => !ki.passphrase)) {
         if (await KeyUtil.decrypt(await KeyUtil.parse(ki.private), distinctPassphrases[0])) {
           ki.passphrase = distinctPassphrases[0];
@@ -166,7 +166,7 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
         await Ui.modal.error(differentPassphrasesError);
         return undefined;
       }
-      // todo: reset invalid pass phrases (mismatch === true)?
+      // todo: reset invalid passphrases (mismatch === true)?
       const longids = kisMissingPp.map(ki => ki.longid);
       if (this.ui.parentTabId) {
         BrowserMsg.send.passphraseDialog(this.ui.parentTabId, { type: 'backup', longids });
@@ -174,10 +174,10 @@ export class BackupUiManualActionModule extends BackupUiModule<BackupUi> {
           return undefined;
         }
       } else {
-        await Ui.modal.error(`Sorry, can't back up private key because its pass phrase can't be extracted. Please restart your browser and try again.`);
+        await Ui.modal.error(`Sorry, can't back up private key because its passphrase can't be extracted. Please restart your browser and try again.`);
         return undefined;
       }
-      // re-start the function recursively with newly discovered pass phrases
+      // re-start the function recursively with newly discovered passphrases
       // todo: #4059 however, this code is never actually executed, because our backup frame gets wiped out by the passphrase frame
       return await this.encryptForBackup(keyInfos, checks);
     }

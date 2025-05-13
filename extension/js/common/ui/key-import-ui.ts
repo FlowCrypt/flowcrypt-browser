@@ -411,7 +411,7 @@ export class KeyImportUi {
 
   private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string, contactSubsentence: string): Promise<void> => {
     if (!passphrase) {
-      throw new UserAlert('Please enter a pass phrase to use with this key');
+      throw new UserAlert('Please enter a passphrase to use with this key');
     }
     try {
       if (toEncrypt.fullyDecrypted) {
@@ -424,10 +424,10 @@ export class KeyImportUi {
           this.onBadPassphrase();
           if (this.expectedLongid) {
             // todo - double check this line, should it not say `this.expectedLongid === PgpKey.longid() ? Or is that checked elsewhere beforehand?
-            throw new UserAlert(`This is the right key! However, the pass phrase does not match. Please try a different pass phrase.
-              Your original pass phrase might have been different then what you use now.`);
+            throw new UserAlert(`This is the right key! However, the passphrase does not match. Please try a different passphrase.
+              Your original passphrase might have been different then what you use now.`);
           } else {
-            throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
+            throw new UserAlert('The passphrase does not match. Please try a different passphrase.');
           }
         }
       } else if (!toDecrypt.fullyDecrypted) {

@@ -128,7 +128,7 @@ export class ClientConfiguration {
   };
 
   /**
-   * pass phrase session length to be configurable with client configuraiton
+   * passphrase session length to be configurable with client configuraiton
    * default 4 hours
    */
   public getInMemoryPassPhraseSessionExpirationMs = (): number => {
@@ -166,8 +166,8 @@ export class ClientConfiguration {
   };
 
   /**
-   * Normally, during setup, "remember pass phrase" is unchecked
-   * This option will cause "remember pass phrase" option to be checked by default
+   * Normally, during setup, "remember passphrase" is unchecked
+   * This option will cause "remember passphrase" option to be checked by default
    * This behavior is also enabled as a byproduct of PASS_PHRASE_QUIET_AUTOGEN
    */
   public rememberPassPhraseByDefault = (): boolean => {
@@ -197,10 +197,10 @@ export class ClientConfiguration {
   };
 
   /**
-   * When generating keys, user will not be prompted to choose a pass phrase
-   * Instead a pass phrase will be automatically generated, and stored locally
-   * The pass phrase will NOT be displayed to user, and it will never be asked of the user
-   * This creates the smoothest user experience, for organisations that use full-disk-encryption and don't need pass phrase protection
+   * When generating keys, user will not be prompted to choose a passphrase
+   * Instead a passphrase will be automatically generated, and stored locally
+   * The passphrase will NOT be displayed to user, and it will never be asked of the user
+   * This creates the smoothest user experience, for organisations that use full-disk-encryption and don't need passphrase protection
    */
   public mustAutogenPassPhraseQuietly = (): boolean => {
     return this.usesKeyManager() && (this.clientConfigurationJson.flags || []).includes('PASS_PHRASE_QUIET_AUTOGEN');

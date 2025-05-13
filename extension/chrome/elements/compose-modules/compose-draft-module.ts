@@ -376,9 +376,9 @@ export class ComposeDraftModule extends ViewModule<ComposeView> {
       Xss.sanitizeRender(
         this.view.S.cached('prompt'),
         `
-        <div style="font-size: 18px">Waiting for pass phrase to open draft...</div>
+        <div style="font-size: 18px">Waiting for passphrase to open draft...</div>
         <div class="mt-20">
-          <button href="#" data-test="action-open-passphrase-dialog" class="button long green action_open_passphrase_dialog">Enter pass phrase</button>
+          <button href="#" data-test="action-open-passphrase-dialog" class="button long green action_open_passphrase_dialog">Enter passphrase</button>
           <button href="#" class="button gray action_close">close</button>
         </div>
       `

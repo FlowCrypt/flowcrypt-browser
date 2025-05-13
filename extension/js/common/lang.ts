@@ -39,19 +39,19 @@ export const Lang = {
     confirmSkipRecovery:
       'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?',
     nBackupsAlreadyRecoveredOrLeft: (nGot: number, nBups: number, txtTeft: string) =>
-      `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`,
+      `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different passphrase to unlock all backups.`,
     tryDifferentPassPhraseForRemainingBackups:
-      'This pass phrase was already used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.',
+      'This passphrase was already used to recover some of your backups.\n\nThe remaining backups use a different passphrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.',
     creatingKeysNotAllowedPleaseImport: 'Creating keys is not allowed on your domain. Please import your keys.',
     keyBackupsNotAllowed: 'Key backups are not allowed on this domain.',
     prvHasFixableCompatIssue:
       'This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software.It may be missing user IDs, a self-signature, or have an invalid user ID (e.g., a user ID with image data). It is also possible that the key is simply expired.',
-    ppMatchAllSet: "Your pass phrase matches. Good job! You're all set.",
+    ppMatchAllSet: "Your passphrase matches. Good job! You're all set.",
     noKeys: 'Keys for your account were not set up yet - please ask your systems administrator.',
     prvBackupToDesignatedMailboxEmailSubject: (acctEmail: string, fingerprint: string) =>
       `FlowCrypt OpenPGP Private Key backup for user ${acctEmail} with id ${fingerprint}`,
     prvBackupToDesignatedMailboxEmailBody:
-      "Please keep this email and attachment in the mailbox for safekeeping. It will be needed if the user ever needs to set up FlowCrypt again or forgets their pass phrase. Without this, the user won't be able to read their emails.\n\nSee https://flowcrypt.com/docs/technical/enterprise/configuration/backup-to-designated-mailbox.html#account-recovery.",
+      "Please keep this email and attachment in the mailbox for safekeeping. It will be needed if the user ever needs to set up FlowCrypt again or forgets their passphrase. Without this, the user won't be able to read their emails.\n\nSee https://flowcrypt.com/docs/technical/enterprise/configuration/backup-to-designated-mailbox.html#account-recovery.",
   },
   account: {
     googleAcctDisabledOrPolicy: `Your Google Account or Google Email seems to be disabled, or access to this app is disabled by your organisation admin policy. Contact your email administrator.`,
@@ -144,13 +144,13 @@ export const Lang = {
     emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?',
   },
   passphraseRequired: {
-    sign: 'Enter FlowCrypt pass phrase to sign email',
-    draft: 'Enter FlowCrypt pass phrase to load a draft',
-    attachment: 'Enter FlowCrypt pass phrase to decrypt a file',
-    quote: 'Enter FlowCrypt pass phrase to load quoted content',
-    backup: 'Enter FlowCrypt pass phrase to back up',
-    updateKey: 'Enter FlowCrypt pass phrase to keep your account keys up to date',
-    email: 'Enter FlowCrypt pass phrase to read encrypted email',
+    sign: 'Enter FlowCrypt passphrase to sign email',
+    draft: 'Enter FlowCrypt passphrase to load a draft',
+    attachment: 'Enter FlowCrypt passphrase to decrypt a file',
+    quote: 'Enter FlowCrypt passphrase to load quoted content',
+    backup: 'Enter FlowCrypt passphrase to back up',
+    updateKey: 'Enter FlowCrypt passphrase to keep your account keys up to date',
+    email: 'Enter FlowCrypt passphrase to read encrypted email',
   },
   settings: {
     deleteKeyConfirm: (fingerprint: string) => `Are you sure you want to remove encryption key with fingerprint ${fingerprint}?`,

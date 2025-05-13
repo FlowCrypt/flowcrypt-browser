@@ -98,7 +98,7 @@
         },
         {
           "name": "Subject",
-          "value": "for ci tests that change pass phrase"
+          "value": "for ci tests that change passphrase"
         },
         {
           "name": "To",
