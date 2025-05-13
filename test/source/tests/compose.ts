@@ -26,6 +26,7 @@ import {
   expiredPubkey,
   hasPubKey,
   newerVersionOfExpiredPubkey,
+  noSigPubKey,
   protonMailCompatKey,
   somePubkey,
   testMatchPubKey,
@@ -1086,6 +1087,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.click('@input-subject');
         await composePage.waitForContent('.email_address.no_pgp', unknownRecipient); // Check if unknown email recipient correctly displays no_pgp status
         await composePage.waitForContent('.email_address.has_pgp', correctRecipient); // Check if mock recipient shows correct has_pgp status
+      })
+    );
+
+    test(
+      'compose - check correct color for unusable keys',
+      testWithBrowser(async (t, browser) => {
+        const recipient = 'no-sig@flowcrypt.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        t.context.mockApi!.configProvider!.config.attester = {
+          pubkeyLookup: {
+            [recipient]: {
+              pubkey: noSigPubKey,
+            },
+          },
+        };
+        await ComposePageRecipe.fillMsg(composePage, { to: recipient }, t.title);
+        await composePage.waitForContent('.email_address.unusable', recipient);
+        await composePage.waitAny('@password-or-pubkey-container');
+        await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await ComposePageRecipe.closed(composePage);
       })
     );
 
