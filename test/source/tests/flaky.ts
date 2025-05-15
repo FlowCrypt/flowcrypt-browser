@@ -426,13 +426,13 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         await BrowserRecipe.finishSession(inboxPage);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-        await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as pass phrase is not known', undefined, {
+        await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'should not send as passphrase is not known', undefined, {
           encrypt: false,
         });
         await composeFrame.waitAndClick('@action-send');
         await inboxPage.waitAll('@dialog-passphrase');
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-        await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm', 'Ask your IT staff for help if you lost your pass phrase.');
+        await passphraseDialog.waitForContent('@lost-pass-phrase-with-ekm', 'Ask your IT staff for help if you lost your passphrase.');
         expect(await passphraseDialog.hasClass('@forget-pass-phrase-label', 'hidden')).to.equal(true);
         expect(await passphraseDialog.isChecked('@forget-pass-phrase-checkbox')).to.equal(true);
         await inboxPage.close();
@@ -603,7 +603,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
     test(
-      'decrypt - entering pass phrase should unlock all keys that match the pass phrase',
+      'decrypt - entering passphrase should unlock all keys that match the passphrase',
       testWithBrowser(
         async (t, browser) => {
           const acctEmail = 'flowcrypt.compatibility@gmail.com';

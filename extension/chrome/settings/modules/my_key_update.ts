@@ -126,7 +126,7 @@ View.run(
           await Ui.modal.warning(`This key ${Str.spaced(updatedKey.id || 'err')} does not match your current key ${Str.spaced(this.ki!.fingerprints[0])}`);
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
         } else if (!(await KeyUtil.decrypt(updatedKey, updatedKeyPassphrase))) {
-          await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
+          await Ui.modal.error('The passphrase does not match.\n\nPlease enter passphrase of the newly updated key.');
         } else {
           if (updatedKey.usableForEncryption) {
             await this.storeUpdatedKeyAndPassphrase(updatedKeyEncrypted, updatedKeyPassphrase);

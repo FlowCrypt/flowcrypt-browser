@@ -30,8 +30,8 @@ export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
   private setupCreateSimpleAutomaticInboxBackup = async () => {
     const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.ui.acctEmail));
     if (prvs.find(prv => !prv.key.fullyEncrypted)) {
-      await Ui.modal.warning('Key not protected with a pass phrase, skipping');
-      throw new UnreportableError('Key not protected with a pass phrase, skipping');
+      await Ui.modal.warning('Key not protected with a passphrase, skipping');
+      throw new UnreportableError('Key not protected with a passphrase, skipping');
     }
     try {
       await this.ui.manualModule.doBackupOnEmailProvider(prvs.map(prv => prv.keyInfo));

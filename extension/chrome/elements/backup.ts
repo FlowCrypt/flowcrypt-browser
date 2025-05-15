@@ -83,10 +83,10 @@ View.run(
 
     private testPassphraseHandler = async () => {
       if (await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val()))) {
-        await Ui.modal.info('Success - your pass phrase matches this backup!');
+        await Ui.modal.info('Success - your passphrase matches this backup!');
       } else {
         await Ui.modal.warning(
-          "Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don't get" +
+          "Passphrase did not match. Please try again. If you forgot your passphrase, please change it, so that you don't get" +
             ' locked out of your encrypted messages.'
         );
       }
