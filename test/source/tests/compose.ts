@@ -1906,7 +1906,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           appendUrl: `draftId=${draftId}`,
         });
         expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
-        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
       })
     );
 
@@ -1925,7 +1925,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl: `draftId=${draftId}`,
         });
-        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
       })
     );
 
