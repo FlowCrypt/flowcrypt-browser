@@ -270,6 +270,7 @@ export class ComposeSendBtnModule extends ViewModule<ComposeView> {
           supplementaryOperations.push(this.bindMessageId(msg.externalId, msgSentRes.id, supplementaryOperationsErrors));
         }
       } catch (e) {
+        Catch.reportErr(e);
         failures.push(
           ...msgRecipients.map(recipient => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
