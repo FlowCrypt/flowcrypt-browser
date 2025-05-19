@@ -26,6 +26,7 @@ import {
   expiredPubkey,
   hasPubKey,
   newerVersionOfExpiredPubkey,
+  noSigPubKey,
   protonMailCompatKey,
   somePubkey,
   testMatchPubKey,
@@ -1090,6 +1091,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - check correct color for unusable keys',
+      testWithBrowser(async (t, browser) => {
+        const recipient = 'no-sig@flowcrypt.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        t.context.mockApi!.configProvider!.config.attester = {
+          pubkeyLookup: {
+            [recipient]: {
+              pubkey: noSigPubKey,
+            },
+          },
+        };
+        await ComposePageRecipe.fillMsg(composePage, { to: recipient }, t.title);
+        await composePage.waitForContent('.email_address.unusable', recipient);
+        await composePage.waitAny('@password-or-pubkey-container');
+        await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await ComposePageRecipe.closed(composePage);
+      })
+    );
+
+    test(
       'compose - reply - CC&BCC test reply',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
@@ -1906,7 +1929,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           appendUrl: `draftId=${draftId}`,
         });
         expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
-        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
       })
     );
 
@@ -1925,7 +1948,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl: `draftId=${draftId}`,
         });
-        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
       })
     );
 
