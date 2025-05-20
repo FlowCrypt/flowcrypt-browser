@@ -2,8 +2,10 @@
 
 'use strict';
 
+import { storageGet } from '../browser/chrome.js';
 import { Url } from '../core/common.js';
 import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
+import { AbstractStore } from './store/abstract-store.js';
 import { GlobalStore } from './store/global-store.js';
 import { InMemoryStore } from './store/in-memory-store.js';
 
@@ -331,13 +333,18 @@ export class Catch {
     try {
       const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
       const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
+      // Avoiding circular dependency by accessing storage directly instead of AcctStore.get
+      const key = AbstractStore.singleScopeRawIndex(acctEmail, 'fesUrl');
+      const storageObj = await storageGet('local', [key]);
+      const fesUrl = storageObj[key] as string;
+
       if (!acctEmail) {
         console.error('Not reporting error because user is not logged in');
         return;
       }
       const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
       void $.ajax({
-        url: `${SHARED_TENANT_API_HOST}/api/v1/log-collector/exception`,
+        url: `${fesUrl ? fesUrl : SHARED_TENANT_API_HOST}/api/v1/log-collector/exception`,
         method: 'POST',
         data: JSON.stringify(errorReport),
         dataType: 'json',
