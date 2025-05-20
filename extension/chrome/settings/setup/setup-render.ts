@@ -54,7 +54,7 @@ export class SetupRenderModule {
   public renderSetupDone = async () => {
     const storedKeys = await KeyStore.get(this.view.acctEmail);
     if (this.view.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) {
-      // recovery where not all keys were processed: some may have other pass phrase
+      // recovery where not all keys were processed: some may have other passphrase
       this.displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');
       $('.email').text(this.view.acctEmail);

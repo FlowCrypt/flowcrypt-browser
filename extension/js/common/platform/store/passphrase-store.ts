@@ -8,7 +8,7 @@ import { InMemoryStore } from './in-memory-store.js';
 import { ClientConfiguration } from '../../client-configuration.js';
 
 /**
- * Local or session store of pass phrases
+ * Local or session store of passphrases
  */
 export class PassphraseStore extends AbstractStore {
   // if we implement (and migrate) password storage to use KeyIdentity instead of longid, we'll have `keyInfo: KeyIdentity` here

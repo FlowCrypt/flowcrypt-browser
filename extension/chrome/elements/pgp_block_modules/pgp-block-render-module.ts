@@ -117,7 +117,7 @@ export class PgpBlockViewRenderModule {
 
   public renderPassphraseNeeded = (longids: string[]) => {
     const enterPp = `<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`;
-    this.view.errorModule.renderErr(enterPp, undefined, 'pass phrase needed');
+    this.view.errorModule.renderErr(enterPp, undefined, 'passphrase needed');
     $('.enter_passphrase').on(
       'click',
       this.view.setHandler(() => {
