@@ -1,5 +1,7 @@
 <div class="lightboxed">
 
+version 8.5.11 on May 20, 2025: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/485?closed=1" target="_blank">Improvements for key generation and message parsing</a>
+
 version 8.5.10 on February 19, 2025: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/484?closed=1" target="_blank">"Secure reply to all" improvements</a>
 
 version 8.5.9 on February 5, 2025: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/482?closed=1" target="_blank">Password-protected messages improvements, fixes for switching to secure mode</a>
