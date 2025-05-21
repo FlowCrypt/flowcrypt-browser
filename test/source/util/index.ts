@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as fs from 'fs';
+import { join } from 'path';
 import { ElementHandle, Keyboard, KeyInput } from 'puppeteer';
 import { BrowserHandle } from '../browser/browser-handle.js';
 import { KeyInfoWithIdentityAndOptionalPp, KeyUtil } from '../core/crypto/key.js';
@@ -9,6 +10,7 @@ import { testKeyConstants } from '../tests/tooling/consts';
 import { AvaContext } from '../tests/tooling/index.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL' | 'UNIT-TESTS' | 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
+const ROOT_DIR = process.cwd();
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
@@ -28,7 +30,7 @@ export const getParsedCliParams = () => {
   if (!testGroup) {
     testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
   }
-  const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
+  const buildDir = join(ROOT_DIR, `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`);
   const poolSizeOne = process.argv.includes('--pool-size=1') || ['FLAKY-GROUP', 'CONTENT-SCRIPT-TESTS'].includes(testGroup);
   const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
