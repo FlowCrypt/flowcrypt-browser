@@ -111,7 +111,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           await gmailPage.getFrame(['backup.htm'])
         ).waitForContent(
           '@private-key-status',
-          'This private key with fingerprint 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788 has already been imported.'
+          'This private key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207 has already been imported.'
         );
         await gmailPage.close();
       })
