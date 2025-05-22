@@ -75,7 +75,7 @@ export class BrowserRecipe {
       // close announcement about updated UI
       await googleChatPage.waitAndClick('.fKz7Od', { delay: 1 });
     }
-    await googleChatPage.waitAny(['.T57Ued-BIzmGd', '.T57Ued-BIzmGd-OWXEXe-X9G3K', '.T2watc', '.slSulf', '.pDfpbf', '.jVwmLb']); // New chat button
+    await googleChatPage.waitAll('a.gb_5d');
     return googleChatPage;
   };
 
