@@ -62,7 +62,7 @@ const copyDependencies = async () => {
     ['squire-rte/dist/squire.js', 'lib/squire.js'],
     ['clipboard/dist/clipboard.js', 'lib/clipboard.js'],
     ['@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js', 'lib/fine-uploader.js'],
-    ['filesize/dist/filesize.js', 'lib/filesize.js'],
+    ['filesize/dist/filesize.esm.js', 'lib/filesize.js'],
     // Using legacy build due to Puppeteer compatibility issue (Promise.withResolvers error)
     // Reference: https://github.com/mozilla/pdf.js/issues/18006#issuecomment-2078739672
     ['pdfjs-dist/legacy/build/pdf.min.mjs', 'lib/pdf.min.mjs'],
