@@ -27,8 +27,7 @@ export class PgpBlockViewAttachmentsModule {
     for (const i of attachments.keys()) {
       const name = attachments[i].name ? Str.stripPgpOrGpgExtensionIfPresent(attachments[i].name) : 'noname';
       const nameVisible = name.length > 100 ? name.slice(0, 100) + '…' : name;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const size = fileSize(attachments[i].length);
+      const size = fileSize(attachments[i].length) as string;
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       const attachment = $(`<a href="#" index="${Number(i)}">`);
       attachment.attr('title', name);
