@@ -1,5 +1,5 @@
 declare module 'filesize' {
-  export function fileSize(
+  export function filesize(
     bytes: number,
   ): string;
 }
