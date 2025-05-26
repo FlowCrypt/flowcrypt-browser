@@ -16,14 +16,13 @@ export class SetupImportKeyModule {
 
   public actionImportPrivateKeyHandle = async (button: HTMLElement) => {
     if (button.className.includes('gray')) {
-      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
+      await Ui.modal.warning('Please double check the passphrase input field for any issues.');
       return;
     }
     /* eslint-disable @typescript-eslint/naming-convention */
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       submit_main: this.view.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2b_manual_enter .input_submit_key'),
-      submit_all: this.view.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2b_manual_enter .input_submit_all'),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       passphrase_ensure_single_copy: true,
       recovered: false,
@@ -47,7 +46,12 @@ export class SetupImportKeyModule {
         }
       }
       Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
-      await saveKeysAndPassPhrase(this.view.acctEmail, [checked.encrypted], options, this.view.submitKeyForAddrs);
+      await saveKeysAndPassPhrase(
+        this.view.acctEmail,
+        [checked.encrypted],
+        options,
+        this.view.keyImportUi.getSelectedEmailAliases('submit_pubkey').map(alias => alias.email)
+      );
       await this.view.submitPublicKeys(options);
       await this.view.finalizeSetup();
       await this.view.setupRender.renderSetupDone();

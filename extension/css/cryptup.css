@@ -54,8 +54,8 @@
 
 button.swal2-styled:focus,
 .button:focus {
-  border: rgba(0, 0, 0, 0) solid 1px !important;
-  outline: rgba(0, 0, 0, 0) 0 !important;
+  border: rgb(0, 0, 0, 0) solid 1px !important;
+  outline: rgb(0, 0, 0, 0) 0 !important;
   box-shadow: inset 0 0 0 1px #fff !important;
   text-decoration: none;
 }
@@ -206,7 +206,7 @@ button.btn_disabled,
 }
 
 .swal2-popup.swal2-toast.ui-toast .swal2-timer-progress-bar {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgb(255, 255, 255, 0.5);
 }
 
 .swal2-popup.ui-modal-iframe {
@@ -229,7 +229,7 @@ button.btn_disabled,
 }
 
 .swal2-container.ui-modal-page {
-  background: rgba(0, 0, 0, 0.6) !important;
+  background: rgb(0, 0, 0, 0.6) !important;
 }
 
 .swal2-container.ui-modal-fullscreen {
@@ -273,7 +273,7 @@ button.btn_disabled,
   background: #dadada;
   height: 45px;
   line-height: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  border: 1px solid rgb(0, 0, 0, 0.25);
   border-left: none;
   font-size: 14px;
   font-weight: 300;
@@ -499,7 +499,7 @@ body#settings > div#content input[type='text'] {
   box-sizing: border-box;
   width: 360px !important;
   height: 45px !important;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  border: 1px solid rgb(0, 0, 0, 0.25);
   padding-left: 8px;
   text-indent: 5px;
 }
@@ -512,7 +512,7 @@ body#settings > div#content .separator {
   max-width: 550px;
   margin: 10px auto;
   margin-bottom: 20px;
-  background: rgba(0, 0, 0, 0.125);
+  background: rgb(0, 0, 0, 0.125);
   height: 1px;
 }
 
@@ -804,7 +804,7 @@ textarea.armored {
   text-align: left;
   margin-top: -13px;
   padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.25);
+  border: 1px solid rgb(0, 0, 0, 0.25);
 }
 
 body#settings > div#content.setup div.manual div.line_container {
@@ -816,7 +816,7 @@ body#settings > div#content.setup div.manual div.line_container {
 }
 
 body#settings > div#content.setup div.manual a.back i {
-  color: rgba(0, 0, 0, 0.5);
+  color: rgb(0, 0, 0, 0.5);
   font-size: 30px;
   position: absolute;
   top: 5px;
@@ -1807,6 +1807,10 @@ table#compose .input .collapsed .email_preview .email_address.revoked {
   background-color: #d18826;
 }
 
+table#compose .input .collapsed .email_preview .email_address.unusable {
+  background-color: #a44;
+}
+
 table#compose.not-encrypted .input .collapsed .email_preview .email_address {
   border: none !important;
   background-color: #f0f0f0 !important;
@@ -1973,6 +1977,11 @@ table#compose div.recipients-inputs > div#input_addresses_container div .recipie
   color: white;
 }
 
+table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span.unusable {
+  background: #a44;
+  color: white;
+}
+
 table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span.failed {
   border: 1px dashed #a44;
 }
@@ -2020,7 +2029,7 @@ table#compose div.recipients-inputs > div#input_addresses_container div span.con
 }
 
 table#compose div.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons button:focus {
-  box-shadow: 0 0 0 3px rgba(49, 162, 23, 0.4);
+  box-shadow: 0 0 0 3px rgb(49, 162, 23, 0.4);
 }
 
 table#compose div.recipients-inputs > div#input_addresses_container div span.container-cc-bcc-buttons img {
@@ -2145,7 +2154,7 @@ table#compose #input-container-from select#input_from {
 }
 
 table#compose #input-container-from select#input_from:focus {
-  box-shadow: 0 0 0 3px rgba(49, 162, 23, 0.4);
+  box-shadow: 0 0 0 3px rgb(49, 162, 23, 0.4);
 }
 
 .reply_box table#compose #input-container-from select#input_from {
@@ -2187,7 +2196,7 @@ table#compose div.reply-container div.reply-options-container {
   white-space: nowrap;
   box-sizing: border-box;
   z-index: 1;
-  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 4px 0 rgb(0, 0, 0, 0.2);
   min-width: 256px;
 }
 
@@ -2537,7 +2546,7 @@ table#compose .intro_container > td > .input_intro {
 }
 
 .qq-upload-drop-area-active::after {
-  background: rgba(49, 162, 23, 0.2);
+  background: rgb(49, 162, 23, 0.2);
   width: 97%;
   height: 96%;
   content: '';
@@ -2632,9 +2641,9 @@ div#contacts {
   background: white;
   overflow-y: auto;
   top: 74px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid rgb(0, 0, 0, 0.2);
   left: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgb(0, 0, 0, 0.2);
   z-index: 1;
 }
 
@@ -2673,6 +2682,10 @@ div#contacts .select_contact .select_contact_email {
   color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+div#contacts .select_contact:hover {
+  background: #eee;
 }
 
 div#contacts ul li img,
@@ -2781,7 +2794,7 @@ table#compose tr#password_or_pubkey_container td .orange {
 table#compose tr#password_or_pubkey_container #expiration_note {
   display: none;
   position: absolute;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgb(0, 0, 0, 0.6);
   color: white;
   left: 50px;
   right: 0;
@@ -2855,15 +2868,15 @@ body#new_message #initial_prompt {
 }
 
 body#new_message.full_window {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgb(0, 0, 0, 0.5);
   padding: 20px 150px;
 }
 
 body#new_message.full_window table#compose {
   box-shadow:
-    0 8px 10px 1px rgba(0, 0, 0, 0.14),
-    0 3px 14px 2px rgba(0, 0, 0, 0.12),
-    0 5px 5px -3px rgba(0, 0, 0, 0.2);
+    0 8px 10px 1px rgb(0, 0, 0, 0.14),
+    0 3px 14px 2px rgb(0, 0, 0, 0.12),
+    0 5px 5px -3px rgb(0, 0, 0, 0.2);
 }
 
 div#reply_message_table_container {
@@ -2885,12 +2898,12 @@ div#initial_prompt .reply-action-button {
 }
 
 div#initial_prompt .reply-action-button:focus {
-  background: rgba(32, 33, 36, 0.122);
+  background: rgb(32, 33, 36, 0.122);
   box-shadow: inset 0 0 0 1px #bdc1c6;
 }
 
 div#initial_prompt .reply-action-button:hover {
-  background: rgba(32, 33, 36, 0.059);
+  background: rgb(32, 33, 36, 0.059);
 }
 
 div#initial_prompt #a_reply_all {
@@ -3022,7 +3035,7 @@ table#compose #error_container_reply_message #error_text_reply_message {
   top: -2px;
 }
 
-body.attachment {
+#attachment-container {
   border: 1px solid #dadada;
   border-radius: 2px;
   text-align: center;
@@ -3034,11 +3047,11 @@ body.attachment {
   cursor: pointer;
 }
 
-body.attachment:hover {
+#attachment-container:hover {
   border-color: #eaeaea;
 }
 
-body.attachment.error-occured {
+#attachment-container.error-occured {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3049,7 +3062,7 @@ body.attachment.error-occured {
   cursor: default;
 }
 
-body.attachment #download {
+#attachment-container #download {
   display: flex;
   opacity: 0;
   position: absolute;
@@ -3059,24 +3072,24 @@ body.attachment #download {
   bottom: 32px;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgb(0, 0, 0, 0.8);
   border-radius: 3px;
   z-index: 1;
   cursor: pointer;
   border: 0;
 }
 
-body.attachment:focus-within #download,
-body.attachment:hover #download {
+#attachment-container:focus-within #download,
+#attachment-container:hover #download {
   opacity: 1;
 }
 
-body.attachment #download:focus {
+#attachment-container #download:focus {
   box-shadow: 0 0 5px #31a217;
   outline: none;
 }
 
-body.attachment .download_progress {
+#attachment-container .download_progress {
   position: absolute;
   top: 50%;
   margin-top: -6px;
@@ -3084,7 +3097,7 @@ body.attachment .download_progress {
   line-height: 1;
 }
 
-body.attachment #header {
+#attachment-container #header {
   height: 90px;
   font-weight: 400;
   font-size: 14px;
@@ -3099,12 +3112,12 @@ body.attachment #header {
   justify-content: center;
 }
 
-body.attachment #type {
+#attachment-container #type {
   padding: 10px 0;
   color: #999;
 }
 
-body.attachment #name {
+#attachment-container #name {
   padding: 7px 12px;
   background: #f3f3f3;
   position: absolute;
@@ -3118,7 +3131,7 @@ body.attachment #name {
   height: 12px;
 }
 
-body.attachment .file-format-holder {
+#attachment-container .file-format-holder {
   display: inline-block;
   border-radius: 120px;
   position: absolute;
@@ -3127,7 +3140,7 @@ body.attachment .file-format-holder {
   margin-bottom: 5px;
 }
 
-body.attachment .file-format-holder img#file-format {
+#attachment-container .file-format-holder img#file-format {
   width: 45px;
   height: auto;
   margin-top: 12px;
@@ -3159,7 +3172,7 @@ body.attachment .file-format-holder img#file-format {
   max-width: 96vw;
   max-height: 70vh;
   overflow: auto;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgb(0, 0, 0, 0.7);
   color: #ccc;
   padding: 15px;
   font-size: 14px;
@@ -3258,7 +3271,7 @@ body.attachment .file-format-holder img#file-format {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgb(0, 0, 0, 0.75);
   border-radius: 4px;
   color: #fff;
 }
@@ -3280,7 +3293,7 @@ body.attachment .file-format-holder img#file-format {
 
 #pdf-preview-zoom {
   display: flex;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-left: 1px solid rgb(255, 255, 255, 0.2);
 }
 
 #pdf-preview-controls button {
@@ -3293,7 +3306,7 @@ body.attachment .file-format-holder img#file-format {
 }
 
 #pdf-preview-controls button:not([disabled]):hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgb(255, 255, 255, 0.25);
 }
 
 #pdf-preview-controls button[disabled] {
@@ -3314,7 +3327,7 @@ body.attachment .file-format-holder img#file-format {
   color: white;
   align-items: center;
   background: #4c494c;
-  box-shadow: 0 10px 12px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 12px 5px rgb(0, 0, 0, 0.2);
   padding: 30px;
   border-radius: 15px;
 }
@@ -3352,11 +3365,11 @@ body#select_account .emails li {
   cursor: pointer;
   height: auto;
   padding-top: 1px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgb(0, 0, 0, 0.1);
 }
 
 body#select_account .emails li:last-child {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgb(0, 0, 0, 0.1);
 }
 
 body#select_account .emails li a {
@@ -3457,6 +3470,27 @@ body#select_account .action_add_account::before {
   display: inline-block;
 }
 
+.generate_alias_key_view {
+  display: none;
+  font-size: 14px;
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+.generate_alias_key_view .generate_private_key_addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.submit_pubkey_addresses {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+}
+
 code {
   padding: 0.2em 0.4em;
   margin: 0;
@@ -3488,7 +3522,7 @@ body#settings div.webmail_notifications div.webmail_notification {
   background-color: rgb(249, 237, 190);
   border: 1px solid rgb(240, 195, 109);
   border-radius: 2px;
-  box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
+  box-shadow: rgb(0, 0, 0, 0.2) 0 2px 4px 0;
   color: rgb(34, 34, 34);
   font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12.8px;

@@ -49,7 +49,7 @@ export class Assert {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
           } else {
-            const msg = `Protect your key with a pass phrase to finish setup.`;
+            const msg = `Protect your key with a passphrase to finish setup.`;
             const r = await Ui.renderOverlayPromptAwaitUserChoice(
               { finishSetup: {}, later: { color: 'gray' } },
               msg,

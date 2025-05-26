@@ -108,7 +108,7 @@ a.gray_link {
   margin: 0 auto;
   margin-top: 30px;
   z-index: 10;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgb(0, 0, 0, 0.3);
   font-size: 14px;
 }
 
@@ -161,7 +161,7 @@ a.gray_link {
 }
 
 .row.alt-accounts:focus {
-  background: rgba(0, 0, 0, 0.019) !important;
+  background: rgb(0, 0, 0, 0.019) !important;
 }
 
 #alt-accounts .action_add_account.action_add_account--settings::before {
@@ -246,7 +246,7 @@ a.gray_link {
 }
 
 #settings-row .separator {
-  background: rgba(0, 0, 0, 0.09);
+  background: rgb(0, 0, 0, 0.09);
   max-width: 515px;
   margin: 15px auto 20px;
   height: 1px;
@@ -516,7 +516,7 @@ body#settings .basic {
 
 body#settings .settings-border {
   position: relative;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid rgb(0, 0, 0, 0.2);
   width: 100%;
   margin: 10px;
   height: 220px;

@@ -20,7 +20,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Settings } from '../../../js/common/settings.js';
 import { BackupUi } from '../../../js/common/ui/backup-ui/backup-ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
-import { initPassphraseToggle } from '../../../js/common/ui/passphrase-ui.js';
+import { initPassphraseToggle, isCreatePrivateFormInputCorrect } from '../../../js/common/ui/passphrase-ui.js';
 import { ViewModule } from '../../../js/common/view-module.js';
 import { SetupOptions } from '../setup';
 import { AddKeyView } from './add_key';
@@ -51,10 +51,14 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
     $('#step_2a_manual_create.input_password2').on('keydown', this.view.setEnterHandlerThatClicks('#step_2a_manual_create .action_proceed_private'));
   };
 
-  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo): Promise<KeyIdentity> => {
+  public createSaveKeyPair = async (options: SetupOptions, keyAlgo: KeyAlgo, aliasList: { name: string; email: string }[] = []): Promise<KeyIdentity> => {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { full_name } = await AcctStore.get(this.view.acctEmail, ['full_name']);
-    const pgpUids = [{ name: full_name || '', email: this.view.acctEmail }]; // todo - add all addresses?
+    const fullName = full_name ?? '';
+    const pgpUids = [{ name: fullName, email: this.view.acctEmail }];
+    for (const alias of aliasList) {
+      pgpUids.push({ name: alias.name ?? fullName, email: alias.email });
+    }
     const expireMonths = this.view.clientConfiguration.getEnforcedKeygenExpirationMonths();
     const key = await OpenPGPKey.create(pgpUids, keyAlgo, options.passphrase, expireMonths);
     const prv = await KeyUtil.parse(key.private);
@@ -63,6 +67,10 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
   };
 
   public actionCreateKeyHandler = async () => {
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', this.view.clientConfiguration);
+    if (!(await isCreatePrivateFormInputCorrect('step_2a_manual_create', this.view.clientConfiguration))) {
+      return;
+    }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_proceed_private', Ui.spinner('white') + 'just a minute');
@@ -72,12 +80,11 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         passphrase_ensure_single_copy: false, // there can't be any saved passphrases for the new key
         submit_main: this.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2a_manual_create .input_submit_key'),
-        submit_all: this.keyImportUi.shouldSubmitPubkey(this.view.clientConfiguration, '#step_2a_manual_create .input_submit_all'),
         recovered: false,
       };
       /* eslint-enable @typescript-eslint/naming-convention */
       const keyAlgo = this.view.clientConfiguration.getEnforcedKeygenAlgo() || ($('#step_2a_manual_create .key_type').val() as KeyAlgo);
-      const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo);
+      const keyIdentity = await this.createSaveKeyPair(opts, keyAlgo, this.keyImportUi.getSelectedEmailAliases('generate_private_key'));
       if (this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox()) {
         const adminPubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
         if (adminPubkey) {
@@ -141,18 +148,17 @@ export class AddKeyGenerateModule extends ViewModule<AddKeyView> {
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  private submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
+  private submitPublicKeys = async ({ submit_main }: { submit_main: boolean }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.view.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
       await submitPublicKeyIfNeeded(this.view.clientConfiguration, this.view.acctEmail, [], this.pubLookup.attester, mostUsefulPrv?.keyInfo.public, {
         submit_main,
-        submit_all,
       });
     } catch (e) {
       return await Settings.promptToRetry(
         e,
         e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
-        () => this.submitPublicKeys({ submit_main, submit_all }),
+        () => this.submitPublicKeys({ submit_main }),
         Lang.general.contactIfNeedAssistance(Boolean(this.view.fesUrl))
       );
     }

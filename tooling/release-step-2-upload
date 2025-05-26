@@ -88,4 +88,5 @@ for filepath in replace_version_in_web_files:
   with open(filepath, 'w') as wp:
     wp.write(replaced)
 
-os.system('cd ../flowcrypt-web && git pull && git commit -a --message=\'firefox v%s links updated\' && git push && cd ../flowcrypt-browser' % version)
+os.system('cd ../flowcrypt-web && git pull && git checkout -b release-%s && git commit -a --message=\'firefox v%s links updated\' && git push origin release-%s && cd ../flowcrypt-browser' % (dashed_version, version, dashed_version))
+

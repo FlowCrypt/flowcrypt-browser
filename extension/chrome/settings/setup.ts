@@ -23,7 +23,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Settings } from '../../js/common/settings.js';
 import { BackupUi } from '../../js/common/ui/backup-ui/backup-ui.js';
 import { KeyImportUi } from '../../js/common/ui/key-import-ui.js';
-import { initPassphraseToggle, shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase-ui.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { View } from '../../js/common/view.js';
 import { BgUtils } from '../../js/service_worker/bgutils.js';
 import { SetupCreateKeyModule } from './setup/setup-create-key.js';
@@ -42,7 +42,6 @@ export interface PassphraseOptions {
 
 export interface SetupOptions extends PassphraseOptions {
   submit_main: boolean;
-  submit_all: boolean;
   recovered?: boolean;
 }
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -72,7 +71,6 @@ export class SetupView extends View {
   public fetchedKeyBackupsUniqueLongids: string[] = [];
   public importedKeysUniqueLongids: string[] = [];
   public mathingPassphrases: string[] = [];
-  public submitKeyForAddrs: string[];
 
   public constructor() {
     super();
@@ -89,8 +87,7 @@ export class SetupView extends View {
     } else {
       window.location.href = 'index.htm';
     }
-    this.submitKeyForAddrs = [];
-    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId, this.submitKeyForAddrs); // for step_2b_manual_enter, if user chooses so
+    this.keyImportUi.initPrvImportSrcForm(this.acctEmail, this.parentTabId); // for step_2b_manual_enter, if user chooses so
     this.keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').trigger('focus');
     this.keyImportUi.renderPassPhraseStrengthValidationInput(
       $('#step_2_ekm_choose_pass_phrase .input_password'),
@@ -155,6 +152,8 @@ export class SetupView extends View {
       $('.remove_if_backup_not_allowed').remove();
     }
     await this.setupRender.renderInitial();
+
+    await this.keyImportUi.renderEmailAliasView(this.acctEmail);
   };
 
   public setHandlers = () => {
@@ -203,7 +202,7 @@ export class SetupView extends View {
     );
     $('.input_submit_key').on(
       'click',
-      this.setHandler(el => this.actionSubmitPublicKeyToggleHandler(el))
+      this.setHandler(el => this.keyImportUi.actionSubmitPublicKeyToggleHandler(el))
     );
     $('#step_0_backup_to_designated_mailbox .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').on(
       'click',
@@ -264,7 +263,7 @@ export class SetupView extends View {
           <code>Change Pass Phrase</code>.<br>
           It will let you change it without knowing the previous one.
           When done, <a href="#" class="reload_page">reload this page</a>
-          and use the new pass phrase.
+          and use the new passphrase.
           <p><strong>If no:</strong> unfortunately, you will not be able to
           read previously encrypted emails regardless of what you do.
           You can <a href="#" class="action_skip_recovery">skip recovery
@@ -285,19 +284,6 @@ export class SetupView extends View {
     );
   };
 
-  public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
-    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
-    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
-    if ($(target).prop('checked')) {
-      if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
-        $('.input_email_alias').prop({ disabled: false });
-      }
-    } else {
-      $('.input_email_alias').prop({ checked: false });
-      $('.input_email_alias').prop({ disabled: true });
-    }
-  };
-
   public actionCloseHandler = () => {
     if (this.parentTabId) {
       BrowserMsg.send.redirect(this.parentTabId, {
@@ -309,18 +295,24 @@ export class SetupView extends View {
   };
 
   /* eslint-disable @typescript-eslint/naming-convention */
-  public submitPublicKeys = async ({ submit_main, submit_all }: { submit_main: boolean; submit_all: boolean }): Promise<void> => {
+  public submitPublicKeys = async ({ submit_main }: { submit_main: boolean }): Promise<void> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail)), 'ONLY-FULLY-USABLE');
     try {
-      await submitPublicKeyIfNeeded(this.clientConfiguration, this.acctEmail, this.submitKeyForAddrs, this.pubLookup.attester, mostUsefulPrv?.keyInfo.public, {
-        submit_main,
-        submit_all,
-      });
+      await submitPublicKeyIfNeeded(
+        this.clientConfiguration,
+        this.acctEmail,
+        this.keyImportUi.getSelectedEmailAliases('submit_pubkey').map(alias => alias.email),
+        this.pubLookup.attester,
+        mostUsefulPrv?.keyInfo.public,
+        {
+          submit_main,
+        }
+      );
     } catch (e) {
       return await Settings.promptToRetry(
         e,
         e instanceof CompanyLdapKeyMismatchError ? Lang.setup.failedToImportUnknownKey : Lang.setup.failedToSubmitToAttester,
-        () => this.submitPublicKeys({ submit_main, submit_all }),
+        () => this.submitPublicKeys({ submit_main }),
         Lang.general.contactIfNeedAssistance(this.isCustomerUrlFesUsed())
       );
     }
@@ -330,41 +322,6 @@ export class SetupView extends View {
     await AcctStore.set(this.acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
   };
   /* eslint-enable @typescript-eslint/naming-convention */
-
-  public isCreatePrivateFormInputCorrect = async (section: string): Promise<boolean> => {
-    const password1 = $(`#${section} .input_password`);
-    const password2 = $(`#${section} .input_password2`);
-    if (!password1.val()) {
-      await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
-      password1.trigger('focus');
-      return false;
-    }
-    if ($(`#${section} .action_proceed_private`).hasClass('gray')) {
-      await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
-      password1.trigger('focus');
-      return false;
-    }
-    if (password1.val() !== password2.val()) {
-      await Ui.modal.warning('The pass phrases do not match. Please try again.');
-      password2.val('').trigger('focus');
-      return false;
-    }
-    let notePp = String(password1.val());
-    if (await shouldPassPhraseBeHidden()) {
-      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
-    }
-    if (!this.clientConfiguration.usesKeyManager()) {
-      const paperPassPhraseStickyNote = `
-        <div style="font-size: 1.2em">
-          Please write down your pass phrase and store it in safe place or even two.
-          It is needed in order to access your FlowCrypt account.
-        </div>
-        <div class="passphrase-sticky-note">${notePp}</div>
-      `;
-      return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
-    }
-    return true;
-  };
 
   private actionComposeEncryptedEmailHandler = async () => {
     const inboxUrl = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail: this.acctEmail });

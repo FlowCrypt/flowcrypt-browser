@@ -2,43 +2,21 @@
 
 'use strict';
 
-import { Url, Value } from '../../../js/common/core/common.js';
+import { Url } from '../../../js/common/core/common.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { SetupView } from '../setup.js';
-import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
-import { Xss } from '../../../js/common/platform/xss.js';
-import { KeyImportUi } from '../../../js/common/ui/key-import-ui.js';
 import * as $ from 'jquery';
 
 export class SetupRenderModule {
-  public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
-
   public constructor(private view: SetupView) {}
 
   public renderInitial = async (): Promise<void> => {
     $('.email-address').text(this.view.acctEmail);
     $('#button-go-back').css('visibility', 'hidden');
-    if (this.view.storage.email_provider === 'gmail') {
-      // show alternative account addresses in setup form + save them for later
-      try {
-        await Settings.refreshSendAs(this.view.acctEmail);
-        const { sendAs } = await AcctStore.get(this.view.acctEmail, ['sendAs']);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.saveAndFillSubmitPubkeysOption(Object.keys(sendAs!));
-      } catch (e) {
-        await Settings.promptToRetry(
-          e,
-          Lang.setup.failedToLoadEmailAliases,
-          () => this.renderInitial(),
-          Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
-        );
-        return;
-      }
-    }
 
     if (this.view.storage.setup_done && this.view.action !== 'update_from_ekm') {
       if (this.view.action !== 'add_key') {
@@ -76,7 +54,7 @@ export class SetupRenderModule {
   public renderSetupDone = async () => {
     const storedKeys = await KeyStore.get(this.view.acctEmail);
     if (this.view.fetchedKeyBackupsUniqueLongids.length > storedKeys.length) {
-      // recovery where not all keys were processed: some may have other pass phrase
+      // recovery where not all keys were processed: some may have other passphrase
       this.displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');
       $('.email').text(this.view.acctEmail);
@@ -172,41 +150,5 @@ export class SetupRenderModule {
         this.displayBlock('step_2b_manual_enter');
       }
     }
-  };
-
-  private saveAndFillSubmitPubkeysOption = (addresses: string[]) => {
-    this.renderEmailAddresses(this.filterAddressesForSubmittingKeys(addresses));
-  };
-
-  private renderEmailAddresses = (addresses: string[]) => {
-    $('.input_submit_all').hide();
-    const emailAliases = Value.arr.withoutVal(addresses, this.view.acctEmail);
-    for (const e of emailAliases) {
-      $('.addresses').append(
-        `<label><input type="checkbox" class="input_email_alias" data-email="${Xss.escape(e)}" data-test="input-email-alias-${e.replace(
-          /[^a-z0-9]+/g,
-          ''
-        )}" />${Xss.escape(e)}</label><br/>`
-      ); // xss-escaped
-    }
-    $('.input_email_alias').on('click', event => {
-      const email = String($(event.target).data('email'));
-      if ($(event.target).prop('checked')) {
-        if (!this.view.submitKeyForAddrs.includes(email)) {
-          KeyImportUi.addAliasForSubmission(email, this.view.submitKeyForAddrs);
-        }
-      } else {
-        KeyImportUi.removeAliasFromSubmission(email, this.view.submitKeyForAddrs);
-      }
-    });
-    if (emailAliases.length > 0) {
-      $('.also_submit_alias_key_view').show();
-    }
-    $('.manual .input_submit_all').prop({ checked: true, disabled: false });
-  };
-
-  private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
-    const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
-    return addresses.filter(e => !filterAddrRegEx.test(e));
   };
 }
