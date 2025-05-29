@@ -44,6 +44,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   private googleContactsSearchEnabled: boolean | Promise<boolean | undefined>;
 
   private uniqueRecipientIndex = 0;
+  private inputContainerPaddingBottom = '30px';
 
   public constructor(view: ComposeView) {
     super(view);
@@ -91,6 +92,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.now('cc').on(
       'click',
       this.view.setHandler(target => {
+        $('#input-container-to').css('padding-bottom', 0);
         const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
         this.copyCcBccActionsClickHandler(target, newContainer);
       })
@@ -98,6 +100,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.view.S.now('bcc').on(
       'click',
       this.view.setHandler(target => {
+        $('#input-container-cc').css('padding-bottom', 0);
         const newContainer = this.view.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
         this.copyCcBccActionsClickHandler(target, newContainer);
       })
@@ -106,6 +109,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       'click',
       this.view.setHandler(() => {
         this.view.S.cached('input_to').trigger('focus');
+        this.setCorrectPaddingForInputContainer();
       })
     );
     this.view.S.cached('input_to').on(
@@ -405,6 +409,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
     this.view.S.cached('recipients_placeholder').css('display', 'flex');
+    $('.input-container').css('padding-bottom', '0');
     this.setEmailsPreview();
     this.hideContacts();
     this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
@@ -914,6 +919,21 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     sendingType: RecipientType,
     status: RecipientStatus
   ): RecipientElement[] => {
+    // Do not add padding-bottom for reply box
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5935
+    if (!container.hasClass('input-container')) {
+      if (sendingType === 'to') {
+        if ($('#input-container-cc').css('display') === 'none' && $('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
+      }
+      if (sendingType === 'cc') {
+        if ($('#input-container-bcc').css('display') === 'none') {
+          container.parent().css('padding-bottom', this.inputContainerPaddingBottom);
+        }
+      }
+    }
+
     const result: RecipientElement[] = [];
     for (const { email, name, invalid } of emails) {
       const recipientId = this.generateRecipientId();
@@ -1080,7 +1100,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       //    - else EXPIRED.
       // 3. Otherwise NO_PGP.
       const firstKeyInfo = info.sortedPubkeys[0];
-      if (!firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
+      if (firstKeyInfo.pubkey.usableForEncryption && !firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
@@ -1095,7 +1115,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             'You should ask them to send you an updated public key.\n\n' +
             this.formatPubkeysHintText(info.sortedPubkeys)
         );
-      } else {
+      } else if (KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass('expired');
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
@@ -1105,6 +1125,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             'You should ask them to send you an updated public key.\n\n' +
             this.formatPubkeysHintText(info.sortedPubkeys)
         );
+      } else {
+        recipient.status = RecipientStatus.UNUSABLE;
+        $(el).addClass('unusable');
+        Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
+        $(el).attr('title', 'Does use encryption but their public key is unusable for encryption.\n\n' + this.formatPubkeysHintText(info.sortedPubkeys));
       }
     } else {
       recipient.status = RecipientStatus.NO_PGP;
@@ -1129,6 +1154,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private formatPubkeysHintText = (pubkeyInfos: PubkeyInfo[]): string => {
     const valid: PubkeyInfo[] = [];
+    const unusable: PubkeyInfo[] = [];
     const expired: PubkeyInfo[] = [];
     const revoked: PubkeyInfo[] = [];
     for (const pubkeyInfo of pubkeyInfos) {
@@ -1136,6 +1162,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         revoked.push(pubkeyInfo);
       } else if (KeyUtil.expired(pubkeyInfo.pubkey)) {
         expired.push(pubkeyInfo);
+      } else if (!pubkeyInfo.pubkey.usableForEncryption) {
+        unusable.push(pubkeyInfo);
       } else {
         valid.push(pubkeyInfo);
       }
@@ -1144,6 +1172,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       { groupName: 'Valid public key fingerprints:', pubkeyInfos: valid },
       { groupName: 'Expired public key fingerprints:', pubkeyInfos: expired },
       { groupName: 'Revoked public key fingerprints:', pubkeyInfos: revoked },
+      { groupName: 'Unusable public key fingerprints:', pubkeyInfos: unusable },
     ]
       .filter(g => g.pubkeyInfos.length)
       .map(g => this.formatKeyGroup(g.groupName, g.pubkeyInfos))
@@ -1156,12 +1185,17 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private removeRecipient = (element: HTMLElement) => {
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
-    this.addedRecipients[index].element.remove();
+    const recipient = this.addedRecipients[index];
+    // Adjust padding when the last recipient of a specific type is removed
+    if (this.addedRecipients.filter(r => r.sendingType === recipient.sendingType).length === 1) {
+      $(`#input-container-${recipient.sendingType}`).css('padding-bottom', '0');
+    }
+    recipient.element.remove();
     const container = element.parentElement?.parentElement; // Get Container, e.g. '.input-container-cc'
     if (container) {
       this.view.sizeModule.resizeInput($(container).find('input'));
     }
-    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).trigger('focus');
+    this.view.S.cached('input_addresses_container_outer').find(`#input-container-${recipient.sendingType} input`).trigger('focus');
     this.addedRecipients.splice(index, 1);
     this.view.pwdOrPubkeyContainerModule.showHideContainerAndColorSendBtn().catch(Catch.reportErr);
     this.view.myPubkeyModule.reevaluateShouldAttachOrNot();
@@ -1250,6 +1284,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         child.parentElement?.removeChild(child);
         break;
       }
+    }
+  };
+
+  private setCorrectPaddingForInputContainer = () => {
+    if (this.addedRecipients.some(r => r.sendingType === 'to') && !this.addedRecipients.some(r => r.sendingType === 'cc')) {
+      $('#input-container-to').css('padding-bottom', this.inputContainerPaddingBottom);
+    } else if (this.addedRecipients.some(r => r.sendingType === 'cc') && !this.addedRecipients.some(r => r.sendingType === 'bcc')) {
+      $('#input-container-cc').css('padding-bottom', this.inputContainerPaddingBottom);
     }
   };
 

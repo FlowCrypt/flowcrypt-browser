@@ -12,13 +12,14 @@ import { Key, KeyUtil } from '../core/crypto/key.js';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password.js';
 import { Settings } from '../settings.js';
 import { Ui } from '../browser/ui.js';
-import { Url, Str } from '../core/common.js';
+import { Url, Str, Value } from '../core/common.js';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom.js';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key.js';
 import { KeyStore } from '../platform/store/key-store.js';
 import { isCustomerUrlFesUsed } from '../helpers.js';
 import { Xss } from '../platform/xss.js';
 import { ClientConfiguration } from '../client-configuration.js';
+import { AcctStore } from '../platform/store/acct-store.js';
 
 type KeyImportUiCheckResult = {
   normalized: string;
@@ -39,6 +40,7 @@ export class KeyCanBeFixed extends Error {
 export class UserAlert extends Error {}
 
 export class KeyImportUi {
+  public readonly emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
   private expectedLongid?: string;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
@@ -70,17 +72,40 @@ export class KeyImportUi {
     return;
   };
 
-  public static addAliasForSubmission = (email: string, submitKeyForAddrs: string[]) => {
-    submitKeyForAddrs.push(email);
-  };
-
-  public static removeAliasFromSubmission = (email: string, submitKeyForAddrs: string[]) => {
-    submitKeyForAddrs.splice(submitKeyForAddrs.indexOf(email), 1);
-  };
-
   // by unselecting, we allow to click on "Load from a file" and trigger the fineuploader again
   public static allowReselect = () => {
     $('input[type=radio][name=source]').prop('checked', false);
+  };
+
+  public renderEmailAliasView = async (acctEmail: string) => {
+    await Settings.refreshSendAs(acctEmail);
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { email_provider, sendAs } = await AcctStore.get(acctEmail, ['email_provider', 'sendAs']);
+    if (email_provider !== 'gmail') return;
+    const addresses = this.filterAddressesForSubmittingKeys(Object.keys(sendAs ?? {}));
+
+    const emailAliases = Value.arr.withoutVal(addresses, acctEmail);
+    for (const e of emailAliases) {
+      for (const option of ['generate_private_key', 'submit_pubkey']) {
+        const dataTestValue = `input-email-alias-${option}-${e.replace(/[^a-z0-9]+/g, '')}`;
+        $(`.${option}_addresses`).append(
+          `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-name="${sendAs?.[e].name ?? ''}" data-test="${dataTestValue}" />${Xss.escape(e)}</label><br/>`
+        ); // xss-escaped
+      }
+    }
+    if (emailAliases.length > 0) {
+      $('.also_submit_alias_key_view').show();
+    }
+  };
+
+  public actionSubmitPublicKeyToggleHandler = (target: HTMLElement) => {
+    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
+    const aliasCheckboxes = $('.input_email_alias_submit_pubkey');
+    if ($(target).prop('checked')) {
+      aliasCheckboxes.prop({ disabled: false });
+    } else {
+      aliasCheckboxes.prop({ checked: false, disabled: true });
+    }
   };
 
   public onBadPassphrase: VoidCallback = () => undefined;
@@ -98,22 +123,33 @@ export class KeyImportUi {
     return Boolean($(checkboxSelector).prop('checked'));
   };
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined, submitKeyForAddrs?: string[]) => {
+  public getSelectedEmailAliases = (type: 'generate_private_key' | 'submit_pubkey'): { name: string; email: string }[] => {
+    return $(`.input_email_alias_${type}:visible:checked`)
+      .toArray()
+      .map(el => ({
+        name: $(el).data('name') as string,
+        email: $(el).data('email') as string,
+      }));
+  };
+
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
     $('input[type=radio][name=source]')
       .off()
-      .on('change', function () {
-        const selectedValue = (this as HTMLInputElement).value;
+      .on('change', ev => {
+        const selectedValue = (ev.target as HTMLInputElement).value;
         switch (selectedValue) {
           case 'file':
             $('.input_private_key').val('').trigger('change').prop('disabled', true);
             $('.source_paste_container').css('display', 'none');
             $('.source_generate_container').hide();
+            $('.generate_alias_key_view').hide();
             $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
             $('#fineuploader_button > input').trigger('click');
             break;
           case 'paste':
             $('.input_private_key').val('').trigger('change').prop('disabled', false);
             $('.source_generate_container').hide();
+            $('.generate_alias_key_view').hide();
             $('.source_paste_container').css('display', 'block');
             $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
             break;
@@ -127,6 +163,7 @@ export class KeyImportUi {
           case 'generate':
             $('.source_paste_container').hide();
             $('.source_generate_container').show();
+            if ($('.input_email_alias_generate_private_key').length > 0) $('.generate_alias_key_view').show();
             break;
           default:
             break;
@@ -144,17 +181,14 @@ export class KeyImportUi {
       'keyup paste change',
       Ui.event.handle(async target => {
         $('.action_add_private_key').addClass('btn_disabled').attr('disabled');
-        $('.input_email_alias').prop('checked', false);
+        $('.input_email_alias_submit_pubkey').prop('checked', false);
         const prv = await Catch.undefinedOnException(KeyUtil.parse(String($(target).val())));
         if (prv !== undefined) {
           $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-          if (submitKeyForAddrs !== undefined) {
-            for (const email of prv.emails) {
-              for (const inputCheckboxesWithEmail of $('.input_email_alias')) {
-                if (String($(inputCheckboxesWithEmail).data('email')) === email) {
-                  KeyImportUi.addAliasForSubmission(email, submitKeyForAddrs);
-                  $(inputCheckboxesWithEmail).prop('checked', true);
-                }
+          for (const email of prv.emails) {
+            for (const inputCheckboxesWithEmail of $('.input_email_alias_submit_pubkey')) {
+              if (String($(inputCheckboxesWithEmail).data('email')) === email) {
+                $(inputCheckboxesWithEmail).prop('checked', true);
               }
             }
           }
@@ -356,14 +390,28 @@ export class KeyImportUi {
       const keyinfos = await KeyStore.get(acctEmail);
       const privateKeysIds = keyinfos.map(ki => ki.fingerprints[0]);
       if (privateKeysIds.includes(k.id)) {
-        throw new UserAlert('This is one of your current keys, try another one.');
+        const key = keyinfos.find(ki => ki.id === k.id);
+        if (key) {
+          const existingKey = await KeyUtil.parse(key.public);
+          const hasNewerExpiration = !!(k.expiration && existingKey.expiration && k.expiration > existingKey.expiration);
+          if (hasNewerExpiration) {
+            const updateKeyMessage =
+              "The key you're trying to import is a newer version of one you already have, based on its expiry date. " +
+              "We'll redirect you to the key update page to manage your key.";
+            if (await Ui.modal.confirm(updateKeyMessage, true)) {
+              window.location.href = Url.create('/chrome/settings/modules/my_key_update.htm', { acctEmail, fingerprint: k.id, parentTabId: '' });
+            }
+          } else {
+            throw new UserAlert('This is one of your current keys, try another one.');
+          }
+        }
       }
     }
   };
 
   private decryptAndEncryptAsNeeded = async (toDecrypt: Key, toEncrypt: Key, passphrase: string, contactSubsentence: string): Promise<void> => {
     if (!passphrase) {
-      throw new UserAlert('Please enter a pass phrase to use with this key');
+      throw new UserAlert('Please enter a passphrase to use with this key');
     }
     try {
       if (toEncrypt.fullyDecrypted) {
@@ -376,10 +424,10 @@ export class KeyImportUi {
           this.onBadPassphrase();
           if (this.expectedLongid) {
             // todo - double check this line, should it not say `this.expectedLongid === PgpKey.longid() ? Or is that checked elsewhere beforehand?
-            throw new UserAlert(`This is the right key! However, the pass phrase does not match. Please try a different pass phrase.
-              Your original pass phrase might have been different then what you use now.`);
+            throw new UserAlert(`This is the right key! However, the passphrase does not match. Please try a different passphrase.
+              Your original passphrase might have been different then what you use now.`);
           } else {
-            throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
+            throw new UserAlert('The passphrase does not match. Please try a different passphrase.');
           }
         }
       } else if (!toDecrypt.fullyDecrypted) {
@@ -457,5 +505,10 @@ export class KeyImportUi {
                 <div></div>
               </div>`;
     return { passwordResultElement: $(passwordResultHTML), progressBarElement: $(progressBarHTML) };
+  };
+
+  private filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
+    const filterAddrRegEx = new RegExp(`@(${this.emailDomainsToSkip.join('|')})`);
+    return addresses.filter(e => !filterAddrRegEx.test(e));
   };
 }

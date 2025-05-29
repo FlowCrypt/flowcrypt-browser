@@ -222,7 +222,7 @@ export class KeyUtil {
           // if (await KeyUtil.decrypt(parsed, passPhrase, undefined, 'OK-IF-ALREADY-DECRYPTED')) {
           allKeys.push(parsed);
           // } else {
-          //   allErr.push(new Error(`Wrong pass phrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
+          //   allErr.push(new Error(`Wrong passphrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
           // }
         } catch (e) {
           allErr.push(e as Error);
@@ -275,7 +275,8 @@ export class KeyUtil {
       const opgpresult = await OpenPGPKey.diagnose(key, passphrase);
       result = new Map<string, string>([...result, ...opgpresult]);
     }
-    result.set(`expiration`, KeyUtil.formatResult(key.expiration));
+    const expirationIso = key.expiration ? new Date(key.expiration).toISOString() : undefined;
+    result.set(`expiration`, KeyUtil.formatResult(expirationIso));
     result.set(`internal dateBeforeExpiration`, await KeyUtil.formatResultAsync(async () => KeyUtil.dateBeforeExpirationIfAlreadyExpired(key)));
     result.set(`internal usableForEncryption`, KeyUtil.formatResult(key.usableForEncryption));
     result.set(`internal usableForSigning`, KeyUtil.formatResult(key.usableForSigning));
@@ -292,8 +293,9 @@ export class KeyUtil {
     }
   }
 
-  public static formatResult(value: unknown): string {
-    return `[-] ${String(value)}`;
+  public static formatResult(value: unknown | undefined): string {
+    const formattedOutput = value !== undefined ? (value as string) : '-';
+    return `[-] ${formattedOutput}`;
   }
 
   public static async asPublicKey(key: Key): Promise<Key> {
@@ -489,47 +491,71 @@ export class KeyUtil {
     return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
   }
 
-  public static validateChecksum = (armoredText: string): boolean => {
-    const lines = armoredText.split('\n').map(l => l.trim());
+  public static validateChecksum(armoredText: string): boolean {
+    // Regex to capture any PGP armor block, e.g. SIGNATURE, MESSAGE, etc.
+    // It captures: the block type in group (1), and the content in group (2)
+    const pgpBlockRegex = /-----BEGIN PGP ([A-Z ]+)-----([\s\S]*?)-----END PGP \1-----/g;
 
-    // Filter out known non-data lines
-    const dataCandidates = lines.filter(line => line.length > 0 && !line.startsWith('-----') && !line.startsWith('Version:') && !line.startsWith('Comment:'));
+    let match: RegExpExecArray | null;
+    let validFound = false;
 
-    // Find checksum line
-    const checksumIndex = dataCandidates.findIndex(line => line.startsWith('='));
-    if (checksumIndex === -1) return false;
+    // Iterate over all PGP blocks in the text
+    while ((match = pgpBlockRegex.exec(armoredText))) {
+      const blockContent = match[2] || ''; // the captured block text
+      const lines = blockContent.split('\n').map(l => l.trim());
 
-    const checksumLine = dataCandidates[checksumIndex].slice(1);
-    const dataLines = dataCandidates.slice(0, checksumIndex);
+      // Filter out known non-base64 lines
+      const dataCandidates = lines.filter(
+        line => line.length > 0 && !line.startsWith('Version:') && !line.startsWith('Comment:') && !line.startsWith('Hash:') && !line.startsWith('-----')
+      );
 
-    // Decode checksum
-    let providedBytes: string;
-    try {
-      providedBytes = atob(checksumLine);
-    } catch {
-      return false;
-    }
-    if (providedBytes.length !== 3) return false;
+      // Find the checksum line (starts with '=')
+      const checksumIndex = dataCandidates.findIndex(line => line.startsWith('='));
+      if (checksumIndex === -1) {
+        continue; // No checksum line found in this block, skip
+      }
 
-    const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
-
-    // Attempt to decode all data lines (some may not be base64)
-    const decodedChunks: string[] = [];
-    for (const line of dataLines) {
+      // Get the base64 after the '='
+      const checksumLine = dataCandidates[checksumIndex].slice(1);
+      let providedBytes: string;
       try {
-        decodedChunks.push(atob(line));
+        providedBytes = atob(checksumLine);
       } catch {
-        // Not a valid base64 line, skip it
+        continue; // Not valid base64, skip
+      }
+
+      // Check that decoded checksum is 3 bytes for CRC24
+      if (providedBytes.length !== 3) {
+        continue;
+      }
+      const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
+
+      // Decode all lines before the checksum line
+      const dataLines = dataCandidates.slice(0, checksumIndex);
+      const decodedChunks: string[] = [];
+      for (const line of dataLines) {
+        try {
+          decodedChunks.push(atob(line));
+        } catch {
+          // skip lines that aren't valid base64
+        }
+      }
+
+      if (!decodedChunks.length) {
+        continue;
+      }
+
+      // Join all decoded base64 data and calculate its CRC
+      const rawData = decodedChunks.join('');
+      // eslint-disable-next-line @typescript-eslint/no-misused-spread
+      const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+      if (KeyUtil.crc24(dataBytes) === providedCRC) {
+        validFound = true;
       }
     }
 
-    if (decodedChunks.length === 0) return false;
-
-    const rawData = decodedChunks.join('');
-    const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
-
-    return KeyUtil.crc24(dataBytes) === providedCRC;
-  };
+    return validFound;
+  }
 
   private static crc24 = (dataBytes: Uint8Array): number => {
     let crc = 0xb704ce;

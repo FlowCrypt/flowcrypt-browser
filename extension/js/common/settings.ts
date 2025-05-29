@@ -28,6 +28,7 @@ import { Api } from './api/shared/api.js';
 import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
+import { KeyWithPrivateFields } from './core/crypto/pgp/openpgp-key.js';
 
 declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
 
@@ -94,8 +95,10 @@ export class Settings {
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
+
     await new Promise<void>((resolve, reject) => {
-      chrome.storage.local.get(async storage => {
+      // eslint-disable-next-line no-null/no-null
+      chrome.storage.local.get(null, async storage => {
         try {
           for (const storageIndex of Object.keys(storage)) {
             if (storageIndex.startsWith(filter)) {
@@ -129,7 +132,7 @@ export class Settings {
     if (!oldAcctEmailIndexPrefix) {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
-    // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
+    // in case the destination email address was already set up with an account, recover keys and passphrases before it's overwritten
     const oldAccountPrivateKeys = await KeyStore.get(oldAcctEmail);
     const newAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const oldAcctPassPhrases: KeyInfoWithIdentityAndOptionalPp[] = [];
@@ -254,7 +257,27 @@ export class Settings {
             const expireSeconds = expireYears === 'never' ? 0 : Math.floor((Date.now() - origPrv.created) / 1000) + 60 * 60 * 24 * 365 * Number(expireYears);
             await KeyUtil.decrypt(origPrv, passphrase);
             let reformatted;
-            const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
+            let userIds: { email: string | undefined; name: string }[] = [];
+            const internal = (origPrv as KeyWithPrivateFields).internal;
+            if (typeof internal !== 'string' && internal?.users) {
+              for (const u of internal.users) {
+                if (u.userID) {
+                  userIds.push({
+                    email: u.userID.email,
+                    name: u.userID.name || '',
+                  });
+                }
+              }
+              if (!userIds.length) {
+                userIds = uids.map(uid => {
+                  const parsed = Str.parseEmail(uid);
+                  return {
+                    email: parsed.email,
+                    name: parsed.name || '',
+                  };
+                });
+              }
+            }
             try {
               reformatted = await KeyUtil.reformatKey(origPrv, passphrase, userIds, expireSeconds);
             } catch (e) {
@@ -512,8 +535,8 @@ export class Settings {
       '',
       'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
       '',
-      'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
-      'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
+      'If this key was registered on a keyserver (typically they are), you will need this same key (and passphrase!) to replace it.',
+      'In other words, losing this key or passphrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
       '',
       'acctEmail: ' + acctEmail,
     ];

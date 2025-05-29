@@ -72,11 +72,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
-        await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await inboxPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788 has already been imported.'
+        );
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
-        await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await gmailPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788 has already been imported.'
+        );
         await gmailPage.close();
       })
     );
@@ -88,11 +98,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
-        await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await inboxPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207 has already been imported.'
+        );
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
-        await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await gmailPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207 has already been imported.'
+        );
         await gmailPage.close();
       })
     );
@@ -269,6 +289,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm']);
         expect(urls.length).to.equal(0);
         await inboxPage.close();
+      })
+    );
+
+    test(
+      `decrypt - render a plain text email with an ambiguous public key name as its attachment`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '1960e404123e1cbc';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        expect(await inboxPage.isElementPresent('@container-attachments')).to.equal(true);
+        const attachmentsContainer = await inboxPage.waitAny('@container-attachments');
+        const attachments = await attachmentsContainer.$$('.pgp_block.publicKey');
+        expect(attachments.length).to.equal(1);
       })
     );
 
@@ -1050,7 +1085,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      `compose - #5125 test pass phrase anti brute force protection`,
+      `compose - #5125 test passphrase anti brute force protection`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const wrongPassphrase = 'wrong';
@@ -1079,7 +1114,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - by entering pass phrase + remember in session',
+      'decrypt - by entering passphrase + remember in session',
       testWithBrowser(async (t, browser) => {
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
@@ -1890,6 +1925,21 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/5949
+    test(
+      `decrypt - check if checksum error doesn't appear for signed message reply`,
+      testWithBrowser(async (t, browser) => {
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const threadId = '195883e4d3e2f249';
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitAll('iframe.pgp_block');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForSelTestState('ready');
+        const htmlContent = await pgpBlock.readHtml('#pgp_block');
+        expect(htmlContent).not.include('Warning: Checksum mismatch detected');
+      })
+    );
+
     test(
       'decrypt - inbox - encrypted message inside signed',
       testWithBrowser(async (t, browser) => {
@@ -1947,7 +1997,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    test.todo('decrypt - by entering secondary pass phrase');
+    test.todo('decrypt - by entering secondary passphrase');
 
     test(
       `decrypt - signed only - parse error in a badge`,
@@ -2035,12 +2085,12 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message and should be hidden in encrypted message',
+      'decrypt - emails with binary "noname" attachment should not be recognized as an encrypted message',
       testWithBrowser(async (t, browser) => {
         const threadId1 = '18adb91ebf3ba7b9'; // email attachment "noname" with type img/<image-extension>
         const threadId2 = '18afaa4118afeb62'; // email attachment "noname" with type application/octet-stream
         const threadId3 = '191e2735a1cc08c4'; // email attachment "noname" with type message/global
-        const threadId4 = '18b7f6a2b00ad967'; // a password-protected message that is also public key encrypted with noname attachment
+        const threadId4 = '19647ca5dcfb932d'; // email attachment "noname" with type application/pdf
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
         await inboxPage1.notPresent('iframe.pgp_block');
@@ -2057,11 +2107,23 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(attachments.length).to.equal(1);
         await inboxPage3.close();
         const inboxPage4 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
-        const pgpBlock = await inboxPage4.getFrame(['pgp_block.htm']);
-        await inboxPage4.notPresent('@container-attachments');
-        expect(await inboxPage4.isElementPresent('iframe.pgp_block')).to.equal(true);
-        expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage4.notPresent('iframe.pgp_block');
+        expect(await inboxPage4.isElementPresent('@container-attachments')).to.be.true;
         await inboxPage4.close();
+      })
+    );
+
+    test(
+      'decrypt - an ambiguous file "noname" should not be recognized as an encrypted message and should be hidden in encrypted message',
+      testWithBrowser(async (t, browser) => {
+        const threadId1 = '18b7f6a2b00ad967'; // a password-protected message that is also public key encrypted with noname attachment
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage1 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId1}`);
+        const pgpBlock = await inboxPage1.getFrame(['pgp_block.htm']);
+        await inboxPage1.notPresent('@container-attachments');
+        expect(await inboxPage1.isElementPresent('iframe.pgp_block')).to.equal(true);
+        expect(await pgpBlock.isElementPresent('@pgp-encryption')).to.equal(true);
+        await inboxPage1.close();
       })
     );
 
@@ -2182,6 +2244,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(Object.entries(downloadedFile4).length).to.equal(1);
         expect(Object.keys(downloadedFile4)[0]).to.match(/demo.*\.bat/);
         const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitForSelTestState('ready');
         await attachmentFrame.waitAndClick('@attachment-container');
         const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');

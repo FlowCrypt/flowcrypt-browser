@@ -20,6 +20,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
   public reinsertReplyBox: (replyMsgId: string) => void;
   public scrollToReplyBox: (replyMsgId: string) => void;
   public scrollToCursorInReplyBox: (replyMsgId: string, cursorOffsetTop: number) => void;
+  public addSecureActionsToMessageMenu: () => void;
   private acctEmail: string;
   private emailBodyFromThunderbirdMail: string;
 

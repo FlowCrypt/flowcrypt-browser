@@ -99,7 +99,7 @@ export class AttachmentDownloadView extends View {
       });
     } catch (e) {
       Catch.reportErr(e);
-      $('body.attachment').text(`Error processing params: ${String(e)}. ${Lang.general.writeMeToFixIt(!!this.fesUrl)}`);
+      $('#attachment-container').text(`Error processing params: ${String(e)}. ${Lang.general.writeMeToFixIt(!!this.fesUrl)}`);
       return;
     }
     $('#type').text(this.type || 'unknown type');
@@ -133,8 +133,8 @@ export class AttachmentDownloadView extends View {
         this.setHandlerPrevent('double', () => this.downloadButtonClickedHandler())
       );
       this.downloadButton.on('click', e => e.stopPropagation());
-      $('body').on('click', async () => {
-        if ($('body').attr('id') !== 'attachment-preview' && !$('body').hasClass('error-occured')) {
+      $('#attachment-container').on('click', async () => {
+        if ($('#attachment-container').attr('id') !== 'attachment-preview' && !$('#attachment-container').hasClass('error-occured')) {
           await this.previewAttachmentClickedHandler();
         }
       });
@@ -270,7 +270,7 @@ export class AttachmentDownloadView extends View {
             traverseUp: 1,
             css: { display: 'none' },
           }); // hide attachment
-          $('body').text('');
+          $('#attachment-container').text('');
           return true;
         }
       }
@@ -347,7 +347,7 @@ export class AttachmentDownloadView extends View {
       }
       await this.decryptAndSaveAttachmentToDownloads();
     } else {
-      $('body.attachment')
+      $('#attachment-container')
         .html(
           `<div>Failed to decrypt:</div><a href="#" data-test="decrypt-error-details" class="see-error-details">see error details</a><br><div>Downloading original…`
         ) // xss-escaped

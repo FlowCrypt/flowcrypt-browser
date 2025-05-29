@@ -15,6 +15,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { processAndStoreKeysFromEkmLocally, saveKeysAndPassPhrase } from '../../../js/common/helpers.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
+import { isCreatePrivateFormInputCorrect } from '../../../js/common/ui/passphrase-ui.js';
 
 export class SetupWithEmailKeyManagerModule {
   public constructor(private view: SetupView) {}
@@ -27,7 +28,7 @@ export class SetupWithEmailKeyManagerModule {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
       submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
     };
-    if (!(await this.view.isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase'))) {
+    if (!(await isCreatePrivateFormInputCorrect('step_2_ekm_choose_pass_phrase', this.view.clientConfiguration))) {
       return;
     }
     try {
@@ -50,7 +51,6 @@ export class SetupWithEmailKeyManagerModule {
         this.view.clientConfiguration.mustAutogenPassPhraseQuietly() || Boolean($('#step_2_ekm_choose_pass_phrase .input_passphrase_save').prop('checked')),
       passphrase_ensure_single_copy: false, // there can't be any saved passphrases for the new key
       submit_main: this.view.clientConfiguration.canSubmitPubToAttester(),
-      submit_all: false,
       passphrase,
     };
     /* eslint-enable @typescript-eslint/naming-convention */
@@ -127,6 +127,6 @@ export class SetupWithEmailKeyManagerModule {
       'Failed to store newly generated key on FlowCrypt Email Key Manager',
       Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
     );
-    await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + pass phrase locally
+    await saveKeysAndPassPhrase(this.view.acctEmail, [await KeyUtil.parse(generated.private)], setupOptions); // store encrypted key + passphrase locally
   };
 }

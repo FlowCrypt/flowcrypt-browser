@@ -6,6 +6,7 @@ import { Catch } from '../platform/catch.js';
 import { Ui } from '../browser/ui.js';
 import { Xss } from '../platform/xss.js';
 import { GlobalStore } from '../platform/store/global-store.js';
+import { ClientConfiguration } from '../client-configuration.js';
 
 export const shouldPassPhraseBeHidden = async () => {
   const storage = await GlobalStore.get(['hide_pass_phrases']);
@@ -26,6 +27,9 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
   for (const id of passphraseInputIds) {
     const passphraseInput = $(`#${id}`);
     passphraseInput.addClass('toggled_passphrase');
+    if (!passphraseInput.attr('data-test')) {
+      passphraseInput.attr('data-test', 'input-passphrase');
+    }
     if (show) {
       passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonHide}</label>`); // xss-direct
       passphraseInput.attr('type', 'text');
@@ -56,4 +60,39 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
       .trigger('click')
       .trigger('click'); // double-click the toggle to prevent browser from prefilling values
   }
+};
+
+export const isCreatePrivateFormInputCorrect = async (section: string, clientConfiguration: ClientConfiguration): Promise<boolean> => {
+  const password1 = $(`#${section} .input_password`);
+  const password2 = $(`#${section} .input_password2`);
+  if (!password1.val()) {
+    await Ui.modal.warning('Passphrase is needed to protect your private email. Please enter a passphrase.');
+    password1.trigger('focus');
+    return false;
+  }
+  if ($(`#${section} .action_proceed_private`).hasClass('gray')) {
+    await Ui.modal.warning('Passphrase is not strong enough. Please make it stronger, by adding a few words.');
+    password1.trigger('focus');
+    return false;
+  }
+  if (password1.val() !== password2.val()) {
+    await Ui.modal.warning('The passphrases do not match. Please try again.');
+    password2.val('').trigger('focus');
+    return false;
+  }
+  let notePp = String(password1.val());
+  if (await shouldPassPhraseBeHidden()) {
+    notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
+  }
+  if (!clientConfiguration.usesKeyManager()) {
+    const paperPassPhraseStickyNote = `
+        <div style="font-size: 1.2em">
+          Please write down your passphrase and store it in safe place or even two.
+          It is needed in order to access your FlowCrypt account.
+        </div>
+        <div class="passphrase-sticky-note">${notePp}</div>
+      `;
+    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
+  }
+  return true;
 };

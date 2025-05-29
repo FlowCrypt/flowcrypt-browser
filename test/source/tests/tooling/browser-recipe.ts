@@ -75,7 +75,7 @@ export class BrowserRecipe {
       // close announcement about updated UI
       await googleChatPage.waitAndClick('.fKz7Od', { delay: 1 });
     }
-    await googleChatPage.waitAll('.T-I-KE'); // New chat button
+    await googleChatPage.waitAll('a.gb_5d'); // Google hangout logo
     return googleChatPage;
   };
 
@@ -325,7 +325,7 @@ export class BrowserRecipe {
       const page = pgpBlockFrame.getPage();
       await page.notPresent('@action-finish-session');
       const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
-      expect(errBadgeContent).to.equal('pass phrase needed');
+      expect(errBadgeContent).to.equal('passphrase needed');
       await pgpBlockFrame.notPresent('@action-print');
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await page.waitAll('@dialog-passphrase');

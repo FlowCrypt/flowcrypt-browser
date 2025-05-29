@@ -200,7 +200,11 @@ export class Attachment {
       return 'signature';
     } else if (this.inline && this.isImage()) {
       return 'inlineImage';
-    } else if (!this.name && !this.isImage() && !['application/octet-stream', 'multipart/mixed', 'message/global'].includes(this.type)) {
+    } else if (!this.name && !['application/octet-stream', 'multipart/mixed', 'message/global'].includes(this.type)) {
+      // this is a noname attachment, but treat them as 'plainFile' if body is not empty. therefore, the attachment can't be concluded as pgp message
+      if (!isBodyEmpty) {
+        return 'plainFile';
+      }
       // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
     } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
@@ -210,7 +214,7 @@ export class Attachment {
     } else if (this.name === 'message' && isBodyEmpty) {
       // treat message as encryptedMsg when empty body for the 'message' attachment
       return 'encryptedMsg';
-    } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) {
+    } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g) && !this.isPublicKey() && !this.isPrivateKey()) {
       // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
       // todo: after #4906 is done we should "decrypt" the encryptedFile here to see if it's a binary 'publicKey' (as in message 1869220e0c8f16dd)

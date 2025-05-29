@@ -54,6 +54,7 @@ const allowedRecipients: string[] = [
   'flowcrypt.test.key.new.manual.1@gmail.com',
   'user@prv-backup-to-designated-mailbox.flowcrypt.test',
   'admin@prv-backup-to-designated-mailbox.flowcrypt.test',
+  'no-sig@flowcrypt.com',
 ];
 
 export type MockUserAlias = {

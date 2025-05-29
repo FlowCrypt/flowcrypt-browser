@@ -26,6 +26,7 @@ import {
   expiredPubkey,
   hasPubKey,
   newerVersionOfExpiredPubkey,
+  noSigPubKey,
   protonMailCompatKey,
   somePubkey,
   testMatchPubKey,
@@ -169,7 +170,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'compose - trying to send PWD encrypted message with pass phrase - should show err',
+      'compose - trying to send PWD encrypted message with passphrase - should show err',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
@@ -180,14 +181,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndType('@input-password', msgPwd);
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
-          contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+          contentToCheck: 'Please do not use your private key passphrase as a password for this message',
           clickOn: 'confirm',
         });
         // changing case should result in this error too
         await composePage.waitAndType('@input-password', msgPwd.toUpperCase());
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
-          contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+          contentToCheck: 'Please do not use your private key passphrase as a password for this message',
           clickOn: 'confirm',
         });
         const forgottenPassphrase = 'this passphrase is forgotten';
@@ -198,7 +199,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndType('@input-password', forgottenPassphrase);
         await composePage.waitAndClick('@action-send', { delay: 1 });
         await PageRecipe.waitForModalAndRespond(composePage, 'error', {
-          contentToCheck: 'Please do not use your private key pass phrase as a password for this message',
+          contentToCheck: 'Please do not use your private key passphrase as a password for this message',
           clickOn: 'confirm',
         });
       })
@@ -274,7 +275,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'compose - signed with entered pass phrase + will remember pass phrase in session',
+      'compose - signed with entered passphrase + will remember passphrase in session',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail', {
@@ -285,17 +286,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail);
         const composeFrame = await InboxPageRecipe.openAndGetComposeFrame(inboxPage);
-        await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', undefined, {
+        await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered passphrase', undefined, {
           encrypt: false,
         });
         await composeFrame.waitAndClick('@action-send');
         await inboxPage.waitAll('@dialog-passphrase');
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
-        await passphraseDialog.waitForContent('@lost-pass-phrase', 'Lost pass phrase?');
+        await passphraseDialog.waitForContent('@lost-pass-phrase', 'Lost passphrase?');
         await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
         await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
         await inboxPage.waitTillGone('@dialog-passphrase');
-        await inboxPage.waitTillGone('@container-new-message'); // confirming pass phrase will auto-send the message
+        await inboxPage.waitTillGone('@container-new-message'); // confirming passphrase will auto-send the message
         // signed - done, now try to see if it remembered pp in session
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', undefined, {
@@ -802,7 +803,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
     for (const inputMethod of ['mouse', 'keyboard']) {
       test(
-        `compose - reply - pass phrase dialog - dialog ok (${inputMethod})`,
+        `compose - reply - passphrase dialog - dialog ok (${inputMethod})`,
         testWithBrowser(async (t, browser) => {
           await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
           const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
@@ -838,7 +839,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       );
 
       test(
-        `compose - reply - pass phrase dialog - dialog cancel (${inputMethod})`,
+        `compose - reply - passphrase dialog - dialog cancel (${inputMethod})`,
         testWithBrowser(async (t, browser) => {
           await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
           const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
@@ -858,7 +859,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       );
 
       test(
-        `compose - pass phrase dialog - dialog cancel (${inputMethod})`,
+        `compose - passphrase dialog - dialog cancel (${inputMethod})`,
         testWithBrowser(async (t, browser) => {
           const k = Config.key('ci.tests.gmail');
           const acctEmail = 'ci.tests.gmail@flowcrypt.test';
@@ -875,7 +876,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           expect(passphraseDialog.frame.detached).to.equal(false);
           await Util.sleep(0.5);
           expect(await composeFrame.read('@action-send')).to.eq('Signing...');
-          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt passphrase to sign email');
           await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
           await Util.sleep(0.5);
           await composeFrame.waitForContent('@action-send', 'Sign and Send');
@@ -883,7 +884,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       );
 
       test(
-        `compose - non-primary pass phrase dialog - dialog cancel (${inputMethod})`,
+        `compose - non-primary passphrase dialog - dialog cancel (${inputMethod})`,
         testWithBrowser(async (t, browser) => {
           const k = Config.key('ci.tests.gmail');
           const acctEmail = 'ci.tests.gmail@flowcrypt.test';
@@ -905,7 +906,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
           expect(passphraseDialog.frame.detached).to.equal(false);
           await composeFrame.waitForContent('@action-send', 'Loading...');
-          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
+          await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt passphrase to sign email');
           await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
           await ComposePageRecipe.cancelPassphraseDialog(inboxPage, inputMethod);
           await composeFrame.waitForContent('@action-send', 'Encrypt, Sign, and Send');
@@ -914,7 +915,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     } // end of tests per inputMethod
 
     test(
-      `compose - signed and encrypted S/MIME message - pass phrase dialog`,
+      `compose - signed and encrypted S/MIME message - passphrase dialog`,
       testWithBrowser(async (t, browser) => {
         const k = Config.key('ci.tests.gmail');
         const acctEmail = 'ci.tests.gmail@flowcrypt.test';
@@ -935,7 +936,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composeFrame.waitAndClick('@action-send', { delay: 2 });
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
         expect(passphraseDialog.frame.detached).to.equal(false);
-        await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt pass phrase to sign email');
+        await passphraseDialog.waitForContent('@passphrase-text', 'Enter FlowCrypt passphrase to sign email');
         await passphraseDialog.waitForContent('@which-key', '47FB 0318 3E03 A8ED 44E3 BBFC CEA2 D53B B9D2 4871');
         await passphraseDialog.waitAndType('@input-pass-phrase', forgottenPassphrase);
         await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry');
@@ -1086,6 +1087,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.click('@input-subject');
         await composePage.waitForContent('.email_address.no_pgp', unknownRecipient); // Check if unknown email recipient correctly displays no_pgp status
         await composePage.waitForContent('.email_address.has_pgp', correctRecipient); // Check if mock recipient shows correct has_pgp status
+      })
+    );
+
+    test(
+      'compose - check correct color for unusable keys',
+      testWithBrowser(async (t, browser) => {
+        const recipient = 'no-sig@flowcrypt.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        t.context.mockApi!.configProvider!.config.attester = {
+          pubkeyLookup: {
+            [recipient]: {
+              pubkey: noSigPubKey,
+            },
+          },
+        };
+        await ComposePageRecipe.fillMsg(composePage, { to: recipient }, t.title);
+        await composePage.waitForContent('.email_address.unusable', recipient);
+        await composePage.waitAny('@password-or-pubkey-container');
+        await composePage.waitAndType('@input-password', 'gO0d-pwd');
+        await composePage.waitAndClick('@action-send', { delay: 1 });
+        await ComposePageRecipe.closed(composePage);
       })
     );
 
@@ -1327,7 +1350,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      'compose - loading drafts - PKCS#7 encrypted draft with forgotten non-primary pass phrase',
+      'compose - loading drafts - PKCS#7 encrypted draft with forgotten non-primary passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
         t.context.mockApi!.configProvider = new ConfigurationProvider({
@@ -1376,7 +1399,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composeFrame.waitAndClick('@action-open-passphrase-dialog');
         const passphraseDialog = await inboxPage.getFrame(['passphrase.htm']);
         await passphraseDialog.waitForSelTestState('ready');
-        expect(await passphraseDialog.read('@passphrase-text')).to.equal('Enter FlowCrypt pass phrase to load a draft');
+        expect(await passphraseDialog.read('@passphrase-text')).to.equal('Enter FlowCrypt passphrase to load a draft');
         const whichKeyText = await passphraseDialog.read('@which-key');
         expect(whichKeyText).to.include('9B5F CFF5 76A0 3249 5AFE 7780 5354 351B 39AB 3BC6');
         expect(whichKeyText).to.not.include('CB04 85FE 44FC 22FF 09AF 0DB3 1B38 3D03 34E3 8B28');
@@ -1906,7 +1929,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           appendUrl: `draftId=${draftId}`,
         });
         expect(await composePage.attr('@input-subject', 'dir')).to.eq('rtl');
-        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
       })
     );
 
@@ -1925,7 +1948,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl: `draftId=${draftId}`,
         });
-        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا<br></div>');
+        expect(await composePage.readHtml('@input-body')).to.include('<div dir="rtl">مرحبا</div>');
       })
     );
 

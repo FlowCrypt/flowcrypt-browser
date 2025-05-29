@@ -53,6 +53,23 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
+
+const registerCompletionHandler = () => {
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  const dynamicImport = new Function('specifier', 'return import(specifier)');
+
+  dynamicImport('ava').then((module: { registerCompletionHandler: (handler: () => void) => void }) => {
+    const { registerCompletionHandler } = module;
+    registerCompletionHandler(() => {
+      process.exit(0);
+    });
+  });
+};
+
+test.before(() => {
+  registerCompletionHandler();
+});
+
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });
@@ -106,7 +123,7 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   });
   const address = mockApi.server.address();
   if (typeof address === 'object' && address) {
-    const result = await asyncExec(`sh ./scripts/config-mock-build.sh ${buildDir} ${address.port}`);
+    const result = await asyncExec(`node ./scripts/config-mock-build.js ${buildDir} ${address.port}`);
     t.context.extensionDir = result.stdout;
     t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
