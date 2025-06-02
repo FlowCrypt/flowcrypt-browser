@@ -187,7 +187,7 @@ export class ApiErr {
     } else if (e instanceof AjaxErr) {
       return 'AjaxErr with unknown cause.';
     } else if (e instanceof BgNotReadyErr) {
-      return 'Extension not ready. Restarting the browser should help.';
+      return 'Extension not ready. Restarting the browser or turning extension off and on in chrome://extensions should help.';
     } else if (e instanceof StoreFailedError) {
       return 'Failed to access browser extension storage. Restarting the browser should help.';
     } else {

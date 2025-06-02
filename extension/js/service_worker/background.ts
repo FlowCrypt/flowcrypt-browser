@@ -1,4 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+/// <reference lib="webworker" />
 
 'use strict';
 
@@ -17,12 +18,20 @@ import { injectFcIntoWebmail } from './inject.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 
 console.info('background.js service worker starting');
+declare let self: ServiceWorkerGlobalScope;
 
 (async () => {
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60 * 1000); // 4 hours
   await BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
+  self.addEventListener('install', () => {
+    void self.skipWaiting();
+  });
+
+  self.addEventListener('activate', event => {
+    event.waitUntil(self.clients.claim());
+  });
 
   try {
     await migrateGlobal();

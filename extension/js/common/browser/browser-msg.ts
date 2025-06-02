@@ -654,9 +654,21 @@ export class BrowserMsg {
               lastError === 'Could not establish connection. Receiving end does not exist.' ||
               lastError === 'The message port closed before a response was received.'
             ) {
-              // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
-              //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
-              e = new BgNotReadyErr(`BgNotReadyErr: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+              const hasReloaded = sessionStorage.getItem('bg_reload_attempted');
+
+              if (!hasReloaded) {
+                console.warn('Background not ready. Reloading extension to recover...');
+                sessionStorage.setItem('bg_reload_attempted', '1');
+                chrome.runtime.reload();
+                return; // this line likely won't run, but just in case
+              } else {
+                // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
+                //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
+                e = new BgNotReadyErr(`BgNotReadyErr: Background unavailable even after reload: ${lastError}`);
+                e.stack = `${msg.stack}\n\n${e.stack}`;
+                reject(e);
+                return;
+              }
             } else {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
             }
