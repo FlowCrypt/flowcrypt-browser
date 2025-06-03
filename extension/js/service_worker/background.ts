@@ -21,7 +21,11 @@ console.info('background.js service worker starting');
 declare let self: ServiceWorkerGlobalScope;
 
 self.addEventListener('install', () => {
-  void self.skipWaiting();
+  chrome.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason === 'update') {
+      void self.skipWaiting();
+    }
+  });
 });
 
 self.addEventListener('activate', event => {
