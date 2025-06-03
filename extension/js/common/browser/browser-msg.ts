@@ -401,13 +401,32 @@ export class BrowserMsg {
       try {
         return await operation();
       } catch (e) {
-        if (!(e instanceof BgNotReadyErr) || attempt === maxAttempts - 1) {
+        const isBgErr = e instanceof BgNotReadyErr;
+        const isLastAttempt = attempt === maxAttempts - 1;
+
+        if (!isBgErr) {
           throw e;
         }
+
+        if (isLastAttempt) {
+          const hasReloaded = sessionStorage.getItem('bg_reload_attempted');
+
+          if (!hasReloaded) {
+            console.warn('BgNotReadyErr: retry limit reached, reloading extension');
+            sessionStorage.setItem('bg_reload_attempted', '1');
+            chrome.runtime.reload();
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return new Promise(() => {}); // wait indefinitely after reload
+          }
+
+          throw new BgNotReadyErr('Background unavailable after retry and reload.');
+        }
+
         await Ui.delay(delayMs);
       }
     }
-    throw new BgNotReadyErr('Unexpected error after maximum retries');
+
+    throw new BgNotReadyErr('Unexpected BgNotReadyErr after maximum retries.'); // fallback safety
   }
 
   public static addListener(name: string, handler: Handler) {
@@ -654,21 +673,9 @@ export class BrowserMsg {
               lastError === 'Could not establish connection. Receiving end does not exist.' ||
               lastError === 'The message port closed before a response was received.'
             ) {
-              const hasReloaded = sessionStorage.getItem('bg_reload_attempted');
-
-              if (!hasReloaded) {
-                console.warn('Background not ready. Reloading extension to recover...');
-                sessionStorage.setItem('bg_reload_attempted', '1');
-                chrome.runtime.reload();
-                return; // this line likely won't run, but just in case
-              } else {
-                // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
-                //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
-                e = new BgNotReadyErr(`BgNotReadyErr: Background unavailable even after reload: ${lastError}`);
-                e.stack = `${msg.stack}\n\n${e.stack}`;
-                reject(e);
-                return;
-              }
+              // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
+              //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
+              e = new BgNotReadyErr(`BgNotReadyErr: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
             } else {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
             }
