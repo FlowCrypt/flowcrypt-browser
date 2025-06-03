@@ -851,7 +851,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         expect(pubkeyExpiration).to.equal(expectedExpiration);
       })
     );
-    test.only(
+    test(
       'settings - inform user when importing newer key version',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
