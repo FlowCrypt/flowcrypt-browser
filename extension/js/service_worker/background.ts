@@ -20,18 +20,19 @@ import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-
 console.info('background.js service worker starting');
 declare let self: ServiceWorkerGlobalScope;
 
+self.addEventListener('install', () => {
+  void self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
+});
+
 (async () => {
   let db: IDBDatabase;
   let storage: GlobalStoreDict;
   const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60 * 1000); // 4 hours
   await BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
-  self.addEventListener('install', () => {
-    void self.skipWaiting();
-  });
-
-  self.addEventListener('activate', event => {
-    event.waitUntil(self.clients.claim());
-  });
 
   try {
     await migrateGlobal();

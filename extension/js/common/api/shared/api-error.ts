@@ -187,7 +187,10 @@ export class ApiErr {
     } else if (e instanceof AjaxErr) {
       return 'AjaxErr with unknown cause.';
     } else if (e instanceof BgNotReadyErr) {
-      return 'Extension not ready. Restarting the browser or turning extension off and on in chrome://extensions should help.';
+      return `Extension not ready. Please try:
+        - turn FlowCrypt extension off and on again at Extensions page (chrome://extensions)
+        - restart browser
+        - reinstall FlowCrypt extension`;
     } else if (e instanceof StoreFailedError) {
       return 'Failed to access browser extension storage. Restarting the browser should help.';
     } else {
