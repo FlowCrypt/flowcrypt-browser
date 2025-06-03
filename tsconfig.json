@@ -13,7 +13,6 @@
     "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,
-    "skipLibCheck": true,
     "strict": true,
     "useUnknownInCatchVariables": false,
     "outDir": "build/generic-extension-wip",

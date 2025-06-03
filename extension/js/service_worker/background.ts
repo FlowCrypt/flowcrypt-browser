@@ -1,5 +1,4 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-/// <reference lib="webworker" />
 
 'use strict';
 
@@ -18,19 +17,6 @@ import { injectFcIntoWebmail } from './inject.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 
 console.info('background.js service worker starting');
-declare let self: ServiceWorkerGlobalScope;
-
-self.addEventListener('install', () => {
-  chrome.runtime.onInstalled.addListener(({ reason }) => {
-    if (reason === 'update') {
-      void self.skipWaiting();
-    }
-  });
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
-});
 
 (async () => {
   let db: IDBDatabase;
