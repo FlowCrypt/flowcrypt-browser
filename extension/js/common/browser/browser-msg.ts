@@ -401,13 +401,32 @@ export class BrowserMsg {
       try {
         return await operation();
       } catch (e) {
-        if (!(e instanceof BgNotReadyErr) || attempt === maxAttempts - 1) {
+        const isBgErr = e instanceof BgNotReadyErr;
+        const isLastAttempt = attempt === maxAttempts - 1;
+
+        if (!isBgErr) {
           throw e;
         }
+
+        if (isLastAttempt) {
+          const hasReloaded = sessionStorage.getItem('bg_reload_attempted');
+
+          if (!hasReloaded) {
+            console.warn('BgNotReadyErr: retry limit reached, reloading extension');
+            sessionStorage.setItem('bg_reload_attempted', '1');
+            chrome.runtime.reload();
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return new Promise(() => {}); // wait indefinitely after reload
+          }
+
+          throw new BgNotReadyErr('Background unavailable after retry and reload.');
+        }
+
         await Ui.delay(delayMs);
       }
     }
-    throw new BgNotReadyErr('Unexpected error after maximum retries');
+
+    throw new BgNotReadyErr('Unexpected BgNotReadyErr after maximum retries.'); // fallback safety
   }
 
   public static addListener(name: string, handler: Handler) {
