@@ -60,7 +60,6 @@ const copyDependencies = async () => {
     ['iso-8859-2/iso-8859-2.js', 'lib/iso-8859-2.js'],
     ['zxcvbn/dist/zxcvbn.js', 'lib/zxcvbn.js'],
     ['squire-rte/dist/squire.js', 'lib/squire.js'],
-    ['clipboard/dist/clipboard.js', 'lib/clipboard.js'],
     ['@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js', 'lib/fine-uploader.js'],
     ['filesize/dist/filesize.esm.js', 'lib/filesize.js'],
     // Using legacy build due to Puppeteer compatibility issue (Promise.withResolvers error)

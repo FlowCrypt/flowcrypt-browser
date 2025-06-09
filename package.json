@@ -46,7 +46,6 @@
     "@flowcrypt/fine-uploader": "5.16.4",
     "@types/thunderbird-webext-browser": "^127.0.0",
     "bootstrap": "4.6.2",
-    "clipboard": "2.0.11",
     "dompurify": "3.2.6",
     "filesize": "10.1.6",
     "fs-extra": "^11.3.0",
