@@ -26,7 +26,6 @@
       "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/lib/index.d.ts", "lib/streams/streams.js"],
       "dompurify": ["../node_modules/dompurify/dist/purify.cjs.d.ts", "lib/purify.js", "COMMENT"],
       "fine-uploader": ["lib/fine-uploader.js", "COMMENT"],
-      "clipboard": ["lib/clipboard.js", "COMMENT"],
       "filesize": ["lib/filesize.js", "../node_modules/filesize/types/filesize.d.ts"],
       "iso-8859-2": ["lib/iso-8859-2.js", "COMMENT"],
       "zxcvbn": ["lib/zxcvbn.js", "COMMENT"],
