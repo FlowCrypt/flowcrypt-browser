@@ -30,11 +30,23 @@ import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
 import { KeyWithPrivateFields } from './core/crypto/pgp/openpgp-key.js';
 
-declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
-
 export class Settings {
   public static evalPasswordStrength(passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') {
-    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type);
+    // all package will be available under zxcvbnts
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
+    const options = {
+      translations: zxcvbnts['language-en'].translations,
+      graphs: zxcvbnts['language-common'].adjacencyGraphs,
+      dictionary: {
+        ...zxcvbnts['language-common'].dictionary,
+        ...zxcvbnts['language-en'].dictionary,
+        userInputs: PgpPwd.weakWords(),
+      },
+    };
+    zxcvbnts.core.zxcvbnOptions.setOptions(options);
+    const guesses = zxcvbnts.core.zxcvbn(passphrase).guesses;
+    return PgpPwd.estimateStrength(guesses, type);
+    /* eslint-enable */
   }
 
   public static async renderSubPage(

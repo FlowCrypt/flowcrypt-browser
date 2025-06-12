@@ -45,6 +45,9 @@
   "dependencies": {
     "@flowcrypt/fine-uploader": "5.16.4",
     "@types/thunderbird-webext-browser": "^127.0.0",
+    "@zxcvbn-ts/core": "^3.0.4",
+    "@zxcvbn-ts/language-common": "^3.0.4",
+    "@zxcvbn-ts/language-en": "^3.0.2",
     "bootstrap": "4.6.2",
     "dompurify": "3.2.6",
     "filesize": "10.1.6",
@@ -58,8 +61,7 @@
     "postcss-html": "^1.8.0",
     "squire-rte": "2.3.3",
     "sweetalert2": "11.22.0",
-    "tap-xunit": "^2.4.1",
-    "zxcvbn": "4.4.2"
+    "tap-xunit": "^2.4.1"
   },
   "scripts": {
     "build": "npm run symlink-core && node ./scripts/build.js",
