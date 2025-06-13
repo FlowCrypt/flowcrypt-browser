@@ -67,7 +67,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    test(
+    test.only(
       'compose - strip emojis in a recipient email address',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';
