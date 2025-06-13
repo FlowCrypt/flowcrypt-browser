@@ -56,7 +56,6 @@ export class BrowserPool {
           slowMo,
         });
         await Util.sleep(1);
-        console.info('Chrome started...');
         break;
       } catch (err) {
         console.error('Error when starting Chrome...', err);
