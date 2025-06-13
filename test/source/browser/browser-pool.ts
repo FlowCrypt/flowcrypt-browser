@@ -4,7 +4,7 @@ import { Util } from '../util';
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
-import { launch } from 'puppeteer';
+import { Browser, launch } from 'puppeteer';
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
 
 class TimeoutError extends Error {}
@@ -33,6 +33,7 @@ export class BrowserPool {
       '--kiosk-printing',
       `--disable-extensions-except=${extensionDir}`,
       `--load-extension=${extensionDir}`,
+      '-disable-gpu',
       `--window-size=${this.width + 10},${this.height + 132}`,
       // https://github.com/puppeteer/puppeteer/issues/5123
       '--disable-features=site-per-process',
@@ -42,14 +43,33 @@ export class BrowserPool {
       args.push('--allow-insecure-localhost');
     }
     const slowMo = this.isMock ? 60 : 60;
-    const browser = await launch({
-      args,
-      acceptInsecureCerts: this.isMock,
-      headless: false,
-      devtools: false,
-      slowMo,
-    });
-    const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
+    // Attempt to open Chrome browser 5 times maximum.
+    let browser: Browser | undefined;
+    const browserStartAttempts = 5;
+    for (let i = 0; i < browserStartAttempts; i++) {
+      try {
+        await launch({
+          args,
+          acceptInsecureCerts: this.isMock,
+          headless: false,
+          devtools: false,
+          slowMo,
+        });
+        await Util.sleep(1000);
+        console.info('Chrome started...');
+        break;
+      } catch (err) {
+        console.error('Error when starting Chrome...', err);
+        if (browser?.connected) {
+          console.info('Closing browser...');
+          await browser.close();
+        }
+        await Util.sleep(1000);
+        browser = undefined;
+        console.info('Trying again...\n\n');
+      }
+    }
+    const handle = new BrowserHandle(browser!, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       try {
         const initialPage = await handle.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
