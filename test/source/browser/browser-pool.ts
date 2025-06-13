@@ -33,6 +33,7 @@ export class BrowserPool {
       '--kiosk-printing',
       `--disable-extensions-except=${extensionDir}`,
       `--load-extension=${extensionDir}`,
+      '-disable-gpu',
       `--window-size=${this.width + 10},${this.height + 132}`,
       // https://github.com/puppeteer/puppeteer/issues/5123
       '--disable-features=site-per-process',
