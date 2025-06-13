@@ -55,7 +55,7 @@ export class BrowserPool {
           devtools: false,
           slowMo,
         });
-        await Util.sleep(1000);
+        await Util.sleep(1);
         console.info('Chrome started...');
         break;
       } catch (err) {
@@ -64,7 +64,7 @@ export class BrowserPool {
           console.info('Closing browser...');
           await browser.close();
         }
-        await Util.sleep(1000);
+        await Util.sleep(1);
         browser = undefined;
         console.info('Trying again...\n\n');
       }
