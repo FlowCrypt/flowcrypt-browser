@@ -48,7 +48,7 @@ export class BrowserPool {
     const browserStartAttempts = 5;
     for (let i = 0; i < browserStartAttempts; i++) {
       try {
-        await launch({
+        browser = await launch({
           args,
           acceptInsecureCerts: this.isMock,
           headless: false,
