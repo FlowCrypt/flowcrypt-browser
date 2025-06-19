@@ -2,12 +2,10 @@
 
 'use strict';
 
-import { storageGet } from '../browser/chrome.js';
+import { ExternalService } from '../api/account-servers/external-service.js';
 import { Url } from '../core/common.js';
-import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
-import { AbstractStore } from './store/abstract-store.js';
+import { FLAVOR, VERSION } from '../core/const.js';
 import { GlobalStore } from './store/global-store.js';
-import { InMemoryStore } from './store/in-memory-store.js';
 
 export class UnreportableError extends Error {}
 export class CompanyLdapKeyMismatchError extends UnreportableError {}
@@ -28,8 +26,8 @@ export type ErrorReport = {
 type BrowserType = 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
 export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
+  public static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static ORIG_ONERROR = onerror;
-  private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
     // happens in gmail window when reloaded extension + now reloading gmail
     "Invocation of form get(, function) doesn't match definition get(optional string or array or object keys, function callback)",
@@ -330,46 +328,14 @@ export class Catch {
   }
 
   private static async doSendErrorToSharedTenantFes(errorReport: ErrorReport) {
-    try {
-      const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
-      const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
-      // Avoiding circular dependency by accessing storage directly instead of AcctStore.get
-      const key = AbstractStore.singleScopeRawIndex(acctEmail, 'fesUrl');
-      const storageObj = await storageGet('local', [key]);
-      const fesUrl = storageObj[key] as string;
-
-      if (!acctEmail) {
-        console.error('Not reporting error because user is not logged in');
-        return;
-      }
-      const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      void $.ajax({
-        url: `${fesUrl ? fesUrl : SHARED_TENANT_API_HOST}/api/v1/log-collector/exception`,
-        method: 'POST',
-        data: JSON.stringify(errorReport),
-        dataType: 'json',
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        headers: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          Authorization: `Bearer ${idToken}`,
-        },
-        success: (response: { saved: boolean }) => {
-          if (response && typeof response === 'object' && response.saved) {
-            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          } else {
-            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          }
-        },
-        error: () => {
-          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-        },
-      });
-    } catch (ajaxErr) {
-      console.error(ajaxErr);
-      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+    const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
+    const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
+    if (!acctEmail) {
+      console.error('Not reporting error because user is not logged in');
+      return;
     }
+    const externalService = new ExternalService(acctEmail);
+    await externalService.reportException(errorReport);
   }
 
   private static formExceptionFromThrown(thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error {
