@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Key, UnexpectedKeyTypeError } from '../key.js';
 import { Str } from '../../common.js';
-import { UnreportableError } from '../../../platform/catch.js';
+import { UnreportableError } from '../../../platform/error-report.js';
 import { PgpArmor } from '../pgp/pgp-armor.js';
 import { Buf } from '../../buf.js';
 import { MsgBlockParser } from '../../msg-block-parser.js';

@@ -15,6 +15,7 @@ import { View } from '../../../js/common/view.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { InMemoryStore } from '../../../js/common/platform/store/in-memory-store.js';
 import { InMemoryStoreKeys } from '../../../js/common/core/const.js';
+import { CatchHelper } from '../../../js/common/platform/catch-helper.js';
 
 View.run(
   class ExperimentalView extends View {
@@ -50,20 +51,20 @@ View.run(
       );
       $('.action_throw_unchecked').on('click', e => {
         e.preventDefault();
-        Catch.test('error');
+        CatchHelper.test('error');
       });
       $('.action_throw_err').on(
         'click',
         this.setHandler((el, e) => {
           e.preventDefault();
-          Catch.test('error');
+          CatchHelper.test('error');
         })
       );
       $('.action_throw_obj').on(
         'click',
         this.setHandler((el, e) => {
           e.preventDefault();
-          Catch.test('object');
+          CatchHelper.test('object');
         })
       );
       $('.action_reset_account').on(

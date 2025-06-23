@@ -9,7 +9,7 @@ import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/con
 import { GmailRes } from './gmail-parser.js';
 import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { Serializable } from '../../../platform/store/abstract-store.js';
-import { Catch } from '../../../platform/catch.js';
+import { CatchHelper } from '../../../platform/catch-helper.js';
 
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
@@ -62,7 +62,7 @@ export class Google {
     }
     const headers = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const progressCbs = 'download' in progress || 'upload' in progress ? progress : undefined;
-    const request: Ajax = { url, headers, ...dataPart, stack: Catch.stackTrace(), progress: progressCbs };
+    const request: Ajax = { url, headers, ...dataPart, stack: CatchHelper.stackTrace(), progress: progressCbs };
     return await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<RT>(acctEmail, request);
   };
 
@@ -80,7 +80,7 @@ export class Google {
           method: 'GET',
           data,
           headers: authorizationHeader,
-          stack: Catch.stackTrace(),
+          stack: CatchHelper.stackTrace(),
         })
       )
     );
@@ -106,7 +106,7 @@ export class Google {
       method: 'GET',
       data,
       headers: authorizationHeader,
-      stack: Catch.stackTrace(),
+      stack: CatchHelper.stackTrace(),
     });
     return contacts;
   };

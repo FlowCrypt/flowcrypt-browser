@@ -16,6 +16,7 @@ import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { Debug } from '../../js/common/platform/debug.js';
 import { Catch } from '../../js/common/platform/catch.js';
+import { CatchHelper } from '../../js/common/platform/catch-helper.js';
 import { Url } from '../../js/common/core/common.js';
 import { Gmail } from '../../js/common/api/email-provider/gmail/gmail.js';
 import { PgpHash } from '../../js/common/core/crypto/pgp/pgp-hash.js';
@@ -44,6 +45,7 @@ const libs: unknown[] = [
   ContactStore,
   Debug,
   Catch,
+  CatchHelper,
   Gmail,
   PgpHash,
   PgpArmor,

@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Catch } from '../platform/catch.js';
 import { Dict } from '../core/common.js';
 import { FlatTypes } from '../platform/store/abstract-store.js';
+import { CatchHelper } from '../platform/catch-helper.js';
 
 export class BrowserExtension {
   // todo - move extension-specific common.js code here
 
   public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error | unknown): string => {
-    const bugReport: Dict<string> = { name, stack: Catch.stackTrace() };
+    const bugReport: Dict<string> = { name, stack: CatchHelper.stackTrace() };
     try {
       bugReport.error = JSON.stringify(error, undefined, 2);
     } catch (e) {

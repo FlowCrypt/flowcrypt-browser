@@ -20,6 +20,7 @@ import { Ui } from './ui.js';
 import { AuthRes } from '../api/authentication/generic/oauth.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
+import { CatchHelper } from '../platform/catch-helper.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -643,7 +644,7 @@ export class BrowserMsg {
       data: { bm },
       to: destString || null, // eslint-disable-line no-null/no-null
       uid: SymmetricMessageEncryption.generateIV(),
-      stack: Catch.stackTrace(),
+      stack: CatchHelper.stackTrace(),
     };
     // eslint-disable-next-line no-null/no-null
     if (!(await Env.isBackgroundPage()) && msg.to !== null) {

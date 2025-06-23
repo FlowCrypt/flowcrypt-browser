@@ -10,7 +10,7 @@ import { asyncSome } from './core/common.js';
 import { InMemoryStoreKeys } from './core/const.js';
 import { KeyUtil, Key } from './core/crypto/key.js';
 import { KeyStoreUtil } from './core/crypto/key-store-util.js';
-import { CompanyLdapKeyMismatchError } from './platform/catch.js';
+import { CompanyLdapKeyMismatchError } from './platform/error-report.js';
 import { InMemoryStore } from './platform/store/in-memory-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 

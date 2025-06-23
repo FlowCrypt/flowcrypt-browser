@@ -2,7 +2,9 @@
 
 'use strict';
 
-import { Catch, UnreportableError } from '../common/platform/catch.js';
+import { Catch } from '../common/platform/catch.js';
+import { UnreportableError } from '../common/platform/error-report.js';
+import { CatchHelper } from '../common/platform/catch-helper.js';
 import { Dict, Url, UrlParam } from '../common/core/common.js';
 import { StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store/abstract-store.js';
 import { GlobalStore } from '../common/platform/store/global-store.js';
@@ -58,7 +60,7 @@ export class BgUtils {
         reason = 'db_failed';
       }
     }
-    await BgUtils.openSettingsPage(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
+    await BgUtils.openSettingsPage(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : CatchHelper.stackTrace() }));
     throw new UnreportableError();
   }
 }

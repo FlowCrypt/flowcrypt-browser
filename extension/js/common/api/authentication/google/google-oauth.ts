@@ -10,7 +10,7 @@ import { Ajax, Api } from '../../shared/api.js';
 import { Bm, ScreenDimensions } from '../../../browser/browser-msg.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
 import { OAuth2 } from '../../../oauth2/oauth2.js';
-import { Catch } from '../../../platform/catch.js';
+import { CatchHelper } from '../../../platform/catch-helper.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
 import { AccountServer } from '../../account-server.js';
@@ -48,7 +48,7 @@ export class GoogleOAuth extends OAuth {
         url: `${OAUTH_GOOGLE_API_HOST}/tokeninfo?access_token=${accessToken}`,
         method: 'GET',
         timeout: 10000,
-        stack: Catch.stackTrace(),
+        stack: CatchHelper.stackTrace(),
       },
       'json'
     );
@@ -103,7 +103,7 @@ export class GoogleOAuth extends OAuth {
         return performAjaxRequest({
           ...req,
           headers: { ...(req.headers ?? {}), ...(await GoogleOAuth.googleApiAuthHeader(acctEmail, true)) },
-          stack: Catch.stackTrace(),
+          stack: CatchHelper.stackTrace(),
         });
       }
       throw firstAttemptErr;
@@ -200,7 +200,7 @@ export class GoogleOAuth extends OAuth {
     const req: Ajax = {
       url,
       method: 'POST',
-      stack: Catch.stackTrace(),
+      stack: CatchHelper.stackTrace(),
     };
 
     return await Api.ajax(req, 'json');
@@ -313,7 +313,7 @@ export class GoogleOAuth extends OAuth {
         }),
         /* eslint-enable @typescript-eslint/naming-convention */
         method: 'POST',
-        stack: Catch.stackTrace(),
+        stack: CatchHelper.stackTrace(),
       },
       'json'
     );

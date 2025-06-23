@@ -4,7 +4,7 @@
 
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
-import { Catch } from '../../platform/catch.js';
+import { CatchHelper } from '../../platform/catch-helper.js';
 import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
@@ -87,7 +87,7 @@ export class Api {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
         } else {
           const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET', stack: Catch.stackTrace() }));
+          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET', stack: CatchHelper.stackTrace() }));
         }
       };
       request.onerror = errHandler;
@@ -329,7 +329,7 @@ export class Api {
         throw e;
       }
       if (Api.isRawAjaxErr(e)) {
-        throw AjaxErr.fromXhr(e, { ...req, stack: Catch.stackTrace() });
+        throw AjaxErr.fromXhr(e, { ...req, stack: CatchHelper.stackTrace() });
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
@@ -408,7 +408,7 @@ export class Api {
         dataPart = { method: values.method ?? 'POST', data: formattedData, dataType: 'FORM' };
       }
     }
-    const req: Ajax = { url: url + path, stack: Catch.stackTrace(), ...dataPart, headers, progress };
+    const req: Ajax = { url: url + path, stack: CatchHelper.stackTrace(), ...dataPart, headers, progress };
     if (typeof resFmt === 'undefined') {
       const undefinedRes: undefined = await Api.ajax(req, undefined); // we should get an undefined
       return undefinedRes as FetchResult<T, RT>;

@@ -5,23 +5,11 @@
 import { ExternalService } from '../api/account-servers/external-service.js';
 import { Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
+import { CatchHelper } from './catch-helper.js';
+import { ErrorReport, UnreportableError } from './error-report.js';
 import { GlobalStore } from './store/global-store.js';
 
-export class UnreportableError extends Error {}
-export class CompanyLdapKeyMismatchError extends UnreportableError {}
 type ObjWithStack = { stack: string };
-export type ErrorReport = {
-  name: string;
-  message: string;
-  url: string;
-  line: number;
-  col: number;
-  trace: string;
-  version: string;
-  environment: string;
-  product: string;
-  buildType: string;
-};
 
 type BrowserType = 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
 export class Catch {
@@ -205,48 +193,6 @@ export class Catch {
     return browserName + ':' + env;
   }
 
-  public static test(type: 'error' | 'object' = 'error') {
-    if (type === 'error') {
-      throw new Error('intentional error for debugging');
-    } else {
-      // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
-      throw { what: 'intentional thrown object for debugging' };
-    }
-  }
-
-  public static stackTrace(): string {
-    try {
-      Catch.test();
-    } catch (e) {
-      // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(location.href)}\n`;
-    }
-    return ''; // make ts happy - this will never happen
-  }
-
-  public static censoredUrl(url: string | undefined): string {
-    if (!url) {
-      return '(unknown url)';
-    }
-    const sensitiveFields = ['message', 'senderEmail', 'acctEmail'];
-    for (const field of sensitiveFields) {
-      url = Url.replaceUrlParam(url, field, '[SCRUBBED]');
-    }
-    if (url.includes('refreshToken=')) {
-      return `${url.split('?')[0]}~censored:refreshToken`;
-    }
-    if (url.includes('token=')) {
-      return `${url.split('?')[0]}~censored:token`;
-    }
-    if (url.includes('code=')) {
-      return `${url.split('?')[0]}~censored:code`;
-    }
-    if (url.includes('idToken=')) {
-      return `${url.split('?')[0]}~censored:idToken`;
-    }
-    return url;
-  }
-
   public static onUnhandledRejectionInternalHandler(e: unknown) {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
@@ -306,7 +252,7 @@ export class Catch {
     }
     if (thrown instanceof Error) {
       // reporting stack may differ from the stack of the actual error, both may be interesting
-      thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
+      thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', CatchHelper.stackTrace());
       if (thrown.hasOwnProperty('workerStack')) {
         // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
         thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as Error & { workerStack: string }).workerStack));

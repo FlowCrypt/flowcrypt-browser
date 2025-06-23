@@ -7,7 +7,7 @@ import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { Dict, Str } from '../../core/common.js';
 import { FLAVOR, SHARED_TENANT_API_HOST } from '../../core/const.js';
-import { ErrorReport } from '../../platform/catch.js';
+import { ErrorReport } from '../../platform/error-report.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
 import { AcctStore } from '../../platform/store/acct-store.js';
 import { Xss } from '../../platform/xss.js';

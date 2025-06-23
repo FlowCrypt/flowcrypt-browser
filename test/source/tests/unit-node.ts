@@ -8,7 +8,7 @@ import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
-import { UnreportableError } from '../platform/catch.js';
+import { UnreportableError } from '../platform/error-report.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
