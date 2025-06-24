@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { ExternalService } from '../api/account-servers/external-service.js';
 import { Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
 import { CatchHelper } from './catch-helper.js';
@@ -280,7 +279,9 @@ export class Catch {
       console.error('Not reporting error because user is not logged in');
       return;
     }
-    const externalService = new ExternalService(acctEmail);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
+    const externalService = require('../api/account-servers/external-service.js');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await externalService.reportException(errorReport);
   }
 
