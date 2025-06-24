@@ -104,11 +104,16 @@ export class ExternalService extends Api {
     return r.clientConfiguration;
   };
 
+  public setUrlBasedOnFesStatus = async () => {
+    const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    if (!fesUrl) {
+      this.url = SHARED_TENANT_API_HOST;
+    }
+  };
+
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
     try {
-      const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
-      const url = `${fesUrl ? fesUrl : SHARED_TENANT_API_HOST}/api/v1/log-collector/exception`;
-      await this.request(url, { fmt: 'JSON', data: errorReport });
+      await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
     } catch (ajaxErr) {
       console.error(ajaxErr);
       // Couldn't use Catch.CONSOLE_MSG because of circurlar dependency issue

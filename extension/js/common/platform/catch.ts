@@ -282,6 +282,8 @@ export class Catch {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
     const externalService = require('../api/account-servers/external-service.js');
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    await externalService.setUrlBasedOnFesStatus();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await externalService.reportException(errorReport);
   }
 
