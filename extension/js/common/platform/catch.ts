@@ -279,11 +279,13 @@ export class Catch {
       console.error('Not reporting error because user is not logged in');
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-require-imports
-    const externalService = require('../api/account-servers/external-service.js');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
+    // @ts-expect-error need to use lazy load because of circular dependency injection
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { ExternalService } = await import('../api/account-servers/external-service.js');
+    const externalService = new ExternalService(acctEmail);
+    console.log(externalService);
     await externalService.setUrlBasedOnFesStatus();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await externalService.reportException(errorReport);
   }
 
