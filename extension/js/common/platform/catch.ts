@@ -280,7 +280,6 @@ export class Catch {
       return;
     }
 
-    // @ts-expect-error need to use lazy load because of circular dependency injection
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { ExternalService } = await import('../api/account-servers/external-service.js');
     const externalService = new ExternalService(acctEmail);
