@@ -448,7 +448,7 @@ export class KeyImportUi {
           'Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
             'Please export the key with --export-secret-key option.'
         );
-      } else if (await KeyUtil.isWithoutSelfCertifications(k)) {
+      } else if ((await KeyUtil.isWithoutSelfCertifications(k)) || (await OpenPGPKey.keyHasNoUsers(k))) {
         throw new KeyCanBeFixed(encrypted);
       } else if (k.usableForEncryptionButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:

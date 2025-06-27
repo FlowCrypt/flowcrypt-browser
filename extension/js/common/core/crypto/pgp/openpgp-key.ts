@@ -308,6 +308,11 @@ export class OpenPGPKey {
     return '[' + strs.join(', ') + ']';
   }
 
+  public static async keyHasNoUsers(pubkey: Key): Promise<boolean> {
+    const key = await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
+    return key.users.length === 0;
+  }
+
   public static async diagnose(pubkey: Key, passphrase: string): Promise<Map<string, string>> {
     const key = await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
     const result = new Map<string, string>();
