@@ -448,8 +448,6 @@ export class KeyImportUi {
           'Looks like this key was exported with --export-secret-subkeys option and missing private key parameters.\n\n' +
             'Please export the key with --export-secret-key option.'
         );
-      } else if ((await KeyUtil.isWithoutSelfCertifications(k)) || (await OpenPGPKey.keyHasNoUsers(k))) {
-        throw new KeyCanBeFixed(encrypted);
       } else if (k.usableForEncryptionButExpired) {
         // Currently have 2 options: import or skip. Would be better to give user 3 choices:
         // 1) Confirm importing expired key
@@ -464,6 +462,8 @@ export class KeyImportUi {
             'You chose to not import expired key.\n\nPlease import another key, or edit the expired key in another OpenPGP software to extend key validity.'
           );
         }
+      } else if ((await KeyUtil.isWithoutSelfCertifications(k)) || (await OpenPGPKey.keyHasNoUsers(k))) {
+        throw new KeyCanBeFixed(encrypted);
       } else {
         throw new UserAlert(`This looks like a valid key but it cannot be used for encryption. Please ${contactSubsentence} to see why is that.`);
       }
