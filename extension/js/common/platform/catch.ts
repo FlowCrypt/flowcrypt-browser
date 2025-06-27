@@ -283,7 +283,6 @@ export class Catch {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { ExternalService } = await import('../api/account-servers/external-service.js');
     const externalService = new ExternalService(acctEmail);
-    console.log(externalService);
     await externalService.setUrlBasedOnFesStatus();
     await externalService.reportException(errorReport);
   }
