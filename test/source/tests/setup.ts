@@ -310,12 +310,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    // This test will succeed after OpenPGP adds support for parsing keys without
-    // User IDs. See: https://github.com/openpgpjs/openpgpjs/issues/1144
-    //
-    // The test will also succeed if local openpgp.js is patched and
-    // `!this.users.length` condition is removed from the Key constructor.
-    test.failing(
+    test(
       'setup - import key - fix uids',
       testWithBrowser(async (t, browser) => {
         t.context.mockApi!.configProvider = new ConfigurationProvider({
