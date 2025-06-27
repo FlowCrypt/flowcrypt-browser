@@ -1,15 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    "module": "ES2022",
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
-    "alwaysStrict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "strictPropertyInitialization": true,
     "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,

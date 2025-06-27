@@ -4,7 +4,7 @@
 
 import { Lang } from '../../lang.js';
 import { Settings } from '../../settings.js';
-import { UnreportableError } from '../../platform/catch.js';
+import { UnreportableError } from '../../platform/error-report.js';
 import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';

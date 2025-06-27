@@ -2,34 +2,19 @@
 
 'use strict';
 
-import { storageGet } from '../browser/chrome.js';
 import { Url } from '../core/common.js';
-import { FLAVOR, InMemoryStoreKeys, SHARED_TENANT_API_HOST, VERSION } from '../core/const.js';
-import { AbstractStore } from './store/abstract-store.js';
+import { FLAVOR, VERSION } from '../core/const.js';
+import { CatchHelper } from './catch-helper.js';
+import { ErrorReport, UnreportableError } from './error-report.js';
 import { GlobalStore } from './store/global-store.js';
-import { InMemoryStore } from './store/in-memory-store.js';
 
-export class UnreportableError extends Error {}
-export class CompanyLdapKeyMismatchError extends UnreportableError {}
 type ObjWithStack = { stack: string };
-export type ErrorReport = {
-  name: string;
-  message: string;
-  url: string;
-  line: number;
-  col: number;
-  trace: string;
-  version: string;
-  environment: string;
-  product: string;
-  buildType: string;
-};
 
 type BrowserType = 'firefox' | 'thunderbird' | 'ie' | 'chrome' | 'opera' | 'safari' | 'unknown';
 export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
+  public static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static ORIG_ONERROR = onerror;
-  private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
   private static IGNORE_ERR_MSG = [
     // happens in gmail window when reloaded extension + now reloading gmail
     "Invocation of form get(, function) doesn't match definition get(optional string or array or object keys, function callback)",
@@ -207,48 +192,6 @@ export class Catch {
     return browserName + ':' + env;
   }
 
-  public static test(type: 'error' | 'object' = 'error') {
-    if (type === 'error') {
-      throw new Error('intentional error for debugging');
-    } else {
-      // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
-      throw { what: 'intentional thrown object for debugging' };
-    }
-  }
-
-  public static stackTrace(): string {
-    try {
-      Catch.test();
-    } catch (e) {
-      // return stack after removing first 3 lines plus url
-      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${Catch.censoredUrl(location.href)}\n`;
-    }
-    return ''; // make ts happy - this will never happen
-  }
-
-  public static censoredUrl(url: string | undefined): string {
-    if (!url) {
-      return '(unknown url)';
-    }
-    const sensitiveFields = ['message', 'senderEmail', 'acctEmail'];
-    for (const field of sensitiveFields) {
-      url = Url.replaceUrlParam(url, field, '[SCRUBBED]');
-    }
-    if (url.includes('refreshToken=')) {
-      return `${url.split('?')[0]}~censored:refreshToken`;
-    }
-    if (url.includes('token=')) {
-      return `${url.split('?')[0]}~censored:token`;
-    }
-    if (url.includes('code=')) {
-      return `${url.split('?')[0]}~censored:code`;
-    }
-    if (url.includes('idToken=')) {
-      return `${url.split('?')[0]}~censored:idToken`;
-    }
-    return url;
-  }
-
   public static onUnhandledRejectionInternalHandler(e: unknown) {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
@@ -308,7 +251,7 @@ export class Catch {
     }
     if (thrown instanceof Error) {
       // reporting stack may differ from the stack of the actual error, both may be interesting
-      thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', Catch.stackTrace());
+      thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', CatchHelper.stackTrace());
       if (thrown.hasOwnProperty('workerStack')) {
         // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
         thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as Error & { workerStack: string }).workerStack));
@@ -330,46 +273,18 @@ export class Catch {
   }
 
   private static async doSendErrorToSharedTenantFes(errorReport: ErrorReport) {
-    try {
-      const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
-      const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
-      // Avoiding circular dependency by accessing storage directly instead of AcctStore.get
-      const key = AbstractStore.singleScopeRawIndex(acctEmail, 'fesUrl');
-      const storageObj = await storageGet('local', [key]);
-      const fesUrl = storageObj[key] as string;
-
-      if (!acctEmail) {
-        console.error('Not reporting error because user is not logged in');
-        return;
-      }
-      const idToken = await InMemoryStore.get(acctEmail, InMemoryStoreKeys.ID_TOKEN);
-      void $.ajax({
-        url: `${fesUrl ? fesUrl : SHARED_TENANT_API_HOST}/api/v1/log-collector/exception`,
-        method: 'POST',
-        data: JSON.stringify(errorReport),
-        dataType: 'json',
-        crossDomain: true,
-        contentType: 'application/json; charset=UTF-8',
-        async: true,
-        headers: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          Authorization: `Bearer ${idToken}`,
-        },
-        success: (response: { saved: boolean }) => {
-          if (response && typeof response === 'object' && response.saved) {
-            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          } else {
-            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-          }
-        },
-        error: () => {
-          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
-        },
-      });
-    } catch (ajaxErr) {
-      console.error(ajaxErr);
-      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+    const { acctEmail: parsedEmail } = Url.parse(['acctEmail']);
+    const acctEmail = parsedEmail ? String(parsedEmail) : (await GlobalStore.acctEmailsGet())?.[0];
+    if (!acctEmail) {
+      console.error('Not reporting error because user is not logged in');
+      return;
     }
+
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { ExternalService } = await import('../api/account-servers/external-service.js');
+    const externalService = new ExternalService(acctEmail);
+    await externalService.setUrlBasedOnFesStatus();
+    await externalService.reportException(errorReport);
   }
 
   private static formExceptionFromThrown(thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error {

@@ -8,7 +8,8 @@ import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { Buf } from './core/buf.js';
-import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
+import { Catch } from './platform/catch.js';
+import { CompanyLdapKeyMismatchError } from './platform/error-report.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleOAuth } from './api/authentication/google/google-oauth.js';
@@ -29,6 +30,7 @@ import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
 import { KeyWithPrivateFields } from './core/crypto/pgp/openpgp-key.js';
+import { CatchHelper } from './platform/catch-helper.js';
 
 export class Settings {
   public static evalPasswordStrength(passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') {
@@ -393,7 +395,7 @@ export class Settings {
           });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm', method: 'GET', stack: Catch.stackTrace() }, 'text');
+        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm', method: 'GET', stack: CatchHelper.stackTrace() }, 'text');
         await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
         // Do not report error for csrf

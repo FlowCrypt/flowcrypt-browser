@@ -5,7 +5,7 @@
 import { Str } from './core/common.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { KeyAlgo } from './core/crypto/key.js';
-import { UnreportableError } from './platform/catch.js';
+import { UnreportableError } from './platform/error-report.js';
 
 type ClientConfiguration$flag =
   | 'NO_PRV_CREATE'

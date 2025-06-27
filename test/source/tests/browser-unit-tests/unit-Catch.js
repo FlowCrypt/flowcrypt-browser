@@ -51,7 +51,7 @@ BROWSER_UNIT_TEST_NAME(`Catcher does report on consumer`).consumer;
 BROWSER_UNIT_TEST_NAME(`Catcher does report sensitive infos`);
 (async () => {
   const url = 'chrome://extension-id/pgp_block.htm?frameId=id&message=blahblah&some=1&senderEmail=blahblah&acctEmail=123&prefixedacctEmail=blah';
-  const censoredUrl = Catch.censoredUrl(url);
+  const censoredUrl = CatchHelper.censoredUrl(url);
   const expectedCensoredUrl =
     'chrome://extension-id/pgp_block.htm?frameId=id&message=[SCRUBBED]&some=1&senderEmail=[SCRUBBED]&acctEmail=[SCRUBBED]&prefixedacctEmail=blah';
   if (censoredUrl !== expectedCensoredUrl) {

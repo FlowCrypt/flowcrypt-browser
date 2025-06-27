@@ -10,7 +10,7 @@ import { SendableMsg } from '../../../../js/common/api/email-provider/sendable-m
 import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { ComposeView } from '../../compose.js';
 import { KeyStoreUtil, ParsedKeyInfo } from '../../../../js/common/core/crypto/key-store-util.js';
-import { UnreportableError } from '../../../../js/common/platform/catch.js';
+import { UnreportableError } from '../../../../js/common/platform/error-report.js';
 import { ParsedRecipients } from '../../../../js/common/api/email-provider/email-provider-api.js';
 import { Attachment } from '../../../../js/common/core/attachment.js';
 

@@ -8,11 +8,11 @@ import { AuthenticationConfiguration } from '../../authentication-configuration.
 import { Url } from '../../core/common.js';
 import { Assert, AssertError } from '../../assert.js';
 import { Api } from '../shared/api.js';
-import { Catch } from '../../platform/catch.js';
 import { InMemoryStoreKeys } from '../../core/const.js';
 import { InMemoryStore } from '../../platform/store/in-memory-store.js';
 import { AcctStore, AcctStoreDict } from '../../platform/store/acct-store.js';
 import { EnterpriseServerAuthErr } from '../shared/api-error.js';
+import { CatchHelper } from '../../platform/catch-helper.js';
 export class ConfiguredIdpOAuth extends OAuth {
   public static newAuthPopupForEnterpriseServerAuthenticationIfNeeded = async (authRes: AuthRes) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -105,7 +105,7 @@ export class ConfiguredIdpOAuth extends OAuth {
         },
         dataType: 'JSON',
         /* eslint-enable @typescript-eslint/naming-convention */
-        stack: Catch.stackTrace(),
+        stack: CatchHelper.stackTrace(),
       },
       'json'
     );
@@ -211,7 +211,7 @@ export class ConfiguredIdpOAuth extends OAuth {
         },
         dataType: 'JSON',
         /* eslint-enable @typescript-eslint/naming-convention */
-        stack: Catch.stackTrace(),
+        stack: CatchHelper.stackTrace(),
       },
       'json'
     );
