@@ -518,15 +518,12 @@ div.reply_message_iframe_container.inserted {
 
 /* augmented */
 body.cryptup_gmail div.recipients_use_encryption {
+  display: flex;
+  justify-content: space-between;
   min-height: 0;
   background-color: #f5f5f5;
-  margin: 0 -20px;
-  padding: 4px 20px;
-}
-
-body.cryptup_gmail div.recipients_use_encryption a {
-  position: absolute;
-  right: 20px;
+  font-size: 0.875rem;
+  padding: 8px 16px;
 }
 
 .swal2-popup.ui-modal-iframe {
