@@ -153,7 +153,8 @@ export class BgHandlers {
   public static thunderbirdContentScriptRegistration = async () => {
     const contentScriptGroups = chrome.runtime.getManifest().content_scripts ?? []; // we know it's in the manifest
     // sweetalert2.js throws error in Thunderbird environment
-    const files = contentScriptGroups[0].js?.filter(url => !url.includes('sweetalert2')).map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];
+    let files = contentScriptGroups[0].js?.filter(url => !url.includes('sweetalert2')).map(url => url.replace(/moz-extension:\/\/[^/]+\//, './')) ?? [];
+    files = ['./lib/asmcrypto.all.es5.min.js', './lib/elliptic.min.js', './lib/webcrypto-liner.shim.js'].concat(files);
     await messenger.messageDisplayScripts.register({
       js: files.map(file => ({ file })),
       css: [{ file: './css/cryptup.css' }],
