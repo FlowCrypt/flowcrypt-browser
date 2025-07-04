@@ -261,7 +261,9 @@ export class Catch {
     return {
       name: exception.name.substring(0, 50),
       message: Catch.groupSimilarReports(exception.message.substring(0, 200)),
-      url: Catch.groupSimilarReports(location.href.split('?')[0]),
+      // Use https://mail.google.com/mail as URL for content script errors
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/6031
+      url: Catch.RUNTIME_ENVIRONMENT === 'ex:s:gmail' ? 'https://mail.google.com/mail' : Catch.groupSimilarReports(location.href.split('?')[0]),
       line: line || 1,
       col: col || 1,
       trace: Catch.groupSimilarReports(exception.stack || ''),
