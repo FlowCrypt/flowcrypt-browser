@@ -33,6 +33,8 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5280
     '400 when POST-ing https://flowcrypt.com/attester/welcome-message string: email,pubkey -> This key does not appear valid',
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/6030
+    'ResizeObserver loop completed with undelivered notifications',
   ];
 
   public static rewrapErr(e: unknown, message: string): Error {
