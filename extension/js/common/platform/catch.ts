@@ -2,6 +2,8 @@
 
 'use strict';
 
+import type { ExternalService as IExternalService } from '../api/account-servers/external-service.js';
+import { Env } from '../browser/env.js';
 import { Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
 import { CatchHelper } from './catch-helper.js';
@@ -280,9 +282,26 @@ export class Catch {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const { ExternalService } = await import('../api/account-servers/external-service.js');
-    const externalService = new ExternalService(acctEmail);
+    let externalService: IExternalService;
+    if (Env.isContentScript()) {
+      /**
+       * – In content-script builds, the class is already bundled in `webmail_bundle.js`
+       *   so we just grab it from the global scope.
+       *   ⚠️ If we *ever* try to dynamically import this module from a content-script
+       *   the browser will throw:
+       *   “Denying load of chrome-extension://…/external-service.js.
+       *   Resources (including all dependencies this file uses) must be listed in the web_accessible_resources manifest key”
+       */
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      externalService = new ExternalService(acctEmail);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const { ExternalService } = await import('../api/account-servers/external-service.js');
+      externalService = new ExternalService(acctEmail);
+    }
+
     await externalService.setUrlBasedOnFesStatus();
     await externalService.reportException(errorReport);
   }
