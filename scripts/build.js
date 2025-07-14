@@ -63,7 +63,7 @@ const copyDependencies = async () => {
     ['@zxcvbn-ts/language-en/dist/zxcvbn-ts.js', 'lib/zxcvbn-language-en.js'],
     ['squire-rte/dist/squire.js', 'lib/squire.js'],
     ['@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js', 'lib/fine-uploader.js'],
-    ['filesize/dist/filesize.esm.js', 'lib/filesize.js'],
+    ['filesize/dist/filesize.js', 'lib/filesize.js'],
     // Using legacy build due to Puppeteer compatibility issue (Promise.withResolvers error)
     // Reference: https://github.com/mozilla/pdf.js/issues/18006#issuecomment-2078739672
     ['pdfjs-dist/legacy/build/pdf.min.mjs', 'lib/pdf.min.mjs'],
