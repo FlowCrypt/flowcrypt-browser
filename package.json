@@ -50,7 +50,7 @@
     "@zxcvbn-ts/language-en": "^3.0.2",
     "bootstrap": "4.6.2",
     "dompurify": "3.2.6",
-    "filesize": "11.0.0",
+    "filesize": "11.0.1",
     "fs-extra": "^11.3.0",
     "globby": "^14.1.0",
     "iso-8859-2": "1.0.0",
