@@ -25,20 +25,36 @@ export type AjaxHeaders = {
   authorization?: string;
   ['api-version']?: string;
 };
+interface GetParams {
+  method: 'GET' | 'DELETE';
+  data?: UrlParams;
+}
+export interface JsonParams {
+  method: 'POST' | 'PUT';
+  data?: Dict<Serializable>;
+  dataType?: 'JSON';
+}
+
+interface TextParams {
+  method: 'POST' | 'PUT';
+  data: string;
+  contentType?: string;
+  dataType: 'TEXT';
+}
+interface FormParams {
+  method: 'POST' | 'PUT';
+  data: FormData;
+  dataType: 'FORM';
+}
+
+export type AjaxParams = GetParams | JsonParams | TextParams | FormParams;
 export type Ajax = {
   url: string;
   headers?: AjaxHeaders;
   progress?: ProgressCbs;
   timeout?: number; // todo: implement
   stack: string;
-} & (
-  | { method: 'GET' | 'DELETE'; data?: UrlParams }
-  | { method: 'POST' }
-  | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
-  | { method: 'POST' | 'PUT'; contentType?: string; data: string; dataType: 'TEXT' }
-  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' }
-  | { method: never; data: never; contentType: never }
-);
+} & AjaxParams;
 type RawAjaxErr = {
   readyState: number;
   responseText?: string;
@@ -157,7 +173,7 @@ export class Api {
               headersInit.push(['Content-Type', req.contentType]);
             }
           } else {
-            body = req.data; // todo: form data content-type?
+            body = req.data as FormData; // todo: form data content-type?
           }
         }
       }
@@ -291,13 +307,26 @@ export class Api {
     let data: BodyInit | undefined = formattedData;
     const headersInit: Dict<string> = req.headers ?? {};
 
-    if (req.method === 'PUT' || req.method === 'POST') {
-      if ('data' in req && typeof req.data !== 'undefined') {
-        data = req.dataType === 'JSON' ? JSON.stringify(req.data) : req.data;
-
-        if (req.dataType === 'TEXT' && typeof req.contentType === 'string') {
-          headersInit['Content-Type'] = req.contentType;
-        }
+    if ((req.method === 'PUT' || req.method === 'POST') && 'data' in req) {
+      switch (req.dataType) {
+        case 'JSON':
+          // req.data is Dict<Serializable>
+          data = JSON.stringify(req.data);
+          headersInit['Content-Type'] = 'application/json';
+          break;
+        case 'TEXT':
+          // req.data is string
+          data = req.data;
+          if (req.contentType) {
+            headersInit['Content-Type'] = req.contentType;
+          }
+          break;
+        case 'FORM':
+          // req.data is FormData
+          data = req.data;
+          break;
+        default:
+          break;
       }
     }
     const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
@@ -385,12 +414,7 @@ export class Api {
   ): Promise<FetchResult<T, RT>> {
     progress = progress || ({} as ProgressCbs);
     let formattedData: FormData | string | undefined;
-    let dataPart:
-      | { method: 'GET' }
-      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
-      | { method: 'POST' | 'PUT'; data: string; dataType: 'TEXT' }
-      | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' };
-    dataPart = { method: 'GET' };
+    let dataPart: AjaxParams = { method: 'GET' };
     if (values) {
       if (values.fmt === 'JSON') {
         dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'JSON' };
