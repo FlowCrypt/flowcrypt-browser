@@ -13,6 +13,7 @@ if (typeof opgp !== 'undefined') {
   opgp.config.showVersion = true;
   opgp.config.commentString = 'Seamlessly send and receive encrypted email';
   opgp.config.showComment = true;
+  opgp.config.rejectHashAlgorithms = new Set([opgp.enums.hash.md5, opgp.enums.hash.sha1, opgp.enums.hash.ripemd]);
   opgp.config.allowUnauthenticatedMessages = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
   opgp.config.allowInsecureDecryptionWithSigningKeys = false; // may get later over-written using ClientConfiguration for some clients
   // openpgp.config.require_uid_self_cert = false;
