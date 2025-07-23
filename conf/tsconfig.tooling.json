@@ -4,7 +4,6 @@
     "lib": ["es6", "dom"],
     "alwaysStrict": true,
     "noImplicitAny": true,
-    "skipLibCheck": true,
     "strictNullChecks": true,
     "module": "commonjs",
     "sourceMap": false,
