@@ -13,6 +13,7 @@
     "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,
+    "moduleResolution": "node",
     "outDir": "../build/_/content_scripts",
     "baseUrl": "../extension",
     "paths": {
