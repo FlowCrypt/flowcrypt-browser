@@ -8,7 +8,7 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
-import { opgp } from './openpgpjs-custom.js';
+import { OpenPGPDataType, opgp } from './openpgpjs-custom.js';
 import * as Stream from '@openpgp/web-stream-tools';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
@@ -17,9 +17,9 @@ export type PreparedForDecrypt =
       isArmored: boolean;
       isCleartext: true;
       isPkcs7: false;
-      message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGP.Data>;
+      message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGPDataType>;
     }
-  | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.Message<OpenPGP.Data> }
+  | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.Message<OpenPGPDataType> }
   | { isArmored: boolean; isCleartext: false; isPkcs7: true; message: forge.pkcs7.PkcsEnvelopedData };
 
 type CryptoArmorHeaderDefinitions = {

@@ -8,6 +8,7 @@
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "skipLibCheck": true,
     "noImplicitThis": true,
     "strictPropertyInitialization": false,
     "strictFunctionTypes": false,
