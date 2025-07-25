@@ -477,12 +477,6 @@ export class OpenPGPKey {
     return p instanceof opgp.SecretKeyPacket || p instanceof opgp.SecretSubkeyPacket;
   }
 
-  public static isBaseKeyPacket(p: OpenPGP.BasePacket): p is OpenPGP.AnyKeyPacket {
-    return (
-      p instanceof opgp.SecretKeyPacket || p instanceof opgp.SecretSubkeyPacket || p instanceof opgp.PublicKeyPacket || p instanceof opgp.PublicSubkeyPacket
-    );
-  }
-
   public static async isPacketDecrypted(pubkey: Key, keyid: OpenPGP.KeyID) {
     const [k] = (await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey)).getKeys(keyid); // keyPacket.isDecrypted(keyID);
     if (!k) {
@@ -511,7 +505,7 @@ export class OpenPGPKey {
       const text = msg instanceof opgp.CleartextMessage ? msg.getText() : msg.getLiteralData(); // todo: is this important?
       if (text) {
         // encrypted message
-        verifyRes.content = typeof text === 'string' ? Buf.fromUtfStr(text) : Buf.fromUint8(text as Uint8Array);
+        verifyRes.content = typeof text === 'string' ? Buf.fromUtfStr(text) : Buf.fromUint8(text);
       }
       // is there an intersection?
       if (signerLongids.some(longid => verifyRes.suppliedLongids.includes(longid))) {

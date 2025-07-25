@@ -7,7 +7,7 @@ import { requireOpenpgp } from '../../../platform/require.js';
 
 export const opgp = requireOpenpgp();
 
-export type OpenPGPDataType = string | Uint8Array | ReadableStream<Uint8Array>;
+export type OpenPGPDataType = string | Uint8Array;
 
 if (typeof opgp !== 'undefined') {
   // in certain environments, eg pgp_block.htm or web content script, openpgp is not included
