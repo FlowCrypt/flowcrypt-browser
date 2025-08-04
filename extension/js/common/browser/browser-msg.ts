@@ -449,20 +449,6 @@ export class BrowserMsg {
     BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handler;
   }
 
-  public static async guardAlarmFlood() {
-    const MAX_ALARMS = 500; // Chrome’s hard cap
-    const CLEAR_THRESHOLD = 100; // when to reset down before hitting limits
-
-    // 2) Check current alarms
-    const existing = await chrome.alarms.getAll();
-
-    // 3) If we’re within CLEAR_THRESHOLD of the cap, wipe them out
-    if (existing.length >= MAX_ALARMS - CLEAR_THRESHOLD) {
-      console.warn(`Alarms at ${existing.length}; recycling…`);
-      await chrome.alarms.clearAll();
-    }
-  }
-
   public static async createIntervalAlarm(action: string, periodInMinutes: number) {
     const alarmName = `${action}_interval`;
 
