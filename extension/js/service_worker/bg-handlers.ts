@@ -175,7 +175,7 @@ export class BgHandlers {
     if (tab.id) {
       const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
       if (message?.id) {
-        return await messenger.messages.getFull(Number(message.id));
+        return await messenger.messages.getFull(message.id);
       }
     }
     return;

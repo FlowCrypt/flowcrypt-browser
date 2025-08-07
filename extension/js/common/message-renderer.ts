@@ -740,7 +740,7 @@ export class MessageRenderer {
         signerEmail,
         verificationPubs,
         result.content,
-        !!result.isEncrypted,
+        result.isEncrypted,
         result.signature,
         renderModule,
         this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs))),

@@ -413,7 +413,7 @@ export class SmimeKey {
     if (!eku) {
       return false;
     }
-    return !!(eku as { emailProtection: boolean }).emailProtection;
+    return (eku as { emailProtection: boolean }).emailProtection;
   }
 
   private static dateToNumber(date: Date): undefined | number {

@@ -30,19 +30,17 @@ export class PgpBlockViewAttachmentsModule {
       const size = filesize(attachments[i].length);
 
       const htmlContent = `<b>${Xss.escape(nameVisible)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
-      const attachment = $(`<a href="#" index="${Number(i)}">`);
+      const attachment = $(`<a href="#" index="${i}">`);
       attachment.attr('title', name);
       Xss.sanitizeAppend(attachment, htmlContent);
       if (isEncrypted) {
         attachment.addClass('preview-attachment');
         attachment.attr('data-test', 'preview-attachment');
         attachment.append(
-          `<button class="download-attachment" data-test="download-attachment-${Number(i)}" index="${Number(
-            i
-          )}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`
+          `<button class="download-attachment" data-test="download-attachment-${i}" index="${i}" title="DOWNLOAD"><img src="/img/svgs/download-link-green.svg"></button>`
         ); // xss-escaped
       } else {
-        attachment.attr('data-test', `download-attachment-${Number(i)}`);
+        attachment.attr('data-test', `download-attachment-${i}`);
         attachment.addClass('download-attachment');
       }
       $('#attachments').append(attachment); // xss-escaped
