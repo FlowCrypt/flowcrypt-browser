@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
-import { opgp } from './openpgpjs-custom.js';
+import { OpenPGPDataType, opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
 import { Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
@@ -8,7 +8,7 @@ import type * as OpenPGP from 'openpgp';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
 import * as Stream from '@openpgp/web-stream-tools';
 
-type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGP.Data> | OpenPGP.CleartextMessage;
+type OpenpgpMsgOrCleartext = OpenPGP.Message<OpenPGPDataType> | OpenPGP.CleartextMessage;
 export interface KeyWithPrivateFields extends Key {
   internal: OpenPGP.Key | string; // usable key without weak packets
   rawArmored: string;
@@ -117,7 +117,7 @@ export class OpenPGPKey {
     await OpenPGPKey.convertExternalLibraryObjToKey(encryptedPrv, key);
   }
 
-  public static async decryptMessage(message: OpenPGP.Message<OpenPGP.Data>, privateKeys: Key[], passwords?: string[]) {
+  public static async decryptMessage(message: OpenPGP.Message<OpenPGPDataType>, privateKeys: Key[], passwords?: string[]) {
     const opgpKeys = await Promise.all(privateKeys.map(key => OpenPGPKey.extractExternalLibraryObjFromKey(key)));
     return await message.decrypt(
       opgpKeys.filter(key => key.isPrivate()),
@@ -477,12 +477,6 @@ export class OpenPGPKey {
     return p instanceof opgp.SecretKeyPacket || p instanceof opgp.SecretSubkeyPacket;
   }
 
-  public static isBaseKeyPacket(p: OpenPGP.BasePacket): p is OpenPGP.BasePublicKeyPacket {
-    return (
-      p instanceof opgp.SecretKeyPacket || p instanceof opgp.SecretSubkeyPacket || p instanceof opgp.PublicKeyPacket || p instanceof opgp.PublicSubkeyPacket
-    );
-  }
-
   public static async isPacketDecrypted(pubkey: Key, keyid: OpenPGP.KeyID) {
     const [k] = (await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey)).getKeys(keyid); // keyPacket.isDecrypted(keyID);
     if (!k) {
@@ -577,7 +571,7 @@ export class OpenPGPKey {
   // mimicks OpenPGP.helper.getLatestValidSignature
   private static async getLatestValidSignature(
     signatures: OpenPGP.SignaturePacket[],
-    primaryKey: OpenPGP.BasePublicKeyPacket,
+    primaryKey: OpenPGP.AnyKeyPacket,
     signatureType: OpenPGP.enums.signature,
     dataToVerify: object | Uint8Array
   ): Promise<OpenPGP.SignaturePacket | undefined> {
@@ -801,7 +795,7 @@ export class OpenPGPKey {
     }
     return undefined;
   }
-  private static arePrivateParamsMissing = (packet: OpenPGP.BasePublicKeyPacket): boolean => {
+  private static arePrivateParamsMissing = (packet: OpenPGP.AnyKeyPacket): boolean => {
     // detection of missing private params to solve #2887
     if (!OpenPGPKey.paramCountByAlgo) {
       OpenPGPKey.paramCountByAlgo = {

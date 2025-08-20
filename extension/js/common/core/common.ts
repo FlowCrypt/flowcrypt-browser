@@ -406,7 +406,9 @@ export class Url {
    * todo - the camelCase or snake_case functionality can now be removed
    */
   public static parse = (expectedKeys: string[], parseThisUrl?: string) => {
-    const url = parseThisUrl || window.location.search.replace('?', '');
+    const replacedLocation = typeof window !== 'undefined' ? window.location.search.replace('?', '') : 'https://service-worker.context'; // Placeholder URL when running in a service‐worker context
+
+    const url = parseThisUrl ?? replacedLocation;
 
     const valuePairs = url.split('?').pop()?.split('&') ?? []; // str.split('?') string[].length will always be >= 1
     const rawParams = new Map<string, string>();

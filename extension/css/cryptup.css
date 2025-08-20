@@ -390,7 +390,7 @@ body#settings > div#content pre {
   font-size: 12px;
   border-radius: 2px;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 body#settings > div#content.setup {
@@ -1391,7 +1391,7 @@ body {
   font-size: 0.9rem;
   padding: 0;
   margin: 0;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 body#reply_message {
@@ -2429,7 +2429,7 @@ table#compose td.text div#input_text {
   border: none !important;
   box-shadow: none !important;
   height: 100%;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
   max-width: 525px;
   overflow-y: auto;
   min-height: 140px;
@@ -2537,7 +2537,7 @@ table#compose .intro_container > td > .input_intro {
   height: 50px;
   box-shadow: none !important;
   outline: none;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
   overflow-y: auto;
 }
 

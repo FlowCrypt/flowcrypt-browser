@@ -5,7 +5,7 @@ import { Key, KeyInfoWithIdentity, KeyInfoWithIdentityAndOptionalPp, KeyUtil } f
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Buf } from '../../buf.js';
 import { PgpArmor, PreparedForDecrypt } from './pgp-armor.js';
-import { opgp } from './openpgpjs-custom.js';
+import { OpenPGPDataType, opgp } from './openpgpjs-custom.js';
 import type * as OpenPGP from 'openpgp';
 import { KeyCache } from '../../../platform/key-cache.js';
 import { SmimeKey, SmimeMsg } from '../smime/smime-key.js';
@@ -331,7 +331,7 @@ export class MsgUtil {
     return true;
   }
 
-  private static async getSortedKeys(kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.Message<OpenPGP.Data>): Promise<SortedKeysForDecrypt> {
+  private static async getSortedKeys(kiWithPp: KeyInfoWithIdentityAndOptionalPp[], msg: OpenPGP.Message<OpenPGPDataType>): Promise<SortedKeysForDecrypt> {
     const keys: SortedKeysForDecrypt = {
       encryptedFor: [],
       signedBy: [],

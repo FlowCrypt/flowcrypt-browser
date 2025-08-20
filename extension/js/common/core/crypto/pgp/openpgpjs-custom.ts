@@ -7,6 +7,8 @@ import { requireOpenpgp } from '../../../platform/require.js';
 
 export const opgp = requireOpenpgp();
 
+export type OpenPGPDataType = string | Uint8Array;
+
 export const defaultRejectedHashAlgo = opgp.config.rejectHashAlgorithms;
 
 if (typeof opgp !== 'undefined') {
