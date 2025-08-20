@@ -22,6 +22,8 @@ import { ComposeView } from '../compose.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
 import { ContactPreview, ContactStore } from '../../../js/common/platform/store/contact-store.js';
 import { FLOWCRYPT_REPLY_EMAIL_ADDRESSES } from '../../../js/common/api/email-provider/gmail/gmail-parser.js';
+import { opgp } from '../../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { KeyWithPrivateFields } from '../../../js/common/core/crypto/pgp/openpgp-key.js';
 
 /**
  * todo - this class is getting too big
@@ -181,18 +183,18 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const container = input.parent();
       if (validationResult.valid.length) {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - valid emails(${Str.formatEmailList(validationResult.valid)}`);
-        recipientsToEvaluate = this.createRecipientsElements(
+        recipientsToEvaluate = (await this.createRecipientsElements(
           container,
           validationResult.valid,
           sendingType,
           RecipientStatus.EVALUATING
-        ) as ValidRecipientElement[];
+        )) as ValidRecipientElement[];
       }
       const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
       this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
       if (force && invalidEmails.length) {
         this.view.errModule.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-        this.createRecipientsElements(
+        await this.createRecipientsElements(
           container,
           invalidEmails.map(invalid => {
             return { invalid };
@@ -229,15 +231,15 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             const parsed = Str.parseEmail(email);
             if (parsed.email) {
               newRecipients.push(
-                ...(this.createRecipientsElements(
+                ...((await this.createRecipientsElements(
                   recipientsContainer,
                   [{ email: parsed.email, name: parsed.name }],
                   sendingType,
                   RecipientStatus.EVALUATING
-                ) as ValidRecipientElement[])
+                )) as ValidRecipientElement[])
               );
             } else {
-              this.createRecipientsElements(recipientsContainer, [{ invalid: email }], sendingType, RecipientStatus.WRONG);
+              await this.createRecipientsElements(recipientsContainer, [{ invalid: email }], sendingType, RecipientStatus.WRONG);
             }
           }
           this.view.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
@@ -304,7 +306,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         this.view.errModule.debug(`evaluateRecipients.evaluating.recipient.status(${recipientEl.status})`);
         this.view.errModule.debug(`evaluateRecipients.evaluating: calling getUpToDatePubkeys`);
         const info = await this.view.storageModule.getUpToDatePubkeys(recipientEl.email);
-        this.renderPubkeyResult(recipientEl, info);
+        await this.renderPubkeyResult(recipientEl, info);
         // Clear promise when after finished
         // todo - it would be better if we could avoid doing this, eg
         //    recipient.evaluating would be a bool
@@ -457,7 +459,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     const emailAndPubkeys = await ContactStore.getOneWithAllPubkeys(undefined, email);
     for (const recipient of validRecipients) {
       this.view.errModule.debug(`re-rendering recipient: ${email}`);
-      this.renderPubkeyResult(recipient, emailAndPubkeys);
+      await this.renderPubkeyResult(recipient, emailAndPubkeys);
     }
     this.showHideCcAndBccInputsIfNeeded();
     this.setEmailsPreview();
@@ -913,12 +915,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     this.hideContacts();
   };
 
-  private createRecipientsElements = (
+  private createRecipientsElements = async (
     container: JQuery,
     emails: { email?: string; name?: string; invalid?: string }[],
     sendingType: RecipientType,
     status: RecipientStatus
-  ): RecipientElement[] => {
+  ): Promise<RecipientElement[]> => {
     // Do not add padding-bottom for reply box
     // https://github.com/FlowCrypt/flowcrypt-browser/issues/5935
     if (!container.hasClass('input-container')) {
@@ -965,7 +967,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         };
         this.addedRecipients.push(recipient);
         if (recipient.status === RecipientStatus.WRONG) {
-          this.renderPubkeyResult(recipient, undefined);
+          await this.renderPubkeyResult(recipient, undefined);
         }
         result.push(recipient);
       }
@@ -1026,12 +1028,12 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       const dbContacts = await ContactStore.getOneWithAllPubkeys(undefined, email);
       if (dbContacts?.sortedPubkeys?.length) {
         recipientEl.element.classList.remove('no_pgp');
-        this.renderPubkeyResult(recipientEl, dbContacts);
+        await this.renderPubkeyResult(recipientEl, dbContacts);
       }
     }
   };
 
-  private renderPubkeyResult = (recipient: RecipientElement, info: ContactInfoWithSortedPubkeys | undefined | 'fail') => {
+  private renderPubkeyResult = async (recipient: RecipientElement, info: ContactInfoWithSortedPubkeys | undefined | 'fail') => {
     // console.log(`>>>> renderPubkeyResult: ${JSON.stringify(info)}`);
     const el = recipient.element;
     const emailId = recipient.email?.replace(/[^a-z0-9]+/g, '') ?? '';
@@ -1100,7 +1102,22 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       //    - else EXPIRED.
       // 3. Otherwise NO_PGP.
       const firstKeyInfo = info.sortedPubkeys[0];
-      if (firstKeyInfo.pubkey.usableForEncryption && !firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
+      let rejectedHashAlgoDetected = false;
+      const pubkey = await opgp.readKey({ armoredKey: (firstKeyInfo.pubkey as unknown as KeyWithPrivateFields).rawArmored });
+      for (const user of pubkey.users) {
+        for (const sig of user.selfCertifications) {
+          if (sig.preferredHashAlgorithms) {
+            const preferredHashAlgorithms = sig.preferredHashAlgorithms;
+            rejectedHashAlgoDetected = preferredHashAlgorithms.some(v => opgp.config.rejectHashAlgorithms.has(v));
+          }
+        }
+      }
+      if (rejectedHashAlgoDetected) {
+        recipient.status = RecipientStatus.UNUSABLE;
+        $(el).addClass('unusable');
+        Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
+        $(el).attr('title', 'Does use encryption but their public key is unusable for encryption.\n\n' + this.formatPubkeysHintText(info.sortedPubkeys));
+      } else if (firstKeyInfo.pubkey.usableForEncryption && !firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
