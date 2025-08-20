@@ -17,6 +17,7 @@ type ClientConfiguration$flag =
   | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB'
   | 'DEFAULT_REMEMBER_PASS_PHRASE'
   | 'HIDE_ARMOR_META'
+  | 'ALLOW_INSECURE_SHA1_HASH'
   | 'FORBID_STORING_PASS_PHRASE'
   | 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES';
 
@@ -268,6 +269,16 @@ export class ClientConfiguration {
    */
   public shouldHideArmorMeta = (): boolean => {
     return (this.clientConfigurationJson.flags || []).includes('HIDE_ARMOR_META');
+  };
+
+  /**
+   * With this option enabled, SHA-1 hashes will be allowed in OpenPGP operations
+   * despite being considered insecure. This should only be used for legacy
+   * compatibility when communicating with systems that do not support stronger
+   * algorithms.
+   */
+  public shouldAllowInsecureSha1Hash = (): boolean => {
+    return (this.clientConfigurationJson.flags || []).includes('ALLOW_INSECURE_SHA1_HASH');
   };
 
   /**

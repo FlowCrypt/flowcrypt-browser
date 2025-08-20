@@ -14,7 +14,7 @@ import { ClientConfiguration } from '../../js/common/client-configuration.js';
 import { Url } from '../../js/common/core/common.js';
 import { KeyStoreUtil } from '../../js/common/core/crypto/key-store-util.js';
 import { KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
-import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
+import { defaultRejectedHashAlgo, opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { Lang } from '../../js/common/lang.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { CompanyLdapKeyMismatchError } from '../../js/common/platform/error-report.js';
@@ -122,6 +122,11 @@ export class SetupView extends View {
     if (this.clientConfiguration.shouldHideArmorMeta() && typeof opgp !== 'undefined') {
       opgp.config.showComment = false;
       opgp.config.showVersion = false;
+    }
+    if (this.clientConfiguration.shouldAllowInsecureSha1Hash() && typeof opgp !== 'undefined') {
+      opgp.config.rejectHashAlgorithms = new Set([...defaultRejectedHashAlgo]);
+    } else {
+      opgp.config.rejectHashAlgorithms = new Set([...defaultRejectedHashAlgo, opgp.enums.hash.sha1]);
     }
     this.pubLookup = new PubLookup(this.clientConfiguration);
     if (this.clientConfiguration.usesKeyManager() && this.idToken) {
