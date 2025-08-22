@@ -37,6 +37,9 @@ export class BrowserPool {
       `--window-size=${this.width + 10},${this.height + 132}`,
       // https://github.com/puppeteer/puppeteer/issues/5123
       '--disable-features=site-per-process',
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/6060
+      // Fix for CORS Private Network Access issues with Puppeteer 24.16.0+
+      '--disable-web-security',
     ];
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
