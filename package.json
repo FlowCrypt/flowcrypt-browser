@@ -36,8 +36,8 @@
     "puppeteer": "24.15.0",
     "stylelint": "16.23.1",
     "stylelint-config-standard": "39.0.0",
-    "typescript": "5.8.3",
-    "typescript-eslint": "8.38.0",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.41.0",
     "undici-types": "^7.15.0",
     "web-ext": "8.9.0",
     "webpack-cli": "^6.0.1"

@@ -51,7 +51,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       method: 'GET',
       data: {
         labelIds: labelId !== 'ALL' ? labelId : undefined,
-        includeSpamTrash: Boolean(labelId === 'SPAM' || labelId === 'TRASH'),
+        includeSpamTrash: labelId === 'SPAM' || labelId === 'TRASH',
         // pageToken: page_token,
         // q,
         // maxResults

@@ -192,7 +192,7 @@ export class Mime {
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
     parser.onbody = (node: MimeParserNode) => {
-      const path = String(node.path.join('.'));
+      const path = node.path.join('.');
       if (typeof leafNodes[path] === 'undefined') {
         leafNodes[path] = node;
       }
@@ -343,7 +343,7 @@ export class Mime {
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
       typeof hdr === 'string' ? ([hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[]) : hdr.map(h => h.address);
-    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? hdr[0]?.address : String(hdr || '')) || '').email;
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? hdr[0]?.address : hdr || '') || '').email;
     for (const hdrName of headersNames) {
       const header = parsedMimeMsg.headers[hdrName];
       if (header) {
@@ -427,13 +427,13 @@ export class Mime {
     if (node.headers['content-disposition']?.[0]) {
       const header = node.headers['content-disposition'][0];
       if (header.params?.filename) {
-        return String(header.params.filename);
+        return header.params.filename;
       }
     }
     if (node.headers['content-type']?.[0]) {
       const header = node.headers['content-type'][0];
       if (header.params?.name) {
-        return String(header.params.name);
+        return header.params.name;
       }
     }
     return;
