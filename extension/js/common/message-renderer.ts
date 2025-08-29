@@ -740,6 +740,7 @@ export class MessageRenderer {
         signerEmail,
         verificationPubs,
         result.content,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-conversion
         !!result.isEncrypted,
         result.signature,
         renderModule,

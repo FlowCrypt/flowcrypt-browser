@@ -98,6 +98,7 @@ const commonConfig = {
     '@typescript-eslint/consistent-type-definitions': 'off',
     '@typescript-eslint/dot-notation': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/no-unnecessary-type-conversion': 'warn',
     '@typescript-eslint/explicit-member-accessibility': [
       'error',
       {

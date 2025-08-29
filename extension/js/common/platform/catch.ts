@@ -258,7 +258,7 @@ export class Catch {
       thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', CatchHelper.stackTrace());
       if (thrown.hasOwnProperty('workerStack')) {
         // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
-        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', String((thrown as Error & { workerStack: string }).workerStack));
+        thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', (thrown as Error & { workerStack: string }).workerStack);
       }
     }
     const exception = Catch.formExceptionFromThrown(thrown);

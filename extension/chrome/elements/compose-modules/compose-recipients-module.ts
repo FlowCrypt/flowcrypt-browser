@@ -302,7 +302,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.S.now('send_btn_text').text(this.BTN_LOADING);
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipientEl.evaluating = (async () => {
-        this.view.errModule.debug(`evaluateRecipients.evaluat.recipient.email(${String(recipientEl.email)})`);
+        this.view.errModule.debug(`evaluateRecipients.evaluat.recipient.email(${recipientEl.email})`);
         this.view.errModule.debug(`evaluateRecipients.evaluating.recipient.status(${recipientEl.status})`);
         this.view.errModule.debug(`evaluateRecipients.evaluating: calling getUpToDatePubkeys`);
         const info = await this.view.storageModule.getUpToDatePubkeys(recipientEl.email);
