@@ -211,7 +211,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     }
     const text = this.messageToReplyOrForward.text;
     const from = Str.parseEmail(this.messageToReplyOrForward.headers.from || '').email;
-    const date = new Date(String(this.messageToReplyOrForward.headers.date));
+    const date = new Date(this.messageToReplyOrForward.headers.date);
     const dateStr = Str.fromDate(date).replace(' ', ' at ');
     const rtl = new RegExp('[' + Str.rtlChars + ']').exec(text);
     const dirAttr = `dir="${rtl ? 'rtl' : 'ltr'}"`;

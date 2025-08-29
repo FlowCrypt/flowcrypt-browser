@@ -107,7 +107,7 @@ export class SmimeKey {
       }
       p7.addRecipient(certificate);
     }
-    p7.content = this.forge.util.createBuffer(input);
+    p7.content = this.forge.util.createBuffer(new Uint8Array(input));
     p7.encrypt();
     let data: Uint8Array;
     if (armor) {
@@ -151,7 +151,7 @@ export class SmimeKey {
         type: this.forge.pki.oids.messageDigest
       }] */
     });
-    p7.content = this.forge.util.createBuffer(data);
+    p7.content = this.forge.util.createBuffer(new Uint8Array(data));
     p7.sign();
     return SmimeKey.messageToDer(p7);
   }
@@ -413,7 +413,7 @@ export class SmimeKey {
     if (!eku) {
       return false;
     }
-    return !!(eku as { emailProtection: boolean }).emailProtection;
+    return (eku as { emailProtection: boolean }).emailProtection;
   }
 
   private static dateToNumber(date: Date): undefined | number {

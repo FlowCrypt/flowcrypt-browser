@@ -171,8 +171,8 @@ export class XssSafeFactory {
     const params: UrlParams = {
       isReplyBox: true,
       frameId: `frame_${Str.sloppyRandom(10)}`,
-      skipClickPrompt: Boolean(skipClickPrompt),
-      ignoreDraft: Boolean(ignoreDraft),
+      skipClickPrompt,
+      ignoreDraft,
       replyMsgId: convoParams.replyMsgId,
       draftId: convoParams.draftId,
       removeAfterClose: convoParams.removeAfterClose,

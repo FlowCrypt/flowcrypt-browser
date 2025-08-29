@@ -69,7 +69,7 @@ View.run(
               await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
             }
             $('.copy_from_email').val('');
-            $('.pubkey').val(String(KeyUtil.armor(keys[0])));
+            $('.pubkey').val(KeyUtil.armor(keys[0]));
             $('.action_ok').trigger('click');
           } else if (errs.length) {
             await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
