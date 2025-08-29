@@ -1112,7 +1112,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           }
         }
       }
-      if (rejectedHashAlgoDetected) {
+      if (rejectedHashAlgoDetected && !firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.UNUSABLE;
         $(el).addClass('unusable');
         Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
