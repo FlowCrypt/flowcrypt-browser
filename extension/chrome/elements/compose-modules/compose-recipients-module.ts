@@ -1103,12 +1103,14 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       // 3. Otherwise NO_PGP.
       const firstKeyInfo = info.sortedPubkeys[0];
       let rejectedHashAlgoDetected = false;
-      const pubkey = await opgp.readKey({ armoredKey: (firstKeyInfo.pubkey as unknown as KeyWithPrivateFields).rawArmored });
-      for (const user of pubkey.users) {
-        for (const sig of user.selfCertifications) {
-          if (sig.preferredHashAlgorithms) {
-            const preferredHashAlgorithms = sig.preferredHashAlgorithms;
-            rejectedHashAlgoDetected = preferredHashAlgorithms.some(v => opgp.config.rejectHashAlgorithms.has(v));
+      if (firstKeyInfo.pubkey.family === 'openpgp') {
+        const pubkey = await opgp.readKey({ armoredKey: (firstKeyInfo.pubkey as unknown as KeyWithPrivateFields).rawArmored });
+        for (const user of pubkey.users) {
+          for (const sig of user.selfCertifications) {
+            if (sig.preferredHashAlgorithms) {
+              const preferredHashAlgorithms = sig.preferredHashAlgorithms;
+              rejectedHashAlgoDetected = preferredHashAlgorithms.some(v => opgp.config.rejectHashAlgorithms.has(v));
+            }
           }
         }
       }
