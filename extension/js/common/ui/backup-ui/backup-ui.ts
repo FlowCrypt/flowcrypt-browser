@@ -147,7 +147,7 @@ export class BackupUi {
   private renderPrvKeysBackupSelection = async (kinfos: KeyInfoWithIdentity[]) => {
     for (const ki of kinfos) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const email = Xss.escape(String(ki.emails![0]));
+      const email = Xss.escape(ki.emails![0]);
       const dom = `
       <div class="mb-20">
         <div class="details">

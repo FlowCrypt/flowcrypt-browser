@@ -101,7 +101,7 @@ export class AjaxErr extends ApiCallErr {
       const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substring(0, 1000));
       stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
     }
-    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${
+    const message = `${xhr.statusText || '(no status text)'}: ${xhr.status || -1} when ${ApiCallErr.describeApiAction(req)} -> ${
       resMsg || '(no standard err msg)'
     }`;
     return new AjaxErr(message, stack, status, CatchHelper.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', resMsg, resDetails);
