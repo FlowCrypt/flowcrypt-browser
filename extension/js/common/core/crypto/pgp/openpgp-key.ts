@@ -523,7 +523,7 @@ export class OpenPGPKey {
       if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
         verifyRes.error = 'FlowCrypt is not equipped to verify this message';
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
-      } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure hash algorithm:')) {
+      } else if (verifyErr instanceof Error && verifyErr.message.startsWith('Insecure message hash algorithm:')) {
         verifyRes.error = `${verifyErr.message}. Sender is using old, insecure OpenPGP software.`;
         verifyRes.isErrFatal = true; // don't try to re-fetch the message from API
       } else if (verifyErr instanceof Error && verifyErr.message === 'Signature is expired') {

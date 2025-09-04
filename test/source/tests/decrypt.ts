@@ -2158,7 +2158,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           {
             content: ['test'],
             encryption: 'not encrypted',
-            signature: 'error verifying signature: Insecure hash algorithm: SHA1. Sender is using old, insecure OpenPGP software.',
+            signature: 'error verifying signature: Insecure message hash algorithm: SHA1. Sender is using old, insecure OpenPGP software.',
           },
           authHdr
         );
