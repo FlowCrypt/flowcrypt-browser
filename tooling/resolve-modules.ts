@@ -36,7 +36,7 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
 const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"]+)(['"];)\r{0,1}$$/g;
 const requireLineRegEx = /^(.+require\(['"])([^.][^'"]+)(['"]\)+;)\r{0,1}$$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
-const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
+const importLineEndingWithJsNotStartingWithDot = /^(?!\s*\/\/)(?!\s*\/\*)(?:\s*import (?:.+ from )?['"][^.][^'"]+\.js['"];)/gm;
 
 const resolveLineImports = (regex: RegExp, line: string, path: string) =>
   line.replace(regex, (found, prefix, libname: string, suffix) => {

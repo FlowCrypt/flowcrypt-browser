@@ -30,7 +30,7 @@
     "lint-staged": "^16.1.5",
     "mailparser": "3.7.4",
     "mkdirp": "3.0.1",
-    "openpgp": "6.2.0",
+    "openpgp": "6.2.2",
     "pdfjs-dist": "5.4.149",
     "prettier": "^3.6.2",
     "puppeteer": "24.18.0",
