@@ -97,8 +97,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(0);
     };
 
-    const openGmailPage = async (t: AvaContext, browser: BrowserHandle): Promise<ControllablePage> => {
-      const url = TestUrls.gmail(0);
+    const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path?: string): Promise<ControllablePage> => {
+      let url = TestUrls.gmail(0);
+      if (path) {
+        url = TestUrls.gmail(0, path, 'inbox');
+      }
       return await browser.newPage(t, url);
     };
 
@@ -401,10 +404,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       'mail.google.com - plain reply to encrypted and signed messages',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
+        let gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
+        await gmailPage.close();
+        gmailPage = await openGmailPage(t, browser, '/181d226b4e69f172'); // go to encrypted convo
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
@@ -583,9 +586,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-          const gmailPage = await openGmailPage(t, browser);
           const threadId = '181d226b4e69f172'; // 1st message -- thread id
-          await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+          const gmailPage = await openGmailPage(t, browser, `/${threadId}`);
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
           await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
           t.timeout(minutes(2)); // extend ava's timeout
