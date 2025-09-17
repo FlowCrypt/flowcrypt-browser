@@ -70,14 +70,27 @@ export class PgpArmor {
   }
 
   public static clipIncomplete(text: string): string | undefined {
-    const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/gm);
+    // Prevent processing extremely large strings that could cause performance issues
+    const maxLength = 10 * 1024 * 1024; // 10MB limit
+    if (!text || text.length > maxLength) {
+      return undefined;
+    }
+
+    // Use [\s\S]+ instead of [^]+ to avoid potential regex issues
+    const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[\s\S]+)/gm);
     return match?.length ? match[0] : undefined;
   }
 
   public static clip(text: string): string | undefined {
-    if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
+    // Prevent processing extremely large strings that could cause performance issues
+    const maxLength = 10 * 1024 * 1024; // 10MB limit
+    if (!text || text.length > maxLength) {
+      return undefined;
+    }
+
+    if (text.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
       const match = text.match(
-        /(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm
+        /(-----BEGIN PGP MESSAGE-----[\s\S]*?-----END PGP MESSAGE-----|-----BEGIN PGP SIGNED MESSAGE-----[\s\S]*?-----END PGP SIGNATURE-----|-----BEGIN PGP SIGNATURE-----[\s\S]*?-----END PGP SIGNATURE-----|-----BEGIN PGP PUBLIC KEY BLOCK-----[\s\S]*?-----END PGP PUBLIC KEY BLOCK-----)/gm
       );
       return match?.length ? match[0] : undefined;
     }
