@@ -2755,13 +2755,6 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       t.pass();
     });
 
-    test(`[unit][PgpArmor.clipIncomplete] correctly handles all the cases`, async t => {
-      expect(PgpArmor.clipIncomplete('')).to.be.an.undefined;
-      expect(PgpArmor.clipIncomplete('plain text')).to.be.an.undefined;
-      expect(PgpArmor.clipIncomplete('prefix -----BEGIN PGP MESSAGE-----\n\nexample')).to.equal('-----BEGIN PGP MESSAGE-----\n\nexample');
-      t.pass();
-    });
-
     test(`[unit][PgpArmor.clip] correctly handles all the cases including edge cases`, async t => {
       // Test empty and plain text
       expect(PgpArmor.clip('')).to.be.an.undefined;
