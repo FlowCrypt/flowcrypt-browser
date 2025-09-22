@@ -2660,7 +2660,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         const key = {
           title: 'unarmored OpenPGP key',
-          filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.key',
+          filePath: 'test/samples/openpgp/multialiaseduserexamplecom-0x357B908F62498DF8.asc',
           armored: null, // eslint-disable-line no-null/no-null
           passphrase: '1basic passphrase to use',
           longid: null, // eslint-disable-line no-null/no-null
