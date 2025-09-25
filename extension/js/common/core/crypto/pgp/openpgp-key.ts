@@ -350,7 +350,9 @@ export class OpenPGPKey {
     result.set(`Primary key expiration?`, await KeyUtil.formatResultAsync(async () => OpenPGPKey.formatDate(await key.getExpirationTime())));
     result.set(`Primary key getBitSize?`, await KeyUtil.formatResultAsync(async () => key.getAlgorithmInfo().bits));
     const encryptResult = await OpenPGPKey.testEncryptDecrypt(key);
-    await Promise.all(encryptResult.map(msg => result.set(`Encrypt/Decrypt test: ${msg}`, '')));
+    for (const msg of encryptResult) {
+      result.set(`Encrypt/Decrypt test: ${msg}`, '');
+    }
     if (key.isPrivate()) {
       result.set(`Sign/Verify test`, await KeyUtil.formatResultAsync(async () => await OpenPGPKey.testSignVerify(key)));
     }

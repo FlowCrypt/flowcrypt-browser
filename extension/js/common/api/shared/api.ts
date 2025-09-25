@@ -252,7 +252,7 @@ export class Api {
             }),
           };
         } else {
-          return { response, pipe: Value.noop }; // original response
+          return { response, pipe: async () => { /* no-op */ } }; // original response
         }
       };
 

@@ -119,7 +119,7 @@ export class BrowserHandle {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
-      const url = await Promise.race([cPage.page.url(), new Promise<string>(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000))]);
+      const url = cPage.page.url();
       const consoleMsgs = await cPage.console(t, alsoLogToConsole);
       const alerts = cPage.alerts
         .map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`)
