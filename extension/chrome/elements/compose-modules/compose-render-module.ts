@@ -476,12 +476,12 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
   };
 
   private loadRecipientsThenSetTestStateReady = async () => {
-    await Promise.all(
-      this.view.recipientsModule
-        .getRecipients()
-        .filter(r => r.evaluating)
-        .map(r => r.evaluating)
-    );
+    const evaluatingPromises = this.view.recipientsModule
+      .getRecipients()
+      .filter(r => r.evaluating)
+      .map(r => r.evaluating)
+      .filter((p): p is Promise<void> => p !== undefined);
+    await Promise.all(evaluatingPromises);
     document.querySelector('body')?.setAttribute('data-test-state', 'ready'); // set as ready so that automated tests can evaluate results
   };
 
