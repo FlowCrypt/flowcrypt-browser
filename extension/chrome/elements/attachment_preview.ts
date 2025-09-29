@@ -148,7 +148,7 @@ View.run(
               await this.renderPdf(data, userPassword);
             } else {
               // User cancelled the password prompt
-              this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">PDF is password protected. Password required to view.</div>');
+              this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">PDF is password protected. Password required to view.</div>'); // xss-sanitized
               $('#attachment-preview-download').appendTo('.attachment-preview-unavailable').css('display', 'flex');
               $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
             }
