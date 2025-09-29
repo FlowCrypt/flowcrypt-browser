@@ -2296,5 +2296,69 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(Object.keys(downloadedFile8)[0]).to.match(/sample.*\.bat/);
       })
     );
+
+    test(
+      'decrypt - password protected PDF attachment',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '19983afe57200dcd';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+
+        // Check that the attachment frame is present
+        const attachmentFrame = await inboxPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitForSelTestState('ready');
+
+        // Click on the attachment to preview it
+        await attachmentFrame.waitAndClick('@attachment-container');
+
+        // Wait for attachment preview frame
+        const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
+
+        // Wait for password modal and enter the correct password
+        await PageRecipe.waitForModalAndRespond(attachmentPreviewPage, 'password-input', {
+          contentToCheck: 'This PDF is password protected. Please enter the password:',
+          inputValue: '123456',
+          clickOn: 'confirm',
+        });
+
+        // Wait for the PDF to render
+        await attachmentPreviewPage.waitAny('.attachment-preview-pdf');
+
+        // Verify PDF content is displayed
+        const pdfCanvas = await attachmentPreviewPage.waitAny('.attachment-preview-pdf-page');
+        expect(pdfCanvas).to.not.be.null;
+
+        // Test incorrect password scenario
+        await inboxPage.close();
+        const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage2.waitForSelTestState('ready');
+        await inboxPage2.waitAll('iframe');
+
+        const attachmentFrame2 = await inboxPage2.getFrame(['attachment.htm']);
+        await attachmentFrame2.waitForSelTestState('ready');
+        await attachmentFrame2.waitAndClick('@attachment-container');
+
+        const attachmentPreviewPage2 = await inboxPage2.getFrame(['attachment_preview.htm']);
+
+        // Enter wrong password first
+        await PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'password-input', {
+          contentToCheck: 'This PDF is password protected. Please enter the password:',
+          inputValue: 'wrongpassword',
+          clickOn: 'confirm',
+        });
+
+        // Should get incorrect password modal
+        await PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'password-input', {
+          contentToCheck: 'Incorrect password. Please enter the correct password:',
+          inputValue: '123456',
+          clickOn: 'confirm',
+        });
+
+        // Verify PDF renders after correct password
+        await attachmentPreviewPage2.waitAny('.attachment-preview-pdf');
+      })
+    );
   }
 };

@@ -261,6 +261,29 @@ export class Ui {
       const { dismiss } = await userResponsePromise;
       return typeof dismiss === 'undefined';
     },
+    passwordInput: async (title: string, text: string): Promise<string | undefined> => {
+      const result = await Ui.swal().fire({
+        title,
+        text,
+        input: 'password',
+        inputPlaceholder: 'Enter password',
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        cancelButtonText: 'Cancel',
+        allowOutsideClick: false,
+        inputAttributes: {
+          autocapitalize: 'off',
+          autocorrect: 'off',
+        },
+        customClass: {
+          popup: 'ui-modal-password-input',
+          confirmButton: 'ui-modal-password-input-confirm',
+          cancelButton: 'ui-modal-password-input-cancel',
+          input: 'ui-modal-password-input-field',
+        },
+      });
+      return result.isConfirmed && result.value ? (result.value as string) : undefined;
+    },
     page: async (htmlUrl: string, replaceNewlines = false): Promise<void> => {
       let html = await (await fetch(htmlUrl)).text();
       html = Xss.htmlSanitize(html);

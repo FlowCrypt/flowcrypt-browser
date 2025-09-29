@@ -170,6 +170,7 @@ span.gray {
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-info-confirm,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-confirm,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-checkbox-confirm,
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-password-input-confirm,
 .button.green {
   background-color: #31a217;
   color: white;
@@ -179,6 +180,7 @@ button.btn_disabled,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm,
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel,
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-checkbox-cancel,
+.swal2-popup .swal2-styled.swal2-cancel.ui-modal-password-input-cancel,
 .button.gray {
   background-color: #b7b7b7;
   background-image: linear-gradient(#c5c5c5, #b7b7b7);

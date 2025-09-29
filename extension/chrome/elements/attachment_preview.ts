@@ -62,10 +62,7 @@ View.run(
               this.attachmentPreviewContainer.html(`<div class="attachment-preview-txt">${Xss.escape(result.toUtfStr()).replace(/\n/g, '<br>')}</div>`); // xss-escaped
             } else if (attachmentType === 'pdf') {
               // PDF
-              // .slice() is used to copy attachment data https://github.com/FlowCrypt/flowcrypt-browser/issues/5408
-              const pdf = await pdfjsLib.getDocument({ data: result.slice() }).promise;
-              const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
-              await previewPdf.render();
+              await this.renderPdf(result);
             }
           } else {
             // no preview available, download button
@@ -121,6 +118,49 @@ View.run(
         return;
       }
       throw new DecryptionError(result as DecryptError);
+    };
+
+    private renderPdf = async (data: Uint8Array, password?: string) => {
+      try {
+        // .slice() is used to copy attachment data https://github.com/FlowCrypt/flowcrypt-browser/issues/5408
+        const loadingOptions: { data: Uint8Array; password?: string } = { data: data.slice() };
+        if (password) {
+          loadingOptions.password = password;
+        }
+        const pdf = await pdfjsLib.getDocument(loadingOptions).promise;
+        const previewPdf = new AttachmentPreviewPdf(this.attachmentPreviewContainer, pdf);
+        await previewPdf.render();
+      } catch (e) {
+        if (e instanceof Error && e.name === 'PasswordException') {
+          const error = e as Error & { code: number };
+          const needsPassword = error.code === 1; // PasswordException.NEED_PASSWORD
+          const incorrectPassword = error.code === 2; // PasswordException.INCORRECT_PASSWORD
+
+          if (needsPassword || incorrectPassword) {
+            // Show password prompt with appropriate message
+            const message = incorrectPassword
+              ? 'Incorrect password. Please enter the correct password:'
+              : 'This PDF is password protected. Please enter the password:';
+            const userPassword = await this.promptForPdfPassword(message);
+
+            if (userPassword) {
+              // User provided a password, try again
+              await this.renderPdf(data, userPassword);
+            } else {
+              // User cancelled the password prompt
+              this.attachmentPreviewContainer.html('<div class="attachment-preview-unavailable">PDF is password protected. Password required to view.</div>');
+              $('#attachment-preview-download').appendTo('.attachment-preview-unavailable').css('display', 'flex');
+              $('#attachment-preview-filename').text(this.origNameBasedOnFilename);
+            }
+          }
+        } else {
+          throw e;
+        }
+      }
+    };
+
+    private promptForPdfPassword = async (message?: string): Promise<string | undefined> => {
+      return await Ui.modal.passwordInput('Password Required', message || 'This PDF is password protected. Please enter the password:');
     };
   }
 );
