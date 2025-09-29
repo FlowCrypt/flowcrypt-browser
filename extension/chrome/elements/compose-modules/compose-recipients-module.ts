@@ -313,7 +313,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }, 0);
       })();
     }
-    await Promise.all(recipientEls.map(r => r.evaluating));
+    await Promise.all(recipientEls.map(r => r.evaluating).filter(p => p !== undefined));
     if (triggerCallback) {
       for (const callback of this.onRecipientAddedCallbacks) {
         callback(recipientEls);
@@ -405,7 +405,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (this.view.S.cached('input_addresses_container_outer').hasClass('invisible')) {
       return;
     }
-    await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait until all recipients loaded.
+    await Promise.all(this.addedRecipients.map(r => r.evaluating).filter(p => p !== undefined)); // Wait until all recipients loaded.
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
     this.view.S.cached('recipients_placeholder').css('display', 'flex');
