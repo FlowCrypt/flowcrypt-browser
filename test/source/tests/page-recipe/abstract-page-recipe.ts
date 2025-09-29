@@ -11,8 +11,9 @@ type ModalOpts = {
   clickOn?: 'confirm' | 'cancel';
   getTriggeredPage?: boolean;
   timeout?: number;
+  inputValue?: string;
 };
-type ModalType = 'confirm' | 'error' | 'info' | 'warning';
+type ModalType = 'confirm' | 'error' | 'info' | 'warning' | 'password-input';
 
 export abstract class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle, property: string) => {
@@ -23,7 +24,7 @@ export abstract class PageRecipe {
     return await elem.evaluate((el, attribute) => el.getAttribute(attribute), attribute);
   };
 
-  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout }: ModalOpts) => {
+  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn, timeout, inputValue }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${type}`, { timeout });
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('.swal2-html-container');
@@ -31,6 +32,12 @@ export abstract class PageRecipe {
       const actualContent = await PageRecipe.getElementPropertyJson(contentElement!, 'textContent');
       if (!actualContent.includes(contentToCheck)) {
         throw new Error(`Expected modal to contain "${contentToCheck}" but contained "${actualContent}"`);
+      }
+    }
+    if (inputValue) {
+      const inputElement = await modalContainer.$('input.swal2-input');
+      if (inputElement) {
+        await inputElement.type(inputValue);
       }
     }
     if (clickOn) {
