@@ -13,6 +13,7 @@ import { PgpBlockViewPrintModule } from './pgp_block_modules/pgp-block-print-mod
 import { PgpBlockViewQuoteModule } from './pgp_block_modules/pgp-block-quote-module.js';
 import { PgpBlockViewRenderModule } from './pgp_block_modules/pgp-block-render-module.js';
 import { CommonHandlers, Ui } from '../../js/common/browser/ui.js';
+import { Catch } from '../../js/common/platform/catch.js';
 import { View } from '../../js/common/view.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 
@@ -67,6 +68,17 @@ export class PgpBlockView extends View {
     BrowserMsg.addListener('confirmation_result', CommonHandlers.createAsyncResultHandler());
     BrowserMsg.listen(this.getDest());
     BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
+    // Proactively re-send readiness a few times in case the relay/association isn't ready yet,
+    // to ensure printMailInfo is delivered reliably
+    let resendAttempts = 0;
+    const resendInterval = Catch.setHandledInterval(() => {
+      if (this.printModule.printMailInfoHtml || resendAttempts >= 6) {
+        clearInterval(resendInterval);
+        return;
+      }
+      resendAttempts++;
+      BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
+    }, 500);
     // Added this listener to handle cases where 'inbox_page/setup-webmail-content-script' is not ready to retrieve 'pgpBlockReady' events.
     // This can occur if 'setHandlers' is called before 'Inbox.setHandlers' is fully initialized.
     // https://github.com/FlowCrypt/flowcrypt-browser/pull/5783#discussion_r1663636264
