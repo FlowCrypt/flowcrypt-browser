@@ -58,8 +58,6 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
-    // Hide print button until printMailInfo is ready to avoid race conditions
-    $('.pgp_print_button').hide();
     $('.pgp_print_button').on(
       'click',
       this.setHandler(() => this.printModule.printPGPBlock())
@@ -150,8 +148,6 @@ export class PgpBlockView extends View {
     if (data?.printMailInfo) {
       Xss.sanitizeRender('.print_user_email', data.printMailInfo.userNameAndEmail);
       this.printModule.printMailInfoHtml = data.printMailInfo.html;
-      // Now that main print content is prepared, show the print button
-      $('.pgp_print_button').show();
     }
     if (data?.renderAsRegularContent) {
       this.renderModule.renderAsRegularContent(data.renderAsRegularContent);
