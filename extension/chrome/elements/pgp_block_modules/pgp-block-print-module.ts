@@ -3,6 +3,7 @@
 'use strict';
 
 import { Time } from '../../../js/common/browser/time.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
@@ -20,6 +21,7 @@ export class PgpBlockViewPrintModule {
     if (!this.printMailInfoHtml) {
       // Last resort: inform the user
       void Ui.modal.error('Unable to get metadata for this email. Please refresh the page and try again.');
+      Catch.reportErr('printMailInfoHtml not prepared!');
       return;
     }
     const w = window.open();
