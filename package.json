@@ -28,7 +28,7 @@
     "googleapis": "161.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.3",
-    "mailparser": "3.7.4",
+    "mailparser": "3.7.5",
     "mkdirp": "3.0.1",
     "openpgp": "6.2.2",
     "pdfjs-dist": "5.4.296",
