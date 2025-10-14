@@ -121,10 +121,10 @@ const main = async () => {
   // patch imports with .js, e.g. replace './streams' with './streams.js'
   // until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
   const streamDir = path.join(OUTPUT_DIRECTORY, 'lib/streams');
-  const streamFiles = fs.readdirSync(streamDir)
+  const streamFiles = fs
+    .readdirSync(streamDir)
     .map(file => path.join(streamDir, file))
     .filter(filePath => fs.statSync(filePath).isFile());
-  applyRegexReplace(/'(.\/(streams|util|writer|reader|node-conversions))'/g, "'$1.js'", streamFiles);
 
   // patch isUint8Array until https://github.com/openpgpjs/web-stream-tools/pull/23 is resolved
   // First patch: replaces `return Uint8Array.prototype.isPrototypeOf(input);` with fallback to globalThis
