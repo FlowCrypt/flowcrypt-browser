@@ -131,8 +131,7 @@ export class BackupUi {
   private preparePrvKeysBackupSelection = async () => {
     const kinfos = await KeyStore.get(this.acctEmail);
     if (
-      this.keyIdentity &&
-      this.keyIdentity.family === 'openpgp' &&
+      this.keyIdentity?.family === 'openpgp' &&
       kinfos.some(ki => KeyUtil.identityEquals(ki, this.keyIdentity!)) // eslint-disable-line @typescript-eslint/no-non-null-assertion
     ) {
       // todo: error if not found ?

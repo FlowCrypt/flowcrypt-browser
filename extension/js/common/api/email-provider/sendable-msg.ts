@@ -179,7 +179,7 @@ export class SendableMsg {
   ): Promise<SendableMsg> => {
     const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(await KeyStoreUtil.parse(await KeyStore.getRequired(acctEmail)), 'EVEN-IF-UNUSABLE');
     const headers: Dict<string> = {};
-    if (mostUsefulPrv && mostUsefulPrv.key.family === 'openpgp') {
+    if (mostUsefulPrv?.key.family === 'openpgp') {
       headers.Openpgp = `id=${mostUsefulPrv.key.id}`; // todo - use autocrypt format
     }
     return new SendableMsg(acctEmail, headers, isDraft === true, from, replyTo, recipients, subject, body || {}, attachments || [], thread, type, externalId);

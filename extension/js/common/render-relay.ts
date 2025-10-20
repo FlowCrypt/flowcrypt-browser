@@ -42,7 +42,7 @@ export class RenderRelay implements RenderInterface {
   };
 
   public renderProgress = ({ operationId, percent, loaded, total, expectedTransferSize }: Bm.AjaxProgress) => {
-    if (this.progressOperation && this.progressOperation.operationId === operationId) {
+    if (this.progressOperation?.operationId === operationId) {
       const perc = Value.getPercentage(percent, loaded, total, expectedTransferSize);
       if (typeof perc !== 'undefined') {
         this.relay({ progressOperation: { ...this.progressOperation, perc } });

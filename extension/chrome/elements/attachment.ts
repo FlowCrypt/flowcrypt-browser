@@ -258,7 +258,7 @@ export class AttachmentDownloadView extends View {
       });
       if (decrRes.success && decrRes.content) {
         const openpgpType = MsgUtil.type({ data: decrRes.content });
-        if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
+        if (openpgpType?.type === 'publicKey' && openpgpType.armored) {
           // 'openpgpType.armored': could potentially process unarmored pubkey files, maybe later
           BrowserMsg.send.renderPublicKeys(this.parentTabId, {
             afterFrameId: this.frameId,
