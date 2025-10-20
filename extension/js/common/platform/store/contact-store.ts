@@ -564,7 +564,7 @@ export class ContactStore extends AbstractStore {
             resolve(undefined);
             return;
           }
-          if (!email.fingerprints || email.fingerprints.length === 0) {
+          if (email.fingerprints?.length === 0) {
             resolve(email);
             return;
           }

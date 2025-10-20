@@ -308,7 +308,7 @@ export class MessageRenderer {
           data = new Buf(att);
         }
         const openpgpType = MsgUtil.type({ data });
-        if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) {
+        if (openpgpType?.type === 'publicKey' && openpgpType.armored) {
           // todo: publicKey attachment can't be too big, so we could do preparePubkey() call (checking file length) right here
           treatAs = 'publicKey';
         } else if (treatAs === 'publicKey' && openpgpType?.type === 'encryptedMsg') {

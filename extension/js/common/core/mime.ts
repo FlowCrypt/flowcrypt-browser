@@ -441,7 +441,7 @@ export class Mime {
 
   private static isNodeInline(node: MimeParserNode): boolean {
     const cd = node.headers['content-disposition'];
-    return cd?.[0] && cd[0].value === 'inline';
+    return cd?.[0]?.value === 'inline';
   }
 
   private static fromEqualSignNotationAsBuf(str: string): Buf {
