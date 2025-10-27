@@ -729,7 +729,7 @@ export class ControllablePage extends ControllableBase {
       this.consoleMsgs.push(new ConsoleEvent('alert', alert.message()));
     });
     page.on('pageerror', error => {
-      this.consoleMsgs.push(new ConsoleEvent('error', error.stack || String(error)));
+      this.consoleMsgs.push(new ConsoleEvent('error', String(error)));
     });
     // page.on('error', e => this.consoleMsgs.push(`[error]${e.stack}[/error]`)); // this is Node event emitter error. Maybe just let it go crash the process / test
     page.on('dialog', alert => {
