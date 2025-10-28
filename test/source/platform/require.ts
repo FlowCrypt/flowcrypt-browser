@@ -21,8 +21,4 @@ export const requireMimeBuilder = (): any => {
   return undefined; // todo
 };
 
-export const requireIso88592 = (): any => {
-  // (window as any).iso88592
-  return undefined; // todo
-};
 /* eslint-enable @typescript-eslint/no-explicit-any */

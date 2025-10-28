@@ -48,7 +48,6 @@
         "/lib/sweetalert2.js",
         "/lib/streams_web.js",
         "/lib/emailjs/punycode.js",
-        "/lib/iso-8859-2.js",
         "/lib/trusted-types.js",
         "/lib/emailjs/emailjs-stringencoding.js",
         "/lib/emailjs/emailjs-mime-codec.js",
