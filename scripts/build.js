@@ -57,7 +57,6 @@ const copyDependencies = async () => {
     ['linkify-html/dist/linkify-html.min.js', 'lib/linkify-html.min.js'],
     ['sweetalert2/dist/sweetalert2.js', 'lib/sweetalert2.js'],
     ['sweetalert2/dist/sweetalert2.css', 'css/sweetalert2.css'],
-    ['iso-8859-2/iso-8859-2.js', 'lib/iso-8859-2.js'],
     ['@zxcvbn-ts/core/dist/zxcvbn-ts.js', 'lib/zxcvbn-ts.js'],
     ['@zxcvbn-ts/language-common/dist/zxcvbn-ts.js', 'lib/zxcvbn-language-common.js'],
     ['@zxcvbn-ts/language-en/dist/zxcvbn-ts.js', 'lib/zxcvbn-language-en.js'],
