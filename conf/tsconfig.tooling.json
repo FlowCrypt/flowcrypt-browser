@@ -7,7 +7,8 @@
     "strictNullChecks": true,
     "module": "commonjs",
     "sourceMap": false,
-    "outDir": "../build/tooling"
+    "outDir": "../build/tooling",
+    "skipLibCheck": true
   },
   "files": [
     "../tooling/build-types-and-manifests.ts",

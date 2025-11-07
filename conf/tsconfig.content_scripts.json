@@ -16,6 +16,7 @@
     "moduleResolution": "bundler",
     "outDir": "../build/_/content_scripts",
     "baseUrl": "../extension",
+    "skipLibCheck": true,
     "paths": {
       "dompurify": ["../node_modules/dompurify/dist/purify.cjs.d.ts"],
       "openpgp": ["../node_modules/openpgp/openpgp.d.ts"],
