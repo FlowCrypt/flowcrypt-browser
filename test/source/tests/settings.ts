@@ -843,6 +843,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.waitAll('@input-compatibility-fix-expire-years', { timeout: 30 });
         await myKeyPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await myKeyPage.waitAndClick('@action-fix-and-import-key');
+        await Util.sleep(4); // wait for navigation to complete
         const { cryptup_flowcryptcompatibilitygmailcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_flowcryptcompatibilitygmailcom_keys']);
         const pubkey = await KeyUtil.parse((keys as KeyInfoWithIdentity[])[0].public);
         const expectedExpiration = new Date().getFullYear() + 1;

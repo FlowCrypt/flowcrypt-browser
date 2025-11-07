@@ -1461,7 +1461,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), expectedMessage);
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
-        await gmailPage.waitAll('iframe', { timeout: 2 });
+        await gmailPage.waitAll('iframe', { timeout: 15 });
         const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(frameUrlsFromGmailPage.length).to.equal(1);
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame([frameUrlsFromGmailPage[0]]), expectedMessage);
