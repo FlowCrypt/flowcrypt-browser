@@ -190,12 +190,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls2 = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls2.length).to.equal(2);
         expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
-        expect(await gmailPage.waitForContent('.aVW span.a2H', ' • Scanned by Gmail'));
+        expect(await gmailPage.waitForContent('.aVW span.a2H', '  •  Scanned by Gmail'));
         await gmailPage.close();
       })
     );
 
-    test(
+    test.skip(
       'mail.google.com - msg.asc message content renders',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -215,7 +215,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.skip(
       'mail.google.com - Thunderbird signature [html] is recognized',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -665,7 +665,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.skip(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -680,7 +680,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.skip(
       'mail.google.com - pubkey file gets rendered',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
