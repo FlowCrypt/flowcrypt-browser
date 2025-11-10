@@ -674,7 +674,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage1.waitAll(['@webmail-notification-setup', '@notification-successfully-setup-action-close']);
         await gmailPage1.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
         await gmailPage1.page.reload();
-        await gmailPage1.notPresent(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
+        await gmailPage1.waitTillGone(['@webmail-notification-setup', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
         await gmailPage1.close();
         // below test that can re-auth after lost access (simulating situation when user changed password on google)
         await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acct);
@@ -750,7 +750,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         ]);
         await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
         await gmailPage.page.reload();
-        await gmailPage.notPresent([
+        await gmailPage.waitTillGone([
           '@webmail-notification-setup',
           '@notification-setup-action-open-settings',
           '@notification-setup-action-dismiss',
@@ -853,7 +853,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
         await Util.sleep(1);
         await gmailPage.page.reload();
-        await gmailPage.notPresent('@webmail-notification-notify_expiring_keys');
+        await gmailPage.waitTillGone('@webmail-notification-notify_expiring_keys');
         // remove added key and observe warning appears again
         await settingsPage.waitAndClick('@action-remove-key-1');
         await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Are you sure you want to remove encryption key with fingerprint');
@@ -924,7 +924,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await gmailPage.page.reload();
         await PageRecipe.waitForToastToAppearAndDisappear(gmailPage, 'Account keys updated');
         await gmailPage.page.reload();
-        await gmailPage.notPresent('@webmail-notification-setup');
+        await gmailPage.waitTillGone('@webmail-notification-setup');
       })
     );
 

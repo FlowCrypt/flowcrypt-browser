@@ -14,6 +14,7 @@
     "outDir": "build/generic-extension-wip",
     "baseUrl": "./extension",
     "moduleResolution": "bundler",
+    "skipLibCheck": true,
     "paths": {
       "jquery": ["lib/jquery.min.js", "COMMENT"],
       "sweetalert2": ["lib/sweetalert2.js", "COMMENT"],

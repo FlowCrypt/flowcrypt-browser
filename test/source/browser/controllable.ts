@@ -282,6 +282,25 @@ abstract class ControllableBase {
     expect(elementColor).to.equal(color);
   };
 
+  public waitForDetached = async (maxWaitSeconds = 10): Promise<void> => {
+    const startTime = Date.now();
+    const pollInterval = 0.1; // seconds
+
+    // This method is only meaningful for ControllableFrame instances
+    if (!(this instanceof ControllableFrame)) {
+      throw new Error('waitForDetached can only be called on ControllableFrame instances');
+    }
+
+    const frame = (this as unknown as ControllableFrame).frame;
+    while (!frame.detached && Date.now() - startTime < maxWaitSeconds * 1000) {
+      await Util.sleep(pollInterval);
+    }
+
+    if (!frame.detached) {
+      throw new Error(`Frame did not detach within ${maxWaitSeconds} seconds`);
+    }
+  };
+
   public waitAndType = async (selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) => {
     await this.waitAll(selector);
     await Util.sleep(delay);
