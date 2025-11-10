@@ -494,7 +494,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
         await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
-        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
         await gmailPage.waitAndClick('[act="24"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
@@ -518,7 +518,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzQZTMHNLflWQjRcSvWlMsKbLhpr');
-        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
         await gmailPage.waitAll('.action_reply_all_message_button');
       })
     );
@@ -531,7 +531,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           const gmailPage = await openGmailPage(t, browser);
           await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
           await Util.sleep(5);
-          await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+          await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
           await gmailPage.waitAndClick('[act="25"]', { delay: 1 }); // click forward
           await Util.sleep(3);
           await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
