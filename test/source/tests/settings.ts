@@ -1572,8 +1572,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const ppFrame = await settingsPage.getFrame(['passphrase.htm']);
         await ppFrame.waitAndType('@input-pass-phrase', key.passphrase);
         await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry');
-        await Util.sleep(2);
-        expect(ppFrame.frame.detached).to.equal(true);
+        await ppFrame.waitForDetached();
         // todo: #4059 we would expect further iteraction with backupFrame here but it is actually wiped out
         await settingsPage.close();
       })

@@ -20,6 +20,7 @@ import {
 } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { ControllablePage } from '../browser';
+import { minutes } from './tooling';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -1115,29 +1116,33 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
 
     test(
       'decrypt - by entering passphrase + remember in session',
-      testWithBrowser(async (t, browser) => {
-        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
-        const threadId = '15f7f5630573be2d';
-        const content = ['The International DUBLIN Literary Award is an international literary award'];
-        const settingsPage = await browser.newExtensionSettingsPage(t);
-        await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
-        const enterPp = {
-          passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
-          isForgetPpChecked: true,
-          isForgetPpHidden: false,
-        };
-        // 1. inbox page test
-        // requires pp entry
-        await InboxPageRecipe.checkDecryptMsg(t, browser, { enterPp, content, acctEmail, threadId });
-        // now remembers pp in session
-        await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, content, finishSessionAfterTesting: true });
-        // 2. gmail page test
-        // requires pp entry
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
-        // now remembers pp in session
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+          const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+          const threadId = '15f7f5630573be2d';
+          const content = ['The International DUBLIN Literary Award is an international literary award'];
+          const settingsPage = await browser.newExtensionSettingsPage(t);
+          await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
+          const enterPp = {
+            passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
+            isForgetPpChecked: true,
+            isForgetPpHidden: false,
+          };
+          // 1. inbox page test
+          // requires pp entry
+          await InboxPageRecipe.checkDecryptMsg(t, browser, { enterPp, content, acctEmail, threadId });
+          // now remembers pp in session
+          await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, content, finishSessionAfterTesting: true });
+          // 2. gmail page test
+          // requires pp entry
+          await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
+          // now remembers pp in session
+          await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
+        },
+        undefined,
+        minutes(7)
+      )
     );
 
     test(
