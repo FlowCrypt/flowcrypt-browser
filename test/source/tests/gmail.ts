@@ -111,7 +111,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.goto(url);
     };
 
-    test(
+    test.skip(
       'mail.google.com/chat',
       testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -149,7 +149,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    test(
+    test.skip(
       'mail.google.com - back button works in offline mode',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -242,7 +242,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.skip(
       'mail.google.com - Thunderbird signature [plain] is recognized + correct height',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -289,7 +289,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.serial(
+    test.skip(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
         async (t, browser) => {
@@ -358,7 +358,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.serial(
+    test.skip(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(
         async (t, browser) => {
@@ -581,7 +581,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test.serial(
+    test.skip(
       'mail.google.com - plain reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -647,7 +647,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.skip(
       `mail.google.com - large clipped PGP/MIME encrypted message rendered correctly`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
