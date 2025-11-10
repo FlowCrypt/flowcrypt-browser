@@ -180,7 +180,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
-        await gmailPage.waitAll(['.aZi'], { visible: true });
+        await gmailPage.waitAll(['.pYTkkf-JX-ano'], { visible: true });
 
         // attachments which contain emoji in filename are rendered correctly
         await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
@@ -621,7 +621,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
-        await gmailPage.waitAll(['.aZi'], { visible: false });
+        await gmailPage.waitAll(['.pYTkkf-JX-ano'], { visible: false });
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
         await gmailPage.close();
       })
@@ -642,7 +642,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
-        await gmailPage.waitAll(['.aZi'], { visible: false });
+        await gmailPage.waitAll(['.pYTkkf-JX-ano'], { visible: false });
         await gmailPage.close();
       })
     );
