@@ -111,7 +111,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.goto(url);
     };
 
-    test.skip(
+    test(
       'mail.google.com/chat',
       testWithBrowser(async (t, browser) => {
         const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'ci.tests.gmail@flowcrypt.dev');
@@ -149,7 +149,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       )
     );
 
-    test.skip(
+    test(
       'mail.google.com - back button works in offline mode',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -195,7 +195,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - msg.asc message content renders',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -215,7 +215,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - Thunderbird signature [html] is recognized',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -242,7 +242,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - Thunderbird signature [plain] is recognized + correct height',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -289,7 +289,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.skip(
+    test.serial(
       'mail.google.com - saving and rendering compose drafts when offline',
       testWithBrowser(
         async (t, browser) => {
@@ -358,7 +358,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // draft-sensitive test
-    test.skip(
+    test.serial(
       'mail.google.com - multiple compose windows, saving/opening compose draft',
       testWithBrowser(
         async (t, browser) => {
@@ -495,7 +495,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
-        await gmailPage.waitAndClick('[act="24"]', { delay: 1 }); // click reply-all
+        await gmailPage.waitAndClick('li[data-action-type="95"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
@@ -581,7 +581,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    test.skip(
+    test(
       'mail.google.com - plain reply draft',
       testWithBrowser(
         async (t, browser) => {
@@ -589,7 +589,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           const threadId = '181d226b4e69f172'; // 1st message -- thread id
           const gmailPage = await openGmailPage(t, browser, `/${threadId}`);
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
-          await gmailPage.waitAndClick('[aria-label="Reply"]', { delay: 5 });
+          await gmailPage.waitAndClick('div.adn [aria-label="Reply"]', { delay: 5 });
           t.timeout(minutes(2)); // extend ava's timeout
           await Util.sleep(5);
           await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
@@ -647,7 +647,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - large clipped PGP/MIME encrypted message rendered correctly`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -665,7 +665,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -680,7 +680,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test.skip(
+    test(
       'mail.google.com - pubkey file gets rendered',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
