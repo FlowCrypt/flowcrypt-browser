@@ -207,6 +207,9 @@ body.cryptup_gmail div.action_menu_message_button {
   text-transform: capitalize;
   cursor: pointer;
   padding: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #1f1f1f;
 }
 
 body.cryptup_gmail div.action_menu_message_button:hover {
@@ -214,9 +217,9 @@ body.cryptup_gmail div.action_menu_message_button:hover {
 }
 
 body.cryptup_gmail div.action_menu_message_button > img {
-  height: 20px;
-  width: 20px;
-  padding: 0 12px;
+  height: auto;
+  width: 18px;
+  padding: 0 11px;
   object-fit: contain;
 }
 
