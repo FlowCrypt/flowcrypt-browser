@@ -29,6 +29,10 @@
   outline: 0;
 }
 
+.btDi4d {
+  position: initial !important;
+}
+
 .small #flowcrypt_secure_compose_button_icon {
   height: 40px;
 }
