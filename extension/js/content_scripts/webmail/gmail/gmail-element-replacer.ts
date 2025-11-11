@@ -670,7 +670,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private replaceStandardReplyBox = async (msgId?: string, force = false) => {
     const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
-    const newReplyBoxes = $('div.nr.tMHS5d, div.gA td.I5, div.amr > div.nr').not('.reply_message_evaluated').filter(':visible').get();
+    const newReplyBoxes = $('div.nr.tMHS5d, div.gA td.I5, .amr > div.nr').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // removing this line will cause unexpected draft creation bug reappear
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/5616#issuecomment-1972897692
