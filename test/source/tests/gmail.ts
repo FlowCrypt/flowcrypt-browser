@@ -485,7 +485,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
-    test(
+    test.only(
       'mail.google.com - plain reply with dot menu',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
@@ -495,7 +495,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
-        await gmailPage.waitAndClick('li[data-action-type="95"]', { delay: 1 }); // click reply-all
+        await gmailPage.waitAndClick('li[data-action-type="25"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
