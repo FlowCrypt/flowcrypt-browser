@@ -67,7 +67,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
     numberOfAttachmentsLabel: '.aVW span:first-child',
-    attachmentsButtons: '.aZi',
+    downloadAllAttachmentsButton: '.aZi, .pYTkkf-JX-ano',
     draftsList: '.ae4',
   };
 
@@ -558,7 +558,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
     if (nRenderedAttachments !== attachments.length) {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
-      $(this.sel.attachmentsButtons).hide();
+      $(this.sel.downloadAllAttachmentsButton).hide();
     }
     if (nRenderedAttachments === 0) {
       attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
