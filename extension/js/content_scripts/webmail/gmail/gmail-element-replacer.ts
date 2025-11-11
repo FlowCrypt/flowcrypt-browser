@@ -977,7 +977,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     // New Gmail uses data-action-type attributes
     const replyButton = visibleMenu.querySelector('li[data-action-type="94"]');
     const forwardButton = visibleMenu.querySelector('li[data-action-type="25"]');
-    const replyAllButton = visibleMenu.querySelector('li[data-action-type="95"]'); // Estimated based on pattern
+    const replyAllButton = visibleMenu.querySelector('li[data-action-type="24"]'); // Estimated based on pattern
 
     // Cannot use jQuery $('#r2').is(':visible') because the element is considered invisible if its parent has display: none.
     if (replyAllButton && window.getComputedStyle(replyAllButton).display !== 'none') {
