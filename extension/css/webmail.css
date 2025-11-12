@@ -210,10 +210,11 @@ body.cryptup_gmail div.action_menu_message_button {
   align-items: center;
   text-transform: capitalize;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px 4px;
   font-size: 14px;
   font-weight: 400;
   color: #1f1f1f;
+  line-height: 16px;
 }
 
 body.cryptup_gmail div.action_menu_message_button:hover {

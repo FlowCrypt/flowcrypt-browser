@@ -495,12 +495,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
         await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
-        await gmailPage.waitAndClick('li[data-action-type="25"]', { delay: 1 }); // click reply-all
+        await gmailPage.waitAndClick('li[data-action-type="24"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
           '.reply_message_evaluated .error_notification',
-          'The last message was encrypted, but you are composing a message without encryption.'
+          'The last message was encrypted, but you are composing a reply without encryption.'
         );
         await gmailPage.waitAndClick('[data-tooltip="Secure Reply"]'); // Switch to encrypted reply
         await gmailPage.waitAll('.reply_message');
