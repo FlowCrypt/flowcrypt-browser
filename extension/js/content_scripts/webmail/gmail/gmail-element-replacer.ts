@@ -56,8 +56,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     msgInner: 'div.a3s:visible:not(.undefined), .message_inner_body:visible',
     msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
-    msgActionsBtn: '.J-J5-Ji.aap',
-    msgActionsMenu: '.b7.J-M',
+    msgActionsBtn: '.Wsq5Cf',
+    msgActionsMenu: '.tB5Jxf-M-S5Cmsd, ul.aqdrmf-Kf[role="menu"]',
     attachmentsContainerOuter: 'div.hq.gt',
     attachmentsContainerInner: 'div.aQH',
     translatePrompt: '.adI, .wl4W9b',
@@ -67,7 +67,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
     numberOfAttachments: '.aVW',
     numberOfAttachmentsLabel: '.aVW span:first-child',
-    attachmentsButtons: '.aZi',
+    downloadAllAttachmentsButton: '.aZi, .pYTkkf-JX-ano',
     draftsList: '.ae4',
   };
 
@@ -297,8 +297,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     return !!$('iframe.pgp_block').filter(':visible').length;
   };
 
-  private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: string) => {
-    if ($(gmailContextMenuBtn).is(':visible') && !document.querySelector(`.action_${replyOption.replace('a_', '')}_message_button`)) {
+  private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: Element | null) => {
+    if (gmailContextMenuBtn && $(gmailContextMenuBtn).is(':visible') && !document.querySelector(`.action_${replyOption.replace('a_', '')}_message_button`)) {
       const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
       button.on(
         'click',
@@ -323,7 +323,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       // only replace the last one FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
       for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
-        const gmailReplyBtn = $(elem).find('.aaq.L3');
+        const gmailReplyBtn = $(elem).find('.DILLkc');
         const secureReplyBtn = $(this.factory.btnSecureReply()).insertAfter(gmailReplyBtn); // xss-safe-factory
         secureReplyBtn.addClass(gmailReplyBtn.attr('class') || '');
         secureReplyBtn.off();
@@ -391,7 +391,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       return;
     }
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const messageContainer = secureReplyInvokedFromMenu ? $('.T-I-JO.T-I-Kq').closest('.h7') : $(btn.closest('.h7')!);
+    const messageContainer = secureReplyInvokedFromMenu ? $('.ii.gt').closest('div.h7') : $(btn.closest('.h7')!);
     if (messageContainer.is(':last-child')) {
       if (this.isEncrypted()) {
         await this.setReplyBoxEditable(replyOption);
@@ -402,8 +402,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       this.insertEncryptedReplyBox(messageContainer, replyOption);
     }
     if (secureReplyInvokedFromMenu) {
-      $(this.sel.msgActionsBtn).removeClass('T-I-JO T-I-Kq');
-      $(this.sel.msgActionsMenu).hide();
+      $(this.sel.msgActionsBtn).trigger('click');
     }
   };
 
@@ -559,7 +558,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
     if (nRenderedAttachments !== attachments.length) {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
-      $(this.sel.attachmentsButtons).hide();
+      $(this.sel.downloadAllAttachmentsButton).hide();
     }
     if (nRenderedAttachments === 0) {
       attachmentsContainerInner.parents(this.sel.attachmentsContainerOuter).first().hide();
@@ -638,7 +637,23 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private getConvoRootEl = (anyInnerElement: HTMLElement) => {
-    return $(anyInnerElement).closest('div.if, div.aHU, td.Bu').first();
+    const ancestorConvoRoot = $(anyInnerElement).closest('div.if, div.aHU, td.Bu');
+    if (ancestorConvoRoot.length) {
+      return ancestorConvoRoot.first();
+    }
+
+    // New Gmail structure: conversation root might be a sibling
+    // Navigate to common parent container and find conversation root
+    const commonParent = $(anyInnerElement).closest('.nH.a98.iY, .if');
+    if (commonParent.length) {
+      const siblingConvoRoot = commonParent.find('div.if, div.aHU, td.Bu').first();
+      if (siblingConvoRoot.length) {
+        return siblingConvoRoot;
+      }
+    }
+
+    // Fallback: return empty jQuery object to maintain consistent return type
+    return $();
   };
 
   private insertEncryptedReplyBox = (messageContainer: JQuery<Element>, replyOption: ReplyOption) => {
@@ -655,7 +670,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   private replaceStandardReplyBox = async (msgId?: string, force = false) => {
     const legacyDraftReplyRegex = new RegExp(/\[(flowcrypt|cryptup):link:draft_reply:([0-9a-fr\-]+)]/);
-    const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
+    const newReplyBoxes = $('div.nr.tMHS5d, div.gA td.I5, .amr > div.nr').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // removing this line will cause unexpected draft creation bug reappear
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/5616#issuecomment-1972897692
@@ -946,27 +961,41 @@ export class GmailElementReplacer extends WebmailElementReplacer {
      *
      * Issue: https://github.com/FlowCrypt/flowcrypt-browser/issues/5933
      */
-    const messageContainer = $('.T-I-JO.T-I-Kq').closest('.h7');
+    // Find the active message menu
+    const visibleMenu = Array.from(document.querySelectorAll(this.sel.msgActionsMenu)).find(
+      menu => window.getComputedStyle(menu).display !== 'none' && (menu as HTMLElement).offsetParent
+    );
+    if (!visibleMenu) {
+      return;
+    }
+
+    // Find the message container from the menu's position or context
+    const messageContainer = $('div.h7:visible').last(); // Get the last visible message container
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
-    const replyAllMenuButton = document.querySelector('#r2');
+
+    // New Gmail uses data-action-type attributes
+    const replyButton = visibleMenu.querySelector('li[data-action-type="94"]');
+    const forwardButton = visibleMenu.querySelector('li[data-action-type="25"]');
+    const replyAllButton = visibleMenu.querySelector('li[data-action-type="24"]'); // Estimated based on pattern
+
     // Cannot use jQuery $('#r2').is(':visible') because the element is considered invisible if its parent has display: none.
-    if (replyAllMenuButton && window.getComputedStyle(replyAllMenuButton).display !== 'none') {
-      this.addMenuButton('a_reply_all', '#r2');
+    if (replyAllButton && window.getComputedStyle(replyAllButton).display !== 'none') {
+      this.addMenuButton('a_reply_all', replyAllButton);
     } else if (msgId) {
       try {
         const gmailMsg = await this.emailProvider.msgGet(msgId, 'metadata');
         const replyMeta = GmailParser.determineReplyMeta(this.acctEmail, [], gmailMsg);
 
         if (replyMeta.to.length > 1) {
-          this.addMenuButton('a_reply_all', '#r');
+          this.addMenuButton('a_reply_all', replyButton);
         }
       } catch (error) {
         console.error(`Failed to retrieve message metadata for ID ${msgId}:`, error);
       }
     }
 
-    this.addMenuButton('a_reply', '#r');
-    this.addMenuButton('a_forward', '#r3');
+    this.addMenuButton('a_reply', replyButton);
+    this.addMenuButton('a_forward', forwardButton);
   };
 }

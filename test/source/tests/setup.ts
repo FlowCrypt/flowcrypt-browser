@@ -853,6 +853,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
         await Util.sleep(1);
         await gmailPage.page.reload();
+        await Util.sleep(3);
         await gmailPage.waitTillGone('@webmail-notification-notify_expiring_keys');
         // remove added key and observe warning appears again
         await settingsPage.waitAndClick('@action-remove-key-1');
