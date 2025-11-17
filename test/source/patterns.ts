@@ -79,7 +79,7 @@ for (const srcFilePath of getAllFilesInDir('./extension', /\.ts$/)) {
  * https://github.com/FlowCrypt/flowcrypt-browser/issues/2934
  */
 
-const expectedPermissions: chrome.runtime.ManifestPermissions[] = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
+const expectedPermissions: chrome.runtime.ManifestPermission[] = ['alarms', 'scripting', 'storage', 'tabs', 'unlimitedStorage'];
 const expectedConsumerHostPermissions = ['https://*.google.com/*', 'https://www.googleapis.com/*', 'https://flowcrypt.com/*'];
 const expectedEnterpriseHostPermissions = ['https://*.google.com/*', 'https://*.googleapis.com/*', 'https://flowcrypt.com/*'];
 for (const buildType of ['chrome-consumer', 'chrome-enterprise', 'thunderbird-consumer', 'firefox-consumer']) {
