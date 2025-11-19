@@ -461,10 +461,7 @@ export class MessageRenderer {
 
   private getMessageInfo = async (fullMsg: GmailRes.GmailMsg): Promise<MessageInfo> => {
     const sentDate = GmailParser.findHeader(fullMsg, 'date');
-    let sentDateStr = $('div.gK span[title]').attr('title');
-    if (!sentDateStr || isNaN(Date.parse(sentDateStr))) {
-      sentDateStr = sentDate ? new Date(sentDate).toLocaleString() : '';
-    }
+    const sentDateStr = sentDate ? new Date(sentDate).toLocaleString() : '';
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
