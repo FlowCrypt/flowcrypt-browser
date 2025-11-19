@@ -20,6 +20,7 @@ import {
 } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { ControllablePage } from '../browser';
+import { minutes } from './tooling';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
@@ -72,11 +73,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
-        await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await inboxPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788 has already been imported.'
+        );
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
-        await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await gmailPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint 5520 CACE 2CB6 1EA7 13E5 B005 7FDE 6855 48AE A788 has already been imported.'
+        );
         await gmailPage.close();
       })
     );
@@ -88,11 +99,21 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
-        await (await inboxPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await inboxPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207 has already been imported.'
+        );
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
-        await (await gmailPage.getFrame(['backup.htm'])).waitForContent('@private-key-status', 'This Private Key is already imported.');
+        await (
+          await gmailPage.getFrame(['backup.htm'])
+        ).waitForContent(
+          '@private-key-status',
+          'This private key with fingerprint E8F0 517B A6D7 DAB6 081C 96E4 ADAC 279C 9509 3207 has already been imported.'
+        );
         await gmailPage.close();
       })
     );
@@ -1065,7 +1086,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      `compose - #5125 test pass phrase anti brute force protection`,
+      `compose - #5125 test passphrase anti brute force protection`,
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const wrongPassphrase = 'wrong';
@@ -1094,30 +1115,34 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
-      'decrypt - by entering pass phrase + remember in session',
-      testWithBrowser(async (t, browser) => {
-        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
-        const threadId = '15f7f5630573be2d';
-        const content = ['The International DUBLIN Literary Award is an international literary award'];
-        const settingsPage = await browser.newExtensionSettingsPage(t);
-        await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
-        const enterPp = {
-          passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
-          isForgetPpChecked: true,
-          isForgetPpHidden: false,
-        };
-        // 1. inbox page test
-        // requires pp entry
-        await InboxPageRecipe.checkDecryptMsg(t, browser, { enterPp, content, acctEmail, threadId });
-        // now remembers pp in session
-        await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, content, finishSessionAfterTesting: true });
-        // 2. gmail page test
-        // requires pp entry
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
-        // now remembers pp in session
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
-      })
+      'decrypt - by entering passphrase + remember in session',
+      testWithBrowser(
+        async (t, browser) => {
+          const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+          const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+          const threadId = '15f7f5630573be2d';
+          const content = ['The International DUBLIN Literary Award is an international literary award'];
+          const settingsPage = await browser.newExtensionSettingsPage(t);
+          await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
+          const enterPp = {
+            passphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
+            isForgetPpChecked: true,
+            isForgetPpHidden: false,
+          };
+          // 1. inbox page test
+          // requires pp entry
+          await InboxPageRecipe.checkDecryptMsg(t, browser, { enterPp, content, acctEmail, threadId });
+          // now remembers pp in session
+          await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, content, finishSessionAfterTesting: true });
+          // 2. gmail page test
+          // requires pp entry
+          await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { enterPp, content }, authHdr);
+          // now remembers pp in session
+          await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, threadId, { content, finishSessionAfterTesting: true }, authHdr);
+        },
+        undefined,
+        minutes(7)
+      )
     );
 
     test(
@@ -1441,7 +1466,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), expectedMessage);
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
-        await gmailPage.waitAll('iframe', { timeout: 2 });
+        await gmailPage.waitAll('iframe', { timeout: 15 });
         const frameUrlsFromGmailPage = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(frameUrlsFromGmailPage.length).to.equal(1);
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame([frameUrlsFromGmailPage[0]]), expectedMessage);
@@ -1977,7 +2002,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    test.todo('decrypt - by entering secondary pass phrase');
+    test.todo('decrypt - by entering secondary passphrase');
 
     test(
       `decrypt - signed only - parse error in a badge`,
@@ -2274,6 +2299,70 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         );
         expect(Object.entries(downloadedFile8).length).to.equal(1);
         expect(Object.keys(downloadedFile8)[0]).to.match(/sample.*\.bat/);
+      })
+    );
+
+    test(
+      'decrypt - password protected PDF attachment',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '19983afe57200dcd';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+
+        // Check that the attachment frame is present
+        const attachmentFrame = await inboxPage.getFrame(['attachment.htm']);
+        await attachmentFrame.waitForSelTestState('ready');
+
+        // Click on the attachment to preview it
+        await attachmentFrame.waitAndClick('@attachment-container');
+
+        // Wait for attachment preview frame
+        const attachmentPreviewPage = await inboxPage.getFrame(['attachment_preview.htm']);
+
+        // Wait for password modal and enter the correct password
+        await PageRecipe.waitForModalAndRespond(attachmentPreviewPage, 'password-input', {
+          contentToCheck: 'This PDF is password protected. Please enter the password:',
+          inputValue: '123456',
+          clickOn: 'confirm',
+        });
+
+        // Wait for the PDF to render
+        await attachmentPreviewPage.waitAny('.attachment-preview-pdf');
+
+        // Verify PDF content is displayed
+        const pdfCanvas = await attachmentPreviewPage.waitAny('.attachment-preview-pdf-page');
+        expect(pdfCanvas).to.not.be.null;
+
+        // Test incorrect password scenario
+        await inboxPage.close();
+        const inboxPage2 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage2.waitForSelTestState('ready');
+        await inboxPage2.waitAll('iframe');
+
+        const attachmentFrame2 = await inboxPage2.getFrame(['attachment.htm']);
+        await attachmentFrame2.waitForSelTestState('ready');
+        await attachmentFrame2.waitAndClick('@attachment-container');
+
+        const attachmentPreviewPage2 = await inboxPage2.getFrame(['attachment_preview.htm']);
+
+        // Enter wrong password first
+        await PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'password-input', {
+          contentToCheck: 'This PDF is password protected. Please enter the password:',
+          inputValue: 'wrongpassword',
+          clickOn: 'confirm',
+        });
+
+        // Should get incorrect password modal
+        await PageRecipe.waitForModalAndRespond(attachmentPreviewPage2, 'password-input', {
+          contentToCheck: 'Incorrect password. Please enter the correct password:',
+          inputValue: '123456',
+          clickOn: 'confirm',
+        });
+
+        // Verify PDF renders after correct password
+        await attachmentPreviewPage2.waitAny('.attachment-preview-pdf');
       })
     );
   }

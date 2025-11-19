@@ -2,29 +2,20 @@
 'use strict';
 
 import { Api } from './shared/api.js';
-import { Dict } from '../core/common.js';
-import { BACKEND_API_HOST } from '../core/const.js';
-import { Catch } from '../platform/catch.js';
 import { Browser } from '../browser/browser.js';
+import { CatchHelper } from '../platform/catch-helper.js';
 
 namespace FlowCryptWebsiteRes {
   export type FcBlogPost = { title: string; date: string; url: string };
 }
 
 export class FlowCryptWebsite extends Api {
-  public static url = (type: 'api' | 'me' | 'pubkey' | 'decrypt' | 'web', resource = '') => {
-    return (
-      {
-        api: BACKEND_API_HOST,
-        me: `https://flowcrypt.com/me/${resource}`,
-        pubkey: `https://flowcrypt.com/pub/${resource}`,
-        web: 'https://flowcrypt.com/',
-      } as Dict<string>
-    )[type];
+  public static pubKeyUrl = (resource: string) => {
+    return `https://flowcrypt.com/pub/${resource}`;
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
-    const xmlString = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', method: 'GET', stack: Catch.stackTrace() }, 'text');
+    const xmlString = await Api.ajax({ url: 'https://flowcrypt.com/blog/feed.xml', method: 'GET', stack: CatchHelper.stackTrace() }, 'text');
     const xml = $.parseXML(xmlString);
     const posts: FlowCryptWebsiteRes.FcBlogPost[] = [];
     for (const post of Browser.arrFromDomNodeList(xml.querySelectorAll('entry'))) {

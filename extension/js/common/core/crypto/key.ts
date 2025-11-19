@@ -222,7 +222,7 @@ export class KeyUtil {
           // if (await KeyUtil.decrypt(parsed, passPhrase, undefined, 'OK-IF-ALREADY-DECRYPTED')) {
           allKeys.push(parsed);
           // } else {
-          //   allErr.push(new Error(`Wrong pass phrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
+          //   allErr.push(new Error(`Wrong passphrase for OpenPGP key ${parsed.id} (${parsed.emails[0]})`));
           // }
         } catch (e) {
           allErr.push(e as Error);

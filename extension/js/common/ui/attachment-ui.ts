@@ -3,7 +3,8 @@
 'use strict';
 
 import { Attachment } from '../core/attachment.js';
-import { Catch, UnreportableError } from '../platform/catch.js';
+import { Catch } from '../platform/catch.js';
+import { UnreportableError } from '../platform/error-report.js';
 import { Dict } from '../core/common.js';
 import { MsgUtil } from '../core/crypto/pgp/msg-util.js';
 import { Ui } from '../browser/ui.js';

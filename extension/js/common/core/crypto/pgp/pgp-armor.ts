@@ -8,7 +8,7 @@ import { Buf } from '../../buf.js';
 import { ReplaceableMsgBlockType } from '../../msg-block.js';
 import { Str } from '../../common.js';
 import type * as OpenPGP from 'openpgp';
-import { opgp } from './openpgpjs-custom.js';
+import { OpenPGPDataType, opgp } from './openpgpjs-custom.js';
 import * as Stream from '@openpgp/web-stream-tools';
 import { SmimeKey, ENVELOPED_DATA_OID } from '../smime/smime-key.js';
 
@@ -17,9 +17,9 @@ export type PreparedForDecrypt =
       isArmored: boolean;
       isCleartext: true;
       isPkcs7: false;
-      message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGP.Data>;
+      message: OpenPGP.CleartextMessage | OpenPGP.Message<OpenPGPDataType>;
     }
-  | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.Message<OpenPGP.Data> }
+  | { isArmored: boolean; isCleartext: false; isPkcs7: false; message: OpenPGP.Message<OpenPGPDataType> }
   | { isArmored: boolean; isCleartext: false; isPkcs7: true; message: forge.pkcs7.PkcsEnvelopedData };
 
 type CryptoArmorHeaderDefinitions = {
@@ -69,17 +69,35 @@ export class PgpArmor {
     return !!new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`).exec(msg);
   }
 
-  public static clipIncomplete(text: string): string | undefined {
-    const match = text?.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+)/gm);
-    return match?.length ? match[0] : undefined;
-  }
-
   public static clip(text: string): string | undefined {
-    if (text?.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
-      const match = text.match(
-        /(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm
-      );
-      return match?.length ? match[0] : undefined;
+    // Prevent processing extremely large strings that could cause performance issues
+    const maxLength = 10 * 1024 * 1024; // 10MB limit
+    if (!text || text.length > maxLength) {
+      return undefined;
+    }
+
+    if (text.includes(PgpArmor.ARMOR_HEADER_DICT.null.begin) && text.includes(String(PgpArmor.ARMOR_HEADER_DICT.null.end))) {
+      // Define the PGP armor headers we want to match
+      const pgpHeaders = [
+        PgpArmor.ARMOR_HEADER_DICT.encryptedMsg,
+        PgpArmor.ARMOR_HEADER_DICT.signedMsg,
+        PgpArmor.ARMOR_HEADER_DICT.signature,
+        PgpArmor.ARMOR_HEADER_DICT.publicKey,
+      ];
+
+      // Build regex patterns from headers, escaping special regex characters
+      const patterns = pgpHeaders.map(header => {
+        const escapedBegin = header.begin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // header.end can be string or RegExp, handle both cases
+        const escapedEnd = typeof header.end === 'string' ? header.end.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : header.end.source; // If it's already a RegExp, use its source
+        return `(${escapedBegin}[\\s\\S]*?${escapedEnd})`;
+      });
+
+      // Create regex with alternation, 'm' flag for multiline (no 'g' needed for single match)
+      const regex = new RegExp(patterns.join('|'), 'm');
+      const match = text.match(regex);
+
+      return match ? match[0] : undefined;
     }
     return undefined;
   }

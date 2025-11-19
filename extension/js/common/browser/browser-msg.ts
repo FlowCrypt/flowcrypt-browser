@@ -20,6 +20,7 @@ import { Ui } from './ui.js';
 import { AuthRes } from '../api/authentication/generic/oauth.js';
 import { GlobalStore } from '../platform/store/global-store.js';
 import { BgUtils } from '../../service_worker/bgutils.js';
+import { CatchHelper } from '../platform/catch-helper.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 export type ScreenDimensions = { width: number; height: number; availLeft: number; availTop: number };
@@ -401,13 +402,32 @@ export class BrowserMsg {
       try {
         return await operation();
       } catch (e) {
-        if (!(e instanceof BgNotReadyErr) || attempt === maxAttempts - 1) {
+        const isBgErr = e instanceof BgNotReadyErr;
+        const isLastAttempt = attempt === maxAttempts - 1;
+
+        if (!isBgErr) {
           throw e;
         }
+
+        if (isLastAttempt) {
+          const hasReloaded = sessionStorage.getItem('bg_reload_attempted');
+
+          if (!hasReloaded) {
+            console.warn('BgNotReadyErr: retry limit reached, reloading extension');
+            sessionStorage.setItem('bg_reload_attempted', '1');
+            chrome.runtime.reload();
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return new Promise(() => {}); // wait indefinitely after reload
+          }
+
+          throw new BgNotReadyErr('Background unavailable after retry and reload.');
+        }
+
         await Ui.delay(delayMs);
       }
     }
-    throw new BgNotReadyErr('Unexpected error after maximum retries');
+
+    throw new BgNotReadyErr('Unexpected BgNotReadyErr after maximum retries.'); // fallback safety
   }
 
   public static addListener(name: string, handler: Handler) {
@@ -624,7 +644,7 @@ export class BrowserMsg {
       data: { bm },
       to: destString || null, // eslint-disable-line no-null/no-null
       uid: SymmetricMessageEncryption.generateIV(),
-      stack: Catch.stackTrace(),
+      stack: CatchHelper.stackTrace(),
     };
     // eslint-disable-next-line no-null/no-null
     if (!(await Env.isBackgroundPage()) && msg.to !== null) {

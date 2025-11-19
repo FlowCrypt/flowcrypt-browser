@@ -4,7 +4,7 @@
 
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
-import { Catch } from '../../platform/catch.js';
+import { CatchHelper } from '../../platform/catch-helper.js';
 import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
@@ -25,20 +25,36 @@ export type AjaxHeaders = {
   authorization?: string;
   ['api-version']?: string;
 };
+interface GetParams {
+  method: 'GET' | 'DELETE';
+  data?: UrlParams;
+}
+export interface JsonParams {
+  method: 'POST' | 'PUT';
+  data?: Dict<Serializable>;
+  dataType?: 'JSON';
+}
+
+interface TextParams {
+  method: 'POST' | 'PUT';
+  data: string;
+  contentType?: string;
+  dataType: 'TEXT';
+}
+interface FormParams {
+  method: 'POST' | 'PUT';
+  data: FormData;
+  dataType: 'FORM';
+}
+
+export type AjaxParams = GetParams | JsonParams | TextParams | FormParams;
 export type Ajax = {
   url: string;
   headers?: AjaxHeaders;
   progress?: ProgressCbs;
   timeout?: number; // todo: implement
   stack: string;
-} & (
-  | { method: 'GET' | 'DELETE'; data?: UrlParams }
-  | { method: 'POST' }
-  | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
-  | { method: 'POST' | 'PUT'; contentType?: string; data: string; dataType: 'TEXT' }
-  | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' }
-  | { method: never; data: never; contentType: never }
-);
+} & AjaxParams;
 type RawAjaxErr = {
   readyState: number;
   responseText?: string;
@@ -87,7 +103,7 @@ export class Api {
           reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
         } else {
           const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET', stack: Catch.stackTrace() }));
+          reject(AjaxErr.fromXhr({ readyState, status, statusText }, { url, method: 'GET', stack: CatchHelper.stackTrace() }));
         }
       };
       request.onerror = errHandler;
@@ -157,7 +173,7 @@ export class Api {
               headersInit.push(['Content-Type', req.contentType]);
             }
           } else {
-            body = req.data; // todo: form data content-type?
+            body = req.data as FormData; // todo: form data content-type?
           }
         }
       }
@@ -236,7 +252,7 @@ export class Api {
             }),
           };
         } else {
-          return { response, pipe: Value.noop }; // original response
+          return { response, pipe: async () => { /* no-op */ } }; // original response
         }
       };
 
@@ -291,13 +307,26 @@ export class Api {
     let data: BodyInit | undefined = formattedData;
     const headersInit: Dict<string> = req.headers ?? {};
 
-    if (req.method === 'PUT' || req.method === 'POST') {
-      if ('data' in req && typeof req.data !== 'undefined') {
-        data = req.dataType === 'JSON' ? JSON.stringify(req.data) : req.data;
-
-        if (req.dataType === 'TEXT' && typeof req.contentType === 'string') {
-          headersInit['Content-Type'] = req.contentType;
-        }
+    if ((req.method === 'PUT' || req.method === 'POST') && 'data' in req) {
+      switch (req.dataType) {
+        case 'JSON':
+          // req.data is Dict<Serializable>
+          data = JSON.stringify(req.data);
+          headersInit['Content-Type'] = 'application/json';
+          break;
+        case 'TEXT':
+          // req.data is string
+          data = req.data;
+          if (req.contentType) {
+            headersInit['Content-Type'] = req.contentType;
+          }
+          break;
+        case 'FORM':
+          // req.data is FormData
+          data = req.data;
+          break;
+        default:
+          break;
       }
     }
     const apiReq: JQuery.AjaxSettings<ApiCallContext> = {
@@ -329,7 +358,7 @@ export class Api {
         throw e;
       }
       if (Api.isRawAjaxErr(e)) {
-        throw AjaxErr.fromXhr(e, { ...req, stack: Catch.stackTrace() });
+        throw AjaxErr.fromXhr(e, { ...req, stack: CatchHelper.stackTrace() });
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
@@ -385,12 +414,7 @@ export class Api {
   ): Promise<FetchResult<T, RT>> {
     progress = progress || ({} as ProgressCbs);
     let formattedData: FormData | string | undefined;
-    let dataPart:
-      | { method: 'GET' }
-      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
-      | { method: 'POST' | 'PUT'; data: string; dataType: 'TEXT' }
-      | { method: 'POST' | 'PUT'; data: FormData; dataType: 'FORM' };
-    dataPart = { method: 'GET' };
+    let dataPart: AjaxParams = { method: 'GET' };
     if (values) {
       if (values.fmt === 'JSON') {
         dataPart = { method: values.method ?? 'POST', data: values.data, dataType: 'JSON' };
@@ -408,7 +432,7 @@ export class Api {
         dataPart = { method: values.method ?? 'POST', data: formattedData, dataType: 'FORM' };
       }
     }
-    const req: Ajax = { url: url + path, stack: Catch.stackTrace(), ...dataPart, headers, progress };
+    const req: Ajax = { url: url + path, stack: CatchHelper.stackTrace(), ...dataPart, headers, progress };
     if (typeof resFmt === 'undefined') {
       const undefinedRes: undefined = await Api.ajax(req, undefined); // we should get an undefined
       return undefinedRes as FetchResult<T, RT>;

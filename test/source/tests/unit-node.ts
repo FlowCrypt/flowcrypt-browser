@@ -8,7 +8,7 @@ import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/key';
-import { UnreportableError } from '../platform/catch.js';
+import { UnreportableError } from '../platform/error-report.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
 import { DecryptError, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
@@ -1095,7 +1095,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     test('[MsgUtil.decryptMessage] handles long message', async t => {
       const data = Buf.fromUtfStr('The test string concatenated many times to produce large output'.repeat(100000));
-      const passphrase = 'pass phrase';
+      const passphrase = 'passphrase';
       const prv = await KeyUtil.parse(prvEncryptForSubkeyOnly);
       const encrypted = await MsgUtil.encryptMessage({
         pubkeys: [await KeyUtil.asPublicKey(prv)],
@@ -1373,7 +1373,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 
     test('[MsgUtil.encryptMessage] do not decrypt message when encrypted for key not meant for encryption', async t => {
       const data = Buf.fromUtfStr('hello');
-      const passphrase = 'pass phrase';
+      const passphrase = 'passphrase';
       const tmpPrv = await KeyUtil.parse(prvEncryptForSubkeyOnly);
       await KeyUtil.encrypt(tmpPrv, passphrase);
       expect(tmpPrv.fullyEncrypted).to.equal(true);
@@ -2755,10 +2755,44 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       t.pass();
     });
 
-    test(`[unit][PgpArmor.clipIncomplete] correctly handles all the cases`, async t => {
-      expect(PgpArmor.clipIncomplete('')).to.be.an.undefined;
-      expect(PgpArmor.clipIncomplete('plain text')).to.be.an.undefined;
-      expect(PgpArmor.clipIncomplete('prefix -----BEGIN PGP MESSAGE-----\n\nexample')).to.equal('-----BEGIN PGP MESSAGE-----\n\nexample');
+    test(`[unit][PgpArmor.clip] correctly handles all the cases including edge cases`, async t => {
+      // Test empty and plain text
+      expect(PgpArmor.clip('')).to.be.an.undefined;
+      expect(PgpArmor.clip('plain text')).to.be.an.undefined;
+
+      // Test valid PGP messages
+      const validMessage = '-----BEGIN PGP MESSAGE-----\n\ntest content\n-----END PGP MESSAGE-----';
+      expect(PgpArmor.clip(validMessage)).to.equal(validMessage);
+
+      // Test with prefix and suffix
+      const messageWithNoise = 'prefix text ' + validMessage + ' suffix text';
+      expect(PgpArmor.clip(messageWithNoise)).to.equal(validMessage);
+
+      // Test multiple messages (should return first)
+      const multipleMessages = validMessage + '\n\n' + validMessage;
+      expect(PgpArmor.clip(multipleMessages)).to.equal(validMessage);
+
+      // Test with different block types
+      const publicKeyBlock = '-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nkey data\n-----END PGP PUBLIC KEY BLOCK-----';
+      expect(PgpArmor.clip(publicKeyBlock)).to.equal(publicKeyBlock);
+
+      // Test with signed message
+      const signedMessage = '-----BEGIN PGP SIGNED MESSAGE-----\n\nmessage\n-----BEGIN PGP SIGNATURE-----\nsig\n-----END PGP SIGNATURE-----';
+      expect(PgpArmor.clip(signedMessage)).to.equal(signedMessage);
+
+      // Test with mismatched begin/end (should not match)
+      const mismatchedMessage = '-----BEGIN PGP MESSAGE-----\n\ntest\n-----END PGP SIGNATURE-----';
+      expect(PgpArmor.clip(mismatchedMessage)).to.be.an.undefined;
+
+      // Test with very large input (over 10MB limit)
+      const largeInput = 'a'.repeat(11 * 1024 * 1024);
+      expect(PgpArmor.clip(largeInput)).to.be.an.undefined;
+
+      // Test with pathological input that would have caused stack overflow
+      const pathologicalBase = '-----BEGIN PGP MESSAGE-----\n' + 'a'.repeat(1000);
+      const pathologicalInput = pathologicalBase + '\n-----END PGP MESSAGE-----';
+      expect(PgpArmor.clip(pathologicalInput)).to.equal(pathologicalInput);
+
       t.pass();
     });
 

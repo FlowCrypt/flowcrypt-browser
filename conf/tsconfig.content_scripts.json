@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "es6",
+    "module": "es2022",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
@@ -13,16 +13,18 @@
     "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,
+    "moduleResolution": "bundler",
     "outDir": "../build/_/content_scripts",
     "baseUrl": "../extension",
+    "skipLibCheck": true,
     "paths": {
       "dompurify": ["../node_modules/dompurify/dist/purify.cjs.d.ts"],
       "openpgp": ["../node_modules/openpgp/openpgp.d.ts"],
-      "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/lib/index.d.ts"],
+      "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/lib/types/index.d.ts"],
       "squire-rte": ["../node_modules/squire-rte/dist/types/Squire.d.ts"],
       "undici-types": ["../node_modules/undici-types/index.d.ts", "COMMENT"],
-      "linkifyHtml": ["../node_modules/linkify-html/dist/linkify-html.es.d.ts", "COMMENT"],
-      "linkifyjs": ["../node_modules/linkifyjs/dist/linkify.es.d.ts", "COMMENT"]
+      "linkifyHtml": ["../node_modules/linkify-html/dist/linkify-html.d.mts", "COMMENT"],
+      "linkifyjs": ["../node_modules/linkifyjs/dist/linkify.d.mts", "COMMENT"]
     },
     "typeRoots": ["../extension/types", "../extension/js/common/core/types"]
   },

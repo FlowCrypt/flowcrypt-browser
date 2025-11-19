@@ -2,49 +2,22 @@
 
 'use strict';
 
-import { Ajax, ProgressCbs } from '../../shared/api.js';
-import { Dict, Str, UrlParams } from '../../../core/common.js';
+import { Ajax, AjaxParams, JsonParams, ProgressCbs } from '../../shared/api.js';
+import { Dict, Str } from '../../../core/common.js';
 
 import { GMAIL_GOOGLE_API_HOST, PEOPLE_GOOGLE_API_HOST } from '../../../core/const.js';
 import { GmailRes } from './gmail-parser.js';
 import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
-import { Serializable } from '../../../platform/store/abstract-store.js';
-import { Catch } from '../../../platform/catch.js';
-
+import { CatchHelper } from '../../../platform/catch-helper.js';
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
     return `https://mail.google.com/mail/u/${acctEmail}`;
   };
 
-  public static gmailCall = async <RT>(
-    acctEmail: string,
-    path: string,
-    params?:
-      | {
-          method: 'POST' | 'PUT';
-          data: Dict<Serializable>;
-          dataType?: 'JSON';
-        }
-      | {
-          method: 'POST';
-          data: string;
-          contentType: string;
-          dataType: 'TEXT';
-        }
-      | {
-          method: 'GET';
-          data?: UrlParams;
-        }
-      | { method: 'DELETE' },
-    progress?: ProgressCbs
-  ): Promise<RT> => {
+  public static gmailCall = async <RT>(acctEmail: string, path: string, params?: AjaxParams, progress?: ProgressCbs): Promise<RT> => {
     progress = progress || {};
     let url;
-    let dataPart:
-      | { method: 'POST' | 'PUT'; data: Dict<Serializable>; dataType: 'JSON' }
-      | { method: 'POST'; data: string; contentType: string; dataType: 'TEXT' }
-      | { method: 'GET'; data?: UrlParams }
-      | { method: 'DELETE' };
+    let dataPart: AjaxParams;
     if (params?.method === 'POST' && params.dataType === 'TEXT') {
       url = `${GMAIL_GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
       dataPart = { method: 'POST', data: params.data, contentType: params.contentType, dataType: 'TEXT' };
@@ -53,7 +26,12 @@ export class Google {
       if (params?.method === 'GET') {
         dataPart = { method: 'GET', data: params.data };
       } else if (params?.method === 'POST' || params?.method === 'PUT') {
-        dataPart = { method: params.method, data: params.data, dataType: 'JSON' };
+        const { method, data } = params as JsonParams;
+        dataPart = {
+          method,
+          data,
+          dataType: 'JSON',
+        };
       } else if (params?.method === 'DELETE') {
         dataPart = { ...params };
       } else {
@@ -62,7 +40,7 @@ export class Google {
     }
     const headers = await GoogleOAuth.googleApiAuthHeader(acctEmail);
     const progressCbs = 'download' in progress || 'upload' in progress ? progress : undefined;
-    const request: Ajax = { url, headers, ...dataPart, stack: Catch.stackTrace(), progress: progressCbs };
+    const request: Ajax = { url, headers, ...dataPart, stack: CatchHelper.stackTrace(), progress: progressCbs };
     return await GoogleOAuth.apiGoogleCallRetryAuthErrorOneTime<RT>(acctEmail, request);
   };
 
@@ -80,7 +58,7 @@ export class Google {
           method: 'GET',
           data,
           headers: authorizationHeader,
-          stack: Catch.stackTrace(),
+          stack: CatchHelper.stackTrace(),
         })
       )
     );
@@ -106,7 +84,7 @@ export class Google {
       method: 'GET',
       data,
       headers: authorizationHeader,
-      stack: Catch.stackTrace(),
+      stack: CatchHelper.stackTrace(),
     });
     return contacts;
   };

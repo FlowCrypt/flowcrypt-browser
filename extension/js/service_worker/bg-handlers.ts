@@ -76,7 +76,7 @@ export class BgHandlers {
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       const email = acctEmails?.length ? acctEmails[0] : undefined;
 
-      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // eslint-disable-line no-null/no-null
+      void chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // eslint-disable-line no-null/no-null
     }
   };
 
@@ -175,7 +175,7 @@ export class BgHandlers {
     if (tab.id) {
       const message = await messenger.messageDisplay.getDisplayedMessage(tab.id);
       if (message?.id) {
-        return await messenger.messages.getFull(Number(message.id));
+        return await messenger.messages.getFull(message.id);
       }
     }
     return;

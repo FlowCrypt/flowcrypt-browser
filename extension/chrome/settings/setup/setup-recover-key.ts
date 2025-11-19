@@ -26,7 +26,7 @@ export class SetupRecoverKeyModule {
         return;
       }
       if (!passphrase) {
-        await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+        await Ui.modal.warning('Please enter the passphrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
         return;
       }
       let matchedPreviouslyRecoveredKey = false;
@@ -47,13 +47,13 @@ export class SetupRecoverKeyModule {
       if (!newlyMatchingKeys.length) {
         if (matchedPreviouslyRecoveredKey) {
           $('#recovery_password').val('');
-          await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
+          await Ui.modal.warning('This is a correct passphrase, but it matches a key that was already recovered. Please try another passphrase.');
         } else if (this.view.fetchedKeyBackupsUniqueLongids.length > 1) {
           await Ui.modal.warning(
-            `This pass phrase did not match any of your ${this.view.fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`
+            `This passphrase did not match any of your ${this.view.fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`
           );
         } else {
-          await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
+          await Ui.modal.warning('This passphrase did not match your original setup. Please try again.');
         }
         return;
       }
@@ -107,7 +107,7 @@ export class SetupRecoverKeyModule {
         })
       );
     } else {
-      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different passphrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   };

@@ -25,12 +25,6 @@ import { MimeParser } from '../core/types/emailjs.js';
 import * as openpgp from 'openpgp';
 import { Catch } from './catch.js';
 
-type Codec = {
-  encode: (text: string, mode: 'fatal' | 'html') => string;
-  decode: (text: string) => string;
-  labels: string[];
-  version: string;
-};
 
 export const requireOpenpgp = () => {
   if (typeof window !== 'undefined' && typeof globalThis !== 'undefined' && window !== globalThis && Catch.browser().name === 'firefox') {
@@ -51,9 +45,4 @@ export const requireMimeParser = (): typeof MimeParser => {
 
 export const requireMimeBuilder = () => {
   return (globalThis as any)['emailjs-mime-builder']; // eslint-disable-line
-};
-
-export const requireIso88592 = (): Codec => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  return (globalThis as any).iso88592 as Codec;
 };

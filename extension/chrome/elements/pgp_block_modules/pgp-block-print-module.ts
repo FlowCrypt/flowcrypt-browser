@@ -4,13 +4,23 @@
 
 import { Time } from '../../../js/common/browser/time.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { Ui } from '../../../js/common/browser/ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 
 export class PgpBlockViewPrintModule {
   public printMailInfoHtml: string | undefined;
 
   public printPGPBlock = async () => {
+    // If printMailInfoHtml is not yet prepared, wait briefly to handle race conditions
     if (!this.printMailInfoHtml) {
+      for (let i = 0; i < 6 && !this.printMailInfoHtml; i++) {
+        await Time.sleep(200);
+      }
+    }
+    // If still not prepared, skip printing entirely
+    if (!this.printMailInfoHtml) {
+      // Last resort: inform the user
+      void Ui.modal.error('Unable to get metadata for this email. Please refresh the page and try again.');
       Catch.reportErr('printMailInfoHtml not prepared!');
       return;
     }

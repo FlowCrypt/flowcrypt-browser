@@ -71,11 +71,12 @@ export class BrowserRecipe {
   public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
     await Util.sleep(5);
-    if (await googleChatPage.isElementPresent('.fKz7Od')) {
+    const chatFrame = await googleChatPage.getFrame(['https://chat.google.com/u/0/mole/world']);
+    if (await chatFrame.isElementPresent('.fKz7Od')) {
       // close announcement about updated UI
-      await googleChatPage.waitAndClick('.fKz7Od', { delay: 1 });
+      await chatFrame.waitAndClick('.fKz7Od', { delay: 1 });
     }
-    await googleChatPage.waitAll('.T-I-KE'); // New chat button
+    await chatFrame.waitAny(['a.gb_6d', 'a.gb_Fc', 'a.gb_9d', 'a.gb_7d', 'a.gb_ce', 'a.gb_Sc']); // Google hangout logo
     return googleChatPage;
   };
 
@@ -325,7 +326,7 @@ export class BrowserRecipe {
       const page = pgpBlockFrame.getPage();
       await page.notPresent('@action-finish-session');
       const errBadgeContent = await pgpBlockFrame.read('@pgp-error');
-      expect(errBadgeContent).to.equal('pass phrase needed');
+      expect(errBadgeContent).to.equal('passphrase needed');
       await pgpBlockFrame.notPresent('@action-print');
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await page.waitAll('@dialog-passphrase');

@@ -57,10 +57,10 @@ const copyDependencies = async () => {
     ['linkify-html/dist/linkify-html.min.js', 'lib/linkify-html.min.js'],
     ['sweetalert2/dist/sweetalert2.js', 'lib/sweetalert2.js'],
     ['sweetalert2/dist/sweetalert2.css', 'css/sweetalert2.css'],
-    ['iso-8859-2/iso-8859-2.js', 'lib/iso-8859-2.js'],
-    ['zxcvbn/dist/zxcvbn.js', 'lib/zxcvbn.js'],
+    ['@zxcvbn-ts/core/dist/zxcvbn-ts.js', 'lib/zxcvbn-ts.js'],
+    ['@zxcvbn-ts/language-common/dist/zxcvbn-ts.js', 'lib/zxcvbn-language-common.js'],
+    ['@zxcvbn-ts/language-en/dist/zxcvbn-ts.js', 'lib/zxcvbn-language-en.js'],
     ['squire-rte/dist/squire.js', 'lib/squire.js'],
-    ['clipboard/dist/clipboard.js', 'lib/clipboard.js'],
     ['@flowcrypt/fine-uploader/fine-uploader/fine-uploader.js', 'lib/fine-uploader.js'],
     ['filesize/dist/filesize.js', 'lib/filesize.js'],
     // Using legacy build due to Puppeteer compatibility issue (Promise.withResolvers error)
@@ -120,8 +120,10 @@ const main = async () => {
   // patch imports with .js, e.g. replace './streams' with './streams.js'
   // until https://github.com/openpgpjs/web-stream-tools/pull/20 is resolved
   const streamDir = path.join(OUTPUT_DIRECTORY, 'lib/streams');
-  const streamFiles = fs.readdirSync(streamDir).map(file => path.join(streamDir, file));
-  applyRegexReplace(/'(.\/(streams|util|writer|reader|node-conversions))'/g, "'$1.js'", streamFiles);
+  const streamFiles = fs
+    .readdirSync(streamDir)
+    .map(file => path.join(streamDir, file))
+    .filter(filePath => fs.statSync(filePath).isFile());
 
   // patch isUint8Array until https://github.com/openpgpjs/web-stream-tools/pull/23 is resolved
   // First patch: replaces `return Uint8Array.prototype.isPrototypeOf(input);` with fallback to globalThis

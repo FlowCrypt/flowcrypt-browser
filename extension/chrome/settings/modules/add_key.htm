@@ -59,7 +59,7 @@
             <textarea class="input_private_key" data-test="input-armored-key" placeholder="ASCII Armored Private Key" maxlength="120000"> </textarea>
           </div>
           <div class="line display_none unprotected_key_create_pass_phrase" style="text-align: left; padding-left: 40px">
-            This key is unprotected. Create a pass phrase or
+            This key is unprotected. Create a passphrase or
             <a href="#" class="action_use_random_pass_phrase" data-test="action-step2bmanualenter-new-random-passphrase"> use a random one </a>
             .
           </div>
@@ -69,7 +69,7 @@
           <div class="line">
             <label class="input_passphrase_save_label hidden" data-test="input-save-passphrase-label">
               <input type="checkbox" value="" name="check" class="import_input_passphrase_save" data-test="input-save-passphrase" />
-              Remember the pass phrase after closing the browser
+              Remember the passphrase after closing the browser
             </label>
           </div>
           <div class="line">
@@ -88,7 +88,9 @@
     <script src="/lib/sweetalert2.js"></script>
     <script src="/lib/openpgp.js"></script>
     <script src="/lib/forge.js"></script>
-    <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/zxcvbn-ts.js"></script>
+    <script src="/lib/zxcvbn-language-common.js"></script>
+    <script src="/lib/zxcvbn-language-en.js"></script>
     <script src="/lib/emailjs/punycode.js"></script>
     <script src="/lib/emailjs/emailjs-stringencoding.js"></script>
     <script src="/lib/emailjs/emailjs-mime-codec.js"></script>

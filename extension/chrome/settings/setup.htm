@@ -151,7 +151,7 @@
               ></textarea>
             </div>
             <div class="line display_none unprotected_key_create_pass_phrase">
-              This key is unprotected. Create a pass phrase or
+              This key is unprotected. Create a passphrase or
               <a href="#" class="action_use_random_pass_phrase" data-test="action-step2bmanualenter-new-random-passphrase">use a random one</a>.
             </div>
             <div class="line left">
@@ -167,7 +167,7 @@
             <div class="line left">
               <label class="input_passphrase_save_label hidden" data-test="input-step2bmanualenter-save-passphrase-label">
                 <input type="checkbox" value="" name="check" data-test="input-step2bmanualenter-save-passphrase" class="input_passphrase_save" />
-                Remember the pass phrase after closing the browser
+                Remember the passphrase after closing the browser
               </label>
             </div>
             <div class="line left remove_if_pubkey_submitting_not_user_configurable">
@@ -194,13 +194,13 @@
 
       <div id="step_2_ekm_choose_pass_phrase" class="manual">
         <div class="line">
-          Choose pass phrase to protect your encrypted emails. <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure pass phrases</a>
+          Choose passphrase to protect your encrypted emails. <a href="#" data-swal-page="/chrome/texts/passphrase_help.htm">choosing secure passphrases</a>
         </div>
         <div class="line">
           <input
             class="input_password"
             type="text"
-            placeholder="Pass phrase"
+            placeholder="Passphrase"
             id="step_2_ekm_input_password"
             data-test="input-step2ekm-passphrase-1"
             maxlength="256"
@@ -210,7 +210,7 @@
           <input
             class="input_password2"
             type="text"
-            placeholder="Repeat pass phrase"
+            placeholder="Repeat passphrase"
             data-test="input-step2ekm-passphrase-2"
             id="step_2_ekm_input_password2"
             maxlength="256"
@@ -221,7 +221,7 @@
           <p class="text-success small m-0" data-test="ekm-setup-user-notify">Your keys are managed with your organization's Email Key Manager.</p>
           <label class="input_passphrase_save_label hidden" data-test="input-step2ekm-save-passphrase-label">
             <input type="checkbox" class="input_passphrase_save" value="" name="check" data-test="input-step2ekm-save-passphrase" />
-            Remember the pass phrase after closing the browser
+            Remember the passphrase after closing the browser
           </label>
         </div>
 
@@ -231,15 +231,15 @@
       </div>
 
       <div id="step_2_recovery">
-        <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your pass phrase to continue.</div>
+        <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your passphrase to continue.</div>
         <div class="wide line recovery_passphrase_container">
-          <input type="text" id="recovery_password" placeholder="Enter your pass phrase" data-test="input-recovery-pass-phrase" maxlength="256" />
+          <input type="text" id="recovery_password" placeholder="Enter your passphrase" data-test="input-recovery-pass-phrase" maxlength="256" />
         </div>
         <div class="wide line">
           <button class="button green longer action_recover_account" data-test="action-recover-account">RECOVER ACCOUNT</button>
         </div>
         <div class="line line_skip_recovery center">
-          <a href="#" id="lost_pass_phrase">Lost your pass phrase?</a>
+          <a href="#" id="lost_pass_phrase">Lost your passphrase?</a>
         </div>
         <div id="error_text_container" class="line">
           <div id="error_text">
@@ -299,7 +299,9 @@
     <script src="/lib/fine-uploader.js"></script>
     <script src="/lib/jquery.min.js"></script>
     <script src="/lib/sweetalert2.js"></script>
-    <script src="/lib/zxcvbn.js"></script>
+    <script src="/lib/zxcvbn-ts.js"></script>
+    <script src="/lib/zxcvbn-language-common.js"></script>
+    <script src="/lib/zxcvbn-language-en.js"></script>
     <script src="/lib/openpgp.js"></script>
     <script src="/lib/forge.js"></script>
     <script src="/lib/emailjs/punycode.js"></script>

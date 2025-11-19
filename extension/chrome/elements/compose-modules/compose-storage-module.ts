@@ -6,7 +6,7 @@ import { BrowserMsg } from '../../../js/common/browser/browser-msg.js';
 import { KeyUtil, Key, PubkeyInfo, PubkeyResult, ContactInfoWithSortedPubkeys, KeyInfoWithIdentity } from '../../../js/common/core/crypto/key.js';
 import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import { Assert } from '../../../js/common/assert.js';
-import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { CollectKeysResult } from './compose-types.js';
 import { ComposerResetBtnTrigger, PUBKEY_LOOKUP_RESULT_FAIL } from './compose-err-module.js';
 import { ViewModule } from '../../../js/common/view-module.js';
@@ -19,6 +19,7 @@ import { KeyFamily } from '../../../js/common/core/crypto/key.js';
 import { ParsedKeyInfo } from '../../../js/common/core/crypto/key-store-util.js';
 import { EmailParts, Str } from '../../../js/common/core/common.js';
 import { AcctStore } from '../../../js/common/platform/store/acct-store.js';
+import { UnreportableError } from '../../../js/common/platform/error-report.js';
 
 export class ComposeStorageModule extends ViewModule<ComposeView> {
   public getAccountKeys = async (senderEmail: string | undefined, family?: 'openpgp' | 'x509'): Promise<KeyInfoWithIdentity[]> => {
@@ -80,8 +81,8 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
   };
 
   /**
-   * returns decrypted key (potentially using user-entered pass phrase)
-   * otherwise throws ComposerResetBtnTrigger when pass phrase not entered
+   * returns decrypted key (potentially using user-entered passphrase)
+   * otherwise throws ComposerResetBtnTrigger when passphrase not entered
    */
   public decryptSenderKey = async (parsedKey: ParsedKeyInfo): Promise<ParsedKeyInfo> => {
     const passphrase = await this.passphraseGet(parsedKey.keyInfo);
@@ -92,7 +93,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
         return await this.decryptSenderKey(parsedKey);
       } else {
         // reset - no passphrase entered
-        throw new ComposerResetBtnTrigger('no pass phrase entered');
+        throw new ComposerResetBtnTrigger('no passphrase entered');
       }
     } else {
       if (!parsedKey.key.fullyDecrypted) {

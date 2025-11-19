@@ -282,6 +282,25 @@ abstract class ControllableBase {
     expect(elementColor).to.equal(color);
   };
 
+  public waitForDetached = async (maxWaitSeconds = 10): Promise<void> => {
+    const startTime = Date.now();
+    const pollInterval = 0.1; // seconds
+
+    // This method is only meaningful for ControllableFrame instances
+    if (!(this instanceof ControllableFrame)) {
+      throw new Error('waitForDetached can only be called on ControllableFrame instances');
+    }
+
+    const frame = (this as unknown as ControllableFrame).frame;
+    while (!frame.detached && Date.now() - startTime < maxWaitSeconds * 1000) {
+      await Util.sleep(pollInterval);
+    }
+
+    if (!frame.detached) {
+      throw new Error(`Frame did not detach within ${maxWaitSeconds} seconds`);
+    }
+  };
+
   public waitAndType = async (selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) => {
     await this.waitAll(selector);
     await Util.sleep(delay);
@@ -729,7 +748,7 @@ export class ControllablePage extends ControllableBase {
       this.consoleMsgs.push(new ConsoleEvent('alert', alert.message()));
     });
     page.on('pageerror', error => {
-      this.consoleMsgs.push(new ConsoleEvent('error', error.stack || String(error)));
+      this.consoleMsgs.push(new ConsoleEvent('error', String(error)));
     });
     // page.on('error', e => this.consoleMsgs.push(`[error]${e.stack}[/error]`)); // this is Node event emitter error. Maybe just let it go crash the process / test
     page.on('dialog', alert => {

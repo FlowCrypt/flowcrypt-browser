@@ -170,6 +170,7 @@ span.gray {
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-info-confirm,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-confirm,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-checkbox-confirm,
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-password-input-confirm,
 .button.green {
   background-color: #31a217;
   color: white;
@@ -179,6 +180,7 @@ button.btn_disabled,
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm,
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel,
 .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-checkbox-cancel,
+.swal2-popup .swal2-styled.swal2-cancel.ui-modal-password-input-cancel,
 .button.gray {
   background-color: #b7b7b7;
   background-image: linear-gradient(#c5c5c5, #b7b7b7);
@@ -390,7 +392,7 @@ body#settings > div#content pre {
   font-size: 12px;
   border-radius: 2px;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 body#settings > div#content.setup {
@@ -1391,7 +1393,7 @@ body {
   font-size: 0.9rem;
   padding: 0;
   margin: 0;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 body#reply_message {
@@ -1807,6 +1809,10 @@ table#compose .input .collapsed .email_preview .email_address.revoked {
   background-color: #d18826;
 }
 
+table#compose .input .collapsed .email_preview .email_address.unusable {
+  background-color: #a44;
+}
+
 table#compose.not-encrypted .input .collapsed .email_preview .email_address {
   border: none !important;
   background-color: #f0f0f0 !important;
@@ -1970,6 +1976,11 @@ table#compose div.recipients-inputs > div#input_addresses_container div .recipie
 
 table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span.no_pgp {
   background: #989898;
+  color: white;
+}
+
+table#compose div.recipients-inputs > div#input_addresses_container div .recipients > span.unusable {
+  background: #a44;
   color: white;
 }
 
@@ -2420,7 +2431,7 @@ table#compose td.text div#input_text {
   border: none !important;
   box-shadow: none !important;
   height: 100%;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
   max-width: 525px;
   overflow-y: auto;
   min-height: 140px;
@@ -2528,7 +2539,7 @@ table#compose .intro_container > td > .input_intro {
   height: 50px;
   box-shadow: none !important;
   outline: none;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
   overflow-y: auto;
 }
 

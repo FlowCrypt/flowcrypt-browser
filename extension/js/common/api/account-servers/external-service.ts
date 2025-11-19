@@ -1,20 +1,20 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 'use strict';
 
-import { Api, ProgressCb, ProgressCbs } from '../shared/api.js';
-import { AcctStore } from '../../platform/store/acct-store.js';
-import { Dict, Str } from '../../core/common.js';
-import { ErrorReport } from '../../platform/catch.js';
-import { ApiErr } from '../shared/api-error.js';
-import { FLAVOR } from '../../core/const.js';
-import { Attachment } from '../../core/attachment.js';
-import { ParsedRecipients } from '../email-provider/email-provider-api.js';
-import { Buf } from '../../core/buf.js';
-import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
-import { Serializable } from '../../platform/store/abstract-store.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
+import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
+import { Attachment } from '../../core/attachment.js';
+import { Buf } from '../../core/buf.js';
+import { Dict, Str } from '../../core/common.js';
+import { FLAVOR, SHARED_TENANT_API_HOST } from '../../core/const.js';
+import { ErrorReport } from '../../platform/error-report.js';
+import { Serializable } from '../../platform/store/abstract-store.js';
+import { AcctStore } from '../../platform/store/acct-store.js';
 import { Xss } from '../../platform/xss.js';
 import { ConfiguredIdpOAuth } from '../authentication/configured-idp-oauth.js';
+import { ParsedRecipients } from '../email-provider/email-provider-api.js';
+import { ApiErr } from '../shared/api-error.js';
+import { Api, ProgressCb, ProgressCbs } from '../shared/api.js';
 
 // todo - decide which tags to use
 type EventTag = 'compose' | 'decrypt' | 'setup' | 'settings' | 'import-pub' | 'import-prv';
@@ -104,8 +104,21 @@ export class ExternalService extends Api {
     return r.clientConfiguration;
   };
 
+  public setUrlBasedOnFesStatus = async () => {
+    const { fesUrl } = await AcctStore.get(this.acctEmail, ['fesUrl']);
+    if (!fesUrl) {
+      this.url = SHARED_TENANT_API_HOST;
+    }
+  };
+
   public reportException = async (errorReport: ErrorReport): Promise<void> => {
-    await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
+    try {
+      await this.request(`/api/${this.apiVersion}/log-collector/exception`, { fmt: 'JSON', data: errorReport });
+    } catch (ajaxErr) {
+      console.error(ajaxErr);
+      // Couldn't use Catch.CONSOLE_MSG because of circurlar dependency issue
+      console.error('%cFlowCrypt ISSUE: Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.', 'font-weight: bold;');
+    }
   };
 
   public helpFeedback = async (email: string, message: string): Promise<unknown> => {

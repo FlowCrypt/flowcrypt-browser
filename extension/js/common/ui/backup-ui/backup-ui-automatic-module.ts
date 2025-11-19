@@ -4,7 +4,7 @@
 
 import { Lang } from '../../lang.js';
 import { Settings } from '../../settings.js';
-import { UnreportableError } from '../../platform/catch.js';
+import { UnreportableError } from '../../platform/error-report.js';
 import { Ui } from '../../browser/ui.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
@@ -30,8 +30,8 @@ export class BackupUiAutomaticModule extends BackupUiModule<BackupUi> {
   private setupCreateSimpleAutomaticInboxBackup = async () => {
     const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.ui.acctEmail));
     if (prvs.find(prv => !prv.key.fullyEncrypted)) {
-      await Ui.modal.warning('Key not protected with a pass phrase, skipping');
-      throw new UnreportableError('Key not protected with a pass phrase, skipping');
+      await Ui.modal.warning('Key not protected with a passphrase, skipping');
+      throw new UnreportableError('Key not protected with a passphrase, skipping');
     }
     try {
       await this.ui.manualModule.doBackupOnEmailProvider(prvs.map(prv => prv.keyInfo));

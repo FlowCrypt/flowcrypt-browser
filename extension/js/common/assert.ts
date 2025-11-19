@@ -7,7 +7,8 @@ import { Ui } from './browser/ui.js';
 import { Dict, UrlParam, UrlParams } from './core/common.js';
 import { KeyInfoWithIdentity, KeyUtil } from './core/crypto/key.js';
 import { Lang } from './lang.js';
-import { Catch, UnreportableError } from './platform/catch.js';
+import { Catch } from './platform/catch.js';
+import { UnreportableError } from './platform/error-report.js';
 import { AcctStore } from './platform/store/acct-store.js';
 import { KeyStore } from './platform/store/key-store.js';
 import { Xss } from './platform/xss.js';
@@ -49,7 +50,7 @@ export class Assert {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
           } else {
-            const msg = `Protect your key with a pass phrase to finish setup.`;
+            const msg = `Protect your key with a passphrase to finish setup.`;
             const r = await Ui.renderOverlayPromptAwaitUserChoice(
               { finishSetup: {}, later: { color: 'gray' } },
               msg,

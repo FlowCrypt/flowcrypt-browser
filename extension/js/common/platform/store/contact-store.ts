@@ -488,7 +488,7 @@ export class ContactStore extends AbstractStore {
       if (update.pubkey && typeof update.pubkey !== 'string') {
         KeyUtil.pack(update.pubkey);
       }
-      await BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] });
+      await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.db({ f: 'update', args: [email, update] }));
       return;
     }
     if (Array.isArray(email)) {
@@ -564,7 +564,7 @@ export class ContactStore extends AbstractStore {
             resolve(undefined);
             return;
           }
-          if (!email.fingerprints || email.fingerprints.length === 0) {
+          if (email.fingerprints?.length === 0) {
             resolve(email);
             return;
           }

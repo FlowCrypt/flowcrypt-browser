@@ -11,6 +11,7 @@ import { Url, Str } from '../../js/common/core/common.js';
 import { View } from '../../js/common/view.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 View.run(
   class BackupView extends View {
@@ -48,10 +49,15 @@ View.run(
       }
       [this.storedPrvWithMatchingLongid] = await KeyStore.get(this.acctEmail, [fingerprint]);
       if (this.storedPrvWithMatchingLongid) {
-        $('.line .private_key_status').text('This Private Key is already imported.');
+        $('.line .private_key_status').html(
+          `This private key with fingerprint <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has already been imported.`
+        );
       } else {
         $('.line .private_key_status')
-          .text('This private key was not imported yet. We suggest to import all backups so that you can read all incoming encrypted emails.')
+          .html(
+            `The private key <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has not been imported yet. \n` +
+              `We recommend importing all backups to ensure you can read all incoming encrypted emails.`
+          )
           .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>'); // xss-direct
       }
       this.sendResizeMsg();
@@ -83,10 +89,10 @@ View.run(
 
     private testPassphraseHandler = async () => {
       if (await KeyUtil.checkPassPhrase(this.armoredPrvBackup, String($('#pass_phrase').val()))) {
-        await Ui.modal.info('Success - your pass phrase matches this backup!');
+        await Ui.modal.info('Success - your passphrase matches this backup!');
       } else {
         await Ui.modal.warning(
-          "Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don't get" +
+          "Passphrase did not match. Please try again. If you forgot your passphrase, please change it, so that you don't get" +
             ' locked out of your encrypted messages.'
         );
       }

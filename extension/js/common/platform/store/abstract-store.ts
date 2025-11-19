@@ -7,7 +7,8 @@ import { Dict, emailKeyIndex } from '../../core/common.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
 import { GmailRes } from '../../api/email-provider/gmail/gmail-parser.js';
 import { AcctStoreDict, AccountIndex } from './acct-store.js';
-import { UnreportableError, Catch } from '../catch.js';
+import { Catch } from '../catch.js';
+import { UnreportableError } from '../error-report.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | ClientConfigurationJson;

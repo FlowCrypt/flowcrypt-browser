@@ -10,7 +10,7 @@ import { BgUtils } from '../../service_worker/bgutils.js';
 
 export class Browser {
   public static objUrlCreate = (content: Uint8Array | string) => {
-    return URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+    return URL.createObjectURL(new Blob([content as BlobPart], { type: 'application/octet-stream' }));
   };
 
   public static saveToDownloads = (attachment: Attachment) => {

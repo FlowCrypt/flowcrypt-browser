@@ -300,7 +300,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       this.view.S.now('send_btn_text').text(this.BTN_LOADING);
       this.view.sizeModule.setInputTextHeightManuallyIfNeeded();
       recipientEl.evaluating = (async () => {
-        this.view.errModule.debug(`evaluateRecipients.evaluat.recipient.email(${String(recipientEl.email)})`);
+        this.view.errModule.debug(`evaluateRecipients.evaluat.recipient.email(${recipientEl.email})`);
         this.view.errModule.debug(`evaluateRecipients.evaluating.recipient.status(${recipientEl.status})`);
         this.view.errModule.debug(`evaluateRecipients.evaluating: calling getUpToDatePubkeys`);
         const info = await this.view.storageModule.getUpToDatePubkeys(recipientEl.email);
@@ -313,7 +313,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         }, 0);
       })();
     }
-    await Promise.all(recipientEls.map(r => r.evaluating));
+    await Promise.all(recipientEls.map(r => r.evaluating).filter(p => p !== undefined));
     if (triggerCallback) {
       for (const callback of this.onRecipientAddedCallbacks) {
         callback(recipientEls);
@@ -405,7 +405,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
     if (this.view.S.cached('input_addresses_container_outer').hasClass('invisible')) {
       return;
     }
-    await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait until all recipients loaded.
+    await Promise.all(this.addedRecipients.map(r => r.evaluating).filter(p => p !== undefined)); // Wait until all recipients loaded.
     this.showHideCcAndBccInputsIfNeeded();
     this.view.S.cached('input_addresses_container_outer').addClass('invisible');
     this.view.S.cached('recipients_placeholder').css('display', 'flex');
@@ -1100,7 +1100,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       //    - else EXPIRED.
       // 3. Otherwise NO_PGP.
       const firstKeyInfo = info.sortedPubkeys[0];
-      if (!firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
+      if (firstKeyInfo.pubkey.usableForEncryption && !firstKeyInfo.revoked && !KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.HAS_PGP;
         $(el).addClass('has_pgp');
         Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
@@ -1115,7 +1115,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             'You should ask them to send you an updated public key.\n\n' +
             this.formatPubkeysHintText(info.sortedPubkeys)
         );
-      } else {
+      } else if (KeyUtil.expired(firstKeyInfo.pubkey)) {
         recipient.status = RecipientStatus.EXPIRED;
         $(el).addClass('expired');
         Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="revoked-or-expired">');
@@ -1125,6 +1125,11 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
             'You should ask them to send you an updated public key.\n\n' +
             this.formatPubkeysHintText(info.sortedPubkeys)
         );
+      } else {
+        recipient.status = RecipientStatus.UNUSABLE;
+        $(el).addClass('unusable');
+        Xss.sanitizePrepend(el, '<img src="/img/svgs/revoked.svg" class="revoked-or-expired">');
+        $(el).attr('title', 'Does use encryption but their public key is unusable for encryption.\n\n' + this.formatPubkeysHintText(info.sortedPubkeys));
       }
     } else {
       recipient.status = RecipientStatus.NO_PGP;
@@ -1149,6 +1154,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
 
   private formatPubkeysHintText = (pubkeyInfos: PubkeyInfo[]): string => {
     const valid: PubkeyInfo[] = [];
+    const unusable: PubkeyInfo[] = [];
     const expired: PubkeyInfo[] = [];
     const revoked: PubkeyInfo[] = [];
     for (const pubkeyInfo of pubkeyInfos) {
@@ -1156,6 +1162,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         revoked.push(pubkeyInfo);
       } else if (KeyUtil.expired(pubkeyInfo.pubkey)) {
         expired.push(pubkeyInfo);
+      } else if (!pubkeyInfo.pubkey.usableForEncryption) {
+        unusable.push(pubkeyInfo);
       } else {
         valid.push(pubkeyInfo);
       }
@@ -1164,6 +1172,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
       { groupName: 'Valid public key fingerprints:', pubkeyInfos: valid },
       { groupName: 'Expired public key fingerprints:', pubkeyInfos: expired },
       { groupName: 'Revoked public key fingerprints:', pubkeyInfos: revoked },
+      { groupName: 'Unusable public key fingerprints:', pubkeyInfos: unusable },
     ]
       .filter(g => g.pubkeyInfos.length)
       .map(g => this.formatKeyGroup(g.groupName, g.pubkeyInfos))

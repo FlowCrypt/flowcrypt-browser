@@ -6,6 +6,7 @@ import { DecryptionError } from '../../core/crypto/pgp/msg-util.js';
 import { Xss } from '../../platform/xss.js';
 import { StoreFailedError } from '../../platform/store/abstract-store.js';
 import { Str } from '../../core/common.js';
+import { CatchHelper } from '../../platform/catch-helper.js';
 
 interface StandardErrRes {
   error: StandardError;
@@ -34,7 +35,7 @@ export const MAX_RATE_LIMIT_ERROR_RETRY_COUNT = 5;
 abstract class ApiCallErr extends Error {
   protected static describeApiAction = (req: { url: string; method?: string; data?: unknown }) => {
     const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
-    return `${req.method || 'GET'}-ing ${Catch.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
+    return `${req.method || 'GET'}-ing ${CatchHelper.censoredUrl(req.url)} ${describeBody}: ${ApiCallErr.getPayloadStructure(req)}`;
   };
 
   private static getPayloadStructure = (req: { data?: unknown }): string => {
@@ -71,7 +72,7 @@ export class AjaxErr extends ApiCallErr {
   }
 
   public static fromNetErr = (message: string, stack?: string, url?: string) => {
-    return new AjaxErr(message, stack ?? 'no stack trace available', 0, Catch.censoredUrl(url), '', '(no status text)', undefined, undefined);
+    return new AjaxErr(message, stack ?? 'no stack trace available', 0, CatchHelper.censoredUrl(url), '', '(no status text)', undefined, undefined);
   };
 
   public static fromFetchResponse = (fetchRes: Response, stack?: string) => {
@@ -80,7 +81,7 @@ export class AjaxErr extends ApiCallErr {
       message,
       stack ?? 'no stack trace available',
       fetchRes.status,
-      Catch.censoredUrl(fetchRes.url),
+      CatchHelper.censoredUrl(fetchRes.url),
       '',
       fetchRes.statusText,
       undefined,
@@ -100,10 +101,10 @@ export class AjaxErr extends ApiCallErr {
       const redactedPayload = AjaxErr.redactSensitiveData(Catch.stringify(req.data).substring(0, 1000));
       stack += `\n\nresponseText(0, 1000):\n${redactedRes}\n\npayload(0, 1000):\n${redactedPayload}`;
     }
-    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallErr.describeApiAction(req)} -> ${
+    const message = `${xhr.statusText || '(no status text)'}: ${xhr.status || -1} when ${ApiCallErr.describeApiAction(req)} -> ${
       resMsg || '(no standard err msg)'
     }`;
-    return new AjaxErr(message, stack, status, Catch.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', resMsg, resDetails);
+    return new AjaxErr(message, stack, status, CatchHelper.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)', resMsg, resDetails);
   };
 
   private static parseResErr = (responseText: string): { resMsg?: string; resDetails?: string; resCode?: number } => {
@@ -187,7 +188,10 @@ export class ApiErr {
     } else if (e instanceof AjaxErr) {
       return 'AjaxErr with unknown cause.';
     } else if (e instanceof BgNotReadyErr) {
-      return 'Extension not ready. Restarting the browser should help.';
+      return `Extension not ready. Please try:
+        - turn FlowCrypt extension off and on again at Extensions page (chrome://extensions)
+        - restart browser
+        - reinstall FlowCrypt extension`;
     } else if (e instanceof StoreFailedError) {
       return 'Failed to access browser extension storage. Restarting the browser should help.';
     } else {

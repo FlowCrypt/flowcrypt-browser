@@ -4,7 +4,7 @@
 'use strict';
 
 import { Dict, Str } from './common.js';
-import { requireIso88592, requireMimeBuilder, requireMimeParser } from '../platform/require.js';
+import { requireMimeBuilder, requireMimeParser } from '../platform/require.js';
 
 import { Attachment } from './attachment.js';
 import { Buf } from './buf.js';
@@ -18,7 +18,6 @@ import { iso2022jpToUtf } from '../platform/util.js';
 /* eslint-disable @typescript-eslint/naming-convention */
 const MimeParser = requireMimeParser();
 const MimeBuilder = requireMimeBuilder();
-const Iso88592 = requireIso88592();
 /* eslint-enable @typescript-eslint/naming-convention */
 
 type AddressHeader = { address: string; name: string };
@@ -192,7 +191,7 @@ export class Mime {
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
     parser.onbody = (node: MimeParserNode) => {
-      const path = String(node.path.join('.'));
+      const path = node.path.join('.');
       if (typeof leafNodes[path] === 'undefined') {
         leafNodes[path] = node;
       }
@@ -343,7 +342,7 @@ export class Mime {
     let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) =>
       typeof hdr === 'string' ? ([hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[]) : hdr.map(h => h.address);
-    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? hdr[0]?.address : String(hdr || '')) || '').email;
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? hdr[0]?.address : hdr || '') || '').email;
     for (const hdrName of headersNames) {
       const header = parsedMimeMsg.headers[hdrName];
       if (header) {
@@ -427,13 +426,13 @@ export class Mime {
     if (node.headers['content-disposition']?.[0]) {
       const header = node.headers['content-disposition'][0];
       if (header.params?.filename) {
-        return String(header.params.filename);
+        return header.params.filename;
       }
     }
     if (node.headers['content-type']?.[0]) {
       const header = node.headers['content-type'][0];
       if (header.params?.name) {
-        return String(header.params.name);
+        return header.params.name;
       }
     }
     return;
@@ -441,7 +440,7 @@ export class Mime {
 
   private static isNodeInline(node: MimeParserNode): boolean {
     const cd = node.headers['content-disposition'];
-    return cd?.[0] && cd[0].value === 'inline';
+    return cd?.[0]?.value === 'inline';
   }
 
   private static fromEqualSignNotationAsBuf(str: string): Buf {
@@ -480,9 +479,12 @@ export class Mime {
   }
 
   private static getNodeContentAsUtfStr(node: MimeParserNode): string {
-    if (node.charset && Iso88592.labels.includes(node.charset)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return Iso88592.decode(node.rawContent!);
+    // List of charset labels that map to ISO-8859-2
+    const iso88592Labels = ['csisolatin2', 'iso-8859-2', 'iso-ir-101', 'iso8859-2', 'iso88592', 'iso_8859-2', 'iso_8859-2:1987', 'l2', 'latin2'];
+    
+    if (node.charset && node.rawContent && iso88592Labels.includes(node.charset.toLowerCase())) {
+      const decoder = new TextDecoder('iso-8859-2');
+      return decoder.decode(Buf.fromRawBytesStr(node.rawContent));
     }
     let resultBuf: Buf;
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {

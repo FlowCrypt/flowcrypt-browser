@@ -51,7 +51,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       method: 'GET',
       data: {
         labelIds: labelId !== 'ALL' ? labelId : undefined,
-        includeSpamTrash: Boolean(labelId === 'SPAM' || labelId === 'TRASH'),
+        includeSpamTrash: labelId === 'SPAM' || labelId === 'TRASH',
         // pageToken: page_token,
         // q,
         // maxResults
@@ -413,11 +413,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       }
     }
     const rawValidEmails = rawParsedResults.filter(r => r.address && Str.isEmailValid(r.address));
-    const newValidResults: EmailProviderContact[] = await Promise.all(
-      rawValidEmails.map(a => {
-        return { email: a.address!, name: a.name }; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      })
-    );
+    const newValidResults: EmailProviderContact[] = rawValidEmails.map(a => {
+      return { email: a.address!, name: a.name }; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+    });
     const uniqueNewValidResults: EmailProviderContact[] = [];
     for (const newValidRes of newValidResults) {
       if (!allResults.map(c => c.email).includes(newValidRes.email)) {

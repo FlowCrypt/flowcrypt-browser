@@ -53,6 +53,7 @@ export type CommonAcct = 'compatibility' | 'compose' | 'ci.tests.gmail';
 
 const asyncExec = promisify(exec);
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', buildDir, isMock, undefined, undefined, consts.IS_LOCAL_DEBUG);
+
 test.beforeEach('set timeout', async t => {
   t.timeout(consts.TIMEOUT_EACH_RETRY);
 });

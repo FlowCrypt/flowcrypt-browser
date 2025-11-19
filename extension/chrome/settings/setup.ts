@@ -16,7 +16,8 @@ import { KeyStoreUtil } from '../../js/common/core/crypto/key-store-util.js';
 import { KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
 import { opgp } from '../../js/common/core/crypto/pgp/openpgpjs-custom.js';
 import { Lang } from '../../js/common/lang.js';
-import { Catch, CompanyLdapKeyMismatchError } from '../../js/common/platform/catch.js';
+import { Catch } from '../../js/common/platform/catch.js';
+import { CompanyLdapKeyMismatchError } from '../../js/common/platform/error-report.js';
 import { AcctStore, AcctStoreDict } from '../../js/common/platform/store/acct-store.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { Xss } from '../../js/common/platform/xss.js';
@@ -263,7 +264,7 @@ export class SetupView extends View {
           <code>Change Pass Phrase</code>.<br>
           It will let you change it without knowing the previous one.
           When done, <a href="#" class="reload_page">reload this page</a>
-          and use the new pass phrase.
+          and use the new passphrase.
           <p><strong>If no:</strong> unfortunately, you will not be able to
           read previously encrypted emails regardless of what you do.
           You can <a href="#" class="action_skip_recovery">skip recovery

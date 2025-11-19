@@ -8,7 +8,8 @@ import { ApiErr, AjaxErr } from './api/shared/api-error.js';
 import { Attachment } from './core/attachment.js';
 import { Browser } from './browser/browser.js';
 import { Buf } from './core/buf.js';
-import { Catch, CompanyLdapKeyMismatchError } from './platform/catch.js';
+import { Catch } from './platform/catch.js';
+import { CompanyLdapKeyMismatchError } from './platform/error-report.js';
 import { Env } from './browser/env.js';
 import { Gmail } from './api/email-provider/gmail/gmail.js';
 import { GoogleOAuth } from './api/authentication/google/google-oauth.js';
@@ -29,12 +30,23 @@ import { Time } from './browser/time.js';
 import { Google } from './api/email-provider/gmail/google.js';
 import { ConfiguredIdpOAuth } from './api/authentication/configured-idp-oauth.js';
 import { KeyWithPrivateFields } from './core/crypto/pgp/openpgp-key.js';
-
-declare const zxcvbn: (password: string, userInputs: string[]) => { guesses: number };
+import { CatchHelper } from './platform/catch-helper.js';
 
 export class Settings {
   public static evalPasswordStrength(passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') {
-    return PgpPwd.estimateStrength(zxcvbn(passphrase, PgpPwd.weakWords()).guesses, type);
+    // all package will be available under zxcvbnts
+    const options = {
+      translations: zxcvbnts['language-en'].translations,
+      graphs: zxcvbnts['language-common'].adjacencyGraphs,
+      dictionary: {
+        ...zxcvbnts['language-common'].dictionary,
+        ...zxcvbnts['language-en'].dictionary,
+        userInputs: PgpPwd.weakWords(),
+      },
+    };
+    zxcvbnts.core.zxcvbnOptions.setOptions(options);
+    const guesses = zxcvbnts.core.zxcvbn(passphrase).guesses;
+    return PgpPwd.estimateStrength(guesses, type);
   }
 
   public static async renderSubPage(
@@ -132,7 +144,7 @@ export class Settings {
     if (!oldAcctEmailIndexPrefix) {
       throw new Error(`Filter is empty for account_email "${oldAcctEmail}"`);
     }
-    // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
+    // in case the destination email address was already set up with an account, recover keys and passphrases before it's overwritten
     const oldAccountPrivateKeys = await KeyStore.get(oldAcctEmail);
     const newAccountPrivateKeys = await KeyStore.get(newAcctEmail);
     const oldAcctPassPhrases: KeyInfoWithIdentityAndOptionalPp[] = [];
@@ -381,7 +393,7 @@ export class Settings {
           });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
-        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm', method: 'GET', stack: Catch.stackTrace() }, 'text');
+        const authDeniedHtml = await Api.ajax({ url: '/chrome/settings/modules/auth_denied.htm', method: 'GET', stack: CatchHelper.stackTrace() }, 'text');
         await Ui.modal.info(`${authDeniedHtml}\n<div class="line">${Lang.general.contactIfNeedAssistance()}</div>`, true);
       } else {
         // Do not report error for csrf
@@ -535,8 +547,8 @@ export class Settings {
       '',
       'NOTE DOWN YOUR PASS PHRASE IN A SAFE PLACE THAT YOU CAN FIND LATER',
       '',
-      'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
-      'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
+      'If this key was registered on a keyserver (typically they are), you will need this same key (and passphrase!) to replace it.',
+      'In other words, losing this key or passphrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
       '',
       'acctEmail: ' + acctEmail,
     ];

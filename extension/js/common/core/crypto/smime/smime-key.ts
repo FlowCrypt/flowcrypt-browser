@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Key, UnexpectedKeyTypeError } from '../key.js';
 import { Str } from '../../common.js';
-import { UnreportableError } from '../../../platform/catch.js';
+import { UnreportableError } from '../../../platform/error-report.js';
 import { PgpArmor } from '../pgp/pgp-armor.js';
 import { Buf } from '../../buf.js';
 import { MsgBlockParser } from '../../msg-block-parser.js';
@@ -107,7 +107,7 @@ export class SmimeKey {
       }
       p7.addRecipient(certificate);
     }
-    p7.content = this.forge.util.createBuffer(input);
+    p7.content = this.forge.util.createBuffer(new Uint8Array(input));
     p7.encrypt();
     let data: Uint8Array;
     if (armor) {
@@ -151,7 +151,7 @@ export class SmimeKey {
         type: this.forge.pki.oids.messageDigest
       }] */
     });
-    p7.content = this.forge.util.createBuffer(data);
+    p7.content = this.forge.util.createBuffer(new Uint8Array(data));
     p7.sign();
     return SmimeKey.messageToDer(p7);
   }
@@ -413,7 +413,7 @@ export class SmimeKey {
     if (!eku) {
       return false;
     }
-    return !!(eku as { emailProtection: boolean }).emailProtection;
+    return (eku as { emailProtection: boolean }).emailProtection;
   }
 
   private static dateToNumber(date: Date): undefined | number {

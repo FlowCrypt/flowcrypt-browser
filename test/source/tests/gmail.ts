@@ -97,8 +97,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       expect(urls.length).to.equal(0);
     };
 
-    const openGmailPage = async (t: AvaContext, browser: BrowserHandle): Promise<ControllablePage> => {
-      const url = TestUrls.gmail(0);
+    const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path?: string): Promise<ControllablePage> => {
+      let url = TestUrls.gmail(0);
+      if (path) {
+        url = TestUrls.gmail(0, path, 'inbox');
+      }
       return await browser.newPage(t, url);
     };
 
@@ -153,6 +156,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDWztBnnCgRHzjrvmFqLtcJD');
         const expectedMessage = { content: ['this should decrypt even offline'], signature: 'signed', encryption: 'encrypted' };
+        await Util.sleep(5);
         await BrowserRecipe.pgpBlockCheck(t, await gmailPage.getFrame(['/chrome/elements/pgp_block.htm'], { sleep: 10, timeout: 25 }), expectedMessage);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
         await gmailPage.page.setOfflineMode(true); // go offline mode
@@ -176,7 +180,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gotoGmailPage(gmailPage, '/KtbxLvHkSWwbVHxgCbWNvXVKGjFgqMbGQq');
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
-        await gmailPage.waitAll(['.aZi'], { visible: true });
+        await gmailPage.waitAll(['.pYTkkf-JX-ano'], { visible: true });
 
         // attachments which contain emoji in filename are rendered correctly
         await gotoGmailPage(gmailPage, '/FMfcgzGtwqFGhMwWtLRjkPJlQlZHSlrW');
@@ -186,7 +190,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const urls2 = await gmailPage.getFramesUrls(['/chrome/elements/attachment.htm']);
         expect(urls2.length).to.equal(2);
         expect(await gmailPage.waitForContent('.aVW span:first-child', '2'));
-        expect(await gmailPage.waitForContent('.aVW span.a2H', ' •  Scanned by Gmail'));
+        expect(await gmailPage.waitForContent('.aVW span.a2H', '  •  Scanned by Gmail'));
         await gmailPage.close();
       })
     );
@@ -400,11 +404,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       'mail.google.com - plain reply to encrypted and signed messages',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
-        await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
-        await gotoGmailPage(gmailPage, '/181d226b4e69f172'); // go to encrypted convo
-        await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+        let gmailPage = await openGmailPage(t, browser, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
+        await gmailPage.waitAndClick('div.adn [aria-label="Reply"]', { delay: 1 });
+        await gmailPage.close();
+        gmailPage = await openGmailPage(t, browser, '/181d226b4e69f172'); // go to encrypted convo
+        await gmailPage.waitAndClick('div.adn [aria-label="Reply"]', { delay: 1 });
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
@@ -415,7 +419,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
-        await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+        await gmailPage.waitAndClick('div.adn [aria-label="Reply"]', { delay: 1 });
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
@@ -434,7 +438,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 }); // click first message of thread
           await Util.sleep(3);
           const messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
-          const plainReplyButton = await messages[0].$('[data-tooltip="Reply"]');
+          const plainReplyButton = await messages[0].$('[aria-label="Reply"]');
           await Util.sleep(1);
           await plainReplyButton!.click();
           await gmailPage.waitAndClick('#switch_to_encrypted_reply'); // Switch to encrypted compose
@@ -463,7 +467,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         const messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
         expect(messages.length).to.equal(2);
 
-        const plainReplyButton = await messages[0].$('[data-tooltip="Reply"]');
+        const plainReplyButton = await messages[0].$('[aria-label="Reply"]');
         expect(plainReplyButton).to.be.ok;
         await Util.sleep(1);
         await plainReplyButton!.click();
@@ -487,11 +491,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNgcQxLmkhBCKVSFwkfdvV'); // plain convo
-        await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 1 });
+        await gmailPage.waitAndClick('div.adn [aria-label="Reply"]', { delay: 1 });
         await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
         await Util.sleep(5);
-        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
-        await gmailPage.waitAndClick('[act="24"]', { delay: 1 }); // click reply-all
+        await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
+        await gmailPage.waitAndClick('li[data-action-type="24"]', { delay: 1 }); // click reply-all
         await Util.sleep(3);
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.waitForContent(
@@ -514,7 +518,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzQZTMHNLflWQjRcSvWlMsKbLhpr');
-        await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
+        await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
         await gmailPage.waitAll('.action_reply_all_message_button');
       })
     );
@@ -527,8 +531,8 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           const gmailPage = await openGmailPage(t, browser);
           await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
           await Util.sleep(5);
-          await gmailPage.waitAndClick('.adn [data-tooltip="More"]', { delay: 1 });
-          await gmailPage.waitAndClick('[act="25"]', { delay: 1 }); // click forward
+          await gmailPage.waitAndClick('.adn [aria-label="More message options"]', { delay: 1 });
+          await gmailPage.waitAndClick('li[data-action-type="25"]', { delay: 1 }); // click forward
           await Util.sleep(3);
           await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
           await gmailPage.waitForContent(
@@ -552,7 +556,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const gmailPage = await openGmailPage(t, browser);
         await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
-        const gmailContextMenu = '.J-J5-Ji.aap';
+        const gmailContextMenu = '.adn [aria-label="More message options"]';
         await gmailPage.waitAndClick(gmailContextMenu);
         await Util.sleep(1);
         expect(await gmailPage.isElementPresent('@action-reply-message-button'));
@@ -582,11 +586,10 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-          const gmailPage = await openGmailPage(t, browser);
           const threadId = '181d226b4e69f172'; // 1st message -- thread id
-          await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
+          const gmailPage = await openGmailPage(t, browser, `/${threadId}`);
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
-          await gmailPage.waitAndClick('[data-tooltip="Reply"]', { delay: 5 });
+          await gmailPage.waitAndClick('div.adn [aria-label="Reply"]', { delay: 5 });
           t.timeout(minutes(2)); // extend ava's timeout
           await Util.sleep(5);
           await gmailPage.waitTillFocusIsIn('div[aria-label="Message Body"]', { timeout: 10 });
@@ -618,7 +621,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
-        await gmailPage.waitAll(['.aZi'], { visible: false });
+        await gmailPage.waitAll(['.pYTkkf-JX-ano'], { visible: false });
         expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
         await gmailPage.close();
       })
@@ -639,7 +642,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await Util.sleep(5);
         await gmailPage.waitAll('iframe');
         expect(await gmailPage.isElementPresent('@container-attachments')).to.equal(false);
-        await gmailPage.waitAll(['.aZi'], { visible: false });
+        await gmailPage.waitAll(['.pYTkkf-JX-ano'], { visible: false });
         await gmailPage.close();
       })
     );
