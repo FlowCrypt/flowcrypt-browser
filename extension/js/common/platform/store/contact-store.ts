@@ -550,7 +550,7 @@ export class ContactStore extends AbstractStore {
     if (!db) {
       // relay op through background process
       // eslint-disable-next-line
-      return await BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] });
+      return await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.db({ f: 'getOneWithAllPubkeys', args: [email] }));
     }
     const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readonly');
     const pubkeys: Pubkey[] = [];
@@ -608,7 +608,7 @@ export class ContactStore extends AbstractStore {
   public static async getPubkey(db: IDBDatabase | undefined, { id, family }: KeyIdentity): Promise<string | undefined> {
     if (!db) {
       // relay op through background process
-      return (await BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, family }] })) as string | undefined;
+      return (await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.db({ f: 'getPubkey', args: [{ id, family }] }))) as string | undefined;
     }
     const internalFingerprint = ContactStore.getPubkeyId({ id, family });
     const tx = db.transaction(['pubkeys'], 'readonly');
