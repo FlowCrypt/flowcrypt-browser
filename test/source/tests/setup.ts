@@ -851,7 +851,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKey);
         await addKeyPopup.waitAndType('#input_passphrase', passphrase);
         await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
-        await Util.sleep(1);
+        await settingsPage.waitAll('@action-show-key-1');
         await gmailPage.page.reload();
         await Util.sleep(3);
         await gmailPage.waitTillGone('@webmail-notification-notify_expiring_keys');
@@ -2250,7 +2250,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const title = await settingsPage.read('@container-overlay-prompt-text');
         expect(title).to.contain(
           'Failed to store newly generated key on FlowCrypt Email Key Manager, ' +
-            'No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet. Please ask your administrator.'
+          'No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet. Please ask your administrator.'
         );
         await settingsPage.click('@action-show-overlay-details');
         await settingsPage.waitAll('@container-overlay-details');
@@ -2258,7 +2258,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain(
           `405 when PUT-ing https://localhost:${t.context.urls?.port}/flowcrypt-email-key-manager/v1/keys/private string: ` +
-            'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet'
+          'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet'
         );
         expect(details).to.not.contain('PRIVATE KEY');
       })
