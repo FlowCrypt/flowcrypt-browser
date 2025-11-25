@@ -544,6 +544,10 @@ body#settings .settings-border .key_list {
   height: 219px;
 }
 
+.key-content-row.expired {
+  opacity: 0.7;
+}
+
 #settings-row .box img.security-icon {
   width: 70px;
 }
