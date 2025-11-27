@@ -511,7 +511,7 @@ View.run(
           createdTime: prv.created,
           dateStr: date,
           isExpired,
-          originalIndex: i,
+          originalIndex: i, // keep track for actions that might rely on index? actually actions seem to use data attributes mostly, except maybe tests relying on order
         });
       }
 
@@ -521,10 +521,10 @@ View.run(
       // 3. Build HTML
       // Header row
       html += `
-        <div class="row key-list-header" style="font-weight: 600; padding: 5px 0; border-bottom: 2px solid #eee;">
-          <div class="col-3">Email</div>
+        <div class="row key-list-header" style="font-weight: 600; padding: 10px 0; border-bottom: 2px solid #eee;">
+          <div class="col-4">Email</div>
           <div class="col-2">Created</div>
-          <div class="col-5">Fingerprint</div>
+          <div class="col-4">Fingerprint</div>
           <div class="col-2">Status</div>
         </div>
       `;
@@ -544,13 +544,11 @@ View.run(
         const rowClass = isExpired ? 'key-content-row expired' : 'key-content-row';
         const opacityStyle = isExpired ? 'opacity: 0.7;' : '';
 
-        // Compact layout: reduced padding via CSS (4px), no inline padding here.
-        // Added white-space: nowrap and overflow handling to keep single line.
-        html += `<div class="row ${rowClass}" style="border-bottom: 1px solid #e6e6e6; align-items: center; ${opacityStyle}">`;
-        html += `  <div class="col-3" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapedLink}</div>`;
-        html += `  <div class="col-2" style="white-space: nowrap;">${Xss.escape(dateStr)}</div>`;
-        html += `  <div class="col-5" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fpHtml}</div>`;
-        html += `  <div class="col-2" style="display: flex; justify-content: space-between; align-items: center; white-space: nowrap;">
+        html += `<div class="row ${rowClass}" style="padding: 10px 0; border-bottom: 1px solid #e6e6e6; align-items: center; ${opacityStyle}">`;
+        html += `  <div class="col-4" style="overflow: hidden; text-overflow: ellipsis;">${escapedLink}</div>`;
+        html += `  <div class="col-2">${Xss.escape(dateStr)}</div>`;
+        html += `  <div class="col-4">${fpHtml}</div>`;
+        html += `  <div class="col-2" style="display: flex; justify-content: space-between; align-items: center;">
                      ${KeyUtil.statusHtml(ki.id, prv)}
                      ${removeKeyBtn}
                    </div>`;

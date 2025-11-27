@@ -28,8 +28,8 @@ html {
   font-size: 14px;
 }
 
-#header-row .logo-row .subscription>span,
-#header-row .logo-row .subscription>button {
+#header-row .logo-row .subscription > span,
+#header-row .logo-row .subscription > button {
   display: inline-block;
   margin-left: 4px;
   border: 1px solid #31a217;
@@ -37,7 +37,7 @@ html {
   padding: 0 5px;
 }
 
-#header-row .logo-row .subscription>button:focus {
+#header-row .logo-row .subscription > button:focus {
   outline: none;
   box-shadow: inset 0 0 0 1px #fff;
 }
@@ -201,7 +201,7 @@ a.gray_link {
   margin: 0 auto !important;
 }
 
-.settings-icons-rows>div {
+.settings-icons-rows > div {
   min-width: 145px;
 }
 
@@ -587,21 +587,21 @@ body#settings .settings-border .key_list {
   top: 28px;
 }
 
-@media (width <=991px) {
+@media (width <= 991px) {
   .my-keys-row .settings-border {
     margin: 35px auto !important;
     width: 100% !important;
   }
 }
 
-@media (width <=776px) {
+@media (width <= 776px) {
   #public-profile-indicator {
     left: 0;
     right: 0;
   }
 }
 
-@media (width <=448px) {
+@media (width <= 448px) {
   #footer-row {
     position: relative;
   }
@@ -612,7 +612,7 @@ body#settings .settings-border .key_list {
   font-size: 14px;
 }
 
-#settings.client>#banner {
+#settings.client > #banner {
   background: white;
   margin-left: 0;
   margin-right: 0;
@@ -648,12 +648,12 @@ body#settings .settings-border .key_list {
   padding-bottom: 200px;
 }
 
-#settings.client .threads>p {
+#settings.client .threads > p {
   padding-left: 20px;
   opacity: 0.7;
 }
 
-#settings.client .threads>.line {
+#settings.client .threads > .line {
   padding-left: 20px;
   text-align: left;
   border-top: 1px solid #31a217;
@@ -661,25 +661,25 @@ body#settings .settings-border .key_list {
   width: auto;
 }
 
-#settings.client .threads>.line:last-child {
+#settings.client .threads > .line:last-child {
   border-bottom: 1px solid #31a217;
 }
 
-#settings.client .threads>.line.loaded:hover {
+#settings.client .threads > .line.loaded:hover {
   background-color: #fff;
   cursor: pointer;
 }
 
-#settings.client .threads>.line .loading {
+#settings.client .threads > .line .loading {
   display: inline-block;
 }
 
-#settings.client .threads>.line .from_container {
+#settings.client .threads > .line .from_container {
   display: inline-block;
   width: 300px;
 }
 
-#settings.client .threads>.line .from_container .msg_count {
+#settings.client .threads > .line .from_container .msg_count {
   font-size: 90%;
   opacity: 0.5;
   padding-left: 8px;
@@ -688,7 +688,7 @@ body#settings .settings-border .key_list {
 }
 
 /* #settings.client .threads .line .subject { } */
-#settings.client .threads>.line .date {
+#settings.client .threads > .line .date {
   position: absolute;
   right: 20px;
 }
@@ -701,8 +701,8 @@ body#settings .settings-border .key_list {
   border-top: 1px dotted #c0c0c0;
 }
 
-#settings.client .thread .message>iframe,
-#settings.client .thread .reply>iframe {
+#settings.client .thread .message > iframe,
+#settings.client .thread .reply > iframe {
   width: 100%;
   border: none;
 }
@@ -726,12 +726,12 @@ body#settings .settings-border .key_list {
   cursor: pointer;
 }
 
-#settings.client>table {
+#settings.client > table {
   width: 100%;
   min-height: 90%;
 }
 
-#settings.client>table td.menu {
+#settings.client > table td.menu {
   width: 200px;
   min-width: 200px;
   max-width: 200px;
@@ -740,14 +740,14 @@ body#settings .settings-border .key_list {
   background: white;
 }
 
-#settings.client>table td.menu .button {
+#settings.client > table td.menu .button {
   min-width: 160px !important;
   margin-bottom: 8px !important;
   text-align: left !important;
   white-space: nowrap;
 }
 
-#settings.client>table td.menu span.label {
+#settings.client > table td.menu span.label {
   margin-left: 0;
   margin-bottom: 2px;
   font-size: 12px;
@@ -758,7 +758,7 @@ body#settings .settings-border .key_list {
   opacity: 0.7;
 }
 
-#settings.client>#banner>img {
+#settings.client > #banner > img {
   height: 32px;
   width: 32px;
   float: right;
@@ -767,11 +767,11 @@ body#settings .settings-border .key_list {
   margin-left: 20px;
 }
 
-#settings.client>#banner>img.action_open_settings {
+#settings.client > #banner > img.action_open_settings {
   cursor: pointer;
 }
 
-#settings.client>#banner>.action_finish_session {
+#settings.client > #banner > .action_finish_session {
   height: 32px;
   margin-top: -6px;
   float: right;
@@ -779,7 +779,7 @@ body#settings .settings-border .key_list {
   cursor: pointer;
 }
 
-#settings.client>#banner>.action_finish_session img {
+#settings.client > #banner > .action_finish_session img {
   height: 32px;
 }
 
