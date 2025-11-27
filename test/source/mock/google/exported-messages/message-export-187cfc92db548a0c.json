@@ -3,11 +3,7 @@
   "full": {
     "id": "187cfc92db548a0c",
     "threadId": "187cfc92db548a0c",
-    "labelIds": [
-      "Label_15",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["Label_15", "SENT", "INBOX"],
     "snippet": "This is a test for flowcrypt-browser issue #4862.",
     "payload": {
       "partId": "",
@@ -112,11 +108,7 @@
   "raw": {
     "id": "187cfc92db548a0c",
     "threadId": "187cfc92db548a0c",
-    "labelIds": [
-      "Label_15",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["Label_15", "SENT", "INBOX"],
     "snippet": "This is a test for flowcrypt-browser issue #4862.",
     "sizeEstimate": 1207,
     "raw": "UmVjZWl2ZWQ6IGZyb20gNzE3Mjg0NzMwMjQ0DQoJbmFtZWQgdW5rbm93bg0KCWJ5IGdtYWlsYXBpLmdvb2dsZS5jb20NCgl3aXRoIEhUVFBSRVNUOw0KCVNhdCwgMjkgQXByIDIwMjMgMTg6MzE6MjAgLTA3MDANCkNvbnRlbnQtVHlwZTogbXVsdGlwYXJ0L21peGVkOw0KIGJvdW5kYXJ5PSItLS0tc2luaWthZWwtPz1fMS0xNjgyODE4Mjc5MzIyMC4zNDk3NzcyNjAwOTQ0NDQ0MyINCk9wZW5wZ3A6IGlkPUU4RjA1MTdCQTZEN0RBQjYwODFDOTZFNEFEQUMyNzlDOTUwOTMyMDcNCkZyb206IEZsb3dDcnlwdCBDb21wYXRpYmlsaXR5IDxmbG93Y3J5cHQuY29tcGF0aWJpbGl0eUBnbWFpbC5jb20-DQpUbzogRmxvd0NyeXB0IENvbXBhdGliaWxpdHkgPGZsb3djcnlwdC5jb21wYXRpYmlsaXR5QGdtYWlsLmNvbT4NClN1YmplY3Q6IHRlc3QgZm9yIGZsb3djcnlwdC1icm93c2VyICM0ODYyICh1bmVuY3J5cHRlZCBleGVjdXRhYmxlDQogYXR0YWNobWVudCkNCkRhdGU6IFNhdCwgMjkgQXByIDIwMjMgMTg6MzE6MjAgLTA3MDANCk1lc3NhZ2UtSWQ6IDxDQUtidUxUcDREMExWb1VZLVhqM2ErUm56RjhtdHFZcjRTZmVxejUrVDB5VU10a1FDMmdAbWFpbC5nbWFpbC5jb20-DQpNSU1FLVZlcnNpb246IDEuMA0KDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2ODI4MTgyNzkzMjIwLjM0OTc3NzI2MDA5NDQ0NDQzDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IHF1b3RlZC1wcmludGFibGUNCg0KVGhpcyBpcyBhIHRlc3QgZm9yIGZsb3djcnlwdC1icm93c2VyIGlzc3VlICM0ODYyLg0KLS0tLS0tc2luaWthZWwtPz1fMS0xNjgyODE4Mjc5MzIyMC4zNDk3NzcyNjAwOTQ0NDQ0Mw0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW07IG5hbWU9c2FtcGxlLmJhdA0KQ29udGVudC1EaXNwb3NpdGlvbjogYXR0YWNobWVudDsgZmlsZW5hbWU9c2FtcGxlLmJhdA0KWC1BdHRhY2htZW50LUlkOiBmX3FkQ2xmSnlFYUNjTUdkV1hlT1dBbWZaSllEc2l1b0BmbG93Y3J5cHQNCkNvbnRlbnQtSWQ6IDxmX3FkQ2xmSnlFYUNjTUdkV1hlT1dBbWZaSllEc2l1b0BmbG93Y3J5cHQ-DQpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQNCg0KSXlCMFpYTjBJR0poZEdOb0lHWnBiR1VLDQotLS0tLS1zaW5pa2FlbC0_PV8xLTE2ODI4MTgyNzkzMjIwLjM0OTc3NzI2MDA5NDQ0NDQzLS0NCg==",

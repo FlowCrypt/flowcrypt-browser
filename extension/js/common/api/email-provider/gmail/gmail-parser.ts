@@ -167,8 +167,8 @@ export class GmailParser {
         // are we dealing with a PGP/MIME encrypted message?
         const pgpEncrypted = Boolean(
           parts.length === 2 &&
-            contentType?.value.startsWith('multipart/encrypted') &&
-            (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
+          contentType?.value.startsWith('multipart/encrypted') &&
+          (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
         );
         for (const [i, part] of parts.entries()) {
           GmailParser.findAttachments(part, internalMsgId, internalResults, {

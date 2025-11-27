@@ -481,7 +481,7 @@ export class Mime {
   private static getNodeContentAsUtfStr(node: MimeParserNode): string {
     // List of charset labels that map to ISO-8859-2
     const iso88592Labels = ['csisolatin2', 'iso-8859-2', 'iso-ir-101', 'iso8859-2', 'iso88592', 'iso_8859-2', 'iso_8859-2:1987', 'l2', 'latin2'];
-    
+
     if (node.charset && node.rawContent && iso88592Labels.includes(node.charset.toLowerCase())) {
       const decoder = new TextDecoder('iso-8859-2');
       return decoder.decode(Buf.fromRawBytesStr(node.rawContent));

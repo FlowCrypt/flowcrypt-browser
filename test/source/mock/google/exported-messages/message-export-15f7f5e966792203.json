@@ -3,13 +3,7 @@
   "full": {
     "id": "15f7f5e966792203",
     "threadId": "15f7f5e966792203",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "CATEGORY_PERSONAL",
-      "Label_4",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "CATEGORY_PERSONAL", "Label_4", "INBOX"],
     "snippet": "-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA256 Standard message signed inline should easily verify This is email footer -----BEGIN PGP SIGNATURE----- Version: FlowCrypt 5.0.4 Gmail Encryption",
     "payload": {
       "partId": "",
