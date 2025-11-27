@@ -3,15 +3,7 @@
   "full": {
     "id": "15f7fd3ba3f37cf3",
     "threadId": "15f7fd3ba3f37cf3",
-    "labelIds": [
-      "Label_17",
-      "IMPORTANT",
-      "STARRED",
-      "Label_3",
-      "CATEGORY_PERSONAL",
-      "Label_4",
-      "INBOX"
-    ],
+    "labelIds": ["Label_17", "IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL", "Label_4", "INBOX"],
     "snippet": "",
     "payload": {
       "partId": "",

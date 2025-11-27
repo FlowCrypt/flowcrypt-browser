@@ -3,12 +3,7 @@
   "full": {
     "id": "16b7fce1c1589c0a",
     "threadId": "16b7fce1c1589c0a",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "Label_3",
-      "CATEGORY_PERSONAL"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL"],
     "snippet": "-----BEGIN PGP MESSAGE----- Version: FlowCrypt 6.8.5 Gmail Encryption Comment: Seamlessly send and receive encrypted email wcFMAzBfgamu0SA1ARAAuHXRxM9k+XfQ8iPNconAE62s5pP1PdO5iS01/OB+ 3+",
     "payload": {
       "partId": "",

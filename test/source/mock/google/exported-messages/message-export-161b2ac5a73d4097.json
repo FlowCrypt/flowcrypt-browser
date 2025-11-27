@@ -3,14 +3,7 @@
   "full": {
     "id": "161b2ac5a73d4097",
     "threadId": "161b2ac5a73d4097",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "Label_20",
-      "Label_3",
-      "CATEGORY_PERSONAL",
-      "Label_12"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "Label_20", "Label_3", "CATEGORY_PERSONAL", "Label_12"],
     "snippet": "-- ------------------------------ 1io | Sales &amp; Marketing 1io GmbH | Mozartstr. 5 | 87435 Kempten | Germany 1io | Development &amp; Support kuhnert GmbH | Mozartstr. 5 | 87435 Kempten | Germany",
     "payload": {
       "partId": "",

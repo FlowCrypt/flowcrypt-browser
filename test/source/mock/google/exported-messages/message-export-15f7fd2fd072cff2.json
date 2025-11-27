@@ -3,15 +3,7 @@
   "full": {
     "id": "15f7fd2fd072cff2",
     "threadId": "15f7fd2fd072cff2",
-    "labelIds": [
-      "Label_17",
-      "IMPORTANT",
-      "STARRED",
-      "Label_3",
-      "CATEGORY_PERSONAL",
-      "Label_4",
-      "INBOX"
-    ],
+    "labelIds": ["Label_17", "IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL", "Label_4", "INBOX"],
     "snippet": "-----BEGIN PGP MESSAGE----- Charset: utf-8 Version: GnuPG v2 hQIMA0taL/zmLZUBAQ/9FX0uRThi4ZT1KmNEZYS3WC+Noqommn5szVhI72E03HUp 3JMub2XMmU80Oe6WybHancEZw3w/oWR5CvdQx9414jub4uXxaE91wBuqlS3Ow6/o",
     "payload": {
       "partId": "",

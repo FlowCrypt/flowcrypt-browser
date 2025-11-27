@@ -3,13 +3,7 @@
   "full": {
     "id": "1639b8ceb6c44a4c",
     "threadId": "1639b8ceb6c44a4c",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "Label_3",
-      "CATEGORY_PERSONAL",
-      "Label_12"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "Label_3", "CATEGORY_PERSONAL", "Label_12"],
     "snippet": "",
     "payload": {
       "partId": "",

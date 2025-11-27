@@ -252,7 +252,12 @@ export class Api {
             }),
           };
         } else {
-          return { response, pipe: async () => { /* no-op */ } }; // original response
+          return {
+            response,
+            pipe: async () => {
+              /* no-op */
+            },
+          }; // original response
         }
       };
 

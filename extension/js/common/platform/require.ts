@@ -25,7 +25,6 @@ import { MimeParser } from '../core/types/emailjs.js';
 import * as openpgp from 'openpgp';
 import { Catch } from './catch.js';
 
-
 export const requireOpenpgp = () => {
   if (typeof window !== 'undefined' && typeof globalThis !== 'undefined' && window !== globalThis && Catch.browser().name === 'firefox') {
     // fix Firefox sandbox permission issues as per convo https://github.com/FlowCrypt/flowcrypt-browser/pull/5013#discussion_r1148343995

@@ -3,12 +3,7 @@
   "full": {
     "id": "16ff09b1baca2051",
     "threadId": "16ff09b1baca2051",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "CATEGORY_PERSONAL",
-      "Label_8913178789750967510"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "CATEGORY_PERSONAL", "Label_8913178789750967510"],
     "snippet": "",
     "payload": {
       "partId": "",

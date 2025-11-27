@@ -3,15 +3,7 @@
   "full": {
     "id": "15f7f5f098d6bc36",
     "threadId": "15f7f5f098d6bc36",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "Label_8",
-      "Label_3",
-      "CATEGORY_PERSONAL",
-      "Label_12",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "Label_8", "Label_3", "CATEGORY_PERSONAL", "Label_12", "INBOX"],
     "snippet": "-----BEGIN PGP MESSAGE----- Version: FlowCrypt 5.0.4 Gmail Encryption flowcrypt.com Comment: Seamlessly send, receive and search encrypted email wcFMA+ADv/5v4RgKAQ/",
     "payload": {
       "partId": "",

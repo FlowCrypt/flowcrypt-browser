@@ -3,13 +3,7 @@
   "full": {
     "id": "1707b9c96c5d7893",
     "threadId": "1707b9c222f75ad8",
-    "labelIds": [
-      "IMPORTANT",
-      "STARRED",
-      "Label_15",
-      "SENT",
-      "INBOX"
-    ],
+    "labelIds": ["IMPORTANT", "STARRED", "Label_15", "SENT", "INBOX"],
     "snippet": "-----BEGIN PGP MESSAGE----- owGbwMvMwMVYfy8j1GPd8g7GNXlJHCWpFSV6JRUlcSH3akoyMosVyhOLFVLzkosq C0pSUxTKM0syFNIL0rm4gISCrm5xZnoekEosys0vUtAtUkjLyS8Hq9VLzs8tSCzJ",
     "payload": {
       "partId": "",
