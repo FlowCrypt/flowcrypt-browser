@@ -851,7 +851,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await addKeyPopup.waitAndType('@input-armored-key', updatedKey.privateKey);
         await addKeyPopup.waitAndType('#input_passphrase', passphrase);
         await addKeyPopup.waitAndClick('.action_add_private_key', { delay: 1 });
-        await Util.sleep(1);
+        await settingsPage.waitAll('@action-show-key-1');
         await gmailPage.page.reload();
         await Util.sleep(3);
         await gmailPage.waitTillGone('@webmail-notification-notify_expiring_keys');
