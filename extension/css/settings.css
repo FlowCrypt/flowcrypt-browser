@@ -255,8 +255,7 @@ a.gray_link {
 #settings-row .my-keys-row {
   display: flex;
   justify-content: center;
-  margin-top: 60px;
-  margin-left: 0 !important;
+  margin: 60px 0;
   text-indent: 0;
 }
 
@@ -533,7 +532,7 @@ body#settings .settings-border .row {
 }
 
 body#settings .settings-border .key-content-row {
-  padding: 7px 0;
+  padding: 4px 0;
   border-bottom: 1px solid #e6e6e6;
 }
 
@@ -542,6 +541,10 @@ body#settings .settings-border .key_list {
 
   /* will be overriden to scroll if > 4 keys */
   height: 219px;
+}
+
+.key-content-row.expired {
+  opacity: 0.7;
 }
 
 #settings-row .box img.security-icon {
@@ -581,6 +584,26 @@ body#settings .settings-border .key_list {
 #settings-row .box img.public-profile-icon {
   width: 73px;
   top: 28px;
+}
+
+.my-keys-row .key-list-header {
+  font-weight: 600;
+  padding: 5px 0;
+  border-bottom: 2px solid #eee;
+}
+
+.my-keys-row .key-content-row {
+  padding: 5px 0;
+  border-bottom: 1px solid #e6e6e6;
+  align-items: center;
+}
+
+.my-keys-row .key-content-row .status-col {
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: flex-start;
+  align-items: start;
+  gap: 2px;
 }
 
 @media (width <= 991px) {
