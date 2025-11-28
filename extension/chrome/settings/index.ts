@@ -521,7 +521,7 @@ View.run(
       // 3. Build HTML
       // Header row
       html += `
-        <div class="row key-list-header" style="font-weight: 600; padding: 10px 0; border-bottom: 2px solid #eee;">
+        <div class="row key-list-header">
           <div class="col-3">Email</div>
           <div class="col-2">Created</div>
           <div class="col-6">Fingerprint</div>
@@ -544,11 +544,11 @@ View.run(
         const rowClass = isExpired ? 'key-content-row expired' : 'key-content-row';
         const opacityStyle = isExpired ? 'opacity: 0.7;' : '';
 
-        html += `<div class="row ${rowClass}" style="padding: 10px 0; border-bottom: 1px solid #e6e6e6; align-items: center; ${opacityStyle}">`;
+        html += `<div class="row ${rowClass}" style="${opacityStyle}">`;
         html += `  <div class="col-3" style="overflow: hidden; text-overflow: ellipsis;">${escapedLink}</div>`;
         html += `  <div class="col-2">${Xss.escape(dateStr)}</div>`;
         html += `  <div class="col-6">${fpHtml}</div>`;
-        html += `  <div class="col-1" style="display: flex; justify-content: space-between; align-items: center;">
+        html += `  <div class="col-1 status-col">
                      ${KeyUtil.statusHtml(ki.id, prv)}
                      ${removeKeyBtn}
                    </div>`;
