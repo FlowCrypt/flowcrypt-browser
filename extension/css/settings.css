@@ -602,7 +602,7 @@ body#settings .settings-border .key_list {
   display: flex;
   flex-flow: column wrap;
   justify-content: flex-start;
-  align-items: center;
+  align-items: start;
   gap: 2px;
 }
 
