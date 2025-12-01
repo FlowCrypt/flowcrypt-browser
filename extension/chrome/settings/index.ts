@@ -496,24 +496,67 @@ View.run(
     private addKeyRowsHtml = async (privateKeys: KeyInfoWithIdentity[]) => {
       let html = '';
       const canRemoveKey = !this.clientConfiguration?.usesKeyManager();
+
+      // 1. Parse and prepare data
+      const rows = [];
       for (let i = 0; i < privateKeys.length; i++) {
         const ki = privateKeys[i];
         const prv = await KeyUtil.parse(ki.private);
         const created = new Date(prv.created);
         const date = Str.monthName(created.getMonth()) + ' ' + created.getDate() + ', ' + created.getFullYear();
+        const isExpired = KeyUtil.expired(prv);
+        rows.push({
+          ki,
+          prv,
+          createdTime: prv.created,
+          dateStr: date,
+          isExpired,
+          originalIndex: i,
+        });
+      }
+
+      // 2. Sort: newest to oldest
+      rows.sort((a, b) => b.createdTime - a.createdTime);
+
+      // 3. Build HTML
+      // Header row
+      html += `
+        <div class="row key-list-header">
+          <div class="col-3">Email</div>
+          <div class="col-2">Created</div>
+          <div class="col-6">Fingerprint</div>
+          <div class="col-1">Status</div>
+        </div>
+      `;
+
+      for (const row of rows) {
+        const { ki, prv, dateStr, isExpired, originalIndex } = row;
+
         let removeKeyBtn = '';
         if (canRemoveKey && privateKeys.length > 1) {
-          removeKeyBtn = `(<a href="#" class="action_remove_key" data-test="action-remove-key-${i}" data-fingerprint=${ki.fingerprints[0]} data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>)`;
+          removeKeyBtn = `<a href="#" class="action_remove_key" style="margin-left: 5px;" data-test="action-remove-key-${originalIndex}" data-fingerprint=${ki.fingerprints[0]} data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>`;
         }
+
         const escapedEmail = Xss.escape(prv.emails[0] || '');
-        const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
-        const fpHtml = `fingerprint:&nbsp;<span class="good">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
-        const space = `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
-        html += `<div class="row key-content-row">`;
-        html += `  <div class="col-12">${escapedLink} from ${Xss.escape(date)}${space}${fpHtml}${space}${KeyUtil.statusHtml(ki.id, prv)}${space}${removeKeyBtn}</div>`;
+        const escapedLink = `<a href="#" data-test="action-show-key-${originalIndex}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
+        const fpHtml = `<span class="good" style="font-family: monospace;">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
+
+        const rowClass = isExpired ? 'key-content-row expired' : 'key-content-row';
+        const opacityStyle = isExpired ? 'opacity: 0.7;' : '';
+
+        html += `<div class="row ${rowClass}" style="${opacityStyle}">`;
+        html += `  <div class="col-3" style="overflow: hidden; text-overflow: ellipsis;">${escapedLink}</div>`;
+        html += `  <div class="col-2">${Xss.escape(dateStr)}</div>`;
+        html += `  <div class="col-6">${fpHtml}</div>`;
+        html += `  <div class="col-1 status-col">
+                     ${KeyUtil.statusHtml(ki.id, prv)}
+                     ${removeKeyBtn}
+                   </div>`;
         html += `</div>`;
       }
+
       Xss.sanitizeAppend('.key_list', html);
+
       $('.action_show_key').on(
         'click',
         this.setHandler(async target => {
