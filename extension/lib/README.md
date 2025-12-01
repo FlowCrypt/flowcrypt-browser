@@ -39,36 +39,76 @@ Copy `dist/forge.js` to `extension/lib/forge.js` in this repository.
 
 ### 4) Build forge.mjs (ES module)
 
-Install rollup and create a rollup configuration:
+Since `node-forge` uses webpack and has Node.js built-ins that can be tricky to bundle with rollup for the browser, the most stable way to generate the ES module is to convert the already-built `forge.js`.
 
-```bash
-npm install --save-dev rollup @rollup/plugin-node-resolve @rollup/plugin-commonjs
-```
-
-Create `rollup.config.js`:
+Create a script `convert-forge-to-mjs.js`:
 
 ```javascript
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
+const fs = require('fs');
+const path = require('path');
 
-export default {
-  input: 'lib/index.js',
-  output: {
-    file: 'dist/forge.mjs',
-    format: 'es',
-    sourcemap: true
-  },
-  plugins: [
-    resolve(),
-    commonjs()
-  ]
-};
+const sourceFile = path.join(__dirname, 'dist', 'forge.js');
+const targetFile = path.join(__dirname, 'dist', 'forge.mjs');
+
+console.log('Reading forge.js...');
+let content = fs.readFileSync(sourceFile, 'utf8');
+
+// Find where the webpack bundle starts
+// It starts with the webpack bootstrap function
+let startLine = lines.findIndex(line => line.includes('/******/ (function(modules) { // webpackBootstrap'));
+
+if (startLine === -1) {
+  throw new Error('Could not find webpack bundle start');
+}
+
+// Find the end - the webpack bundle ends with "/******/ });"
+// This closes the modules object passed to the bootstrap function
+let endLine = -1;
+for (let i = lines.length - 1; i >= 0; i--) {
+  if (lines[i].trim() === '/******/ });') {
+    endLine = i + 1; // Include this line
+    break;
+  }
+}
+
+if (endLine === -1) {
+  throw new Error('Could not find bundle end');
+}
+
+console.log(`Extracting lines ${startLine} to ${endLine}`);
+
+// Extract just the webpack bundle
+const bundleLines = lines.slice(startLine, endLine);
+
+// Remove 'return ' from the first line if present (from UMD wrapper)
+// The line looks like: return /******/ (function(modules) { // webpackBootstrap
+bundleLines[0] = bundleLines[0].replace(/^\s*return\s+/, '');
+
+// Prepend 'var forge = ' to capture the return value
+bundleLines[0] = 'var forge = ' + bundleLines[0];
+
+const bundle = bundleLines.join('\n');
+
+// Create ES module wrapper
+const esModule = `const globalThis = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+${bundle}
+
+var lib = forge;
+
+export { lib as default };
+`;
+
+console.log('Writing forge.mjs...');
+fs.writeFileSync(targetFile, esModule, 'utf8');
 ```
 
-Build the ES module:
+Run the script:
 
 ```bash
-npx rollup -c rollup.config.js
+node convert-forge-to-mjs.js
 ```
 
 Copy `dist/forge.mjs` to `extension/lib/forge.mjs` in this repository.
