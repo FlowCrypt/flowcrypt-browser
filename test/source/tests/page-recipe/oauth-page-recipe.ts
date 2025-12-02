@@ -9,6 +9,42 @@ import { Url } from '../../core/common';
 export class OauthPageRecipe extends PageRecipe {
   private static longTimeout = 40;
 
+  /**
+   * Check if an error is a "Navigating frame was detached" error.
+   * This can happen when the OAuth page closes during navigation (e.g., successful auth).
+   * @param e - The error to check
+   * @returns true if this is a frame detached error that can be safely ignored
+   */
+  private static isFrameDetachedError(e: unknown): boolean {
+    if (!e) {
+      return false;
+    }
+    // Check if it's an Error object with a message property
+    if (e instanceof Error) {
+      return e.message.includes('Navigating frame was detached');
+    }
+    // Fallback: convert to string and check (for non-Error objects)
+    const errorStr = String(e);
+    return errorStr.includes('Navigating frame was detached') || errorStr.includes('frame was detached');
+  }
+
+  /**
+   * Safely navigate to a URL, ignoring "frame was detached" errors.
+   * The OAuth page may close during navigation on successful auth.
+   * @param oauthPage - The OAuth page to navigate
+   * @param url - The URL to navigate to
+   */
+  private static async safeGoto(oauthPage: ControllablePage, url: string): Promise<void> {
+    try {
+      await oauthPage.target.goto(url);
+    } catch (e: unknown) {
+      if (!OauthPageRecipe.isFrameDetachedError(e)) {
+        throw e;
+      }
+      // Ignore frame detached errors - page closed successfully
+    }
+  }
+
   public static mock = async (
     t: AvaContext,
     oauthPage: ControllablePage,
@@ -21,33 +57,28 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.close();
     } else if (action === 'login_with_invalid_state') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
-      await oauthPage.target.goto(
+      await OauthPageRecipe.safeGoto(
+        oauthPage,
         mockOauthUrl.replace('CRYPTUP_STATE', 'INVALID_CRYPTUP_STATE') + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true'
       );
     } else if (action === 'missing_permission') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
       mockOauthUrl += '&scope=missing_scope';
-      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+      await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&proceed=true');
     } else if (!login_hint) {
-      await oauthPage.target.goto(mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
+      await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');
     } else {
       if (action === 'override_acct') {
         mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['login_hint']);
         mockOauthUrl += '&login_hint=' + encodeURIComponent(acctEmail);
       }
-      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
+      await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&proceed=true');
     }
   };
 
   public static customIdp = async (t: AvaContext, oauthPage: ControllablePage): Promise<void> => {
     const mockOauthUrl = oauthPage.target.url();
-    try {
-      await oauthPage.target.goto(mockOauthUrl + '&proceed=true');
-    } catch (e) {
-      if (!e.message.includes('Navigating frame was detached')) {
-        throw e;
-      }
-    }
+    await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&proceed=true');
   };
 
   public static google = async (
