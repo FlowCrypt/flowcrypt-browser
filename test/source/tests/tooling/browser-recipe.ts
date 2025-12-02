@@ -273,7 +273,6 @@ export class BrowserRecipe {
     return { acctEmail, passphrase: key.passphrase, settingsPage };
   };
 
-  // todo: move to gmail-page-recipe
   public static pgpBlockVerifyDecryptedContent = async (
     t: AvaContext,
     browser: BrowserHandle,
@@ -289,15 +288,16 @@ export class BrowserRecipe {
   // todo: move some of these helpers somewhere to page-recipe/...
   // gmail or inbox
   public static checkDecryptMsgOnPage = async (t: AvaContext, page: ControllablePage, m: TestMessageAndSession) => {
-    await page.waitAll('iframe');
+    // Wait for iframes with retry logic to handle slower CI environments
+    await page.waitForIframes();
     if (m.finishSessionBeforeTesting) {
       await BrowserRecipe.finishSession(page);
-      await page.waitAll('iframe');
+      await page.waitForIframes();
     }
     await BrowserRecipe.pgpBlockCheck(t, await page.getFrame(['pgp_block.htm']), m);
     if (m.finishSessionAfterTesting) {
       await BrowserRecipe.finishSession(page);
-      await page.waitAll('iframe');
+      await page.waitForIframes();
       const pgpBlockFrame = await page.getFrame(['pgp_block.htm']);
       await pgpBlockFrame.waitAll('@pgp-block-content');
       await pgpBlockFrame.waitForSelTestState('ready');

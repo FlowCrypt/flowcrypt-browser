@@ -1188,7 +1188,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const msgId = '18ecbf57e1dfb9b5';
         const testPrintBlockInPage = async (page: ControllablePage) => {
-          await page.waitAll('iframe');
+          await page.waitForIframes();
           const pgpBlock = await page.getFrame(['pgp_block.htm']);
           await pgpBlock.waitForSelTestState('ready');
           const expectedPrintDateString = new Date(1712818847000).toLocaleString();
