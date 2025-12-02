@@ -21,11 +21,14 @@ export class OauthPageRecipe extends PageRecipe {
     }
     // Check if it's an Error object with a message property
     if (e instanceof Error) {
-      return e.message.includes('Navigating frame was detached');
+      return e.message.includes('Navigating frame was detached') || e.message.includes('frame was detached');
     }
-    // Fallback: convert to string and check (for non-Error objects)
-    const errorStr = e.toString();
-    return errorStr.includes('Navigating frame was detached') || errorStr.includes('frame was detached');
+    // Check if it's already a string
+    if (typeof e === 'string') {
+      return e.includes('Navigating frame was detached') || e.includes('frame was detached');
+    }
+    // For other types, we can't reliably check - return false to be safe
+    return false;
   }
 
   /**
