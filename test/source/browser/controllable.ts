@@ -121,6 +121,29 @@ abstract class ControllableBase {
     throw Error(`waiting failed: Elements did not receive the focus: ${selector}`);
   };
 
+  /**
+ * Wait for iframes to be present on the page with retry logic.
+ * This is useful in CI environments where iframe injection can be slower.
+ * @param maxAttempts - Maximum number of retry attempts (default: 3)
+ * @param timeoutPerAttempt - Timeout in seconds for each attempt (default: 20)
+ * @returns Promise that resolves when iframes are found
+ */
+  public waitForIframes = async (maxAttempts = 3, timeoutPerAttempt = 20): Promise<void> => {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await this.waitAll('iframe', { timeout: timeoutPerAttempt });
+        return; // Success - iframes found
+      } catch {
+        if (attempt === maxAttempts) {
+          throw new Error(`Failed to find iframes after ${maxAttempts} attempts with ${timeoutPerAttempt}s timeout each`);
+        }
+        // Log and retry
+        console.log(`Attempt ${attempt}/${maxAttempts}: iframes not found yet, retrying...`);
+        await Util.sleep(1); // Brief wait before retry
+      }
+    }
+  };
+
   public notPresent = async (selector: string | string[]) => {
     return await this.waitTillGone(selector, { timeout: 0 });
   };
@@ -404,7 +427,7 @@ abstract class ControllableBase {
     }
     throw new Error(
       `Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. ` +
-        `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
+      `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
     );
   };
 
@@ -716,7 +739,7 @@ class ConsoleEvent {
   public constructor(
     public type: string,
     public text: string
-  ) {}
+  ) { }
 }
 
 export class ControllablePage extends ControllableBase {
