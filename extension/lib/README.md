@@ -53,6 +53,9 @@ const targetFile = path.join(__dirname, 'dist', 'forge.mjs');
 console.log('Reading forge.js...');
 let content = fs.readFileSync(sourceFile, 'utf8');
 
+// Split content into lines
+const lines = content.split('\n');
+
 // Find where the webpack bundle starts
 // It starts with the webpack bootstrap function
 let startLine = lines.findIndex(line => line.includes('/******/ (function(modules) { // webpackBootstrap'));
