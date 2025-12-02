@@ -24,7 +24,7 @@ export class OauthPageRecipe extends PageRecipe {
       return e.message.includes('Navigating frame was detached');
     }
     // Fallback: convert to string and check (for non-Error objects)
-    const errorStr = String(e);
+    const errorStr = e.toString();
     return errorStr.includes('Navigating frame was detached') || errorStr.includes('frame was detached');
   }
 
