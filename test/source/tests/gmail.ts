@@ -324,10 +324,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     );
 
     // convo-sensitive, draft-sensitive test
-    // Couldn't figure out why pageHasSecureDraft can't find correct iframe
-    // Need to fix later
-    // https://flowcrypt.semaphoreci.com/jobs/0106da6d-46f5-44d3-9ebd-3421584220a0
-    test.skip(
+    test.serial(
       'mail.google.com - secure reply btn, reply draft',
       testWithBrowser(
         async (t, browser) => {
