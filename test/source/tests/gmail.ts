@@ -88,7 +88,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       // Wait for the iframe content to load - @input-body must exist first
       await secureDraftFrame.waitAll('@input-body');
       if (expectedContent) {
-        // Use onlyVisible=false to avoid visibility issues with contenteditable elements
         await secureDraftFrame.waitForContent('@input-body', expectedContent);
       }
       return secureDraftFrame;
@@ -345,7 +344,6 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           // Wait for extension to re-inject iframes after reload
           await gmailPage.waitForIframes(3, 25); // 3 attempts, 25s each
           await Util.sleep(2); // Let Gmail settle after reload
-          // Increased timeouts for frame discovery and content waiting
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
           await replyBox.waitAndClick('@action-send', { confirmGone: true });
