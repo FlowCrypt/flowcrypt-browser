@@ -262,12 +262,14 @@ export class Catch {
       }
     }
     const exception = Catch.formExceptionFromThrown(thrown);
+    const reportUrl = location.href.split('?')[0];
     return {
       name: exception.name.substring(0, 50),
       message: Catch.groupSimilarReports(exception.message.substring(0, 200)),
-      // Use https://mail.google.com/mail as URL for content script errors
+      // Strip Gmail URLs to group similar errors from different threads/messages
       // https://github.com/FlowCrypt/flowcrypt-browser/issues/6031
-      url: Catch.RUNTIME_ENVIRONMENT === 'ex:s:gmail' ? 'https://mail.google.com/mail' : Catch.groupSimilarReports(location.href.split('?')[0]),
+      // https://github.com/FlowCrypt/flowcrypt-browser/issues/6128
+      url: Catch.RUNTIME_ENVIRONMENT.endsWith(':ex:s:gmail') ? 'https://mail.google.com/mail/' : Catch.groupSimilarReports(reportUrl),
       line: line || 1,
       col: col || 1,
       trace: Catch.groupSimilarReports(exception.stack || ''),
