@@ -343,7 +343,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           // Wait for extension to re-inject iframes after reload
           await gmailPage.waitForIframes(3, 25); // 3 attempts, 25s each
-          await Util.sleep(2); // Let Gmail settle after reload
+          await Util.sleep(5); // Let Gmail settle after reload
           replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
           await Util.sleep(2);
           await replyBox.waitAndClick('@action-send', { confirmGone: true });
