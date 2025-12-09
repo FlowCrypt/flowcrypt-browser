@@ -7,7 +7,7 @@ import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { launch } from 'puppeteer';
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
 
-class TimeoutError extends Error {}
+class TimeoutError extends Error { }
 
 export class BrowserPool {
   private semaphore: Semaphore;
@@ -41,6 +41,11 @@ export class BrowserPool {
       // Fix for CORS Private Network Access issues with Puppeteer 24.16.0+
       '--disable-web-security',
     ];
+
+    if (process.env.CI || process.env.SEMAPHORE) {
+      args.push('--disable-dev-shm-usage'); // Use /tmp instead of /dev/shm in CI
+      args.push('--no-zygote'); // Helps prevent zombie processes
+    }
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
       args.push('--allow-insecure-localhost');
@@ -52,6 +57,7 @@ export class BrowserPool {
       headless: false,
       devtools: false,
       slowMo,
+      timeout: 90000, // 90 seconds timeout for browser launch (CI can be slow)
     });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
