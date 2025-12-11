@@ -157,7 +157,7 @@ export class Api<REQ, RES> {
         });
         this.server.on('error', e => {
           console.error('failed to start mock server', e);
-          reject(e as Error);
+          reject(e);
         });
       } catch (e) {
         console.error('exception when starting mock server', e);
