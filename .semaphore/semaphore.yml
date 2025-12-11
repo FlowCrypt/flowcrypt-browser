@@ -3,7 +3,7 @@ name: FlowCrypt Extension Tests
 agent:
   machine:
     type: e2-standard-4
-    os_image: ubuntu2204
+    os_image: ubuntu2404
 auto_cancel:
   running:
     when: branch != 'master'
