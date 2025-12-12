@@ -70,3 +70,34 @@ BROWSER_UNIT_TEST_NAME(`Catcher does not include query string on report`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Catcher reports correct URL for Gmail environment`);
+(async () => {
+  const originalEnv = Catch.RUNTIME_ENVIRONMENT;
+
+  // https://github.com/FlowCrypt/flowcrypt-browser/issues/6128
+  const sensitivePaths = [
+    '/mail/u/0/#inbox/WhctKLbvMNLndrHSj',
+    '/mail/u/0/#sent/KtbxLzFrMS',
+    '/mail/u/1/#inbox/rtjXfHsNNgrJVZL',
+    '/mail/u/1/#search/MSCGwzQrb',
+  ];
+
+  try {
+    for (const path of sensitivePaths) {
+      const fullUrl = 'https://mail.google.com' + path;
+
+      // Simulate environment detection based on the URL
+      const env = Catch.environment(fullUrl);
+      Catch.RUNTIME_ENVIRONMENT = env;
+
+      const formatted = Catch.formatExceptionForReport({ name: 'Error' });
+      if (formatted.url !== 'https://mail.google.com/mail/') {
+        throw new Error(`For path ${path}, expected URL to be 'https://mail.google.com/mail/' but got '${formatted.url}' (env: ${env})`);
+      }
+    }
+  } finally {
+    Catch.RUNTIME_ENVIRONMENT = originalEnv;
+  }
+  return 'pass';
+})();
