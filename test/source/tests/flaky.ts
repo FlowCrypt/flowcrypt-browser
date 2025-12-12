@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import test from 'ava';
+import avaTest, { Implementation } from 'ava';
 import { expect } from 'chai';
 
 import { Config, TestVariant, Util } from './../util';
@@ -29,7 +29,15 @@ import { minutes } from './tooling';
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
 
-export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
+export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser, shardIndex = 0, totalShards = 1) => {
+  let testCounter = 0;
+  const test = (title: string, impl: Implementation<unknown[]>) => {
+    if (testCounter++ % totalShards === shardIndex) {
+      avaTest(title, impl);
+    }
+  };
+  test.skip = avaTest.skip;
+
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
     test(
       'compose - own key expired - update and retry',
@@ -320,7 +328,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             'confirm',
             'cancel',
             'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
-              'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
+            'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
           );
           await composePage.close();
           expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
@@ -345,7 +353,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             'error',
             'confirm',
             'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
-              'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+            'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
           );
           await composePage.close();
           expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
@@ -370,7 +378,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             'error',
             'confirm',
             'Messages to some recipients were sent successfully, while messages to timeout@example.com ' +
-              'encountered network errors. Please check your internet connection and try again.'
+            'encountered network errors. Please check your internet connection and try again.'
           );
           await composePage.close();
           expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
