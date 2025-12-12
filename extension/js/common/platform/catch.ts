@@ -174,7 +174,7 @@ export class Catch {
 
   public static environment(url = location.href): string {
     const browserName = Catch.browser().name;
-    const origin = new URL(location.href).origin;
+    const origin = new URL(url).origin;
     let env = 'unknown';
     if (url.includes('bnjglocicd')) {
       env = 'ex:prod';
