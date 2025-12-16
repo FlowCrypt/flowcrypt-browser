@@ -10749,6 +10749,7 @@ var pfxValidator = {
           capture: 'macAlgorithm'
         }, {
           name: 'PFX.macData.mac.digestAlgorithm.parameters',
+          optional: true,
           tagClass: asn1.Class.UNIVERSAL,
           captureAsn1: 'macAlgorithmParameters'
         }]
