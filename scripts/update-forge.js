@@ -2,13 +2,13 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 const FORGE_REPO_URL = 'https://github.com/digitalbazaar/forge';
 const TEMP_DIR = path.join(__dirname, '../.tmp-forge-build');
 const EXTENSION_LIB_DIR = path.join(__dirname, '../extension/lib');
 
-const updateForge = async (version)  => {
+const updateForge = async (version) => {
   if (!version) {
     console.error('Error: Version parameter is required');
     console.error('Usage: npm run update-forge -- v1.3.3');
@@ -25,10 +25,10 @@ const updateForge = async (version)  => {
   try {
     // Clean up any existing temp directory
     await fs.remove(TEMP_DIR);
-    
+
     // Step 1: Clone the forge repository at the desired version
     console.log('\n1. Cloning forge repository...');
-    execSync(`git clone -b ${version} ${FORGE_REPO_URL} "${TEMP_DIR}"`, { stdio: 'inherit' });
+    execFileSync('git', ['clone', '-b', version, FORGE_REPO_URL, TEMP_DIR], { stdio: 'inherit' });
 
     // Step 2: Install dependencies
     console.log('\n2. Installing dependencies...');
@@ -38,17 +38,17 @@ const updateForge = async (version)  => {
     console.log('\n3. Modifying webpack.config.js to add source maps...');
     const webpackConfigPath = path.join(TEMP_DIR, 'webpack.config.js');
     let webpackConfig = fs.readFileSync(webpackConfigPath, 'utf8');
-    
+
     // According to the readme, we need to add devtool to the plain unoptimized bundle
     // This is the bundle object created around line 78
     // Look for "// plain unoptimized unminified bundle" comment and the bundle object after it
-    
+
     const bundlePattern = /(\/\/ plain unoptimized unminified bundle\s*\n\s*const bundle = Object\.assign\(\{}, common, \{[\s\S]*?\n\s*}\);)/;
     const match = webpackConfig.match(bundlePattern);
-    
+
     if (match) {
       const bundleBlock = match[1];
-      
+
       // Check if devtool already exists in this bundle configuration
       if (!bundleBlock.includes('devtool:')) {
         // Find the right place to insert devtool (after mode: 'development')
@@ -56,7 +56,7 @@ const updateForge = async (version)  => {
           /(mode:\s*'development',)/,
           "$1\n    devtool: 'cheap-module-source-map',"
         );
-        
+
         webpackConfig = webpackConfig.replace(bundleBlock, modifiedBundle);
         await fs.writeFile(webpackConfigPath, webpackConfig, 'utf8');
         console.log('   Added source map configuration to webpack.config.js');
@@ -149,16 +149,16 @@ console.log('forge.mjs generated successfully!');
 
     // Step 7: Copy files to extension/lib
     console.log('\n7. Copying files to extension/lib...');
-    
+
     // Ensure the destination directory exists
     await fs.ensureDir(EXTENSION_LIB_DIR);
-    
+
     // Copy forge.js
     const sourceForgeJs = path.join(TEMP_DIR, 'dist', 'forge.js');
     const destForgeJs = path.join(EXTENSION_LIB_DIR, 'forge.js');
     await fs.copy(sourceForgeJs, destForgeJs);
     console.log(`   Copied forge.js to ${destForgeJs}`);
-    
+
     // Copy forge.mjs
     const sourceForgeMjs = path.join(TEMP_DIR, 'dist', 'forge.mjs');
     const destForgeMjs = path.join(EXTENSION_LIB_DIR, 'forge.mjs');
@@ -171,17 +171,17 @@ console.log('forge.mjs generated successfully!');
 
     console.log(`\n✅ Successfully updated Forge to version ${version}!`);
     console.log('Files have been copied to extension/lib/');
-    
+
   } catch (error) {
     console.error('\n❌ Error during Forge update:', error.message);
-    
+
     // Clean up on error
     try {
       await fs.remove(TEMP_DIR);
     } catch {
       // Ignore cleanup errors
     }
-    
+
     process.exit(1);
   }
 }
