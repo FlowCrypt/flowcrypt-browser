@@ -10,6 +10,28 @@ Only add a copy of a library here if it's not published as a npm module.
 
 Both `forge.js` and `forge.mjs` need to be rebuilt when updating node-forge to a new version.
 
+### Automated Method (Recommended)
+
+Use the automated update script:
+
+```bash
+npm run update-forge -- v1.3.3
+```
+
+This script will automatically:
+1. Clone the forge repository at the specified version
+2. Modify webpack.config.js to add source maps
+3. Build forge.js with source maps
+4. Convert forge.js to forge.mjs
+5. Copy both files to `extension/lib/`
+6. Clean up temporary files
+
+The version can be specified with or without the 'v' prefix (e.g., `v1.3.3` or `1.3.3`).
+
+### Manual Method
+
+If you prefer to update manually, follow these steps:
+
 ### 1) Clone the forge repository at the desired version
 
 ```bash
