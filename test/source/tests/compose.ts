@@ -1857,6 +1857,35 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - send only image in rich text mode without empty message dialog',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          attester: { includeHumanKey: true },
+        });
+        const imgBase64 =
+          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAAnElEQVR42u3RAQ0AAAgDIE1u9FvDOahAVzLFGS1ECEKEIEQIQoQgRIgQIQgRghAhCBGCECEIQYgQhAhBiBCECEEIQoQgRAhChCBECEIQIgQhQhAiBCFCEIIQIQgRghAhCBGCEIQIQYgQhAhBiBCEIEQIQoQgRAhChCAEIUIQIgQhQhAiBCEIEYIQIQgRghAhCBEiRAhChCBECEK+W3uw+TnWoJc/AAAAAElFTkSuQmCC';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        // Enable rich text mode and set up recipient + subject
+        await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test sending only image', '', {
+          richtext: true,
+        });
+        // Clear the body completely (including any footer) - issue #3204 is about sending ONLY an image
+        await composePage.page.evaluate(() => {
+          $('#input_text').html('');
+        });
+        // Insert image - this is the only content
+        await composePage.page.evaluate((src: string) => {
+          $('[data-test=action-insert-image]').val(src).trigger('click');
+        }, imgBase64);
+        await Util.sleep(0.5);
+        // Send should work without "Send empty message?" dialog
+        await ComposePageRecipe.sendAndClose(composePage);
+      })
+    );
+
+
+
+    test(
       'compose - check existing draft not saved without changes',
       testWithBrowser(async (t, browser) => {
         const draftId = 'check_existing_draft_save';
@@ -3443,9 +3472,8 @@ const sendTextAndVerifyPresentInSentMsg = async (
   text: string,
   sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {}
 ) => {
-  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${
-    sendingOpt.encrypt ? 'Encrypted' : ''
-  } Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''
+    } Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   const acctEmail = 'flowcrypt.compatibility@gmail.com';
