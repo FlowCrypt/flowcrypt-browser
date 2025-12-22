@@ -200,13 +200,8 @@ export class OpenPGPKey {
       throw new Error('Key does not have a fingerprint and cannot be parsed.');
     }
     const algoInfo = opgpKey.keyPacket.getAlgorithmInfo();
-    const {
-      encryptionKey = undefined,
-      encryptionKeyIgnoringExpiration = undefined,
-      signingKey = undefined,
-      signingKeyIgnoringExpiration = undefined,
-      expiration = undefined,
-    } = await OpenPGPKey.getSigningAndEncryptionKeys(opgpKey);
+    const { encryptionKey, encryptionKeyIgnoringExpiration, signingKey, signingKeyIgnoringExpiration, expiration } =
+      await OpenPGPKey.getSigningAndEncryptionKeys(opgpKey);
     const missingPrivateKeyForSigning = signingKeyIgnoringExpiration?.keyPacket
       ? OpenPGPKey.arePrivateParamsMissing(signingKeyIgnoringExpiration.keyPacket)
       : false;

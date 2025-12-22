@@ -122,12 +122,12 @@ abstract class ControllableBase {
   };
 
   /**
- * Wait for iframes to be present on the page with retry logic.
- * This is useful in CI environments where iframe injection can be slower.
- * @param maxAttempts - Maximum number of retry attempts (default: 3)
- * @param timeoutPerAttempt - Timeout in seconds for each attempt (default: 20)
- * @returns Promise that resolves when iframes are found
- */
+   * Wait for iframes to be present on the page with retry logic.
+   * This is useful in CI environments where iframe injection can be slower.
+   * @param maxAttempts - Maximum number of retry attempts (default: 3)
+   * @param timeoutPerAttempt - Timeout in seconds for each attempt (default: 20)
+   * @returns Promise that resolves when iframes are found
+   */
   public waitForIframes = async (maxAttempts = 3, timeoutPerAttempt = 20): Promise<void> => {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -427,7 +427,7 @@ abstract class ControllableBase {
     }
     throw new Error(
       `Selector ${selector} was found but did not match "${needle}" within ${timeoutSec}s. ` +
-      `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
+        `Observed content history: "${JSON.stringify(observedContentHistory, undefined, 2)}"`
     );
   };
 
@@ -535,7 +535,7 @@ abstract class ControllableBase {
     expect(actualCount).to.equal(expectedCount);
   };
 
-  public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
+  public getFrame = async (urlMatchables: string[], { sleep, timeout } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
     if (sleep) {
       await Util.sleep(sleep);
     }
@@ -739,7 +739,7 @@ class ConsoleEvent {
   public constructor(
     public type: string,
     public text: string
-  ) { }
+  ) {}
 }
 
 export class ControllablePage extends ControllableBase {

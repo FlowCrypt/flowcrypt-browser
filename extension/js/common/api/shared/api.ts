@@ -307,7 +307,7 @@ export class Api {
   public static async ajaxWithJquery<T extends ResFmt, RT = unknown>(
     req: Ajax,
     resFmt: T,
-    formattedData: FormData | string | undefined = undefined
+    formattedData: FormData | string | undefined
   ): Promise<FetchResult<T, RT>> {
     let data: BodyInit | undefined = formattedData;
     const headersInit: Dict<string> = req.headers ?? {};
