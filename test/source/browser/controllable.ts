@@ -535,7 +535,7 @@ abstract class ControllableBase {
     expect(actualCount).to.equal(expectedCount);
   };
 
-  public getFrame = async (urlMatchables: string[], { sleep, timeout } = { sleep: 1, timeout: 10 }): Promise<ControllableFrame> => {
+  public getFrame = async (urlMatchables: string[], { sleep = 1, timeout = 10 } = {}): Promise<ControllableFrame> => {
     if (sleep) {
       await Util.sleep(sleep);
     }
