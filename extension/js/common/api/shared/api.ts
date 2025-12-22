@@ -304,11 +304,7 @@ export class Api {
   }
 
   /** @deprecated should use ajax() */
-  public static async ajaxWithJquery<T extends ResFmt, RT = unknown>(
-    req: Ajax,
-    resFmt: T,
-    formattedData: FormData | string | undefined = undefined
-  ): Promise<FetchResult<T, RT>> {
+  public static async ajaxWithJquery<T extends ResFmt, RT = unknown>(req: Ajax, resFmt: T, formattedData?: FormData | string): Promise<FetchResult<T, RT>> {
     let data: BodyInit | undefined = formattedData;
     const headersInit: Dict<string> = req.headers ?? {};
 
