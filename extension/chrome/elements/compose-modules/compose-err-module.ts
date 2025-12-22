@@ -158,31 +158,6 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     }
   };
 
-  private hasMessageContent = (plaintext: string, plainhtml: string, footer: string): boolean => {
-    const textWithoutFooter = plaintext.trim() === footer.trim() ? '' : plaintext.trim();
-    if (textWithoutFooter) {
-      return true; // Has text content
-    }
-    // Check for file attachments
-    if (this.view.attachmentsModule.attachment.hasAttachment()) {
-      return true;
-    }
-    // Check for embedded images in rich text mode
-    if (this.view.inputModule.isRichText() && plainhtml.includes('<img')) {
-      return true;
-    }
-    return false; // No content at all
-  };
-
-  private getFormattedFooter = async (email: string): Promise<string> => {
-    const footer = await this.view.footerModule.getFooterFromStorage(email);
-    if (!footer) {
-      return '';
-    }
-    // Format footer the way it would be in outgoing plaintext
-    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
-  };
-
   public throwIfEncryptionPasswordInvalidOrDisabled = async ({ subject, pwd }: { subject: string; pwd?: string }) => {
     const disallowedPasswordMessageTerms = this.view.clientConfiguration.getDisallowPasswordMessagesForTerms();
     const disallowedPasswordMessageErrorText = this.view.clientConfiguration.getDisallowPasswordMessagesErrorText();
@@ -223,5 +198,30 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       this.view.S.cached('input_password').trigger('focus');
       throw new ComposerUserError("Some recipients don't have encryption set up. Please add a password.");
     }
+  };
+
+  private hasMessageContent = (plaintext: string, plainhtml: string, footer: string): boolean => {
+    const textWithoutFooter = plaintext.trim() === footer.trim() ? '' : plaintext.trim();
+    if (textWithoutFooter) {
+      return true; // Has text content
+    }
+    // Check for file attachments
+    if (this.view.attachmentsModule.attachment.hasAttachment()) {
+      return true;
+    }
+    // Check for embedded images in rich text mode
+    if (this.view.inputModule.isRichText() && plainhtml.includes('<img')) {
+      return true;
+    }
+    return false; // No content at all
+  };
+
+  private getFormattedFooter = async (email: string): Promise<string> => {
+    const footer = await this.view.footerModule.getFooterFromStorage(email);
+    if (!footer) {
+      return '';
+    }
+    // Format footer the way it would be in outgoing plaintext
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
   };
 }
