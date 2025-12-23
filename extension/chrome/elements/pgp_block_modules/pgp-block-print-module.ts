@@ -10,10 +10,13 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class PgpBlockViewPrintModule {
   public printMailInfoHtml: string | undefined;
 
+  public constructor(private readonly requestPrintInfo: () => void) { }
+
   public printPGPBlock = async () => {
     // If printMailInfoHtml is not yet prepared, wait briefly to handle race conditions
     if (!this.printMailInfoHtml) {
-      for (let i = 0; i < 30 && !this.printMailInfoHtml; i++) {
+      this.requestPrintInfo();
+      for (let i = 0; i < 6 && !this.printMailInfoHtml; i++) {
         await Time.sleep(200);
       }
     }
