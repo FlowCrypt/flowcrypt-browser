@@ -16,7 +16,7 @@ export class PgpBlockViewPrintModule {
     // If printMailInfoHtml is not yet prepared, wait briefly to handle race conditions
     if (!this.printMailInfoHtml) {
       this.requestPrintInfo();
-      for (let i = 0; i < 6 && !this.printMailInfoHtml; i++) {
+      for (let i = 0; i < 25 && !this.printMailInfoHtml; i++) {
         await Time.sleep(200);
       }
     }
