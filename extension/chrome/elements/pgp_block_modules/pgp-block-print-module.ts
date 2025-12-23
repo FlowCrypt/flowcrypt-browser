@@ -13,7 +13,7 @@ export class PgpBlockViewPrintModule {
   public printPGPBlock = async () => {
     // If printMailInfoHtml is not yet prepared, wait briefly to handle race conditions
     if (!this.printMailInfoHtml) {
-      for (let i = 0; i < 15 && !this.printMailInfoHtml; i++) {
+      for (let i = 0; i < 30 && !this.printMailInfoHtml; i++) {
         await Time.sleep(200);
       }
     }

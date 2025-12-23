@@ -72,7 +72,7 @@ export class PgpBlockView extends View {
     // to ensure printMailInfo is delivered reliably
     let resendAttempts = 0;
     const resendInterval = Catch.setHandledInterval(() => {
-      if (this.printModule.printMailInfoHtml || resendAttempts >= 6) {
+      if (this.printModule.printMailInfoHtml || resendAttempts >= 20) {
         clearInterval(resendInterval);
         return;
       }
