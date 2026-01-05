@@ -108,7 +108,7 @@ export class ComposeStorageModule extends ViewModule<ComposeView> {
     const kis = await KeyStore.get(this.view.acctEmail);
     for (const ki of kis) {
       const pp = await PassphraseStore.get(this.view.acctEmail, ki, true);
-      if (pp && pwd.toLowerCase() === pp.toLowerCase()) {
+      if (pwd.toLowerCase() === pp?.toLowerCase()) {
         return true;
       }
       // check whether this pwd unlocks the ki
