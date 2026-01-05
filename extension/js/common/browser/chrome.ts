@@ -13,7 +13,7 @@ type ChromeStorageType = 'local' | 'session';
 
 const handleFatalErr = async (reason: 'storage_undefined', error: Error) => {
   try {
-    if (await Env.isBackgroundPage()) {
+    if (await Env.isServiceWorker()) {
       throw error;
     } else if (Env.isContentScript()) {
       console.error('Incomplete extension environment in content script', error);
