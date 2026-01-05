@@ -1183,7 +1183,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    test(
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/6145
+    test.skip(
       'decrypt - print feature in pgp block',
       testWithBrowser(async (t, browser) => {
         const msgId = '18ecbf57e1dfb9b5';
