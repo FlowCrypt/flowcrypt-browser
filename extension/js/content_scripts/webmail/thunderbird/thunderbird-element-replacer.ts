@@ -59,7 +59,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
           } else {
             const decryptErr = result as DecryptError;
             let decryptionErrorMsg = '';
-            if (decryptErr.error && decryptErr.error.type === DecryptErrTypes.needPassphrase) {
+            if (decryptErr.error?.type === DecryptErrTypes.needPassphrase) {
               const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
               const longids = decryptErr.longids.needPassphrase.join(',');
               decryptionErrorMsg = `decrypt error: private key needs to be unlocked by your passphrase.`;

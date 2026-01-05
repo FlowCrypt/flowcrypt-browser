@@ -177,7 +177,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
     });
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
-    } else if (decryptRes.error && decryptRes.error.type === DecryptErrTypes.needPassphrase) {
+    } else if (decryptRes.error?.type === DecryptErrTypes.needPassphrase) {
       if (Catch.isThunderbirdMail() && this.view.useFullScreenSecureCompose) {
         await Time.sleep(2300);
       }

@@ -156,7 +156,7 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       // format footer the way it would be in outgoing plaintext
       footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
     }
-    if ((!plaintext.trim() || (footer && plaintext.trim() === footer.trim())) && !(await Ui.modal.confirm('Send empty message?'))) {
+    if ((!plaintext.trim() || plaintext.trim() === footer?.trim()) && !(await Ui.modal.confirm('Send empty message?'))) {
       throw new ComposerResetBtnTrigger();
     }
   };
