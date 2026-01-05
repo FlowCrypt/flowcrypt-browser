@@ -42,13 +42,8 @@ export class Env {
   }
 
   // Check if the current context is a Service Worker
-  public static async isBackgroundPage() {
-    // In firefox, window&document is not null even in background page
-    if (typeof browser !== 'undefined' && typeof browser.runtime?.getBackgroundPage !== 'undefined') {
-      const backgroundPage = await browser.runtime.getBackgroundPage();
-      return backgroundPage === window;
-    }
-    return typeof window === 'undefined' && typeof document === 'undefined';
+  public static async isServiceWorker() {
+    return typeof window === 'undefined' && typeof importScripts === 'function';
   }
 
   public static isExtension() {

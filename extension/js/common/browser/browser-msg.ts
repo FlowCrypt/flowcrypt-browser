@@ -629,8 +629,8 @@ export class BrowserMsg {
   private static async sendAwait(destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> {
     bm = bm || {};
     // console.debug(`sendAwait ${name} to ${destString || 'bg'}`, bm);
-    const isBackgroundPage = await Env.isBackgroundPage();
-    if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') {
+    const isServiceWorker = await Env.isServiceWorker();
+    if (isServiceWorker && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') {
       // calling from bg script to bg script: skip messaging
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
       return await handler(bm);
@@ -647,7 +647,7 @@ export class BrowserMsg {
       stack: CatchHelper.stackTrace(),
     };
     // eslint-disable-next-line no-null/no-null
-    if (!(await Env.isBackgroundPage()) && msg.to !== null) {
+    if (!(await Env.isServiceWorker()) && msg.to !== null) {
       const validMsg: Bm.RawWithWindowExtensions = { ...msg, to: msg.to };
       // send via window messaging in parallel
       Catch.try(async () => {
@@ -695,9 +695,9 @@ export class BrowserMsg {
       };
       try {
         if (chrome.runtime) {
-          Env.isBackgroundPage()
-            .then(isBackgroundPage => {
-              if (isBackgroundPage) {
+          Env.isServiceWorker()
+            .then(isServiceWorker => {
+              if (isServiceWorker) {
                 chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
                   for (const tab of tabs) {
                     chrome.tabs.sendMessage(Number(tab.id), msg, resolve);
