@@ -27,7 +27,7 @@ export class PgpBlockView extends View {
   public readonly quoteModule: PgpBlockViewQuoteModule;
   public readonly errorModule: PgpBlockViewErrorModule;
   public readonly renderModule: PgpBlockViewRenderModule;
-  public readonly printModule: PgpBlockViewPrintModule;
+  public readonly printModule = new PgpBlockViewPrintModule();
   private readonly tabId = BrowserMsg.generateTabId();
   private progressOperation?: {
     text: string;
@@ -42,9 +42,6 @@ export class PgpBlockView extends View {
     this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
     this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
     this.debug = uncheckedUrlParams.debug === true;
-    this.printModule = new PgpBlockViewPrintModule(() => {
-      BrowserMsg.send.pgpBlockReady(this, { frameId: this.frameId, messageSender: this.getDest() });
-    });
     // modules
     this.attachmentsModule = new PgpBlockViewAttachmentsModule(this);
     this.quoteModule = new PgpBlockViewQuoteModule(this);
