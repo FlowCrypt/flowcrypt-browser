@@ -19,9 +19,9 @@ import { Lang } from '../../../js/common/lang.js';
 import linkifyHtml from 'linkifyHtml';
 import { MsgUtil } from '../../../js/common/core/crypto/pgp/msg-util.js';
 
-export class ComposerUserError extends Error {}
-class ComposerNotReadyError extends ComposerUserError {}
-export class ComposerResetBtnTrigger extends Error {}
+export class ComposerUserError extends Error { }
+class ComposerNotReadyError extends ComposerUserError { }
+export class ComposerResetBtnTrigger extends Error { }
 
 export const PUBKEY_LOOKUP_RESULT_FAIL = 'fail';
 
@@ -147,16 +147,13 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
     throw new ComposerNotReadyError('Still working, please wait.');
   };
 
-  public throwIfFormValsInvalid = async ({ subject, plaintext, from }: NewMsgData) => {
+  public throwIfFormValsInvalid = async ({ subject, plaintext, plainhtml, from }: NewMsgData) => {
     if (!subject && !(await Ui.modal.confirm('Send without a subject?'))) {
       throw new ComposerResetBtnTrigger();
     }
-    let footer = await this.view.footerModule.getFooterFromStorage(from.email);
-    if (footer) {
-      // format footer the way it would be in outgoing plaintext
-      footer = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
-    }
-    if ((!plaintext.trim() || plaintext.trim() === footer?.trim()) && !(await Ui.modal.confirm('Send empty message?'))) {
+    const footer = await this.getFormattedFooter(from.email);
+    const hasContent = this.hasMessageContent(plaintext, plainhtml, footer);
+    if (!hasContent && !(await Ui.modal.confirm('Send empty message?'))) {
       throw new ComposerResetBtnTrigger();
     }
   };
@@ -175,22 +172,22 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       if (await this.view.storageModule.isPwdMatchingPassphrase(pwd)) {
         throw new ComposerUserError(
           'Please do not use your private key passphrase as a password for this message.\n\n' +
-            'You should come up with some other unique password that you can share with recipient.'
+          'You should come up with some other unique password that you can share with recipient.'
         );
       }
       if (subject.toLowerCase().includes(pwd.toLowerCase())) {
         throw new ComposerUserError(
           `Please do not include the password in the email subject. ` +
-            `Sharing password over email undermines password based encryption.\n\n` +
-            `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
+          `Sharing password over email undermines password based encryption.\n\n` +
+          `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
         );
       }
       const intro = this.view.S.cached('input_intro').length ? this.view.inputModule.extract('text', 'input_intro') : '';
       if (intro.toLowerCase().includes(pwd.toLowerCase())) {
         throw new ComposerUserError(
           'Please do not include the password in the email intro. ' +
-            `Sharing password over email undermines password based encryption.\n\n` +
-            `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
+          `Sharing password over email undermines password based encryption.\n\n` +
+          `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`
         );
       }
       if (!this.view.pwdOrPubkeyContainerModule.isMessagePasswordStrong(pwd)) {
@@ -201,5 +198,30 @@ export class ComposeErrModule extends ViewModule<ComposeView> {
       this.view.S.cached('input_password').trigger('focus');
       throw new ComposerUserError("Some recipients don't have encryption set up. Please add a password.");
     }
+  };
+
+  private hasMessageContent = (plaintext: string, plainhtml: string, footer: string): boolean => {
+    const textWithoutFooter = plaintext.trim() === footer.trim() ? '' : plaintext.trim();
+    if (textWithoutFooter) {
+      return true; // Has text content
+    }
+    // Check for file attachments
+    if (this.view.attachmentsModule.attachment.hasAttachment()) {
+      return true;
+    }
+    // Check for embedded images in rich text mode
+    if (this.view.inputModule.isRichText() && plainhtml.includes('<img')) {
+      return true;
+    }
+    return false; // No content at all
+  };
+
+  private getFormattedFooter = async (email: string): Promise<string> => {
+    const footer = await this.view.footerModule.getFooterFromStorage(email);
+    if (!footer) {
+      return '';
+    }
+    // Format footer the way it would be in outgoing plaintext
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.view.footerModule.createFooterHtml(footer), '\n')).trim();
   };
 }
