@@ -53,7 +53,7 @@ export class GmailPageRecipe extends PageRecipe {
       // deleting last reply - use waitAndClick for more reliable interaction with Gmail's dynamic UI
       await gmailPage.waitAndClick(`[${messageIdAttrName}="${lastMessageId}"] [aria-label="More message options"]`, { delay: 2 });
       await Util.sleep(3);
-      await gmailPage.press('ArrowDown', 3);
+      await gmailPage.press('ArrowDown', 4);
       await gmailPage.press('Enter');
       await Util.sleep(3);
       await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
