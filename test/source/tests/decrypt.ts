@@ -1183,8 +1183,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       })
     );
 
-    // https://github.com/FlowCrypt/flowcrypt-browser/issues/6145
-    test.skip(
+    test(
       'decrypt - print feature in pgp block',
       testWithBrowser(async (t, browser) => {
         const msgId = '18ecbf57e1dfb9b5';
@@ -1192,6 +1191,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           await page.waitForIframes();
           const pgpBlock = await page.getFrame(['pgp_block.htm']);
           await pgpBlock.waitForSelTestState('ready');
+          // Wait for print button to be enabled (data-test-print-ready="true")
+          await pgpBlock.waitAll('[data-test="action-print"][data-test-print-ready="true"]', { timeout: 30 });
           const expectedPrintDateString = new Date(1712818847000).toLocaleString();
           const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
           await printPage.waitForContent('@print-date', expectedPrintDateString);

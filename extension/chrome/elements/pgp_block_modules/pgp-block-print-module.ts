@@ -11,15 +11,9 @@ export class PgpBlockViewPrintModule {
   public printMailInfoHtml: string | undefined;
 
   public printPGPBlock = async () => {
-    // If printMailInfoHtml is not yet prepared, wait briefly to handle race conditions
+    // printMailInfoHtml should always be set when this function is called
+    // because the print button is disabled until the data arrives
     if (!this.printMailInfoHtml) {
-      for (let i = 0; i < 6 && !this.printMailInfoHtml; i++) {
-        await Time.sleep(200);
-      }
-    }
-    // If still not prepared, skip printing entirely
-    if (!this.printMailInfoHtml) {
-      // Last resort: inform the user
       void Ui.modal.error('Unable to get metadata for this email. Please refresh the page and try again.');
       Catch.reportErr('printMailInfoHtml not prepared!');
       return;
