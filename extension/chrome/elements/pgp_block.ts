@@ -58,6 +58,8 @@ export class PgpBlockView extends View {
   };
 
   public setHandlers = () => {
+    // Disable print button initially until printMailInfoHtml is ready
+    $('.pgp_print_button').prop('disabled', true).attr('data-test-print-ready', 'false');
     $('.pgp_print_button').on(
       'click',
       this.setHandler(() => this.printModule.printPGPBlock())
@@ -148,6 +150,8 @@ export class PgpBlockView extends View {
     if (data?.printMailInfo) {
       Xss.sanitizeRender('.print_user_email', data.printMailInfo.userNameAndEmail);
       this.printModule.printMailInfoHtml = data.printMailInfo.html;
+      // Enable print button now that data is ready
+      $('.pgp_print_button').prop('disabled', false).attr('data-test-print-ready', 'true');
     }
     if (data?.renderAsRegularContent) {
       this.renderModule.renderAsRegularContent(data.renderAsRegularContent);
