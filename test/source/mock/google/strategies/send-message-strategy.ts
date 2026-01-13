@@ -318,9 +318,30 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   };
 }
 
+
 class NoopTestStrategy implements ITestMsgStrategy {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   public test = async () => {};
+}
+
+class SignatureRemovalTestStrategy implements ITestMsgStrategy {
+  private readonly signature = 'Test alias signature';
+
+  public test = async (parseResult: ParseMsgResult) => {
+    const mimeMsg = parseResult.mimeMsg;
+    const kisWithPp = await Config.getKeyInfo(['flowcrypt.compatibility.1pp1', 'flowcrypt.compatibility.2pp1']);
+    const encryptedData = mimeMsg.text!;
+    const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+    expect(decrypted.success).to.be.true;
+    // We expect the body to contain the message text but NOT the signature
+    const body = decrypted.content?.toUtfStr() || '';
+    if (!body.includes('Message without signature')) {
+      throw new HttpClientErr(`Error: Msg Text doesn't contain expected body. Current: '${body}'`);
+    }
+    if (body.includes(this.signature)) {
+      throw new HttpClientErr(`Error: Msg Text contains signature that should have been removed. Current: '${body}'`);
+    }
+  };
 }
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
@@ -484,6 +505,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new SaveMessageInStorageStrategy();
     } else if (subject.includes('Test Sending Message With Attachment Which Contains Emoji in Filename')) {
       this.strategy = new SaveMessageInStorageStrategy();
+    } else if (subject.includes('Message without signature')) {
+      this.strategy = new SignatureRemovalTestStrategy();
     } else if (subject.includes('Re: FROM: flowcrypt.compatibility@gmail.com, TO: flowcrypt.compatibility@gmail.com + vladimir@flowcrypt.com')) {
       this.strategy = new NoopTestStrategy();
     } else {
