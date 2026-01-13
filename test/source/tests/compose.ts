@@ -104,7 +104,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    test.only(
+    test(
       'compose - signature must not reappear after manual removal (issue #6135)',
       testWithBrowser(async (t, browser) => {
         const primarySignature = 'Test primary signature';
