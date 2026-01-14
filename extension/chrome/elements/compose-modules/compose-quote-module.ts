@@ -23,12 +23,24 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
   public tripleDotSanitizedHtmlContent: { quote: string | undefined; footer: string | undefined } | undefined;
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
 
-  public getTripleDotSanitizedFormattedHtmlContent = (): string => {
-    // email content order: [myMsg, myFooter, theirQuote]
-    if (this.tripleDotSanitizedHtmlContent) {
-      return '<br />' + (this.tripleDotSanitizedHtmlContent.footer || '') + (this.tripleDotSanitizedHtmlContent.quote || '');
+  /**
+   * Returns the formatted HTML content for the triple-dot expandable section.
+   * Email content order: [myMsg, myFooter, theirQuote]
+   *
+   * @param skipFooter - If true, skip including the footer when there's no quote.
+   *                     Used to prevent duplicate signatures when footer was already
+   *                     rendered in input (issue #6135).
+   */
+  public getTripleDotSanitizedFormattedHtmlContent = (skipFooter = false): string => {
+    if (!this.tripleDotSanitizedHtmlContent) {
+      return '';
     }
-    return '';
+    const { footer, quote } = this.tripleDotSanitizedHtmlContent;
+    // When skipFooter is true and there's no quote, return empty to avoid duplicate footer
+    if (skipFooter && !quote) {
+      return '';
+    }
+    return '<br />' + (footer || '') + (quote || '');
   };
 
   public addSignatureToInput = async () => {

@@ -105,6 +105,44 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      'compose - signature must not reappear after manual removal (issue #6135)',
+      testWithBrowser(async (t, browser) => {
+        const primarySignature = 'Test primary signature';
+        const aliasSignature = 'Test alias signature';
+        const acctAliases = [{
+          ...flowcryptCompatibilityAliasList[0],
+          signature: aliasSignature,
+        }];
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases, acctPrimarySignature: primarySignature },
+          attester: { includeHumanKey: true },
+        });
+
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+        // Select alias email to trigger signature change
+        await ComposePageRecipe.selectFromOption(composePage, 'flowcryptcompatibility@gmail.com');
+        let emailBody = await composePage.read('@input-body');
+        expect(emailBody).to.contain(aliasSignature);
+
+        // meaningful user change: delete the signature
+        // clearInput is not available, so we select all and delete
+        await composePage.waitAndClick('@input-body');
+        await composePage.page.keyboard.down('Control');
+        await composePage.page.keyboard.press('a');
+        await composePage.page.keyboard.up('Control');
+        await composePage.page.keyboard.press('Backspace');
+        await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Message without signature', 'Message without signature');
+
+        // Verify signature is gone before sending
+        emailBody = await composePage.read('@input-body');
+        expect(emailBody).to.not.contain(aliasSignature);
+
+        // Send
+        await ComposePageRecipe.sendAndClose(composePage);
+      })
+    );
+
+    test(
       'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
       testWithBrowser(async (t, browser) => {
         const senderEmail = 'flowcrypt.compatibility@gmail.com';

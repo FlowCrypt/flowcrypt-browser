@@ -67,7 +67,8 @@ export class ComposeInputModule extends ViewModule<ComposeView> {
   public extract = (type: 'text' | 'html', elSel: 'input_text' | 'input_intro', flag?: 'SKIP-ADDONS') => {
     let html = this.view.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && flag !== 'SKIP-ADDONS') {
-      html += this.view.quoteModule.getTripleDotSanitizedFormattedHtmlContent();
+      // skipFooter: true because footer is already rendered in input when user changes sender alias (issue #6135)
+      html += this.view.quoteModule.getTripleDotSanitizedFormattedHtmlContent(true);
     }
     if (type === 'html') {
       return Xss.htmlSanitizeKeepBasicTags(html, 'IMG-KEEP');
