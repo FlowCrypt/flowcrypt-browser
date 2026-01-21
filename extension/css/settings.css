@@ -332,12 +332,17 @@ a.gray_link {
   padding: 36px 0;
 }
 
+.profile-row {
+  position: relative;
+}
+
 #settings-row .box {
   background-color: #31a217;
 
   /* background-image: -webkit-linear-gradient(140deg, #31A217 -40%, green 0%, #31A217 100%);
 */
   border: 0;
+  position: relative;
   border-top-left-radius: 3px;
   border-top-right-radius: 3px;
   display: block;
