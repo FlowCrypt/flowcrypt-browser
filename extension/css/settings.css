@@ -47,6 +47,19 @@ html {
   display: none;
 }
 
+#header-row .action_show_encrypted_inbox,
+#header-row .action-toggle-accounts-menu,
+#footer-row a {
+  text-decoration: none;
+}
+
+#header-row .action_show_encrypted_inbox:hover,
+#header-row .action-toggle-accounts-menu:hover,
+#footer-row a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
 #header-row .logo-row a.cryptup-logo-row {
   text-decoration: none;
 }
