@@ -47,13 +47,13 @@ html {
   display: none;
 }
 
-#header-row .action_show_encrypted_inbox,
+#header-row .action-open-encrypted-contact-page,
 #header-row .action-toggle-accounts-menu,
 #footer-row a {
   text-decoration: none;
 }
 
-#header-row .action_show_encrypted_inbox:hover,
+#header-row .action-open-encrypted-contact-page:hover,
 #header-row .action-toggle-accounts-menu:hover,
 #footer-row a:hover {
   color: #0056b3;
