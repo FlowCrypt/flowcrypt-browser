@@ -427,7 +427,7 @@ export class Settings {
       return [
         `<a href="#" ${isHeaderRow && 'id = "header-row"'} class="row alt-accounts action_select_account">`,
         `  <div class="col-2"><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
-        '  <div class="col-10 text-left">',
+        '  <div class="col-10 text-start">',
         `    <div class="contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
         '  </div>',
         '</a>',
