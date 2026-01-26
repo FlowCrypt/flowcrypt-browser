@@ -298,12 +298,18 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: Element | null) => {
-    if (gmailContextMenuBtn && $(gmailContextMenuBtn).is(':visible') && !document.querySelector(`.action_${replyOption.replace('a_', '')}_message_button`)) {
-      const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
-      button.on(
-        'click',
-        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
-      );
+    if (gmailContextMenuBtn && $(gmailContextMenuBtn).is(':visible')) {
+      const btnClass = `action_${replyOption.replace('a_', '')}_message_button`;
+      // Check if button already exists in this specific menu (sibling of the target button)
+      const alreadyExists = $(gmailContextMenuBtn).parent().find(`.${btnClass}`).length > 0;
+
+      if (!alreadyExists) {
+        const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
+        button.on(
+          'click',
+          Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
+        );
+      }
     }
   };
 
@@ -970,7 +976,25 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
 
     // Find the message container from the menu's position or context
-    const messageContainer = $('div.h7:visible').last(); // Get the last visible message container
+    let messageContainer: JQuery<HTMLElement>;
+
+    // Try to find the trigger button that opened this menu (it should have aria-expanded="true")
+    // This provides a more reliable way to identify the correct message than selecting the last visible one
+    const menuTrigger = document.querySelector('div[aria-expanded="true"][role="button"], div[aria-expanded="true"][role="menuitem"], .T-I[aria-expanded="true"]');
+
+    if (menuTrigger) {
+      if (this.debug) {
+        console.debug('addSecureActionsToMessageMenu found menu trigger:', menuTrigger);
+      }
+      messageContainer = $(menuTrigger).closest(this.sel.msgOuter);
+      if (!messageContainer.length) {
+        // Fallback
+        messageContainer = $('div.h7:visible').last();
+      }
+    } else {
+      messageContainer = $('div.h7:visible').last(); // Get the last visible message container
+    }
+
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
 
