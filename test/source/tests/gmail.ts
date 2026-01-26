@@ -719,6 +719,44 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     //   expect(content).to.contain('Fingerprint: 7A2E 4FFD 34BC 4AED 0F54 4199 D652 7AD6 65C3 B0DD');
     // }));
 
+    test(
+      'mail.google.com - verify secure reply buttons on expanded older message',
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        // Use a known thread with multiple messages.
+        await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf');
+
+        // 1. Verify buttons on the newest message (usually expanded by default)
+        await Util.sleep(3);
+        let messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
+        const newestMessage = messages[messages.length - 1]; 
+        const newestMenuBtn = await newestMessage.$('[aria-label="More message options"]');
+        await newestMenuBtn?.click();
+        await Util.sleep(1);
+        
+        await gmailPage.waitAll('.action_reply_message_button');
+        const collapsedMessage = await gmailPage.target.$('[role="listitem"] .adf.ads');
+        if (collapsedMessage) {
+            await collapsedMessage.click();
+            await Util.sleep(2);
+        }
+
+        // Now find the 3-dot menu on this expanded older message.
+        // After expansion, it should have .adn.ads class active/visible.
+        
+        messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
+        const olderExpandedMessage = messages[0];
+        const olderMenuBtn = await olderExpandedMessage.$('[aria-label="More message options"]');
+        expect(olderMenuBtn).to.be.ok;
+        await olderMenuBtn?.click();
+        await Util.sleep(1);
+
+        // Verify secure buttons exist in the open menu for the older message
+        await gmailPage.waitAll('.action_reply_message_button');
+      })
+    );
+
     const testMinimumElementHeight = async (page: ControllablePage, selector: string, min: number) => {
       // testing https://github.com/FlowCrypt/flowcrypt-browser/issues/3519
       const elStyle = await page.target.$eval(selector, el => el.getAttribute('style')); // 'height: 289.162px;'
