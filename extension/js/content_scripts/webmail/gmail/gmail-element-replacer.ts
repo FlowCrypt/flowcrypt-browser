@@ -976,7 +976,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
 
     // Find the message container from the menu's position or context
-    let messageContainer: JQuery<HTMLElement>;
+    let messageContainer;
 
     // Try to find the trigger button that opened this menu (it should have aria-expanded="true")
     // This provides a more reliable way to identify the correct message than selecting the last visible one
