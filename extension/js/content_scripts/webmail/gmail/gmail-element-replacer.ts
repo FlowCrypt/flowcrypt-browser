@@ -57,6 +57,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     msgActionsBtn: '.Wsq5Cf',
+    msgActionsBtnExpanded: '.Wsq5Cf[aria-expanded="true"]',
     msgActionsMenu: '.tB5Jxf-M-S5Cmsd, ul.aqdrmf-Kf[role="menu"]',
     attachmentsContainerOuter: 'div.hq.gt',
     attachmentsContainerInner: 'div.aQH',
@@ -408,7 +409,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       this.insertEncryptedReplyBox(messageContainer, replyOption);
     }
     if (secureReplyInvokedFromMenu) {
-      $(this.sel.msgActionsBtn).trigger('click');
+      $(this.sel.msgActionsBtnExpanded).trigger('click');
     }
   };
 
@@ -979,20 +980,20 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     let messageContainer;
 
     // Try to find the trigger button that opened this menu (it should have aria-expanded="true")
-    // This provides a more reliable way to identify the correct message than selecting the last visible one
-    const menuTrigger = document.querySelector('div[aria-expanded="true"][role="button"], div[aria-expanded="true"][role="menuitem"], .T-I[aria-expanded="true"]');
+    const messageContainerSelector = 'div.h7:visible';
+    const menuTrigger = document.querySelector(this.sel.msgActionsBtnExpanded);
 
     if (menuTrigger) {
       if (this.debug) {
         console.debug('addSecureActionsToMessageMenu found menu trigger:', menuTrigger);
       }
-      messageContainer = $(menuTrigger).closest(this.sel.msgOuter);
+      messageContainer = $(menuTrigger).closest(this.sel.msgOuter).closest(messageContainerSelector);
       if (!messageContainer.length) {
         // Fallback
-        messageContainer = $('div.h7:visible').last();
+        messageContainer = $(messageContainerSelector).last();
       }
     } else {
-      messageContainer = $('div.h7:visible').last(); // Get the last visible message container
+      messageContainer = $(messageContainerSelector).last(); // Get the last visible message container
     }
 
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
