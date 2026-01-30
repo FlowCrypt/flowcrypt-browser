@@ -57,6 +57,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     msgInnerText: 'table.cf.An',
     msgInnerContainingPgp: "div.a3s:not(.undefined):contains('" + PgpArmor.headers('null').begin + "')",
     msgActionsBtn: '.Wsq5Cf',
+    msgActionsBtnExpanded: '.Wsq5Cf[aria-expanded="true"]',
     msgActionsMenu: '.tB5Jxf-M-S5Cmsd, ul.aqdrmf-Kf[role="menu"]',
     attachmentsContainerOuter: 'div.hq.gt',
     attachmentsContainerInner: 'div.aQH',
@@ -298,12 +299,18 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   };
 
   private addMenuButton = (replyOption: ReplyOption, gmailContextMenuBtn: Element | null) => {
-    if (gmailContextMenuBtn && $(gmailContextMenuBtn).is(':visible') && !document.querySelector(`.action_${replyOption.replace('a_', '')}_message_button`)) {
-      const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
-      button.on(
-        'click',
-        Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
-      );
+    if (gmailContextMenuBtn && $(gmailContextMenuBtn).is(':visible')) {
+      const btnClass = `action_${replyOption.replace('a_', '')}_message_button`;
+      // Check if button already exists in this specific menu (sibling of the target button)
+      const alreadyExists = $(gmailContextMenuBtn).parent().find(`.${btnClass}`).length > 0;
+
+      if (!alreadyExists) {
+        const button = $(this.factory.btnSecureMenuBtn(replyOption)).insertAfter(gmailContextMenuBtn); // xss-safe-factory
+        button.on(
+          'click',
+          Ui.event.handle((el, ev: JQuery.Event) => this.actionActivateSecureReplyHandler(el, ev))
+        );
+      }
     }
   };
 
@@ -402,7 +409,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       this.insertEncryptedReplyBox(messageContainer, replyOption);
     }
     if (secureReplyInvokedFromMenu) {
-      $(this.sel.msgActionsBtn).trigger('click');
+      $(this.sel.msgActionsBtnExpanded).trigger('click');
     }
   };
 
@@ -970,7 +977,25 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     }
 
     // Find the message container from the menu's position or context
-    const messageContainer = $('div.h7:visible').last(); // Get the last visible message container
+    let messageContainer;
+
+    // Try to find the trigger button that opened this menu (it should have aria-expanded="true")
+    const messageContainerSelector = 'div.h7:visible';
+    const menuTrigger = document.querySelector(this.sel.msgActionsBtnExpanded);
+
+    if (menuTrigger) {
+      if (this.debug) {
+        console.debug('addSecureActionsToMessageMenu found menu trigger:', menuTrigger);
+      }
+      messageContainer = $(menuTrigger).closest(this.sel.msgOuter).closest(messageContainerSelector);
+      if (!messageContainer.length) {
+        // Fallback
+        messageContainer = $(messageContainerSelector).last();
+      }
+    } else {
+      messageContainer = $(messageContainerSelector).last(); // Get the last visible message container
+    }
+
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
 
