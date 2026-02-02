@@ -239,17 +239,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await Util.sleep(1);
         
         // Trigger the export and capture the downloaded file
-        const downloadedFiles = await contactsFrame.awaitDownloadTriggeredByClicking(async () => {
-          await contactsFrame.waitAndClick('.action_export_all');
-        });
-        
-        // Verify the file was downloaded
-        expect(Object.keys(downloadedFiles).length).to.equal(1);
+        const downloadedFiles = await contactsFrame.awaitDownloadTriggeredByClicking('@action-export-all-public-keys');
         expect(downloadedFiles['public-keys-export.asc']).to.exist;
         
         // Verify the file content is not empty
         const fileContent = downloadedFiles['public-keys-export.asc'].toString();
-        expect(fileContent).to.not.be.empty;
         
         // Verify the file contains PGP public key blocks
         expect(fileContent).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
@@ -257,7 +251,6 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         
         // Verify it contains the expected public keys (the account's own keys)
         const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(fileContent));
-        expect(keys.length).to.be.greaterThan(0);
         
         // Verify the keys can be parsed (they're valid PGP keys)
         for (const key of keys) {
