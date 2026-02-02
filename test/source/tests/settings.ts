@@ -244,11 +244,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         
         // Verify the file was downloaded
-        expect(Object.keys(downloadedFiles)).to.have.lengthOf(1);
-        expect(Object.keys(downloadedFiles)[0]).to.equal('public-keys-export.asc');
+        const entries = Object.entries(downloadedFiles);
+        expect(entries.length).to.equal(1);
+        const [filename, data] = entries[0];
+        expect(filename).to.equal('public-keys-export.asc');
         
         // Verify the file content is not empty
-        const fileContent = downloadedFiles['public-keys-export.asc'].toString();
+        const fileContent = data.toString();
         expect(fileContent).to.not.be.empty;
         
         // Verify the file contains PGP public key blocks
