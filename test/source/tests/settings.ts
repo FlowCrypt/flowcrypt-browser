@@ -226,6 +226,49 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - export all public keys from contacts',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await Util.sleep(1);
+        
+        // Trigger the export and capture the downloaded file
+        const downloadedFiles = await contactsFrame.awaitDownloadTriggeredByClicking(async () => {
+          await contactsFrame.waitAndClick('.action_export_all');
+        });
+        
+        // Verify the file was downloaded
+        expect(Object.keys(downloadedFiles)).to.have.lengthOf(1);
+        expect(Object.keys(downloadedFiles)[0]).to.equal('public-keys-export.asc');
+        
+        // Verify the file content is not empty
+        const fileContent = downloadedFiles['public-keys-export.asc'].toString();
+        expect(fileContent).to.not.be.empty;
+        
+        // Verify the file contains PGP public key blocks
+        expect(fileContent).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+        expect(fileContent).to.contain('-----END PGP PUBLIC KEY BLOCK-----');
+        
+        // Verify it contains the expected public keys (the account's own keys)
+        const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(fileContent));
+        expect(keys.length).to.be.greaterThan(0);
+        
+        // Verify the keys can be parsed (they're valid PGP keys)
+        for (const key of keys) {
+          expect(key.id).to.not.be.empty;
+        }
+        
+        await SettingsPageRecipe.closeDialog(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      })
+    );
+    test(
       'settings - update contact public key',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
