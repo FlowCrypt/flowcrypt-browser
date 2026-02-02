@@ -72,7 +72,7 @@ View.run(
         substring: String($('.input-search-contacts').val()),
       });
       let lineActionsHtml =
-        '&nbsp;&nbsp;<a href="#" class="action_export_all">Export all</a>&nbsp;&nbsp;' +
+        '&nbsp;&nbsp;<a href="#" class="action_export_all" data-test="action-export-all-public-keys">Export all</a>&nbsp;&nbsp;' +
         '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import" data-test="action-show-import-public-keys-form">Import public keys</a>&nbsp;&nbsp;';
       if (this.clientConfiguration.getCustomSksPubkeyServer()) {
         lineActionsHtml +=

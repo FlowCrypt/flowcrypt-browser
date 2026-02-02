@@ -226,6 +226,42 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
       })
     );
     test(
+      'settings - export all public keys from contacts',
+      testWithBrowser(async (t, browser) => {
+        const acct = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+          google: { acctAliases: flowcryptCompatibilityAliasList },
+        });
+        const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+        const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
+        await contactsFrame.waitAll('@page-contacts');
+        await Util.sleep(1);
+        
+        // Trigger the export and capture the downloaded file
+        const downloadedFiles = await contactsFrame.awaitDownloadTriggeredByClicking('@action-export-all-public-keys');
+        expect(downloadedFiles['public-keys-export.asc']).to.exist;
+        
+        // Verify the file content is not empty
+        const fileContent = downloadedFiles['public-keys-export.asc'].toString();
+        
+        // Verify the file contains PGP public key blocks
+        expect(fileContent).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
+        expect(fileContent).to.contain('-----END PGP PUBLIC KEY BLOCK-----');
+        
+        // Verify it contains the expected public keys (the account's own keys)
+        const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(fileContent));
+        
+        // Verify the keys can be parsed (they're valid PGP keys)
+        for (const key of keys) {
+          expect(key.id).to.not.be.empty;
+        }
+        
+        await SettingsPageRecipe.closeDialog(settingsPage);
+        await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
+      })
+    );
+    test(
       'settings - update contact public key',
       testWithBrowser(async (t, browser) => {
         const acct = 'ci.tests.gmail@flowcrypt.test';
