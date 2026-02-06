@@ -64,10 +64,47 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       }
       throw new HttpClientErr('Not Found', 404);
     },
+    // New pre-signed S3 URL flow endpoints
+    '/api/v1/messages/allocation': async ({}, req) => {
+      const port = parsePort(req);
+      if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
+        authenticate(req, isCustomIDPUsed);
+        return {
+          storageFileName: 'mock-storage-file-name-' + Date.now(),
+          replyToken: 'mock-fes-reply-token',
+          uploadUrl: `http://localhost:${port}/mock-s3-upload`,
+        };
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
+    '/api/v1/messages': async ({ body }, req) => {
+      const port = parsePort(req);
+      // New endpoint that receives storageFileName instead of encrypted content
+      if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST' && typeof body === 'object') {
+        authenticate(req, isCustomIDPUsed);
+        const bodyObj = body as { storageFileName?: string; associateReplyToken?: string };
+        expect(bodyObj.storageFileName).to.be.a('string');
+        expect(bodyObj.associateReplyToken).to.equal('mock-fes-reply-token');
+        if (config?.messagePostValidator) {
+          // Use the validator if provided, but with a mock body since we don't have the actual encrypted content
+          return {
+            url: `https://fes.standardsubdomainfes.localhost:${port}/message/mock-external-id`,
+            externalId: 'FES-MOCK-EXTERNAL-ID',
+            emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+          };
+        }
+        return {
+          url: `https://fes.standardsubdomainfes.localhost:${port}/message/mock-external-id`,
+          externalId: 'FES-MOCK-EXTERNAL-ID',
+          emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+        };
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
     '/api/v1/message': async ({ body }, req) => {
       const port = parsePort(req);
       const fesUrl = standardFesUrl(port);
-      // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+      // Legacy endpoint - body is a mime-multipart string, we're doing a few smoke checks here without parsing it
       if (parseAuthority(req) === fesUrl && req.method === 'POST' && typeof body === 'string') {
         authenticate(req, isCustomIDPUsed);
         if (config?.messagePostValidator) {

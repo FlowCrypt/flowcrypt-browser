@@ -34,6 +34,7 @@ type FesClientConfigurationFlag =
   | 'HIDE_ARMOR_META'
   | 'FORBID_STORING_PASS_PHRASE'
   | 'DISABLE_FES_ACCESS_TOKEN'
+  | 'DISABLE_FES_PRESIGNED_URLS'
   | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -139,8 +140,36 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       }
       throw new HttpClientErr('Not Found', 404);
     },
+    // New pre-signed S3 URL flow endpoints
+    '/shared-tenant-fes/api/v1/messages/allocation': async ({}, req) => {
+      if (req.method === 'POST') {
+        authenticate(req, 'oidc');
+        const port = parsePort(req);
+        return {
+          storageFileName: 'mock-storage-file-name-' + Date.now(),
+          replyToken: 'mock-fes-reply-token',
+          uploadUrl: `http://localhost:${port}/mock-s3-upload`,
+        };
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
+    '/shared-tenant-fes/api/v1/messages': async ({ body }, req) => {
+      // New endpoint that receives storageFileName instead of encrypted content
+      if (req.method === 'POST' && typeof body === 'object') {
+        authenticate(req, 'oidc');
+        const bodyObj = body as { storageFileName?: string; associateReplyToken?: string };
+        expect(bodyObj.storageFileName).to.be.a('string');
+        expect(bodyObj.associateReplyToken).to.equal('mock-fes-reply-token');
+        return {
+          url: `https://flowcrypt.com/shared-tenant-fes/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,
+          externalId: 'FES-MOCK-EXTERNAL-ID',
+          emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+        };
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
     '/shared-tenant-fes/api/v1/message': async ({ body }, req) => {
-      // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
+      // Legacy endpoint - body is a mime-multipart string, we're doing a few smoke checks here without parsing it
       if (req.method === 'POST' && typeof body === 'string') {
         expect(body).to.contain('-----BEGIN PGP MESSAGE-----');
         expect(body).to.contain('"associateReplyToken":"mock-fes-reply-token"');
