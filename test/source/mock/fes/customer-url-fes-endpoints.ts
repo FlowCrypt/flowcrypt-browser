@@ -6,7 +6,13 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { messageIdRegex, parseAuthority, parsePort } from '../lib/mock-util';
 import { MockJwt } from '../lib/oauth';
-import { FesConfig } from './shared-tenant-fes-endpoints';
+import {
+  FesConfig,
+  MessageCreateBody,
+  validateMessageCreateBody,
+  createMockBodyForValidator,
+  generateEmailToExternalIdAndUrl,
+} from './shared-tenant-fes-endpoints';
 
 const standardFesUrl = (port: string) => {
   return `fes.standardsubdomainfes.localhost:${port}`;
@@ -72,31 +78,28 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
         return {
           storageFileName: 'mock-storage-file-name-' + Date.now(),
           replyToken: 'mock-fes-reply-token',
-          uploadUrl: `http://localhost:${port}/mock-s3-upload`,
+          uploadUrl: `https://localhost:${port}/mock-s3-upload`,
         };
       }
       throw new HttpClientErr('Not Found', 404);
     },
     '/api/v1/messages': async ({ body }, req) => {
       const port = parsePort(req);
+      const fesUrl = standardFesUrl(port);
+      const baseUrl = `https://${fesUrl}`;
       // New endpoint that receives storageFileName instead of encrypted content
-      if (parseAuthority(req) === standardFesUrl(port) && req.method === 'POST' && typeof body === 'object') {
+      if (parseAuthority(req) === fesUrl && req.method === 'POST' && typeof body === 'object') {
         authenticate(req, isCustomIDPUsed);
-        const bodyObj = body as { storageFileName?: string; associateReplyToken?: string };
-        expect(bodyObj.storageFileName).to.be.a('string');
-        expect(bodyObj.associateReplyToken).to.equal('mock-fes-reply-token');
+        const bodyObj = body as MessageCreateBody;
+        validateMessageCreateBody(bodyObj);
+        // Use the validator if provided
         if (config?.messagePostValidator) {
-          // Use the validator if provided, but with a mock body since we don't have the actual encrypted content
-          return {
-            url: `https://fes.standardsubdomainfes.localhost:${port}/message/mock-external-id`,
-            externalId: 'FES-MOCK-EXTERNAL-ID',
-            emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
-          };
+          return await config.messagePostValidator(createMockBodyForValidator(bodyObj), fesUrl);
         }
         return {
-          url: `https://fes.standardsubdomainfes.localhost:${port}/message/mock-external-id`,
+          url: `${baseUrl}/message/mock-external-id`,
           externalId: 'FES-MOCK-EXTERNAL-ID',
-          emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+          emailToExternalIdAndUrl: generateEmailToExternalIdAndUrl(bodyObj, baseUrl),
         };
       }
       throw new HttpClientErr('Not Found', 404);

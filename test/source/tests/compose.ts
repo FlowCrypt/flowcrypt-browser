@@ -1146,6 +1146,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAny('@password-or-pubkey-container');
         await composePage.waitAndType('@input-password', 'gO0d-pwd');
         await composePage.waitAndClick('@action-send', { delay: 1 });
+        await Util.sleep(1000);
         await ComposePageRecipe.closed(composePage);
       })
     );

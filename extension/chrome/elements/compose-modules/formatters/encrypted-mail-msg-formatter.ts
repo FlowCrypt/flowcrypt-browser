@@ -227,9 +227,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     return await this.view.acctServer.messageUpload(
       pwdEncryptedWithAttachments,
       replyToken,
-      newMsg.from.email,
+      newMsg.from.email, // todo: Str.formatEmailWithOptionalName?
       newMsg.recipients,
-      p => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF')
+      p => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF') // still need to upload to Gmail later, this request represents first half of progress
     );
   };
 
@@ -315,24 +315,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     newMsgData: NewMsgData,
     replyToken: string
   ): Promise<{ bodyWithReplyToken: SendableMsgBody }> => {
-    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
-    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
-    const replyInfoRaw: ReplyInfoRaw = {
-      sender: newMsgData.from.email,
-      recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
-      subject: newMsgData.subject,
-      token: replyToken,
-    };
-    const replyInfoDiv = Ui.e('div', {
-      style: 'display: none;',
-      class: 'cryptup_reply',
-      'cryptup-data': Str.htmlAttrEncode(replyInfoRaw),
-    });
     return {
-      bodyWithReplyToken: {
-        'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv,
-        'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv,
-      },
+      bodyWithReplyToken: this.buildSendableBodyWithReplyToken(newMsgData, replyToken),
     };
   };
 
@@ -342,26 +326,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     newMsgData: NewMsgData
   ): Promise<{ bodyWithReplyToken: SendableMsgBody; replyToken: string }> => {
-    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
-    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
     try {
       const response = await this.view.acctServer.messageToken();
-      const replyInfoRaw: ReplyInfoRaw = {
-        sender: newMsgData.from.email,
-        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
-        subject: newMsgData.subject,
-        token: response.replyToken,
-      };
-      const replyInfoDiv = Ui.e('div', {
-        style: 'display: none;',
-        class: 'cryptup_reply',
-        'cryptup-data': Str.htmlAttrEncode(replyInfoRaw),
-      });
       return {
-        bodyWithReplyToken: {
-          'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv,
-          'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv,
-        },
+        bodyWithReplyToken: this.buildSendableBodyWithReplyToken(newMsgData, response.replyToken),
         replyToken: response.replyToken,
       };
     } catch (msgTokenErr) {
@@ -380,6 +348,29 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         'There was a token error sending this message. Please try again. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl)
       );
     }
+  };
+
+  /**
+   * Builds the sendable message body with embedded reply token information.
+   */
+  private buildSendableBodyWithReplyToken = (newMsgData: NewMsgData, replyToken: string): SendableMsgBody => {
+    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
+    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
+    const replyInfoRaw: ReplyInfoRaw = {
+      sender: newMsgData.from.email,
+      recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
+      subject: newMsgData.subject,
+      token: replyToken,
+    };
+    const replyInfoDiv = Ui.e('div', {
+      style: 'display: none;',
+      class: 'cryptup_reply',
+      'cryptup-data': Str.htmlAttrEncode(replyInfoRaw),
+    });
+    return {
+      'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv,
+      'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv,
+    };
   };
 
   private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (pubs: PubkeyResult[]): Promise<Date | undefined> => {

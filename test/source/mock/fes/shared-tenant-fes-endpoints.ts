@@ -70,6 +70,74 @@ export interface FesMessageReturnType {
   externalId: string;
   emailToExternalIdAndUrl: { [email: string]: { url: string; externalId: string } };
 }
+
+export interface MessageCreateBody {
+  storageFileName?: string;
+  associateReplyToken?: string;
+  from?: string;
+  to?: string[];
+  cc?: string[];
+  bcc?: string[];
+}
+
+/**
+ * Extracts email from a recipient string that may be in "Name <email>" format.
+ */
+export const extractEmailFromRecipient = (recipient: string): string => {
+  const emailMatch = /<([^>]+)>/.exec(recipient);
+  return emailMatch ? emailMatch[1] : recipient;
+};
+
+/**
+ * Generates emailToExternalIdAndUrl mapping for all recipients.
+ */
+export const generateEmailToExternalIdAndUrl = (
+  bodyObj: MessageCreateBody,
+  baseUrl: string
+): { [email: string]: { url: string; externalId: string } } => {
+  const emailToExternalIdAndUrl: { [email: string]: { url: string; externalId: string } } = {};
+  const allRecipients = [...(bodyObj.to || []), ...(bodyObj.cc || []), ...(bodyObj.bcc || [])];
+  for (const recipient of allRecipients) {
+    const email = extractEmailFromRecipient(recipient);
+    const externalId = `FES-MOCK-EXTERNAL-FOR-${email.toUpperCase()}-ID`;
+    emailToExternalIdAndUrl[email] = {
+      url: `${baseUrl}/message/${externalId}`,
+      externalId,
+    };
+  }
+  return emailToExternalIdAndUrl;
+};
+
+/**
+ * Validates the message create request body.
+ */
+export const validateMessageCreateBody = (bodyObj: MessageCreateBody): void => {
+  expect(bodyObj.storageFileName).to.be.a('string');
+  expect(bodyObj.associateReplyToken).to.equal('mock-fes-reply-token');
+  expect(bodyObj.from).to.be.a('string');
+  expect(bodyObj.to).to.be.an('array');
+  // cc and bcc are optional but should be arrays if present
+  if (bodyObj.cc !== undefined) {
+    expect(bodyObj.cc).to.be.an('array');
+  }
+  if (bodyObj.bcc !== undefined) {
+    expect(bodyObj.bcc).to.be.an('array');
+  }
+};
+
+/**
+ * Creates a mock body string for the messagePostValidator.
+ */
+export const createMockBodyForValidator = (bodyObj: MessageCreateBody): string => {
+  return JSON.stringify({
+    associateReplyToken: bodyObj.associateReplyToken,
+    from: bodyObj.from,
+    to: bodyObj.to,
+    cc: bodyObj.cc,
+    bcc: bodyObj.bcc,
+  });
+};
+
 export interface FesConfig {
   returnError?: HttpClientErr;
   apiEndpointReturnError?: HttpClientErr;
@@ -148,7 +216,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
         return {
           storageFileName: 'mock-storage-file-name-' + Date.now(),
           replyToken: 'mock-fes-reply-token',
-          uploadUrl: `http://localhost:${port}/mock-s3-upload`,
+          uploadUrl: `https://localhost:${port}/mock-s3-upload`,
         };
       }
       throw new HttpClientErr('Not Found', 404);
@@ -157,13 +225,17 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       // New endpoint that receives storageFileName instead of encrypted content
       if (req.method === 'POST' && typeof body === 'object') {
         authenticate(req, 'oidc');
-        const bodyObj = body as { storageFileName?: string; associateReplyToken?: string };
-        expect(bodyObj.storageFileName).to.be.a('string');
-        expect(bodyObj.associateReplyToken).to.equal('mock-fes-reply-token');
+        const bodyObj = body as MessageCreateBody;
+        const baseUrl = 'https://flowcrypt.com/shared-tenant-fes';
+        validateMessageCreateBody(bodyObj);
+        // Use the validator if provided
+        if (config?.messagePostValidator) {
+          return await config.messagePostValidator(createMockBodyForValidator(bodyObj), 'flowcrypt.com/shared-tenant-fes');
+        }
         return {
-          url: `https://flowcrypt.com/shared-tenant-fes/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,
+          url: `${baseUrl}/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,
           externalId: 'FES-MOCK-EXTERNAL-ID',
-          emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+          emailToExternalIdAndUrl: generateEmailToExternalIdAndUrl(bodyObj, baseUrl),
         };
       }
       throw new HttpClientErr('Not Found', 404);
@@ -228,6 +300,15 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID/gateway': async () => {
       // test: `user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error`
       throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
+    },
+    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-NO-SIG@FLOWCRYPT.COM-ID/gateway': async ({ body }, req) => {
+      if (req.method === 'POST') {
+        // test: `compose - check correct color for unusable keys`
+        authenticate(req, 'oidc');
+        expect(body).to.match(messageIdRegexForRequest(req));
+        return {};
+      }
+      throw new HttpClientErr('Not Found', 404);
     },
   };
 };

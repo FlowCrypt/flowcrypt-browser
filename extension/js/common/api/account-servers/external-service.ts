@@ -271,7 +271,7 @@ export class ExternalService extends Api {
       'json'
     );
   };
-  private prepareRecipientsForFes(recipients: ParsedRecipients) {
+  private prepareRecipientsForFes = (recipients: ParsedRecipients) => {
     const process = (list: ParsedRecipients['to']) => (list || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars);
     return {
       to: process(recipients.to),
