@@ -19,7 +19,7 @@ import { KeyUtil } from '../../../core/crypto/key.js';
 import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 
 const checkPwdEncryptedMessage = (message: string | undefined) => {
-  if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/message\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
+  if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/messages?\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
     throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${message}`);
   }
 };

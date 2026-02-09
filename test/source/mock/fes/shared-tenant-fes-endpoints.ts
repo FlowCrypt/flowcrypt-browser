@@ -301,15 +301,6 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       // test: `user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error`
       throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
     },
-    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-NO-SIG@FLOWCRYPT.COM-ID/gateway': async ({ body }, req) => {
-      if (req.method === 'POST') {
-        // test: `compose - check correct color for unusable keys`
-        authenticate(req, 'oidc');
-        expect(body).to.match(messageIdRegexForRequest(req));
-        return {};
-      }
-      throw new HttpClientErr('Not Found', 404);
-    },
   };
 };
 
