@@ -19,7 +19,7 @@ import { KeyUtil } from '../../../core/crypto/key.js';
 import { PgpArmor } from '../../../core/crypto/pgp/pgp-armor.js';
 
 const checkPwdEncryptedMessage = (message: string | undefined) => {
-  if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/messages?\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
+  if (!message?.match(/https:\/\/flowcrypt.com\/shared-tenant-fes\/message\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/)) {
     throw new HttpClientErr(`Error: cannot find pwd encrypted flowcrypt.com/shared-tenant-fes link in:\n\n${message}`);
   }
 };
@@ -132,11 +132,11 @@ class PwdEncryptedMessageWithFesIdTokenTestStrategy implements ITestMsgStrategy 
     const mimeMsg = parseResult.mimeMsg;
     const expectedSenderEmail = `user@standardsubdomainfes.localhost:${port}`;
     expect(mimeMsg.from!.text).to.equal(`"First Last" <${expectedSenderEmail}>`);
-    if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/messages/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
+    if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-TO@EXAMPLE.COM-ID`)) {
       expect((mimeMsg.to as AddressObject).text).to.equal('"Mr To" <to@example.com>');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
-    } else if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/messages/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`)) {
+    } else if (mimeMsg.text?.includes(`http://fes.standardsubdomainfes.localhost:${port}/message/FES-MOCK-MESSAGE-FOR-BCC@EXAMPLE.COM-ID`)) {
       expect((mimeMsg.to as AddressObject).text).to.equal('"Mr Bcc" <bcc@example.com>');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;

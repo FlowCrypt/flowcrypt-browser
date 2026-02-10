@@ -3,17 +3,33 @@
 import { expect } from 'chai';
 import { HandlersDefinition } from '../all-apis-mock';
 
+/**
+ * In-memory storage for S3 uploaded content, keyed by storageFileName.
+ */
+const s3Storage = new Map<string, string>();
+
+/**
+ * Retrieves stored S3 content for a given storageFileName.
+ */
+export const getStoredS3Content = (storageFileName: string): string => {
+  const content = s3Storage.get(storageFileName);
+  if (!content) {
+    throw new Error(`S3 content not found for storageFileName: ${storageFileName}`);
+  }
+  return content;
+};
+
 export const getMockS3Endpoints = (): HandlersDefinition => {
   return {
-    '/mock-s3-upload': async ({ body }, req) => {
-      // S3 PUT requests are simple binary uploads
+    '/mock-s3-upload/?': async ({ body }, req) => {
       if (req.method === 'PUT') {
-        // In a real S3 upload, the body is the file content.
-        // We can assert on the content if needed, but for now just acknowledging receipt is enough.
-        // The fact that we received the request means the URL handling logic works.
-        // Since we configured parseReqBody to return string for this endpoint, body should be string/buffer.
+        // Extract storage file name from URL path: /mock-s3-upload/<storageFileName>
+        const storageFileName = req.url.split('/mock-s3-upload/')[1]?.split('?')[0];
+        expect(storageFileName).to.be.a('string').and.not.be.empty;
         expect(body).to.exist;
-        return {}; // S3 returns 200 OK with empty body on successful PUT
+        // Store the uploaded content (PGP encrypted message as string)
+        s3Storage.set(storageFileName, body as string);
+        return ''; // S3 returns empty body on successful PUT
       }
       throw new Error(`Unexpected method ${req.method} for /mock-s3-upload`);
     },
