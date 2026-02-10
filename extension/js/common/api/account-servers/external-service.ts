@@ -26,6 +26,11 @@ export namespace FesRes {
     externalId: string; // LEGACY
     emailToExternalIdAndUrl?: { [email: string]: { url: string; externalId: string } };
   };
+  export type MessageAllocation = {
+    storageFileName: string;
+    replyToken: string;
+    uploadUrl: string;
+  };
   export type ServiceInfo = { vendor: string; service: string; orgId: string; version: string; apiVersion: string };
   export type ClientConfiguration = { clientConfiguration: ClientConfigurationJson };
 }
@@ -159,9 +164,7 @@ export class ExternalService extends Api {
         JSON.stringify({
           associateReplyToken,
           from,
-          to: (recipients.to || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
-          cc: (recipients.cc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
-          bcc: (recipients.bcc || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars),
+          ...this.prepareRecipientsForFes(recipients),
         })
       ),
     });
@@ -174,6 +177,63 @@ export class ExternalService extends Api {
       fmt: 'JSON',
       data: {
         emailGatewayMessageId,
+      },
+    });
+  };
+
+  /**
+   * Allocates storage for a password-protected message using pre-signed S3 URL.
+   * Returns storage file name, reply token, and pre-signed upload URL.
+   */
+  public webPortalMessageAllocation = async (): Promise<FesRes.MessageAllocation> => {
+    return await this.request<FesRes.MessageAllocation>(`/api/${this.apiVersion}/messages/allocation`, { fmt: 'JSON', data: {} });
+  };
+
+  /**
+   * Uploads encrypted message content directly to S3 using a pre-signed URL.
+   */
+  public uploadToS3 = async (uploadUrl: string, data: Uint8Array, progressCb: ProgressCb): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', uploadUrl, true);
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          progressCb(percent, e.loaded, e.total);
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`S3 upload failed with status ${xhr.status}: ${xhr.statusText}`));
+        }
+      };
+      xhr.onerror = () => {
+        reject(new Error('S3 upload failed due to network error'));
+      };
+      xhr.send(new Blob([data.buffer as ArrayBuffer]));
+    });
+  };
+
+  /**
+   * Creates a password-protected message record in FES after uploading content to S3.
+   * Uses storageFileName from allocation instead of uploading encrypted content directly.
+   */
+  public webPortalMessageCreate = async (
+    storageFileName: string,
+    associateReplyToken: string,
+    from: string,
+    recipients: ParsedRecipients
+  ): Promise<FesRes.MessageUpload> => {
+    return await this.request<FesRes.MessageUpload>(`/api/${this.apiVersion}/messages`, {
+      fmt: 'JSON',
+      data: {
+        storageFileName,
+        associateReplyToken,
+        from,
+        ...this.prepareRecipientsForFes(recipients),
       },
     });
   };
@@ -211,4 +271,12 @@ export class ExternalService extends Api {
       'json'
     );
   };
+  private prepareRecipientsForFes = (recipients: ParsedRecipients) => {
+    const process = (list: ParsedRecipients['to']) => (list || []).map(Str.formatEmailWithOptionalName).map(Xss.stripEmojis).map(Str.replaceAccentedChars);
+    return {
+      to: process(recipients.to),
+      cc: process(recipients.cc),
+      bcc: process(recipients.bcc),
+    };
+  }
 }

@@ -13,6 +13,7 @@ import { FesConfig, getMockSharedTenantFesEndpoints } from '../fes/shared-tenant
 import { WkdConfig, getMockWkdEndpoints } from '../wkd/wkd-endpoints';
 import { SksConfig, getMockSksEndpoints } from '../sks/sks-endpoints';
 import { getMockCustomerUrlFesEndpoints } from '../fes/customer-url-fes-endpoints';
+import { getMockS3Endpoints } from '../s3/s3-endpoints';
 
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
@@ -76,6 +77,7 @@ export class ConfigurationProvider implements ConfigurationProviderInterface<Han
       ...getMockSksEndpoints(this.config.sks),
       ...getMockKeyManagerEndpoints(this.oauth, this.config.ekm),
       ...getMockKeysOpenPGPOrgEndpoints(this.config.keysOpenPgp),
+      ...getMockS3Endpoints(),
     };
     return handlers;
   }
@@ -288,8 +290,9 @@ export class Api<REQ, RES> {
       if (
         req.url.startsWith('/upload/') || // gmail message send
         (req.url.startsWith('/attester/pub/') && req.method === 'POST') || // attester submit
-        req.url.startsWith('/api/v1/message') || // FES pwd msg
-        req.url.startsWith('/shared-tenant-fes/api/v1/message') // Shared TENANT FES pwd msg
+        (req.url.startsWith('/api/v1/message') && !req.url.startsWith('/api/v1/messages')) || // FES pwd msg (legacy only)
+        (req.url.startsWith('/shared-tenant-fes/api/v1/message') && !req.url.startsWith('/shared-tenant-fes/api/v1/messages')) || // Shared TENANT FES pwd msg (legacy only)
+        req.url.startsWith('/mock-s3-upload') // Mock S3 upload
       ) {
         parsedBody = body.toString();
       } else {

@@ -3,7 +3,7 @@
 'use strict';
 
 import { isCustomerUrlFesUsed } from '../helpers.js';
-import { ExternalService } from './account-servers/external-service.js';
+import { ExternalService, FesRes } from './account-servers/external-service.js';
 import { ParsedRecipients } from './email-provider/email-provider-api.js';
 import { Api, ProgressCb } from './shared/api.js';
 import { ClientConfigurationJson } from '../client-configuration.js';
@@ -61,7 +61,37 @@ export class AccountServer extends Api {
     await this.externalService.messageGatewayUpdate(externalId, emailGatewayMessageId);
   };
 
+  /**
+   * Gets a reply token for password-protected messages (legacy flow).
+   */
   public messageToken = async (): Promise<{ replyToken: string }> => {
     return await this.externalService.webPortalMessageNewReplyToken();
+  };
+
+  /**
+   * Allocates storage for a password-protected message using pre-signed S3 URL (new flow).
+   * Returns storage file name, reply token, and pre-signed upload URL.
+   */
+  public messageAllocation = async (): Promise<FesRes.MessageAllocation> => {
+    return await this.externalService.webPortalMessageAllocation();
+  };
+
+  /**
+   * Uploads encrypted content directly to S3 using a pre-signed URL (new flow).
+   */
+  public uploadToS3 = async (uploadUrl: string, data: Uint8Array, progressCb: ProgressCb): Promise<void> => {
+    await this.externalService.uploadToS3(uploadUrl, data, progressCb);
+  };
+
+  /**
+   * Creates a password-protected message record in FES after uploading content to S3 (new flow).
+   */
+  public messageCreate = async (
+    storageFileName: string,
+    associateReplyToken: string,
+    from: string,
+    recipients: ParsedRecipients
+  ): Promise<UploadedMessageData> => {
+    return await this.externalService.webPortalMessageCreate(storageFileName, associateReplyToken, from, recipients);
   };
 }
