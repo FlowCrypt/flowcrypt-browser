@@ -6,6 +6,7 @@ import { HandlersDefinition } from '../all-apis-mock';
 import { HttpClientErr, Status } from '../lib/api';
 import { MockJwt } from '../lib/oauth';
 import { messageIdRegex, parseAuthority, parsePort } from '../lib/mock-util';
+import { getStoredS3Content } from '../s3/s3-endpoints';
 
 export interface ReportedError {
   name: string;
@@ -34,6 +35,7 @@ type FesClientConfigurationFlag =
   | 'HIDE_ARMOR_META'
   | 'FORBID_STORING_PASS_PHRASE'
   | 'DISABLE_FES_ACCESS_TOKEN'
+  | 'DISABLE_FES_PRESIGNED_URLS'
   | 'SETUP_ENSURE_IMPORTED_PRV_MATCH_LDAP_PUB';
 
 /* eslint-disable @typescript-eslint/naming-convention */
@@ -69,6 +71,33 @@ export interface FesMessageReturnType {
   externalId: string;
   emailToExternalIdAndUrl: { [email: string]: { url: string; externalId: string } };
 }
+export interface MessageCreateBody {
+  storageFileName: string;
+  associateReplyToken: string;
+  from: string;
+  to: string[];
+  cc: string[];
+  bcc: string[];
+}
+
+/**
+ * Creates a combined mock body string from S3 content and message metadata,
+ * matching the format expected by messagePostValidator functions.
+ */
+export const createCombinedBodyForValidator = (s3Content: string, bodyObj: MessageCreateBody): string => {
+  return (
+    s3Content +
+    '\n' +
+    JSON.stringify({
+      associateReplyToken: bodyObj.associateReplyToken,
+      from: bodyObj.from,
+      to: bodyObj.to,
+      cc: bodyObj.cc,
+      bcc: bodyObj.bcc,
+    })
+  );
+};
+
 export interface FesConfig {
   returnError?: HttpClientErr;
   apiEndpointReturnError?: HttpClientErr;
@@ -139,6 +168,64 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       }
       throw new HttpClientErr('Not Found', 404);
     },
+    // New pre-signed S3 URL flow endpoints
+    '/shared-tenant-fes/api/v1/messages/allocation': async ({}, req) => {
+      if (req.method === 'POST') {
+        authenticate(req, 'oidc');
+        const port = parsePort(req);
+        const storageFileName = 'mock-storage-file-name-' + Date.now();
+        return {
+          storageFileName,
+          replyToken: 'mock-fes-reply-token',
+          uploadUrl: `https://localhost:${port}/mock-s3-upload/${storageFileName}`,
+        };
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
+    '/shared-tenant-fes/api/v1/messages': async ({ body }, req) => {
+      // New endpoint that receives storageFileName instead of encrypted content
+      if (req.method === 'POST' && typeof body === 'object') {
+        authenticate(req, 'oidc');
+        const bodyObj = body as MessageCreateBody;
+        // Retrieve the PGP content uploaded to S3 and combine with metadata for validation
+        const s3Content = getStoredS3Content(bodyObj.storageFileName);
+        const combinedBody = createCombinedBodyForValidator(s3Content, bodyObj);
+        expect(combinedBody).to.contain('-----BEGIN PGP MESSAGE-----');
+        expect(combinedBody).to.contain('"associateReplyToken":"mock-fes-reply-token"');
+        if (combinedBody.includes('NameWithEmoji')) {
+          expect(combinedBody).to.not.include('⭐');
+        }
+        const response = {
+          // this url is required for pubkey encrypted message
+          url: `https://flowcrypt.com/shared-tenant-fes/message/6da5ea3c-d2d6-4714-b15e-f29c805e5c6a`,
+          externalId: 'FES-MOCK-EXTERNAL-ID',
+          emailToExternalIdAndUrl: {} as { [email: string]: { url: string; externalId: string } },
+        };
+        return response;
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
+    // Wildcard handler for /shared-tenant-fes/api/v1/messages/* sub-paths (gateway endpoints for new flow)
+    // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
+    // test: `compose - user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering`
+    // test: `compose - user3@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - pubkey recipient in bcc`
+    // test: `compose - user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
+    // test: `user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error`
+    '/shared-tenant-fes/api/v1/messages/?': async ({ body }, req) => {
+      const gatewayMatch = /\/shared-tenant-fes\/api\/v1\/messages\/([^/]+)\/gateway/.exec(req.url);
+      if (gatewayMatch && req.method === 'POST') {
+        const externalId = gatewayMatch[1];
+        if (externalId === 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID') {
+          throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
+        }
+        authenticate(req, 'oidc');
+        const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
+        expect(bodyStr).to.match(messageIdRegexForRequest(req));
+        return {};
+      }
+      throw new HttpClientErr('Not Found', 404);
+    },
+    // Legacy endpoint - body is a mime-multipart string
     '/shared-tenant-fes/api/v1/message': async ({ body }, req) => {
       // body is a mime-multipart string, we're doing a few smoke checks here without parsing it
       if (req.method === 'POST' && typeof body === 'string') {
@@ -157,48 +244,24 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
       }
       throw new HttpClientErr('Not Found', 404);
     },
-    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-ID/gateway': async ({ body }, req) => {
-      if (req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
+    // Legacy wildcard handler for /shared-tenant-fes/api/v1/message/* sub-paths (gateway endpoints)
+    // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
+    // test: `compose - user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering`
+    // test: `compose - user3@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - pubkey recipient in bcc`
+    // test: `compose - user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
+    // test: `user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error`
+    '/shared-tenant-fes/api/v1/message/?': async ({ body }, req) => {
+      const gatewayMatch = /\/shared-tenant-fes\/api\/v1\/message\/([^/]+)\/gateway/.exec(req.url);
+      if (gatewayMatch && req.method === 'POST') {
+        const externalId = gatewayMatch[1];
+        if (externalId === 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID') {
+          throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
+        }
         authenticate(req, 'oidc');
         expect(body).to.match(messageIdRegexForRequest(req));
         return {};
       }
       throw new HttpClientErr('Not Found', 404);
-    },
-    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-SENDER@DOMAIN.COM-ID/gateway': async ({ body }, req) => {
-      if (req.method === 'POST') {
-        // test: `compose - user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering`
-        authenticate(req, 'oidc');
-        expect(body).to.match(messageIdRegexForRequest(req));
-        return {};
-      }
-      throw new HttpClientErr('Not Found', 404);
-    },
-    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-TO@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-      if (req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
-        // test: `compose - user2@standardsubdomainfes.localhost - PWD encrypted message with FES - Reply rendering`
-        // test: `compose - user3@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - pubkey recipient in bcc`
-        // test: `compose - user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - some sends fail with BadRequest error`
-        authenticate(req, 'oidc');
-        expect(body).to.match(messageIdRegexForRequest(req));
-        return {};
-      }
-      throw new HttpClientErr('Not Found', 404);
-    },
-    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-BCC@EXAMPLE.COM-ID/gateway': async ({ body }, req) => {
-      if (req.method === 'POST') {
-        // test: `compose - user@standardsubdomainfes.localhost - PWD encrypted message with FES web portal`
-        authenticate(req, 'oidc');
-        expect(body).to.match(messageIdRegexForRequest(req));
-        return {};
-      }
-      throw new HttpClientErr('Not Found', 404);
-    },
-    '/shared-tenant-fes/api/v1/message/FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID/gateway': async () => {
-      // test: `user4@standardsubdomainfes.localhost - PWD encrypted message with FES web portal - a send fails with gateway update error`
-      throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
     },
   };
 };
