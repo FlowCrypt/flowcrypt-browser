@@ -162,6 +162,34 @@ export class MsgBlockParser {
     );
   }
 
+  /**
+   * Find an end marker that is NOT on a quoted line (lines starting with '>').
+   * This is needed for signed messages that may contain quoted inner signatures.
+   */
+  private static findNonQuotedEndMarker(text: string, startIndex: number, endMarker: string): number {
+    let searchFrom = startIndex;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const endIndex = text.indexOf(endMarker, searchFrom);
+      if (endIndex === -1) {
+        return -1; // No end marker found
+      }
+      // Find the start of the line containing this end marker
+      const lastLf = text.lastIndexOf('\n', endIndex - 1);
+      const lastCr = text.lastIndexOf('\r', endIndex - 1);
+      const lineStart = Math.max(lastLf, lastCr) + 1;
+      const linePrefix = text.substring(lineStart, endIndex);
+      // Check if line prefix contains quote markers (ignoring whitespace)
+      // A quoted line has '>' as the first non-whitespace character or after other '>'
+      const isQuoted = /^\s*>/.test(linePrefix);
+      if (!isQuoted) {
+        return endIndex; // Found a non-quoted end marker
+      }
+      // Continue searching after this occurrence
+      searchFrom = endIndex + endMarker.length;
+    }
+  }
+
   private static detectBlockNext(origText: string, startAt: number, completeOnly?: boolean) {
     const armorHdrTypes = Object.keys(PgpArmor.ARMOR_HEADER_DICT) as ReplaceableMsgBlockType[];
     const result: { found: MsgBlock[]; continueAt?: number } = { found: [] as MsgBlock[] };
@@ -190,7 +218,13 @@ export class MsgBlockParser {
             let endIndex = -1;
             let foundBlockEndHeaderLength = 0;
             if (typeof blockHeaderDef.end === 'string') {
-              endIndex = origText.indexOf(blockHeaderDef.end, begin + blockHeaderDef.begin.length);
+              // For signed messages, we need to find the end marker that is NOT quoted
+              // (i.e., not on a line starting with '>'). This handles nested quoted signatures.
+              if (armorHdrType === 'signedMsg') {
+                endIndex = MsgBlockParser.findNonQuotedEndMarker(origText, begin + blockHeaderDef.begin.length, blockHeaderDef.end);
+              } else {
+                endIndex = origText.indexOf(blockHeaderDef.end, begin + blockHeaderDef.begin.length);
+              }
               foundBlockEndHeaderLength = blockHeaderDef.end.length;
             } else {
               // regexp
