@@ -168,7 +168,6 @@ export class MsgBlockParser {
    */
   private static findNonQuotedEndMarker(text: string, startIndex: number, endMarker: string): number {
     let searchFrom = startIndex;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const endIndex = text.indexOf(endMarker, searchFrom);
       if (endIndex === -1) {
