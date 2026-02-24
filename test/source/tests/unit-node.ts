@@ -224,6 +224,41 @@ Something wrong with this key`),
       t.pass();
     });
 
+    test(`[unit][MsgBlockParser.detectBlocks] correctly handles nested quoted signed messages`, async t => {
+      // This tests the fix for the bug where a signed message containing a quoted signed message
+      // would cause "Misformed armored text" error. The parser should find the correct (outer,
+      // non-quoted) END PGP SIGNATURE marker instead of the quoted inner one.
+      const nestedSignedMessage = `-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+This is the outer message.
+
+On 2026-01-15, someone@example.com wrote:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA512
+>
+> This is the quoted inner message.
+>
+> -----BEGIN PGP SIGNATURE-----
+> quotedSignatureData
+> -----END PGP SIGNATURE-----
+
+-----BEGIN PGP SIGNATURE-----
+outerSignatureData
+-----END PGP SIGNATURE-----`;
+
+      const { blocks } = MsgBlockParser.detectBlocks(nestedSignedMessage);
+      expect(blocks).to.have.length(1);
+      expect(blocks[0].type).to.equal('signedMsg');
+      // The block should contain the entire message including the quoted inner signature
+      expect(blocks[0].content).to.include('outerSignatureData');
+      expect(blocks[0].content).to.include('quotedSignatureData');
+      expect(blocks[0].content).to.include('-----BEGIN PGP SIGNED MESSAGE-----');
+      // Verify it ends with the outer signature, not the quoted one
+      expect(blocks[0].content).to.match(/outerSignatureData\n-----END PGP SIGNATURE-----$/);
+      t.pass();
+    });
+
     test(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key`, async t => {
       const expiredKey = await KeyUtil.parse(testConstants.expiredPrv);
       expect(expiredKey.expiration).to.equal(1567605343000);

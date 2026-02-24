@@ -159,13 +159,71 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     if (!newMsg.pwd) {
       throw new Error('password unexpectedly missing');
     }
+
+    // Check if we should use the new pre-signed S3 URL flow
+    if (this.view.clientConfiguration.shouldUseFesPresignedUrls()) {
+      // New flow: allocation -> S3 upload -> create message
+      return await this.prepareAndUploadPwdEncryptedMsgWithPresignedUrl(newMsg, signingKey);
+    } else {
+      // Legacy flow: get token, then upload directly to FES
+      return await this.prepareAndUploadPwdEncryptedMsgLegacy(newMsg, signingKey);
+    }
+  };
+
+  private prepareAndUploadPwdEncryptedMsgWithPresignedUrl = async (
+    newMsg: NewMsgData,
+    signingKey?: ParsedKeyInfo
+  ): Promise<UploadedMessageData> => {
+    // Step 1: Allocate storage and get pre-signed URL + reply token
+    const allocation = await this.view.acctServer.messageAllocation();
+    const { storageFileName, replyToken, uploadUrl } = allocation;
+
+    // Step 2: Prepare body with reply token and encrypt the message
+    const { bodyWithReplyToken } = await this.getPwdMsgSendableBodyWithReplyToken(newMsg, replyToken);
+    const pgpMimeWithAttachments = await Mime.encode(
+      bodyWithReplyToken,
+      { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
+      await this.view.attachmentsModule.attachment.collectAttachments()
+    );
+    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(
+      Buf.fromUtfStr(pgpMimeWithAttachments),
+      newMsg.pwd,
+      [],
+      signingKey?.key
+    );
+
+    // Step 3: Upload encrypted content to S3
+    await this.view.acctServer.uploadToS3(
+      uploadUrl,
+      pwdEncryptedWithAttachments,
+      p => this.view.sendBtnModule.renderUploadProgress(p, 'FIRST-HALF')
+    );
+
+    // Step 4: Create message record in FES
+    return await this.view.acctServer.messageCreate(
+      storageFileName,
+      replyToken,
+      newMsg.from.email,
+      newMsg.recipients
+    );
+  };
+
+  private prepareAndUploadPwdEncryptedMsgLegacy = async (
+    newMsg: NewMsgData,
+    signingKey?: ParsedKeyInfo
+  ): Promise<UploadedMessageData> => {
     const { bodyWithReplyToken, replyToken } = await this.getPwdMsgSendableBodyWithOnlineReplyMsgToken(newMsg);
     const pgpMimeWithAttachments = await Mime.encode(
       bodyWithReplyToken,
       { Subject: newMsg.subject }, // eslint-disable-line @typescript-eslint/naming-convention
       await this.view.attachmentsModule.attachment.collectAttachments()
     );
-    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(Buf.fromUtfStr(pgpMimeWithAttachments), newMsg.pwd, [], signingKey?.key);
+    const { data: pwdEncryptedWithAttachments } = await this.encryptDataArmor(
+      Buf.fromUtfStr(pgpMimeWithAttachments),
+      newMsg.pwd,
+      [],
+      signingKey?.key
+    );
     return await this.view.acctServer.messageUpload(
       pwdEncryptedWithAttachments,
       replyToken,
@@ -250,29 +308,28 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
     });
   };
 
+  /**
+   * Prepares the message body with a reply token that was provided (used by pre-signed URL flow).
+   */
+  private getPwdMsgSendableBodyWithReplyToken = async (
+    newMsgData: NewMsgData,
+    replyToken: string
+  ): Promise<{ bodyWithReplyToken: SendableMsgBody }> => {
+    return {
+      bodyWithReplyToken: this.buildSendableBodyWithReplyToken(newMsgData, replyToken),
+    };
+  };
+
+  /**
+   * Gets a reply token from the server and prepares message body (used by legacy flow).
+   */
   private getPwdMsgSendableBodyWithOnlineReplyMsgToken = async (
     newMsgData: NewMsgData
   ): Promise<{ bodyWithReplyToken: SendableMsgBody; replyToken: string }> => {
-    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
-    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
     try {
       const response = await this.view.acctServer.messageToken();
-      const replyInfoRaw: ReplyInfoRaw = {
-        sender: newMsgData.from.email,
-        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
-        subject: newMsgData.subject,
-        token: response.replyToken,
-      };
-      const replyInfoDiv = Ui.e('div', {
-        style: 'display: none;',
-        class: 'cryptup_reply',
-        'cryptup-data': Str.htmlAttrEncode(replyInfoRaw),
-      });
       return {
-        bodyWithReplyToken: {
-          'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv,
-          'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv,
-        },
+        bodyWithReplyToken: this.buildSendableBodyWithReplyToken(newMsgData, response.replyToken),
         replyToken: response.replyToken,
       };
     } catch (msgTokenErr) {
@@ -291,6 +348,29 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter {
         'There was a token error sending this message. Please try again. ' + Lang.general.contactIfHappensAgain(!!this.view.fesUrl)
       );
     }
+  };
+
+  /**
+   * Builds the sendable message body with embedded reply token information.
+   */
+  private buildSendableBodyWithReplyToken = (newMsgData: NewMsgData, replyToken: string): SendableMsgBody => {
+    const recipientsWithoutBcc = { ...newMsgData.recipients, bcc: [] };
+    const recipients = getUniqueRecipientEmails(recipientsWithoutBcc);
+    const replyInfoRaw: ReplyInfoRaw = {
+      sender: newMsgData.from.email,
+      recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.from.email), this.acctEmail),
+      subject: newMsgData.subject,
+      token: replyToken,
+    };
+    const replyInfoDiv = Ui.e('div', {
+      style: 'display: none;',
+      class: 'cryptup_reply',
+      'cryptup-data': Str.htmlAttrEncode(replyInfoRaw),
+    });
+    return {
+      'text/plain': newMsgData.plaintext + '\n\n' + replyInfoDiv,
+      'text/html': newMsgData.plainhtml + '<br /><br />' + replyInfoDiv,
+    };
   };
 
   private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (pubs: PubkeyResult[]): Promise<Date | undefined> => {
