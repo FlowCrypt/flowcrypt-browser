@@ -1707,7 +1707,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
         });
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-        await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+        await Util.sleep(2);
+        await ComposePageRecipe.showRecipientInput(composePage);
         await composePage.type('@input-to', 'contact');
         if (testVariant === 'CONSUMER-MOCK') {
           // allow contacts scope
