@@ -71,12 +71,17 @@ export class BrowserRecipe {
   public static openGoogleChatPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
     const googleChatPage = await browser.newPage(t, TestUrls.googleChat(googleLoginIndex));
     await Util.sleep(5);
-    const chatFrame = await googleChatPage.getFrame(['https://chat.google.com/u/0/mole/world']);
-    if (await chatFrame.isElementPresent('.fKz7Od')) {
-      // close announcement about updated UI
-      await chatFrame.waitAndClick('.fKz7Od', { delay: 1 });
+    let context: ControllableFrame | ControllablePage;
+    try {
+      context = await googleChatPage.getFrame(['https://chat.google.com/u/0/mole/world']);
+    } catch {
+      context = googleChatPage;
     }
-    await chatFrame.waitAny(['a.gb_de', 'a.gb_Vc', 'a.gb_he']); // Google hangout logo
+    if (await context.isElementPresent('.fKz7Od')) {
+      // close announcement about updated UI
+      await context.waitAndClick('.fKz7Od', { delay: 1 });
+    }
+    await context.waitAny(['a.gb_de', 'a.gb_Vc', 'a.gb_he']); // Google hangout logo
     return googleChatPage;
   };
 
