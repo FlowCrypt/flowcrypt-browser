@@ -666,6 +666,24 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       })
     );
 
+    // https://github.com/FlowCrypt/flowcrypt-browser/issues/6171
+    test(
+      `mail.google.com - large clipped PGP/MIME message with text/plain attachment decrypts`,
+      testWithBrowser(async (t, browser) => {
+        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
+        const gmailPage = await openGmailPage(t, browser);
+        await gotoGmailPage(gmailPage, '/FMfcgzQfBspgLbfNnBHGtlBsFtcLGPsr');
+        const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 25 });
+        expect(urls.length).to.equal(1);
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+          content: ['Test large clipped message'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        });
+      })
+    );
+
     test(
       `mail.google.com - render plain text for "message" attachment (which has plain text)`,
       testWithBrowser(async (t, browser) => {
