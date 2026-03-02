@@ -9,7 +9,7 @@ import { SetupView } from '../setup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
-import * as $ from 'jquery';
+import $ from 'jquery';
 
 export class SetupRenderModule {
   public constructor(private view: SetupView) {}
