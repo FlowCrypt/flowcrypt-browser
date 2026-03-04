@@ -370,8 +370,10 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+        this.setMsgBodyAndStartProcessing(
+          loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email,
+          renderModule => this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject),
+          'append'
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -802,10 +804,11 @@ export class MessageRenderer {
     type: string, // for diagnostics
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
-    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>,
+    method: 'set' | 'append' = 'set'
   ) => {
     const { frameId, frameXssSafe } = this.factory.embeddedMsg(type); // xss-safe-factory
-    loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, 'set'); // xss-safe-value
+    loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, method); // xss-safe-value
     this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 

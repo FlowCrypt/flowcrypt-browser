@@ -608,17 +608,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - [gpgmail] encrypted utf8`,
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '161b2ac5a73d4097',
-          {
-            content: ['Prozent => %', 'Scharf-S => ß', 'Ue => Ü', 'Ae => Ä'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey 9BBE40BC1E8CE4A3',
-          },
-          authHdr
-        );
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/161b2ac5a73d4097`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+          content: ['Prozent => %', 'Scharf-S => ß', 'Ue => Ü', 'Ae => Ä'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey 9BBE40BC1E8CE4A3',
+        });
+        await gmailPage.waitForContent('.message_inner_body', '1io | Sales & Marketing');
+        await gmailPage.waitForContent('.message_inner_body', '1io GmbH');
+        await gmailPage.close();
       })
     );
 
