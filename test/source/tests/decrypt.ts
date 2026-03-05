@@ -1536,6 +1536,31 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      'signature - shows sender/signer mismatch when signer key belongs to a different email',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '1766644f13510f58';
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        await dbPage.page.evaluate(async (pubkey: string) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const key = await (window as any).KeyUtil.parse(pubkey);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (window as any).ContactStore.update(undefined, 'actual.signer@example.com', { pubkey: key });
+        }, testConstants.pubkey2864E326A5BE488A);
+        await dbPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe', { timeout: 2 });
+        const pgpBlock = await gmailPage.getFrame(['/chrome/elements/pgp_block.htm'], { sleep: 10, timeout: 20 });
+        const expectedMessage = {
+          content: ['How is my message signed?'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: signed by actual.signer@example.com but message is from sender@example.com',
+        };
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, expectedMessage);
+      })
+    );
+
+    test(
       'decrypt - protonmail - PGP/inline signed and encrypted message with pubkey - pubkey signature is ignored',
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');

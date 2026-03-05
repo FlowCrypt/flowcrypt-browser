@@ -546,6 +546,39 @@ export class ContactStore extends AbstractStore {
     return (await ContactStore.extractPubkeys(db, fingerprints)).map(pubkey => pubkey.armoredKey).filter(Boolean);
   }
 
+  public static async getEmailsByLongid(db: IDBDatabase | undefined, longid: string): Promise<string[]> {
+    if (!db) {
+      return (await BrowserMsg.retryOnBgNotReadyErr(() => BrowserMsg.send.bg.await.db({ f: 'getEmailsByLongid', args: [longid] }))) as string[];
+    }
+    const tx = db.transaction(['pubkeys', 'emails'], 'readonly');
+    const emails: string[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const req = tx.objectStore('pubkeys').index('index_longids').getAll(longid);
+      ContactStore.setReqPipe(
+        req,
+        (pubkeys: Pubkey[]) => {
+          if (!pubkeys.length) {
+            resolve();
+            return;
+          }
+          ContactStore.setTxHandlers(tx, () => resolve(), reject);
+          for (const pubkey of pubkeys) {
+            const req2 = tx.objectStore('emails').index('index_fingerprints').getAll(pubkey.fingerprint);
+            ContactStore.setReqPipe(req2, (emailEntities: Email[]) => {
+              for (const entity of emailEntities) {
+                if (!emails.includes(entity.email)) {
+                  emails.push(entity.email);
+                }
+              }
+            });
+          }
+        },
+        reject
+      );
+    });
+    return emails;
+  }
+
   public static async getOneWithAllPubkeys(db: IDBDatabase | undefined, email: string): Promise<ContactInfoWithSortedPubkeys | undefined> {
     if (!db) {
       // relay op through background process
