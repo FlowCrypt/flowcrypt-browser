@@ -2777,6 +2777,24 @@ table#compose tr#password_or_pubkey_container td input#input_password {
   text-align: center;
 }
 
+.toggle_msg_password {
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  opacity: 0.5;
+  margin-left: 4px;
+  transition: opacity 0.15s;
+}
+
+.toggle_msg_password:hover {
+  opacity: 0.8;
+}
+
+.toggle_msg_password img {
+  width: 18px;
+  height: 14px;
+}
+
 table#compose tr#password_or_pubkey_container td .grey {
   padding: 1px 5px;
   background: #989898;
