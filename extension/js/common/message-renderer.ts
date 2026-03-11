@@ -203,9 +203,11 @@ export class MessageRenderer {
     if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
       const signerLongid = verifyRes.signerLongids[0];
       const signerEmails = await ContactStore.getEmailsByLongid(undefined, signerLongid);
-      const signerEmailNotMatchingSender = signerEmails.find(e => e !== senderEmail);
-      if (signerEmailNotMatchingSender) {
-        MessageRenderer.renderSignerSenderMismatch(renderModule, senderEmail, signerEmailNotMatchingSender);
+      if (signerEmails.includes(senderEmail)) {
+        // signer key is associated with the sender — not a mismatch, but pubkey wasn't supplied for verification
+        MessageRenderer.renderMissingPubkey(renderModule, signerLongid);
+      } else if (signerEmails.length > 0) {
+        MessageRenderer.renderSignerSenderMismatch(renderModule, senderEmail, signerEmails[0]);
       } else {
         MessageRenderer.renderMissingPubkey(renderModule, signerLongid);
       }
