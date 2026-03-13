@@ -2732,7 +2732,13 @@ table#compose tr#password_or_pubkey_container {
 }
 
 table#compose tr#password_or_pubkey_container .password_input_container {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+table#compose tr#password_or_pubkey_container #password_protected_link {
+  margin-left: 3px;
 }
 
 table#compose tr#password_or_pubkey_container .password_input_container .password_bar div {
@@ -2770,11 +2776,30 @@ table#compose tr#password_or_pubkey_container td input {
 }
 
 table#compose tr#password_or_pubkey_container td input#input_password {
-  width: 160px;
+  flex: 1;
+  min-width: 120px;
   color: #31a217;
   padding: 3px;
   height: 20px;
   text-align: center;
+}
+
+.toggle_msg_password {
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  opacity: 0.5;
+  margin-left: 4px;
+  transition: opacity 0.15s;
+}
+
+.toggle_msg_password:hover {
+  opacity: 0.8;
+}
+
+.toggle_msg_password img {
+  width: 18px;
+  height: 14px;
 }
 
 table#compose tr#password_or_pubkey_container td .grey {

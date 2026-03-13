@@ -90,6 +90,7 @@ export class ComposeView extends View {
     input_from: '#input_from',
     input_subject: '#input_subject',
     input_password: '#input_password',
+    toggle_input_password: '#toggle_input_password',
     expiration_note: '#expiration_note',
     input_intro: '.input_intro',
     recipients_placeholder: '#recipients_placeholder',

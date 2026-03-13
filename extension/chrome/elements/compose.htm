@@ -171,10 +171,16 @@
               <div class="warning_nopgp">or ask them to install FlowCrypt.</div>
               <div class="password_input_container" data-test="password-input-container">
                 Alternatively, send your email
-                <a href="https://flowcrypt.com/docs/getting-started/send-and-receive/send/send-password-protected-emails.html" target="_blank"
+                <a id="password_protected_link" href="https://flowcrypt.com/docs/getting-started/send-and-receive/send/send-password-protected-emails.html" target="_blank"
                   >password-protected</a
                 >:
-                <input id="input_password" autocomplete="off" placeholder="message password" tabindex="5" data-test="input-password" maxlength="256" />
+                <input id="input_password" autocomplete="off" placeholder="message password" tabindex="5" data-test="input-password" maxlength="256" /><span
+                  id="toggle_input_password"
+                  class="toggle_msg_password"
+                  data-test="action-toggle-password-visibility"
+                  title="Toggle password visibility"
+                  ><img src="/img/svgs/eyeopen-icon.svg"
+                /></span>
               </div>
               <div class="warning_no_pubkey_on_attester">
                 <span data-test="container-no-pubkey-on-attester">
