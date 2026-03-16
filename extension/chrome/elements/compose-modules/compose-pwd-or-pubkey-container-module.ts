@@ -14,10 +14,14 @@ import { Xss } from '../../../js/common/platform/xss.js';
 export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
   private MSG_EXPIRE_DAYS_DEFAULT = 3; // todo - update to 7 (needs backend work)
 
+  private readonly EYE_OPEN_ICON = '/img/svgs/eyeopen-icon.svg';
+  private readonly EYE_CLOSED_ICON = '/img/svgs/eyeclosed-icon.svg';
+
   public constructor(view: ComposeView, hideMsgPwd: boolean | undefined) {
     super(view);
     if (hideMsgPwd) {
       this.view.S.cached('input_password').attr('type', 'password');
+      this.view.S.cached('toggle_input_password').find('img').attr('src', this.EYE_CLOSED_ICON);
     }
   }
 
@@ -33,6 +37,10 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
     this.view.S.cached('input_password').on(
       'blur',
       this.view.setHandler(() => this.inputPwdBlurHandler())
+    );
+    this.view.S.cached('toggle_input_password').on(
+      'click',
+      this.view.setHandler(() => this.togglePasswordVisibility())
     );
     this.view.S.cached('expiration_note')
       .find('#expiration_note_settings_link')
@@ -99,6 +107,18 @@ export class ComposePwdOrPubkeyContainerModule extends ViewModule<ComposeView> {
       this.view.S.cached('expiration_note').hide();
     } else {
       this.view.S.cached('expiration_note').show();
+    }
+  };
+
+  public togglePasswordVisibility = () => {
+    const input = this.view.S.cached('input_password');
+    const toggleImg = this.view.S.cached('toggle_input_password').find('img');
+    if (input.attr('type') === 'password') {
+      input.attr('type', 'text');
+      toggleImg.attr('src', this.EYE_OPEN_ICON);
+    } else {
+      input.attr('type', 'password');
+      toggleImg.attr('src', this.EYE_CLOSED_ICON);
     }
   };
 

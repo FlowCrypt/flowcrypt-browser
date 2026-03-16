@@ -177,7 +177,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const expectedMessage = {
           encryption: 'not encrypted',
-          signature: 'could not verify signature: missing pubkey ADAC279C95093207',
+          signature: 'could not verify signature: signed by flowcrypt.compatibility@gmail.com but message is from sender@domain.com',
           content: ['flowcrypt-browser issue #5029 test email'],
         };
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
@@ -542,7 +542,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
           {
             content: ['this was encrypted with gpg', 'gpg --sign --armor -r flowcrypt.compatibility@gmail.com ./text.txt'],
             encryption: 'not encrypted',
-            signature: 'could not verify signature: missing pubkey 7FDE685548AEA788',
+            signature: 'could not verify signature: signed by flowcrypt.compatibility@gmail.com but message is from sender@domain.com',
             quoted: false,
           },
           authHdr
@@ -608,17 +608,17 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       `decrypt - [gpgmail] encrypted utf8`,
       testWithBrowser(async (t, browser) => {
         const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '161b2ac5a73d4097',
-          {
-            content: ['Prozent => %', 'Scharf-S => ß', 'Ue => Ü', 'Ae => Ä'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey 9BBE40BC1E8CE4A3',
-          },
-          authHdr
-        );
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/161b2ac5a73d4097`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm']);
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+          content: ['Prozent => %', 'Scharf-S => ß', 'Ue => Ü', 'Ae => Ä'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey 9BBE40BC1E8CE4A3',
+        });
+        await gmailPage.waitForContent('.message_inner_body', '1io | Sales & Marketing');
+        await gmailPage.waitForContent('.message_inner_body', '1io GmbH');
+        await gmailPage.close();
       })
     );
 
@@ -1532,6 +1532,31 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const urls = await inboxPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
         expect(urls.length).to.equal(1);
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame([urls[0]]), expectedMessage);
+      })
+    );
+
+    test(
+      'signature - shows sender/signer mismatch when signer key belongs to a different email',
+      testWithBrowser(async (t, browser) => {
+        const threadId = '1766644f13510f58';
+        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
+        const dbPage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        await dbPage.page.evaluate(async (pubkey: string) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const key = await (window as any).KeyUtil.parse(pubkey);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (window as any).ContactStore.update(undefined, 'actual.signer@example.com', { pubkey: key });
+        }, testConstants.pubkey2864E326A5BE488A);
+        await dbPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe', { timeout: 2 });
+        const pgpBlock = await gmailPage.getFrame(['/chrome/elements/pgp_block.htm'], { sleep: 10, timeout: 20 });
+        const expectedMessage = {
+          content: ['How is my message signed?'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: signed by actual.signer@example.com but message is from sender@example.com',
+        };
+        await BrowserRecipe.pgpBlockCheck(t, pgpBlock, expectedMessage);
       })
     );
 

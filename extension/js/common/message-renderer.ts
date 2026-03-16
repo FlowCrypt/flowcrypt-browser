@@ -154,7 +154,7 @@ export class MessageRenderer {
   private static async renderPgpSignatureCheckResult(
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
-    wasSignerEmailSupplied: boolean,
+    senderEmail: string | undefined,
     retryVerification?: () => Promise<VerifyRes | undefined>
   ) {
     if (verifyRes?.error) {
@@ -188,23 +188,37 @@ export class MessageRenderer {
           retryVerificationAgain = retryVerification;
         }
       }
-      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, verifyRes, wasSignerEmailSupplied, retryVerificationAgain);
+      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, verifyRes, senderEmail, retryVerificationAgain);
       return;
-    } else if (!wasSignerEmailSupplied) {
+    } else if (!senderEmail) {
       // todo: unit-test this case?
       renderModule.renderSignatureStatus('could not verify signature: missing pubkey, missing sender info');
     } else {
-      MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes);
+      await MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes, senderEmail);
     }
   }
 
-  private static renderMissingPubkeyOrBadSignature(renderModule: RenderInterfaceBase, verifyRes: VerifyRes): void {
+  private static async renderMissingPubkeyOrBadSignature(renderModule: RenderInterfaceBase, verifyRes: VerifyRes, senderEmail: string): Promise<void> {
     // eslint-disable-next-line no-null/no-null
     if (verifyRes.match === null || !Value.arr.hasIntersection(verifyRes.signerLongids, verifyRes.suppliedLongids)) {
-      MessageRenderer.renderMissingPubkey(renderModule, verifyRes.signerLongids[0]);
+      const signerLongid = verifyRes.signerLongids[0];
+      const signerEmails = await ContactStore.getEmailsByLongid(undefined, signerLongid);
+      if (signerEmails.includes(senderEmail)) {
+        // signer key is associated with the sender — not a mismatch, but pubkey wasn't supplied for verification
+        MessageRenderer.renderMissingPubkey(renderModule, signerLongid);
+      } else if (signerEmails.length > 0) {
+        MessageRenderer.renderSignerSenderMismatch(renderModule, senderEmail, signerEmails[0]);
+      } else {
+        MessageRenderer.renderMissingPubkey(renderModule, signerLongid);
+      }
     } else {
       MessageRenderer.renderBadSignature(renderModule);
     }
+  }
+
+  private static renderSignerSenderMismatch(renderModule: RenderInterfaceBase, senderEmail: string, signerEmail: string) {
+    renderModule.renderSignatureStatus(`could not verify signature: signed by ${signerEmail} but message is from ${senderEmail}`);
+    renderModule.setFrameColor('red');
   }
 
   private static renderMissingPubkey(renderModule: RenderInterfaceBase, signerLongid: string) {
@@ -370,8 +384,10 @@ export class MessageRenderer {
         loaderContext.prependEncryptedAttachment(a);
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
-        this.setMsgBodyAndStartProcessing(loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
-          this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
+        this.setMsgBodyAndStartProcessing(
+          loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email,
+          renderModule => this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject),
+          'append'
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
@@ -613,7 +629,7 @@ export class MessageRenderer {
     }
     decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
     renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml, isChecksumInvalid);
-    await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, Boolean(signerEmail), retryVerification);
+    await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, signerEmail, retryVerification);
     if (renderableAttachments.length) {
       renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
@@ -802,10 +818,11 @@ export class MessageRenderer {
     type: string, // for diagnostics
     printMailInfo: PrintMailInfo | undefined,
     senderEmail: string | undefined,
-    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>
+    cb: (renderModule: RenderInterface) => Promise<{ publicKeys?: string[] }>,
+    method: 'set' | 'append' = 'set'
   ) => {
     const { frameId, frameXssSafe } = this.factory.embeddedMsg(type); // xss-safe-factory
-    loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, 'set'); // xss-safe-value
+    loaderContext.setMsgBody_DANGEROUSLY(frameXssSafe, method); // xss-safe-value
     this.relayAndStartProcessing(this.relayManager, this.factory, frameId, printMailInfo, senderEmail, cb);
   };
 

@@ -18,7 +18,8 @@ type ClientConfiguration$flag =
   | 'DEFAULT_REMEMBER_PASS_PHRASE'
   | 'HIDE_ARMOR_META'
   | 'FORBID_STORING_PASS_PHRASE'
-  | 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES';
+  | 'DISABLE_FLOWCRYPT_HOSTED_PASSWORD_MESSAGES'
+  | 'DISABLE_FES_PRESIGNED_URLS';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export type ClientConfigurationJson = {
@@ -284,5 +285,14 @@ export class ClientConfiguration {
    */
   public getPublicKeyForPrivateKeyBackupToDesignatedMailbox = (): string | undefined => {
     return this.clientConfigurationJson.prv_backup_to_designated_mailbox;
+  };
+
+  /**
+   * When sending password-protected messages, by default pre-signed S3 URLs are used for uploading
+   * the encrypted message content. This allows for larger attachments (beyond ~5MB).
+   * If this flag is set, the legacy flow (direct upload to FES) will be used instead.
+   */
+  public shouldUseFesPresignedUrls = (): boolean => {
+    return !(this.clientConfigurationJson.flags || []).includes('DISABLE_FES_PRESIGNED_URLS');
   };
 }

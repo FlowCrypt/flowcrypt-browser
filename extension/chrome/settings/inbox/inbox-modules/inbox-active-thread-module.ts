@@ -46,8 +46,9 @@ class LoaderContext implements LoaderContextInterface {
     /* eslint-enable @typescript-eslint/naming-convention */
     if (method === 'set') {
       this.renderedMessageXssSafe = newHtmlContent_MUST_BE_XSS_SAFE; // xss-safe-value
+    } else if (method === 'append') {
+      this.renderedMessageXssSafe = (this.renderedMessageXssSafe || '') + newHtmlContent_MUST_BE_XSS_SAFE; // xss-safe-value
     } else {
-      // todo: we may implement the difference between 'append' and 'after'
       this.renderedAttachmentsXssSafe.unshift(newHtmlContent_MUST_BE_XSS_SAFE); // xss-safe-value
     }
   };

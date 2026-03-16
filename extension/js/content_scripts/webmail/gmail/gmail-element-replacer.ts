@@ -206,7 +206,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
           // check if message body was converted to attachment by Gmail
           // happens for pgp/mime messages with attachments
           // https://github.com/FlowCrypt/flowcrypt-browser/issues/5458
-          const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments) === 'encryptedMsg');
+          const encryptedMsgAttachment = attachments.find(a => !a.name && a.treatAs(attachments, Mime.isBodyEmpty(body)) === 'encryptedMsg');
           if (encryptedMsgAttachment) {
             const msgEl = this.getMsgBodyEl(msgId);
             const loaderContext = new GmailLoaderContext(this.factory, msgEl);
