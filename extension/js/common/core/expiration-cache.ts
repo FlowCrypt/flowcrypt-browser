@@ -18,13 +18,15 @@ export class ExpirationCache<V> {
     if (Env.isContentScript()) {
       // Get chrome storage data from content script not allowed
       // Need to get data from service worker
-      await BrowserMsg.send.bg.await.expirationCacheSet<V>({
-        key,
-        prefix: this.prefix,
-        value,
-        expirationTicks: this.expirationTicks,
-        expiration,
-      });
+      await BrowserMsg.retryOnBgNotReadyErr(() =>
+        BrowserMsg.send.bg.await.expirationCacheSet<V>({
+          key,
+          prefix: this.prefix,
+          value,
+          expirationTicks: this.expirationTicks,
+          expiration,
+        })
+      );
       return;
     }
     if (value) {
@@ -42,11 +44,13 @@ export class ExpirationCache<V> {
       // Just disable eslint warning as setting expirationCacheGet interface
       // will require lots of code changes in browser-msg.ts
 
-      return await BrowserMsg.send.bg.await.expirationCacheGet<V>({
-        key,
-        prefix: this.prefix,
-        expirationTicks: this.expirationTicks,
-      });
+      return await BrowserMsg.retryOnBgNotReadyErr(() =>
+        BrowserMsg.send.bg.await.expirationCacheGet<V>({
+          key,
+          prefix: this.prefix,
+          expirationTicks: this.expirationTicks,
+        })
+      );
     }
     const prefixedKey = this.getPrefixedKey(key);
     const result = await storageGet('session', [prefixedKey]);

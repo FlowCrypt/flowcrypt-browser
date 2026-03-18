@@ -28,7 +28,3 @@ updates:
         versions: [ ">=1.0.1" ]
       - dependency-name: "ava"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "chai"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "chai-as-promised"
-        update-types: ["version-update:semver-major"]
