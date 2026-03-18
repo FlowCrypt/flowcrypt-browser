@@ -18,7 +18,3 @@ updates:
       npm-deps:
         patterns:
           - "*"
-    ignore:
-      # ignore all bootstrap major updates
-      - dependency-name: "bootstrap"
-        update-types: ["version-update:semver-major"]
