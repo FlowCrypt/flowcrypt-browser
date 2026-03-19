@@ -72,11 +72,13 @@ export const getDebugHtmlAtts = (testId: string, context: TestContext): string[]
 export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) =>
   setTimeout(() => {
     t.fail(`Standalone timeout exceeded (${name})`);
-  }, ms);
+  }, ms).unref();
 
 export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise<T>) => Promise<T>) => {
-  // returns a function
-  const timeoutAllRetries = new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES));
+  // unref() prevents this timer from keeping the worker process alive after all tests finish (ava v6+)
+  const timeoutAllRetries = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES).unref()
+  );
   return <T>(actionPromise: Promise<T>) =>
     Promise.race([
       actionPromise, // the actual action being performed
@@ -85,7 +87,7 @@ export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise
 };
 
 export const newTimeoutPromise = (name: string, seconds = 20): Promise<never> => {
-  return new Promise((resolve, reject) => setTimeout(() => reject(new Error(`Timeout: ${name}`)), seconds * 1000));
+  return new Promise((resolve, reject) => setTimeout(() => reject(new Error(`Timeout: ${name}`)), seconds * 1000).unref());
 };
 
 export const minutes = (count: number) => count * 60 * 1000;
