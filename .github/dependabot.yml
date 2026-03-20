@@ -18,6 +18,3 @@ updates:
       npm-deps:
         patterns:
           - "*"
-    ignore:
-      - dependency-name: "ava"
-        update-types: ["version-update:semver-major"]

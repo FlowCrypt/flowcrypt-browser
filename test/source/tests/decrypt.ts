@@ -1634,6 +1634,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame1.waitForContent('@container-pgp-pubkey', 'Public Key');
         expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
@@ -1641,6 +1642,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame2.waitForContent('@container-pgp-pubkey', 'Public Key');
         expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
       })
     );
