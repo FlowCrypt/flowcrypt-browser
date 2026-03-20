@@ -71,7 +71,11 @@ export const getDebugHtmlAtts = (testId: string, context: TestContext): string[]
 
 export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) =>
   setTimeout(() => {
-    t.fail(`Standalone timeout exceeded (${name})`);
+    try {
+      t.fail(`Standalone timeout exceeded (${name})`);
+    } catch {
+      // ava v6+ throws TestFailure on assertion failure; in setTimeout this would be uncaught
+    }
   }, ms).unref();
 
 export const newWithTimeoutsFunc = (consts: Consts): (<T>(actionPromise: Promise<T>) => Promise<T>) => {

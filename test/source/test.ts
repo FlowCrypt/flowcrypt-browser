@@ -205,7 +205,7 @@ test.afterEach.always('finalize', async t => {
   if (debugHtmlAttachments.length) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+    const hookTimer = standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     const debugArtifactDir = realpathSync(`${__dirname}/..`) + '/debugArtifacts';
     try {
       mkdirSync(debugArtifactDir);
@@ -224,6 +224,7 @@ test.afterEach.always('finalize', async t => {
         // probably local environment without semaphore CLI tooling
       }
     }
+    clearTimeout(hookTimer);
   } else if (!t.passed) {
     console.info(`No debug artifacts created for this failure`);
   }
