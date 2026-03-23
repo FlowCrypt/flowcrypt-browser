@@ -1634,6 +1634,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame1.waitUntilViewLoaded();
         await pubkeyFrame1.waitForContent('@container-pgp-pubkey', 'Public Key');
         expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
         await inboxPage.close();
@@ -1642,6 +1643,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
         const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
+        await pubkeyFrame2.waitUntilViewLoaded();
         await pubkeyFrame2.waitForContent('@container-pgp-pubkey', 'Public Key');
         expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
       })
@@ -2278,7 +2280,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(Object.entries(downloadedFile4).length).to.equal(1);
         expect(Object.keys(downloadedFile4)[0]).to.match(/demo.*\.bat/);
         const attachmentFrame = await gmailPage.getFrame(['attachment.htm']);
-        await attachmentFrame.waitForSelTestState('ready');
+        await attachmentFrame.waitForSelTestState('ready', 30);
         await attachmentFrame.waitAndClick('@attachment-container');
         const attachmentPreviewPage2 = await gmailPage.getFrame(['attachment_preview.htm']);
         await attachmentPreviewPage2.waitAndClick('@attachment-preview-download');
