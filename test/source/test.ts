@@ -236,10 +236,6 @@ if (testGroup === 'UNIT-TESTS') {
   defineUnitBrowserTests(testVariant, testWithBrowser);
 } else if (testGroup === 'FLAKY-GROUP') {
   defineFlakyTests(testVariant, testWithBrowser);
-} else if (testGroup === 'FLAKY-GROUP-1') {
-  defineFlakyTests(testVariant, testWithBrowser, 0, 2);
-} else if (testGroup === 'FLAKY-GROUP-2') {
-  defineFlakyTests(testVariant, testWithBrowser, 1, 2);
 } else if (testGroup === 'CONTENT-SCRIPT-TESTS') {
   defineContentScriptTests(testWithBrowser);
 } else {

@@ -14,7 +14,7 @@ const ROOT_DIR = process.cwd();
 
 export const getParsedCliParams = () => {
   let testVariant: TestVariant;
-  let testGroup: 'FLAKY-GROUP' | 'FLAKY-GROUP-1' | 'FLAKY-GROUP-2' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
+  let testGroup: 'FLAKY-GROUP' | 'STANDARD-GROUP' | 'UNIT-TESTS' | 'CONTENT-SCRIPT-TESTS' | undefined;
   if (process.argv.includes('CONTENT-SCRIPT-TESTS')) {
     testVariant = 'CONSUMER-CONTENT-SCRIPT-TESTS-MOCK';
     testGroup = 'CONTENT-SCRIPT-TESTS';
@@ -28,7 +28,7 @@ export const getParsedCliParams = () => {
     throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
   }
   if (!testGroup) {
-    testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : process.argv.includes('FLAKY-GROUP-1') ? 'FLAKY-GROUP-1' : process.argv.includes('FLAKY-GROUP-2') ? 'FLAKY-GROUP-2' : 'STANDARD-GROUP';
+    testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
   }
   const buildDir = join(ROOT_DIR, `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`);
   const poolSizeArg = process.argv.find(a => a.startsWith('--pool-size='));

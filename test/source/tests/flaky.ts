@@ -29,12 +29,9 @@ import { minutes } from './tooling';
 // these tests are run serially, one after another, because they are somewhat more sensitive to parallel testing
 // eg if they are very cpu-sensitive (create key tests)
 
-export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser, shardIndex = 0, totalShards = 1) => {
-  let testCounter = 0;
+export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   const test = (title: string, impl: Implementation<unknown[]>) => {
-    if (testCounter++ % totalShards === shardIndex) {
-      avaTest(title, impl);
-    }
+    avaTest(title, impl);
   };
   test.skip = avaTest.skip;
 
