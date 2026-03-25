@@ -24,7 +24,7 @@ import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
 
-export const { testVariant, testGroup, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
+export const { testVariant, testGroup, oneIfNotPooled, poolSize, buildDir, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
@@ -38,7 +38,7 @@ const consts = {
   TIMEOUT_EACH_RETRY: minutes(4),
   TIMEOUT_ALL_RETRIES: minutes(55),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
-  POOL_SIZE: oneIfNotPooled(isMock ? 20 : 3),
+  POOL_SIZE: poolSize ?? (isMock ? 20 : 3),
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
 

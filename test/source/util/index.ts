@@ -31,10 +31,12 @@ export const getParsedCliParams = () => {
     testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : process.argv.includes('FLAKY-GROUP-1') ? 'FLAKY-GROUP-1' : process.argv.includes('FLAKY-GROUP-2') ? 'FLAKY-GROUP-2' : 'STANDARD-GROUP';
   }
   const buildDir = join(ROOT_DIR, `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`);
-  const poolSizeOne = process.argv.includes('--pool-size=1') || ['FLAKY-GROUP', 'FLAKY-GROUP-1', 'FLAKY-GROUP-2', 'CONTENT-SCRIPT-TESTS'].includes(testGroup);
-  const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? Math.min(1, suggestedPoolSize) : suggestedPoolSize);
-  console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
-  return { testVariant, testGroup, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
+  const poolSizeArg = process.argv.find(a => a.startsWith('--pool-size='));
+  const poolSize = poolSizeArg ? parseInt(poolSizeArg.split('=')[1], 10) : undefined;
+  const poolSizeOne = poolSize === 1;
+  const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? 1 : suggestedPoolSize);
+  console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSize: ${poolSize ?? 'default'})`);
+  return { testVariant, testGroup, oneIfNotPooled, poolSize, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
 export type TestMessage = {
