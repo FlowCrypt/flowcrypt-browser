@@ -34,12 +34,9 @@ blocks:
             - npm -v
             - node -v
             - npm run-script test_ci_chrome_consumer
-        - name: consumer mock - flaky test group 1
+        - name: consumer mock - flaky test group
           commands:
-            - npm run-script test_ci_chrome_consumer_flaky_1
-        - name: consumer mock - flaky test group 2
-          commands:
-            - npm run-script test_ci_chrome_consumer_flaky_2
+            - npm run-script test_ci_chrome_consumer_flaky
         - name: content script tests
           commands:
             - npm run-script test_ci_chrome_content_scripts
