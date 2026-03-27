@@ -19,15 +19,17 @@ View.run(
     private readonly parentTabId: string;
     private readonly frameId: string;
     private readonly armoredPrvBackup: string;
+    private readonly fromEmail: string;
     private storedPrvWithMatchingLongid: KeyInfoWithIdentity | undefined;
 
     public constructor() {
       super();
-      const uncheckedUrlParams = Url.parse(['acctEmail', 'armoredPrvBackup', 'parentTabId', 'frameId']);
+      const uncheckedUrlParams = Url.parse(['acctEmail', 'armoredPrvBackup', 'parentTabId', 'frameId', 'fromEmail']);
       this.acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
       this.armoredPrvBackup = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPrvBackup');
+      this.fromEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'fromEmail');
     }
 
     public render = async () => {
@@ -53,12 +55,20 @@ View.run(
           `This private key with fingerprint <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has already been imported.`
         );
       } else {
+        const notUserOwnedPrvKey = this.fromEmail !== this.acctEmail;
+        const recommendation = notUserOwnedPrvKey ? '' : 'We recommend importing all backups to ensure you can read all incoming encrypted emails.';
+        if (notUserOwnedPrvKey) {
+          $('.backup_message_text').text(
+            'This message contains a private key received from ' +
+              this.fromEmail +
+              '. Import only if you intentionally sent this to yourself or received it from your administrator.'
+          );
+        }
         $('.line .private_key_status')
-          .html(
-            `The private key <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has not been imported yet. \n` +
-              `We recommend importing all backups to ensure you can read all incoming encrypted emails.`
-          )
-          .after('<div class="line"><button class="button green" id="action_import_key">Import Missing Private Key</button></div>'); // xss-direct
+          .html(`The private key <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has not been imported yet. \n` + recommendation) // xss-safe-value
+          .after(
+            `<div class="line"><button class="button green" id="action_import_key">${notUserOwnedPrvKey ? 'Import Private Key' : 'Import Missing Private Key'}</button></div>`
+          ); // xss-direct
       }
       this.sendResizeMsg();
     };

@@ -385,13 +385,17 @@ export class MessageRenderer {
         return 'replaced'; // native should be hidden, custom should appear instead
       } else if (treatAs === 'encryptedMsg') {
         this.setMsgBodyAndStartProcessing(
-          loaderContext, treatAs, messageInfo.printMailInfo, messageInfo.from?.email,
-          renderModule => this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject),
+          loaderContext,
+          treatAs,
+          messageInfo.printMailInfo,
+          messageInfo.from?.email,
+          renderModule =>
+            this.processEncryptedMsgAttachment(a, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject),
           'append'
         );
         return 'hidden'; // native attachment should be hidden, the "attachment" goes to the message container
       } else if (treatAs === 'privateKey') {
-        return await this.renderBackupFromFile(a, loaderContext, attachmentSel);
+        return await this.renderBackupFromFile(a, loaderContext, attachmentSel, messageInfo.from?.email);
       } else {
         // standard file
         loaderContext.renderPlainAttachment(a, attachmentSel);
@@ -869,11 +873,12 @@ export class MessageRenderer {
   private renderBackupFromFile = async (
     attachment: Attachment,
     loaderContext: LoaderContextInterface,
-    attachmentSel: JQuery | undefined
+    attachmentSel: JQuery | undefined,
+    fromEmail?: string
   ): Promise<'shown' | 'hidden'> => {
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);
-      loaderContext.setMsgBody_DANGEROUSLY(this.factory.embeddedBackup(attachment.getData().toUtfStr()), 'append'); // xss-safe-factory
+      loaderContext.setMsgBody_DANGEROUSLY(this.factory.embeddedBackup(attachment.getData().toUtfStr(), fromEmail), 'append'); // xss-safe-factory
       return 'hidden';
     } catch {
       loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Please reload page'); // todo: unit-test
