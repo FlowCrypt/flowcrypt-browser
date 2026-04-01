@@ -100,7 +100,7 @@ abstract class ControllableBase {
         await this.waitAny(selectors, { timeout: 0 }); // if this fails, that means there are none left: return success
         await Util.sleep(1);
       } catch (e) {
-        if (e instanceof Error && e.message.indexOf('waiting failed') === 0) {
+        if (e instanceof Error && e.message.startsWith('waiting failed')) {
           return;
         }
       }
