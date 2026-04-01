@@ -22,15 +22,16 @@ export interface TSConfig {
 }
 
 const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath || './tsconfig.json').toString()) as TSConfig;
-const moduleMap: { [name: string]: string | null } = {};
+const moduleMap: { [name: string]: string | undefined } = {};
+const commentImportedModules = new Set<string>();
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].some((x: string) => x.endsWith('/COMMENT'))) {
     // COMMENT flag, remove such import statements from the code, because they will be imported with script tags for compatibility
-    moduleMap[moduleName] = null; // eslint-disable-line no-null/no-null
+    commentImportedModules.add(moduleName);
   } else {
     // replace import with full path from config
-    const selectedPath = compilerOptions.paths[moduleName].find((x: string) => /\.(mjs|js)$/.exec(x) !== null);
-    moduleMap[moduleName] = selectedPath?.replace(/^\.\/extension\//, '') || null; // eslint-disable-line no-null/no-null
+    const selectedPath = compilerOptions.paths[moduleName].find((x: string) => /\.(mjs|js)$/.test(x));
+    moduleMap[moduleName] = selectedPath?.replace(/^\.\/extension\//, '');
   }
 }
 
@@ -41,18 +42,18 @@ const importLineEndingWithJsNotStartingWithDot = /^(?!\s*\/\/)(?!\s*\/\*)(?:\s*i
 
 const resolveLineImports = (regex: RegExp, line: string, path: string) =>
   line.replace(regex, (found, prefix, libname: string, suffix) => {
-    // eslint-disable-next-line no-null/no-null
-    if (moduleMap[libname] === null) {
+    if (commentImportedModules.has(libname)) {
       return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
-    } else if (!moduleMap[libname]) {
-      return found;
-    } else {
-      const depth = path.split(sep).length;
-      const prePath = '../'.repeat(depth - 3); // todo:
-      const resolved = `${prefix}${prePath}${moduleMap[libname]}${suffix}`;
-      // console.info(`${path}: ${found} -> ${resolved}`);
-      return resolved;
     }
+    const mappedModulePath = moduleMap[libname];
+    if (!mappedModulePath) {
+      return found;
+    }
+    const depth = path.split(sep).length;
+    const prePath = '../'.repeat(depth - 3); // todo:
+    const resolved = `${prefix}${prePath}${mappedModulePath}${suffix}`;
+    // console.info(`${path}: ${found} -> ${resolved}`);
+    return resolved;
   });
 
 const errIfSrcMissingJsExtensionInImport = (src: string, path: string) => {

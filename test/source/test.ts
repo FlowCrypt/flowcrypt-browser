@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import test from 'ava';
+import test, { Implementation } from 'ava';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -59,7 +59,7 @@ const testWithBrowser = (
   cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>,
   flag?: 'FAILING',
   timeout = consts.TIMEOUT_EACH_RETRY
-) => {
+): Implementation<unknown[]> => {
   return async (t: AvaContext) => {
     const mockApi = isMock ? await startMockApiAndCopyBuild(t) : undefined;
     if (isMock) {
