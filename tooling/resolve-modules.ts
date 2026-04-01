@@ -24,7 +24,7 @@ export interface TSConfig {
 const { compilerOptions } = JSON.parse(readFileSync(tsconfigPath || './tsconfig.json').toString()) as TSConfig;
 const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
-  if (compilerOptions.paths[moduleName].includes('COMMENT')) {
+  if (compilerOptions.paths[moduleName].some((x: string) => x.endsWith('/COMMENT'))) {
     // COMMENT flag, remove such import statements from the code, because they will be imported with script tags for compatibility
     moduleMap[moduleName] = null; // eslint-disable-line no-null/no-null
   } else {

@@ -7,8 +7,10 @@
     "strictNullChecks": true,
     "module": "commonjs",
     "sourceMap": false,
+    "rootDir": "../tooling",
     "outDir": "../build/tooling",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "chrome", "thunderbird-webext-browser"]
   },
   "files": [
     "../tooling/build-types-and-manifests.ts",

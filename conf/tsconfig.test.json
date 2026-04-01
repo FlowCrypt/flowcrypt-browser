@@ -5,12 +5,17 @@
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
+    "strictFunctionTypes": false,
+    "useUnknownInCatchVariables": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "module": "commonjs",
     "sourceMap": true,
+    "rootDir": "..",
     "outDir": "../build/test",
     "skipLibCheck": true,
+    "types": ["node", "chrome", "jquery"],
     "paths": {
       "@openpgp/web-stream-tools": ["../node_modules/@openpgp/web-stream-tools/lib/types/index.d.ts", "../build/generic-extension-wip/lib/streams_common.js"]
     }
