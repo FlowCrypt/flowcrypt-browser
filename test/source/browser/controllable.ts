@@ -45,12 +45,12 @@ abstract class ControllableBase {
   };
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
-    await this.waitAny(`[data-test-state="${state}"]`, { timeout, visible: undefined });
+    await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: undefined });
   };
 
   public waitUntilViewLoaded = async (timeout = TIMEOUT_PAGE_LOAD) => {
     try {
-      await this.waitAny(`[data-test-view-state="loaded"]`, { timeout, visible: undefined });
+      await this.waitAll(`[data-test-view-state="loaded"]`, { timeout, visible: undefined });
     } catch {
       throw new Error(`View didn't load within ${timeout}s at ${this.target.url()}`);
     }
