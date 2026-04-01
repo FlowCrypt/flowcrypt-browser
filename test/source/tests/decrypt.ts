@@ -119,6 +119,33 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - backup key received from a different sender shows warning message`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '19d4781fca9d303d';
+        const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const backupFrame = await inboxPage.getFrame(['backup.htm']);
+        await backupFrame.waitForContent(
+          '@backup-message-text',
+          'This message contains a private key received from sender@domain.com. Import only if you intentionally sent this to yourself or received it from your administrator.'
+        );
+        await inboxPage.close();
+        const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
+        await gmailPage.waitAll('iframe');
+        const backupFrameFromGmailPage = await gmailPage.getFrame(['backup.htm']);
+        await backupFrameFromGmailPage.waitForContent(
+          '@backup-message-text',
+          'This message contains a private key received from sender@domain.com. Import only if you intentionally sent this to yourself or received it from your administrator.'
+        );
+        const importButton = await backupFrameFromGmailPage.waitAny('#action_import_key');
+        expect(await importButton.evaluate((el: Element) => el.textContent?.trim())).to.equal('Import Private Key');
+        await gmailPage.close();
+      })
+    );
+
+    test(
       `decrypt - show remote images`,
       testWithBrowser(async (t, browser) => {
         const threadId = '186bd029856d1e39';
