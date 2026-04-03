@@ -100,7 +100,7 @@ abstract class ControllableBase {
         await this.waitAny(selectors, { timeout: 0 }); // if this fails, that means there are none left: return success
         await Util.sleep(1);
       } catch (e) {
-        if (e.message.indexOf('waiting failed') === 0) {
+        if (e instanceof Error && e.message.startsWith('waiting failed')) {
           return;
         }
       }
@@ -743,7 +743,7 @@ class ConsoleEvent {
 }
 
 export class ControllablePage extends ControllableBase {
-  public target: Page;
+  public declare target: Page;
   public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
   private preventclose = false;
@@ -940,7 +940,7 @@ export class ControllablePage extends ControllableBase {
 }
 
 export class ControllableFrame extends ControllableBase {
-  public target: Frame;
+  public declare target: Frame;
   public frame: Frame;
 
   public constructor(

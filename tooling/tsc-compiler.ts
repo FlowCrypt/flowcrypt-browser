@@ -5,9 +5,6 @@
 import * as path from 'path';
 import * as ts from 'typescript';
 
-import { readFileSync } from 'fs';
-import { TSConfig } from './resolve-modules';
-
 let tsconfigAbsPath: string | undefined;
 for (let i = 0; i < process.argv.length; i++) {
   if (process.argv[i] === '-p' || process.argv[i] === '--project') {
@@ -99,24 +96,19 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
  * Compile using the transformer above
  */
 const compile = (): void => {
-  const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath).toString()) as TSConfig;
-  const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
-  printErrsAndExitIfPresent(errors);
-  const compilerHost = ts.createCompilerHost(options);
-  const extensions = ['.ts', '.tsx', '.d.ts'];
-  if (options.allowJs) {
-    extensions.push('.js');
+  const configFile = ts.readConfigFile(tsconfigAbsPath, path => ts.sys.readFile(path));
+  if (configFile.error) {
+    printErrsAndExitIfPresent([configFile.error]);
   }
-  const fileList = files?.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, extensions, exclude, include); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, tsconfigAbsDir);
+  printErrsAndExitIfPresent(parsedConfig.errors.filter(e => e.category === ts.DiagnosticCategory.Error));
+  const compilerHost = ts.createCompilerHost(parsedConfig.options);
+  const fileList = parsedConfig.fileNames;
   if (!fileList.length) {
-    console.error(
-      `fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join(
-        '\n'
-      )}`
-    );
+    console.error(`fileList empty for ${tsconfigAbsPath}`);
     process.exit(1);
   }
-  const program = ts.createProgram(fileList, options, compilerHost);
+  const program = ts.createProgram(fileList, parsedConfig.options, compilerHost);
   const emitResult = program.emit(undefined, undefined, undefined, undefined, {
     before: [preserveAsyncStackTracesTransformerFactory()],
   });
