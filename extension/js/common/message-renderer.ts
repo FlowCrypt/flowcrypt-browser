@@ -282,7 +282,7 @@ export class MessageRenderer {
         renderedXssSafe += frameXssSafe; // xss-safe-value
         blocksInFrames[frameId] = block;
       } else {
-        renderedXssSafe += XssSafeFactory.renderableMsgBlock(this.factory, block, isOutgoing); // xss-safe-factory
+        renderedXssSafe += XssSafeFactory.renderableMsgBlock(this.factory, block, isOutgoing, senderEmail); // xss-safe-factory
       }
     }
     return { renderedXssSafe, isOutgoing, blocksInFrames }; // xss-safe-value
