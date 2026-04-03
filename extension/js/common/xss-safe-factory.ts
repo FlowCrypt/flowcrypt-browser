@@ -60,7 +60,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean, senderEmail?: string) => {
     if (block.type === 'plainText') {
       return XssSafeFactory.renderPlainContent(block.content);
     } else if (block.type === 'plainHtml') {
@@ -68,7 +68,7 @@ export class XssSafeFactory {
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(PgpArmor.normalize(Str.with(block.content), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'));
+      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'), senderEmail);
     } else if (block.type === 'certificate') {
       return factory.embeddedPubkey(Str.with(block.content), isOutgoing);
     } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
