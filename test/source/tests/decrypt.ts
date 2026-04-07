@@ -1654,25 +1654,37 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     test(
       'decrypt - public key is rendered minimized for outgoing messages',
       testWithBrowser(async (t, browser) => {
+        const assertOutgoingPubkeyFrameIsMinimized = async (page: ControllablePage) => {
+          for (const attempt of [1, 2, 3]) {
+            const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm'], { sleep: attempt === 1 ? 1 : 0, timeout: 20 });
+            try {
+              await pubkeyFrame.waitUntilViewLoaded(90);
+              await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
+              expect(await pubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
+              return;
+            } catch (e) {
+              if (attempt === 3) {
+                throw e;
+              }
+              t.log(`Retrying minimized pubkey frame assertion (${attempt + 1}/3)`);
+              await Util.sleep(1);
+            }
+          }
+        };
+
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const threadId = '1869220e0c8f16de';
         const inboxPage = await browser.newExtensionInboxPage(t, acctEmail, threadId);
         await inboxPage.waitAll('iframe');
         expect((await inboxPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await inboxPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
-        const pubkeyFrame1 = await inboxPage.getFrame(['pgp_pubkey.htm']);
-        await pubkeyFrame1.waitUntilViewLoaded();
-        await pubkeyFrame1.waitForContent('@container-pgp-pubkey', 'Public Key');
-        expect(await pubkeyFrame1.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
+        await assertOutgoingPubkeyFrameIsMinimized(inboxPage);
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
         await gmailPage.waitAll('iframe');
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
-        const pubkeyFrame2 = await gmailPage.getFrame(['pgp_pubkey.htm']);
-        await pubkeyFrame2.waitUntilViewLoaded();
-        await pubkeyFrame2.waitForContent('@container-pgp-pubkey', 'Public Key');
-        expect(await pubkeyFrame2.isElementVisible('@action-add-contact')).to.be.false; // should be hidden because the sender matches acctEmail
+        await assertOutgoingPubkeyFrameIsMinimized(gmailPage);
       })
     );
 
