@@ -12,6 +12,7 @@ export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type PromiseCancellation = { cancel: boolean };
 export type EmailParts = { email: string; name?: string };
+export type ParsedEmail = { email: string | undefined; name: string | undefined; full: string };
 
 export const CID_PATTERN = /^cid:(.+)/;
 
@@ -88,7 +89,7 @@ export class Str {
   public static readonly ltrChars = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02B8\u0370-\u0590\u0800-\u1FFF\u2C00-\uFB1C\uFDFE-\uFE6F\uFEFD-\uFFFF';
   public static readonly rtlChars = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
 
-  public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
+  public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE'): ParsedEmail => {
     let email: string | undefined;
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {

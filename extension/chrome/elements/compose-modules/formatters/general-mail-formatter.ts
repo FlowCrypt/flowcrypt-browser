@@ -97,7 +97,7 @@ export class GeneralMailFormatter {
       // This is important to consider when an email address with a email tag is present on the
       // signingKey, as technically it is the same email.
       const baseSenderEmail = senderEmail.includes('+') ? senderEmail.replace(/(.+)(?=\+).*(?=@)/, '$1') : senderEmail;
-      return signingKey.emails.some(email => email.includes(baseSenderEmail));
+      return signingKey.users.some(u => u.email?.includes(baseSenderEmail));
     }
     return true;
   };

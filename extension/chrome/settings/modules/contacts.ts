@@ -181,7 +181,7 @@ View.run(
         [
           `Type: ${key.family}`,
           `Fingerprint: ${Str.spaced(key.id || 'none')}`,
-          `Users: ${key.emails?.join(', ')}`,
+          `Users: ${key.users?.map(u => u.full).join(', ')}`,
           `Created on: ${key.created ? new Date(key.created) : ''}`,
           `Expiration: ${key.expiration ? new Date(key.expiration) : 'Does not expire'}`,
           `Last signature: ${key.lastModified ? new Date(key.lastModified) : ''}`,

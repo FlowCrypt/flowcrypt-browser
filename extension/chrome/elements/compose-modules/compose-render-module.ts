@@ -436,17 +436,17 @@ export class ComposeRenderModule extends ViewModule<ComposeView> {
         return; // key is invalid
       }
       const key = await KeyUtil.parse(normalizedPub);
-      if (!key.emails.length) {
-        // no users is not desired
+      const firstUserWithEmail = key.users.find(u => u.email);
+      if (!firstUserWithEmail?.email) {
         await Ui.modal.warning(`There are no email addresses listed in this Public Key - don't know who this key belongs to.`);
         return;
       }
-      await ContactStore.update(undefined, key.emails[0], {
-        name: Str.parseEmail(key.identities[0]).name,
+      await ContactStore.update(undefined, firstUserWithEmail.email, {
+        name: firstUserWithEmail.name,
         pubkey: normalizedPub,
         pubkeyLastCheck: Date.now(),
       });
-      this.view.S.cached('input_to').val(key.emails[0]);
+      this.view.S.cached('input_to').val(firstUserWithEmail.email);
       await this.view.recipientsModule.parseRenderRecipients(this.view.S.cached('input_to'));
     }
   };

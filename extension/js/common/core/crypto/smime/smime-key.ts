@@ -1,6 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 import { Key, UnexpectedKeyTypeError } from '../key.js';
-import { Str } from '../../common.js';
+import { ParsedEmail, Str } from '../../common.js';
 import { UnreportableError } from '../../../platform/error-report.js';
 import { PgpArmor } from '../pgp/pgp-armor.js';
 import { Buf } from '../../buf.js';
@@ -242,23 +242,24 @@ export class SmimeKey {
     return parsed.filter((c, i) => !parsed.some((other, j) => j !== i && other.certificate.isIssuer(c.certificate)));
   }
 
-  private static getNormalizedEmailsFromCertificate(certificate: forge.pki.Certificate): string[] {
+  private static getUsersFromCertificate(certificate: forge.pki.Certificate): ParsedEmail[] {
     const emailFromSubject = (certificate.subject.getField('CN') as { value: string }).value;
-    const normalizedEmail = Str.parseEmail(emailFromSubject).email;
-    const emails = normalizedEmail ? [normalizedEmail] : [];
+    const parsedSubject = Str.parseEmail(emailFromSubject);
+    const users: ParsedEmail[] = parsedSubject.email ? [parsedSubject] : [];
     // search for e-mails in subjectAltName extension
     const subjectAltName = certificate.getExtension('subjectAltName') as {
       altNames: { type: number; value: string }[];
     };
     if (subjectAltName?.altNames) {
-      const emailsFromAltNames = subjectAltName.altNames
-        .filter(entry => entry.type === 1)
-        .map(entry => Str.parseEmail(entry.value).email)
-        .filter(Boolean);
-      emails.push(...(emailsFromAltNames as string[]));
+      for (const entry of subjectAltName.altNames.filter(e => e.type === 1)) {
+        const parsed = Str.parseEmail(entry.value);
+        if (parsed.email && !users.some(u => u.email === parsed.email)) {
+          users.push(parsed);
+        }
+      }
     }
-    if (emails.length) {
-      return emails.filter((value, index, self) => self.indexOf(value) === index);
+    if (users.length) {
+      return users;
     }
     throw new UnreportableError(`This S/MIME x.509 certificate has an invalid recipient email: ${emailFromSubject}`);
   }
@@ -282,7 +283,7 @@ export class SmimeKey {
       }
     }
     const fingerprint = this.forge.pki.getPublicKeyFingerprint(certificate.publicKey, { encoding: 'hex' }).toUpperCase();
-    const emails = SmimeKey.getNormalizedEmailsFromCertificate(certificate);
+    const users = SmimeKey.getUsersFromCertificate(certificate);
     const issuerAndSerialNumberAsn1 = SmimeKey.createIssuerAndSerialNumberAsn1(
       this.forge.pki.distinguishedNameToAsn1(certificate.issuer),
       certificate.serialNumber
@@ -300,8 +301,7 @@ export class SmimeKey {
       usableForSigning: usableIgnoringExpiration && !expired,
       usableForEncryptionButExpired: usableIgnoringExpiration && expired,
       usableForSigningButExpired: usableIgnoringExpiration && expired,
-      emails,
-      identities: emails,
+      users,
       created: SmimeKey.dateToNumber(certificate.validity.notBefore),
       lastModified: SmimeKey.dateToNumber(certificate.validity.notBefore),
       expiration,

@@ -1301,8 +1301,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const newPubkey = (newContact.sortedPubkeys as PubkeyInfoWithLastCheck[])[0].pubkey;
         expect(newPubkey.lastModified).to.equal(1689250647000);
         // we now have two uids
-        expect(newPubkey.identities).to.eql(['Additional Name <flowcrypt.test@example.com>', 'flowcrypt.test.key.multiple@gmail.com']);
-        expect(newPubkey.emails).to.eql(['flowcrypt.test@example.com', 'flowcrypt.test.key.multiple@gmail.com']);
+        expect(newPubkey.users.map(u => u.full)).to.eql(['Additional Name <flowcrypt.test@example.com>', 'flowcrypt.test.key.multiple@gmail.com']);
+        expect(newPubkey.users.map(u => u.email)).to.eql(['flowcrypt.test@example.com', 'flowcrypt.test.key.multiple@gmail.com']);
         await settingsPage.close();
         await dbPage.close();
       })

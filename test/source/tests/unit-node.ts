@@ -436,10 +436,10 @@ qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
       expect(key.usableForSigning).to.equal(true);
       expect(key.usableForEncryptionButExpired).to.equal(false);
       expect(key.usableForSigningButExpired).to.equal(false);
-      expect(key.emails.length).to.equal(1);
-      expect(key.emails[0]).to.equal('smime@recipient.com');
-      expect(key.identities.length).to.equal(1);
-      expect(key.identities[0]).to.equal('smime@recipient.com');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].email).to.equal('smime@recipient.com');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].full).to.equal('smime@recipient.com');
       expect(key.isPublic).to.equal(true);
       expect(key.isPrivate).to.equal(false);
       expect(key.expiration).to.not.equal(undefined);
@@ -573,10 +573,10 @@ sOLAw7KgpiL2+0v777saxSO5vtufJCKk4OOEaVDufeijlejKTM+H7twVer4iGqiW
       expect(key.usableForEncryptionButExpired).equal(true);
       expect(key.missingPrivateKeyForDecryption).to.equal(false);
       expect(key.missingPrivateKeyForSigning).to.equal(false);
-      expect(key.emails.length).to.equal(1);
-      expect(key.emails[0]).to.equal('flowcrypt@metacode.biz');
-      expect(key.identities.length).to.equal(1);
-      expect(key.identities[0]).to.equal('Testing <flowcrypt@metacode.biz>');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].email).to.equal('flowcrypt@metacode.biz');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].full).to.equal('Testing <flowcrypt@metacode.biz>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
       expect(key.expiration).to.equal(63074017000);
@@ -648,10 +648,10 @@ cmKFmmDYm+rrWuAv6Q==
       expect(key.usableForSigningButExpired).equal(false);
       expect(key.missingPrivateKeyForDecryption).to.equal(false);
       expect(key.missingPrivateKeyForSigning).to.equal(false);
-      expect(key.emails.length).to.equal(1);
-      expect(key.emails[0]).to.equal('expiration_100years@test.com');
-      expect(key.identities.length).to.equal(1);
-      expect(key.identities[0]).to.equal('Testing <expiration_100years@test.com>');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].email).to.equal('expiration_100years@test.com');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].full).to.equal('Testing <expiration_100years@test.com>');
       expect(key.isPublic).equal(false);
       expect(key.isPrivate).equal(true);
       expect(key.expiration).to.equal(4773398996000);
@@ -1045,8 +1045,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 9Q==
 -----END CERTIFICATE-----`;
       const key = await KeyUtil.parse(pem);
-      expect(key.emails.length).to.equal(1);
-      expect(key.emails[0]).to.equal('email@embedded.in.subj.alt.name');
+      expect(key.users.length).to.equal(1);
+      expect(key.users[0].email).to.equal('email@embedded.in.subj.alt.name');
       t.pass();
     });
 
@@ -1353,10 +1353,10 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
         0
       );
       const pub = await KeyUtil.parse(key.public);
-      expect(pub.emails[0]).to.equal('key1@test.com');
-      expect(pub.identities[0]).to.equal('Key1 <key1@test.com>');
-      expect(pub.emails[1]).to.equal('key2@test.com');
-      expect(pub.identities[1]).to.equal('Key2 <key2@test.com>');
+      expect(pub.users[0].email).to.equal('key1@test.com');
+      expect(pub.users[0].full).to.equal('Key1 <key1@test.com>');
+      expect(pub.users[1].email).to.equal('key2@test.com');
+      expect(pub.users[1].full).to.equal('Key2 <key2@test.com>');
       t.pass();
     });
 
@@ -1467,10 +1467,10 @@ qykKoFAFwEoCtcZ3snFuWp8BAIzRBYJSfZzlvlyyPhrbXJoYSICGNy/5x7noXjp/
 ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
 =eyAR
 -----END PGP PRIVATE KEY BLOCK-----`);
-      expect(key.identities).to.have.length(1);
-      expect(key.identities).to.eql(['first@mock.test']);
-      expect(key.emails).to.have.length(1);
-      expect(key.emails).to.eql(['first@mock.test']);
+      expect(key.users).to.have.length(1);
+      expect(key.users.map(u => u.full)).to.eql(['first@mock.test']);
+      expect(key.users).to.have.length(1);
+      expect(key.users.map(u => u.email)).to.eql(['first@mock.test']);
       const result = await KeyUtil.diagnose(key, '');
       expect(result.get('Primary User')).to.equal('first@mock.test');
       expect(result.get('User id 0')).to.equal('* REVOKED, INVALID OR MISSING SIGNATURE * <user@example.com>');
@@ -2388,8 +2388,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       expect(parsed.length).to.be.equal(1);
       expect(parsed[0].id).to.be.equal('60EFFE4DF7B2114A77021459C273F0AA864AFF7F');
       expect(parsed[0].family).to.be.equal('x509');
-      expect(parsed[0].emails.length).to.be.equal(1);
-      expect(parsed[0].emails[0]).to.be.equal('test@example.com');
+      expect(parsed[0].users.length).to.be.equal(1);
+      expect(parsed[0].users[0].email).to.be.equal('test@example.com');
       expect(parsed[0].isPrivate).to.be.equal(true);
       expect(parsed[0].isPublic).to.be.equal(false);
       t.pass();
@@ -2400,8 +2400,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
-      expect(parsed.emails.length).to.equal(1);
-      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.users.length).to.equal(1);
+      expect(parsed.users[0].email).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(false);
@@ -2419,8 +2419,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       parsed = await KeyUtil.parse(armoredAfterDecryption);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
-      expect(parsed.emails.length).to.equal(1);
-      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.users.length).to.equal(1);
+      expect(parsed.users[0].email).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(true);
@@ -2432,8 +2432,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
-      expect(parsed.emails.length).to.equal(1);
-      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.users.length).to.equal(1);
+      expect(parsed.users[0].email).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(false);
@@ -2451,8 +2451,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       parsed = await KeyUtil.parse(armoredAfterDecryption);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
-      expect(parsed.emails.length).to.equal(1);
-      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.users.length).to.equal(1);
+      expect(parsed.users[0].email).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(true);
@@ -2464,8 +2464,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       let parsed = await KeyUtil.parse(p8);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
-      expect(parsed.emails.length).to.equal(1);
-      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.users.length).to.equal(1);
+      expect(parsed.users[0].email).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(true);
@@ -2480,8 +2480,8 @@ PBcqDCjq5jgMhU1oyVclRK7jJdmu0Azvwo2lleLAFLdCzHEXWXUz
       parsed = await KeyUtil.parse(armoredAfterEncryption);
       expect(parsed.id).to.equal('9B5FCFF576A032495AFE77805354351B39AB3BC6');
       expect(parsed.family).to.equal('x509');
-      expect(parsed.emails.length).to.equal(1);
-      expect(parsed.emails[0]).to.equal('human@flowcrypt.com');
+      expect(parsed.users.length).to.equal(1);
+      expect(parsed.users[0].email).to.equal('human@flowcrypt.com');
       expect(parsed.isPrivate).to.equal(true);
       expect(parsed.isPublic).to.equal(false);
       expect(parsed.fullyDecrypted).to.equal(false);
@@ -2690,19 +2690,19 @@ oYO0H2wzxUfJQIcXL8HfNs70eXJwD7U9F6gnIeUKA8+1NsQMgQE=
 =hLUh
 -----END PGP PUBLIC KEY BLOCK-----`;
       const pubKey = await KeyUtil.parse(armoredPublicKey);
-      expect(pubKey.identities.length).to.equal(2);
-      expect(pubKey.identities[0]).to.equal('First <first@example.com>');
-      expect(pubKey.identities[1]).to.equal('Second <second@example.com>');
-      expect(pubKey.emails.length).to.equal(2);
-      expect(pubKey.emails[0]).to.equal('first@example.com');
-      expect(pubKey.emails[1]).to.equal('second@example.com');
+      expect(pubKey.users.length).to.equal(2);
+      expect(pubKey.users[0].full).to.equal('First <first@example.com>');
+      expect(pubKey.users[1].full).to.equal('Second <second@example.com>');
+      expect(pubKey.users.length).to.equal(2);
+      expect(pubKey.users[0].email).to.equal('first@example.com');
+      expect(pubKey.users[1].email).to.equal('second@example.com');
       const prvKey = await KeyUtil.parse(armoredPrivateKey);
-      expect(prvKey.identities.length).to.equal(2);
-      expect(prvKey.identities[0]).to.equal('First <first@example.com>');
-      expect(prvKey.identities[1]).to.equal('Second <second@example.com>');
-      expect(prvKey.emails.length).to.equal(2);
-      expect(prvKey.emails[0]).to.equal('first@example.com');
-      expect(prvKey.emails[1]).to.equal('second@example.com');
+      expect(prvKey.users.length).to.equal(2);
+      expect(prvKey.users[0].full).to.equal('First <first@example.com>');
+      expect(prvKey.users[1].full).to.equal('Second <second@example.com>');
+      expect(prvKey.users.length).to.equal(2);
+      expect(prvKey.users[0].email).to.equal('first@example.com');
+      expect(prvKey.users[1].email).to.equal('second@example.com');
       t.pass();
     });
 

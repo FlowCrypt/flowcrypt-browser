@@ -2620,7 +2620,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             },
           },
         });
-        expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).emails.length).to.equals(3);
+        expect((await KeyUtil.parse(testConstants.keyMultiAliasedUser)).users.length).to.equals(3);
         const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acct);
         await SetupPageRecipe.manualEnter(
           settingsPage,
