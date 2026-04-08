@@ -58,11 +58,13 @@ View.run(
         const notUserOwnedPrvKey = this.fromEmail !== this.acctEmail;
         const recommendation = notUserOwnedPrvKey ? '' : 'We recommend importing all backups to ensure you can read all incoming encrypted emails.';
         if (notUserOwnedPrvKey) {
-          $('.backup_message_text').text(
-            'This message contains a private key received from ' +
-              this.fromEmail +
-              '. Import only if you intentionally sent this to yourself or received it from your administrator.'
-          );
+          if (notUserOwnedPrvKey) {
+            $('.backup_message_text')
+              .html(
+                `⚠️ This message contains a private key received from ${Xss.escape(this.fromEmail)}. Import only if you intentionally sent this to yourself or received it from your administrator.`
+              )
+              .addClass('orange_label'); // xss-safe-value
+          }
         }
         $('.line .private_key_status')
           .html(`The private key <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has not been imported yet. \n` + recommendation) // xss-safe-value

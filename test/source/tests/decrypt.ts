@@ -129,7 +129,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const backupFrame = await inboxPage.getFrame(['backup.htm']);
         await backupFrame.waitForContent(
           '@backup-message-text',
-          'This message contains a private key received from sender@domain.com. Import only if you intentionally sent this to yourself or received it from your administrator.'
+          '⚠️ THIS MESSAGE CONTAINS A PRIVATE KEY RECEIVED FROM SENDER@DOMAIN.COM. IMPORT ONLY IF YOU INTENTIONALLY SENT THIS TO YOURSELF OR RECEIVED IT FROM YOUR ADMINISTRATOR.'
         );
         await inboxPage.close();
         const gmailPage = await browser.newPage(t, `${t.context.urls?.mockGmailUrl()}/${threadId}`, undefined, authHdr);
@@ -137,7 +137,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         const backupFrameFromGmailPage = await gmailPage.getFrame(['backup.htm']);
         await backupFrameFromGmailPage.waitForContent(
           '@backup-message-text',
-          'This message contains a private key received from sender@domain.com. Import only if you intentionally sent this to yourself or received it from your administrator.'
+          '⚠️ THIS MESSAGE CONTAINS A PRIVATE KEY RECEIVED FROM SENDER@DOMAIN.COM. IMPORT ONLY IF YOU INTENTIONALLY SENT THIS TO YOURSELF OR RECEIVED IT FROM YOUR ADMINISTRATOR.'
         );
         const importButton = await backupFrameFromGmailPage.waitAny('#action_import_key');
         expect(await importButton.evaluate((el: Element) => el.textContent?.trim())).to.equal('Import Private Key');

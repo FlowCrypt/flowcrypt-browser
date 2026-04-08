@@ -1469,6 +1469,12 @@ td {
   min-height: 50px;
 }
 
+#backup_block .backup_message_text {
+  font-weight: 500 !important;
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
 #pgp_block div.error {
   margin-bottom: 30px;
   margin-left: 12px;
