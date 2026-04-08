@@ -20,7 +20,7 @@ import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
-import { ParsedEmail, Str } from '../core/common';
+import { Str } from '../core/common';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password';
 
 use(chaiAsPromised);
@@ -1468,9 +1468,9 @@ ByeOAQDnTbQi4XwXJrU4A8Nl9eyz16ZWUzEPwfWgahIG1eQDDA==
 =eyAR
 -----END PGP PRIVATE KEY BLOCK-----`);
       expect(key.users).to.have.length(1);
-      expect(key.users.map((u: ParsedEmail) => u.full)).to.eql(['first@mock.test']);
+      expect(key.users.map(u => u.full)).to.eql(['first@mock.test']);
       expect(key.users).to.have.length(1);
-      expect(key.users.map((u: ParsedEmail) => u.email)).to.eql(['first@mock.test']);
+      expect(key.users.map(u => u.email)).to.eql(['first@mock.test']);
       const result = await KeyUtil.diagnose(key, '');
       expect(result.get('Primary User')).to.equal('first@mock.test');
       expect(result.get('User id 0')).to.equal('* REVOKED, INVALID OR MISSING SIGNATURE * <user@example.com>');
