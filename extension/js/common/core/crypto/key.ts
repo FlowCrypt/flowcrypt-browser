@@ -461,6 +461,10 @@ export class KeyUtil {
     return SmimeKey.getKeyLongid(pubkey);
   }
 
+  public static getPrimaryEmail(key: Key): string | undefined {
+    return key.users.find(user => user.email)?.email;
+  }
+
   public static getKeyInfoLongids(ki: KeyInfoWithIdentityAndOptionalPp): string[] {
     if (ki.family !== 'x509') {
       return ki.fingerprints.map(fp => OpenPGPKey.fingerprintToLongid(fp));

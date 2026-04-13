@@ -77,7 +77,7 @@ View.run(
         } else {
           let emailText = '';
           if (this.parsedPublicKeys.length === 1) {
-            const email = this.firstParsedPublicKey.users.find(u => u.email)?.email;
+            const email = KeyUtil.getPrimaryEmail(this.firstParsedPublicKey);
             if (email) {
               emailText = email;
               $('.input_email').val(email); // checked above
@@ -90,7 +90,7 @@ View.run(
               Xss.escape(
                 ' for ' +
                   this.parsedPublicKeys
-                    .map(pub => pub.users.find(u => u.email)?.email)
+                    .map(pub => KeyUtil.getPrimaryEmail(pub))
                     .filter(e => !!e)
                     .join(', ')
               )
@@ -193,7 +193,7 @@ View.run(
       $('.error_introduce_label').html(`This OpenPGP key is not usable.<br/><small>(${await this.getErrorText()})</small>`); // xss-escaped
       $('.hide_if_error').hide();
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
-      const email = this.firstParsedPublicKey?.users.find(u => u.email)?.email;
+      const email = this.firstParsedPublicKey ? KeyUtil.getPrimaryEmail(this.firstParsedPublicKey) : undefined;
       if (email) {
         $('.error_container .input_error_email').val(email);
       } else {
@@ -208,7 +208,7 @@ View.run(
         const emails = new Set<string>();
         for (const pubkey of this.parsedPublicKeys!) {
           /* eslint-enable @typescript-eslint/no-non-null-assertion */
-          const email = pubkey.users.find(u => u.email)?.email;
+          const email = KeyUtil.getPrimaryEmail(pubkey);
           if (email) {
             await ContactStore.update(undefined, email, { pubkey: KeyUtil.armor(pubkey) });
             emails.add(email);
