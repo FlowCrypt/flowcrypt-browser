@@ -12,6 +12,7 @@ import { View } from '../../js/common/view.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase-ui.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 
 View.run(
   class BackupView extends View {
@@ -19,7 +20,7 @@ View.run(
     private readonly parentTabId: string;
     private readonly frameId: string;
     private readonly armoredPrvBackup: string;
-    private readonly fromEmail: string;
+    private readonly fromEmail?: string;
     private storedPrvWithMatchingLongid: KeyInfoWithIdentity | undefined;
 
     public constructor() {
@@ -29,7 +30,7 @@ View.run(
       this.parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
       this.frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
       this.armoredPrvBackup = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPrvBackup');
-      this.fromEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'fromEmail');
+      this.fromEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'fromEmail');
     }
 
     public render = async () => {
@@ -55,16 +56,16 @@ View.run(
           `This private key with fingerprint <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has already been imported.`
         );
       } else {
-        const notUserOwnedPrvKey = this.fromEmail !== this.acctEmail;
+        const { sendAs } = await AcctStore.get(this.acctEmail, ['sendAs']);
+        const sendAliases = new Set(sendAs ? Object.keys(sendAs) : []);
+        const notUserOwnedPrvKey = !!this.fromEmail && this.fromEmail !== this.acctEmail && !sendAliases.has(this.fromEmail);
         const recommendation = notUserOwnedPrvKey ? '' : 'We recommend importing all backups to ensure you can read all incoming encrypted emails.';
         if (notUserOwnedPrvKey) {
-          if (notUserOwnedPrvKey) {
-            $('.backup_message_text')
-              .html(
-                `⚠️ This message contains a private key received from ${Xss.escape(this.fromEmail)}. Import only if you intentionally sent this to yourself or received it from your administrator.`
-              )
-              .addClass('orange_label'); // xss-safe-value
-          }
+          $('.backup_message_text')
+            .html(
+              `⚠️ This message contains a private key received from ${Xss.escape(this.fromEmail || 'an unknown sender')}. Import only if you intentionally sent this to yourself or received it from your administrator.`
+            )
+            .addClass('orange_label'); // xss-safe-value
         }
         $('.line .private_key_status')
           .html(`The private key <span class="green">${Xss.escape(Str.spaced(fingerprint))}</span> has not been imported yet. \n` + recommendation) // xss-safe-value
