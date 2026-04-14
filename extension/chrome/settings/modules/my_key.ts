@@ -49,7 +49,8 @@ View.run(
       $('.action_view_user_ids').attr('href', this.myKeyUserIdsUrl);
       $('.action_view_update').attr('href', this.myKeyUpdateUrl);
       $('.fingerprint').text(Str.spaced(this.keyInfo.fingerprints[0]));
-      Xss.sanitizeRender('.email', this.pubKey.emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
+      const emails = this.pubKey.users.map(u => u.email).filter((e): e is string => !!e);
+      Xss.sanitizeRender('.email', emails.map(email => `<span>${Xss.escape(email)}</span>`).join(', '));
       const expiration = this.pubKey.expiration;
       const creation = Str.datetimeToDate(Str.fromDate(new Date(this.pubKey.created)));
       Xss.sanitizeRender('.key_status_contatiner', KeyUtil.statusHtml(this.keyInfo.longid, this.pubKey));

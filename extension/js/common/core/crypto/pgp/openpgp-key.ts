@@ -2,7 +2,7 @@
 import { Key, PrvPacket, KeyAlgo, KeyUtil, UnexpectedKeyTypeError, PubkeyInfo } from '../key.js';
 import { OpenPGPDataType, opgp } from './openpgpjs-custom.js';
 import { Catch } from '../../../platform/catch.js';
-import { Str, Value } from '../../common.js';
+import { ParsedEmail, Str, Value } from '../../common.js';
 import { Buf } from '../../buf.js';
 import type * as OpenPGP from 'openpgp';
 import { PgpMsgMethod, VerifyRes } from './msg-util.js';
@@ -188,7 +188,7 @@ export class OpenPGPKey {
    *    is done on the original supplied object.
    */
   public static convertExternalLibraryObjToKey = async (opgpKey: OpenPGP.Key, keyToUpdate?: Key): Promise<Key> => {
-    const { identities, emails } = await OpenPGPKey.getSortedUserids(opgpKey);
+    const users = await OpenPGPKey.getSortedUserids(opgpKey);
     let lastModified: undefined | number;
     try {
       lastModified = await OpenPGPKey.getLastSigTime(opgpKey);
@@ -221,10 +221,7 @@ export class OpenPGPKey {
       usableForSigningButExpired: !signingKey && !!signingKeyIgnoringExpiration,
       missingPrivateKeyForSigning,
       missingPrivateKeyForDecryption,
-      // valid emails extracted from uids
-      emails,
-      // full uids that have valid emails in them
-      identities,
+      users,
       lastModified,
       expiration,
       created: opgpKey.getCreationTime().getTime(),
@@ -541,28 +538,25 @@ export class OpenPGPKey {
     return expirationTime instanceof Date ? expirationTime : undefined; // we don't differ between Infinity and null
   }
 
-  private static async getSortedUserids(key: OpenPGP.Key) {
+  private static async getSortedUserids(key: OpenPGP.Key): Promise<ParsedEmail[]> {
     const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
     // if there is no good enough user id to serve as primary identity, we assume other user ids are even worse
     if (primaryUser?.user?.userID?.userID) {
       const primaryUserId = primaryUser.user.userID.userID;
-      const identities = [
+      const rawIdentities = [
         primaryUserId, // put the "primary" identity first
         // other identities go in indeterministic order
         ...Value.arr.unique((await key.verifyAllUsers()).filter(x => x.valid && x.userID !== primaryUserId).map(x => x.userID)),
       ];
-      const emails = identities
-        .filter(userId => !!userId)
-        .map(userid => Str.parseEmail(userid).email)
-        .filter(Boolean);
-      if (emails.length === identities.length || !key.isPrivate()) {
-        // OpenPGP.js uses RFC 5322 `email-addresses` parser, so we expect all identities to contain a valid e-mail address
-        // Return empty emails and identities is a way to later throw KeyCanBeFixed exception, allowing the user to reformat the key
+      const users = rawIdentities.filter(uid => !!uid).map(uid => Str.parseEmail(uid));
+      if ((users.length === rawIdentities.length && users.every(u => u.email)) || !key.isPrivate()) {
+        // OpenPGP.js uses RFC 5322 `email-addresses` parser, so we expect all identities to contain a valid e-mail address.
+        // Returning empty users is a way to later throw KeyCanBeFixed exception, allowing the user to reformat the key
         // (e.g. adding signature for UserIDs etc.) But this makes sense for private keys only.
-        return { emails, identities };
+        return users;
       }
     }
-    return { emails: [], identities: [] };
+    return [];
   }
 
   // mimicks OpenPGP.helper.getLatestValidSignature

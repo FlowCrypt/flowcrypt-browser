@@ -115,7 +115,7 @@ View.run(
         KeyImportUi.allowReselect();
         if (typeof updatedKey === 'undefined') {
           await Ui.modal.warning(Lang.setup.keyFormattedWell(this.prvHeaders.begin, String(this.prvHeaders.end)), Ui.getTestCompatibilityLink(this.acctEmail));
-        } else if (updatedKeyEncrypted.identities.length === 0) {
+        } else if (updatedKeyEncrypted.users.length === 0) {
           throw new KeyCanBeFixed(updatedKeyEncrypted);
         } else if (updatedKey.isPublic) {
           await Ui.modal.warning(

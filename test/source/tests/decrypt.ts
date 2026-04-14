@@ -1684,6 +1684,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await gmailPage.waitAll('iframe');
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
+        await Util.sleep(2);
         await assertOutgoingPubkeyFrameIsMinimized(gmailPage);
       })
     );

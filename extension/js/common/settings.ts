@@ -214,7 +214,7 @@ export class Settings {
     passphrase: string,
     backUrl: string
   ): Promise<Key> {
-    const uids = origPrv.identities;
+    const uids = origPrv.users.map(u => u.full);
     if (!uids.length) {
       uids.push(acctEmail);
     }

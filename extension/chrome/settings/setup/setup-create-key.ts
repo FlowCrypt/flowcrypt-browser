@@ -44,7 +44,10 @@ export class SetupCreateKeyModule {
         const adminPubkey = this.view.clientConfiguration.getPublicKeyForPrivateKeyBackupToDesignatedMailbox();
         if (adminPubkey) {
           const msgEncryptionKey = await KeyUtil.parse(adminPubkey);
-          const destinationEmail = msgEncryptionKey.emails[0];
+          const destinationEmail = KeyUtil.getPrimaryEmail(msgEncryptionKey);
+          if (!destinationEmail) {
+            throw new Error('Admin public key does not have an email address');
+          }
           try {
             const privateKey = await KeyStore.get(this.view.acctEmail);
             const primaryKeyId = privateKey[0].id;

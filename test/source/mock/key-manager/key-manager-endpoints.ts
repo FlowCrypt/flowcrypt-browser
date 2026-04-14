@@ -45,9 +45,9 @@ export const getMockKeyManagerEndpoints = (oauth: OauthMock, config: KeyManagerC
             const prv = await KeyUtil.parseMany(privateKey);
             expect(prv).to.have.length(1);
             expect(prv[0].algo.bits).to.equal(2048);
-            expect(prv[0].identities).to.have.length(1);
+            expect(prv[0].users).to.have.length(1);
             if (expectation.identity) {
-              expect(prv[0].identities[0]).to.equal(expectation.identity);
+              expect(prv[0].users[0].full).to.equal(expectation.identity);
             }
             expect(prv[0].isPrivate).to.be.true;
             expect(prv[0].fullyDecrypted).to.be.true;

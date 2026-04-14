@@ -537,7 +537,7 @@ View.run(
           removeKeyBtn = `<a href="#" class="action_remove_key" style="margin-left: 5px;" data-test="action-remove-key-${originalIndex}" data-fingerprint=${ki.fingerprints[0]} data-type="${ki.family}" data-id="${ki.id}" data-longid="${ki.longid}">remove</a>`;
         }
 
-        const escapedEmail = Xss.escape(prv.emails[0] || '');
+        const escapedEmail = Xss.escape(KeyUtil.getPrimaryEmail(prv) || '');
         const escapedLink = `<a href="#" data-test="action-show-key-${originalIndex}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
         const fpHtml = `<span class="good" style="font-family: monospace;">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
 

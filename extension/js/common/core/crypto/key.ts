@@ -11,7 +11,7 @@ import { OpenPGPKey } from './pgp/openpgp-key.js';
 import type * as OpenPGP from 'openpgp';
 import { SmimeKey } from './smime/smime-key.js';
 import { MsgBlock } from '../msg-block.js';
-import { EmailParts, Str } from '../common.js';
+import { EmailParts, ParsedEmail, Str } from '../common.js';
 
 /**
  * This is a common Key interface for both OpenPGP and X.509 keys.
@@ -38,8 +38,7 @@ export interface Key extends KeyIdentity {
   usableForSigningButExpired: boolean;
   missingPrivateKeyForSigning: boolean;
   missingPrivateKeyForDecryption: boolean;
-  emails: string[];
-  identities: string[];
+  users: ParsedEmail[];
   fullyDecrypted: boolean;
   fullyEncrypted: boolean;
   isPublic: boolean; // isPublic and isPrivate are mutually exclusive
@@ -122,13 +121,14 @@ export class KeyUtil {
 
   public static filterKeysByTypeAndSenderEmail(keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] {
     let foundKeys: KeyInfoWithIdentity[] = [];
+    const lowerEmail = email.toLowerCase();
     if (type) {
-      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()) && key.family === type);
+      foundKeys = keys.filter(key => key.emails?.includes(lowerEmail) && key.family === type);
       if (!foundKeys.length) {
         foundKeys = keys.filter(key => key.family === type);
       }
     } else {
-      foundKeys = keys.filter(key => key.emails?.includes(email.toLowerCase()));
+      foundKeys = keys.filter(key => key.emails?.includes(lowerEmail));
       if (!foundKeys.length) {
         foundKeys = [...keys];
       }
@@ -440,7 +440,7 @@ export class KeyUtil {
       private: KeyUtil.armor(prv),
       public: KeyUtil.armor(pubkey),
       longid: KeyUtil.getPrimaryLongid(pubkey),
-      emails: prv.emails,
+      emails: prv.users.map(u => u.email).filter((e): e is string => !!e),
       fingerprints: prv.allIds,
       id: prv.id,
       family: prv.family,
@@ -459,6 +459,10 @@ export class KeyUtil {
       return OpenPGPKey.fingerprintToLongid(pubkey.id);
     }
     return SmimeKey.getKeyLongid(pubkey);
+  }
+
+  public static getPrimaryEmail(key: Key): string | undefined {
+    return key.users.find(user => user.email)?.email;
   }
 
   public static getKeyInfoLongids(ki: KeyInfoWithIdentityAndOptionalPp): string[] {
@@ -488,7 +492,7 @@ export class KeyUtil {
 
   public static async parseAndArmorKeys(binaryKeysData: Uint8Array): Promise<ArmoredKeyIdentityWithEmails[]> {
     const { keys } = await KeyUtil.readMany(Buf.fromUint8(binaryKeysData));
-    return keys.map(k => ({ id: k.id, emails: k.emails, armored: KeyUtil.armor(k), family: k.family }));
+    return keys.map(k => ({ id: k.id, emails: k.users.map(u => u.email).filter((e): e is string => !!e), armored: KeyUtil.armor(k), family: k.family }));
   }
 
   public static validateChecksum(armoredText: string): boolean {

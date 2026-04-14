@@ -185,9 +185,10 @@ export class KeyImportUi {
         const prv = await Catch.undefinedOnException(KeyUtil.parse(String($(target).val())));
         if (prv !== undefined) {
           $('.action_add_private_key').removeClass('btn_disabled').removeAttr('disabled');
-          for (const email of prv.emails) {
+          for (const user of prv.users) {
+            if (!user.email) continue;
             for (const inputCheckboxesWithEmail of $('.input_email_alias_submit_pubkey')) {
-              if (String($(inputCheckboxesWithEmail).data('email')) === email) {
+              if (String($(inputCheckboxesWithEmail).data('email')) === user.email) {
                 $(inputCheckboxesWithEmail).prop('checked', true);
               }
             }
@@ -265,7 +266,7 @@ export class KeyImportUi {
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase, contactSubsentence);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted, contactSubsentence);
     await this.checkSigningIfSelected(decrypted, contactSubsentence);
-    if (encrypted.identities.length === 0) {
+    if (encrypted.users.length === 0) {
       throw new KeyCanBeFixed(encrypted);
     }
     // mandatory checks have passed, now display warnings
