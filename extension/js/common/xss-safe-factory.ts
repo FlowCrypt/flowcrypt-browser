@@ -60,7 +60,7 @@ export class XssSafeFactory {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, isOutgoing?: boolean, senderEmail?: string) => {
     if (block.type === 'plainText') {
       return XssSafeFactory.renderPlainContent(block.content);
     } else if (block.type === 'plainHtml') {
@@ -68,7 +68,7 @@ export class XssSafeFactory {
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(PgpArmor.normalize(Str.with(block.content), 'publicKey'), isOutgoing);
     } else if (block.type === 'privateKey') {
-      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'));
+      return factory.embeddedBackup(PgpArmor.normalize(Str.with(block.content), 'privateKey'), senderEmail);
     } else if (block.type === 'certificate') {
       return factory.embeddedPubkey(Str.with(block.content), isOutgoing);
     } else if (['encryptedAttachment', 'plainAttachment'].includes(block.type)) {
@@ -163,8 +163,8 @@ export class XssSafeFactory {
     });
   };
 
-  public srcBackupIframe = (armoredPrvBackup: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPrvBackup });
+  public srcBackupIframe = (armoredPrvBackup: string, fromEmail?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPrvBackup, fromEmail });
   };
 
   public srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
@@ -229,8 +229,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block', 'publicKey']);
   };
 
-  public embeddedBackup = (armoredPrvBackup: string) => {
-    return this.iframe(this.srcBackupIframe(armoredPrvBackup), ['backup_block']);
+  public embeddedBackup = (armoredPrvBackup: string, fromEmail?: string) => {
+    return this.iframe(this.srcBackupIframe(armoredPrvBackup, fromEmail), ['backup_block']);
   };
 
   public embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft = false) => {
