@@ -887,7 +887,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
           }
           if (everyoneUsesEncryption) {
             if (!standardComposeWin.find('.recipients_use_encryption').length) {
-              const prependable = standardComposeWin.find('div.az9 span[email]').first().parents('form').first();
+              const prependable = standardComposeWin.find('div.az9 span[email]').first().parents('.aaZ').first();
               prependable.prepend(this.factory.btnRecipientsUseEncryption('gmail')); // xss-safe-factory
               prependable.find('a').on(
                 'click',
