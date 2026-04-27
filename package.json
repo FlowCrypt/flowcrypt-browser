@@ -6,8 +6,8 @@
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
-    "@openpgp/web-stream-tools": "0.3.0",
-    "@tony.ganchev/eslint-plugin-header": "^3.4.3",
+    "@openpgp/web-stream-tools": "0.3.1",
+    "@tony.ganchev/eslint-plugin-header": "^3.4.4",
     "@types/chai": "5.2.3",
     "@types/chai-as-promised": "8.0.2",
     "@types/chrome": "0.1.40",
@@ -34,10 +34,10 @@
     "pdfjs-dist": "5.6.205",
     "prettier": "^3.8.3",
     "puppeteer": "24.42.0",
-    "stylelint": "17.8.0",
+    "stylelint": "17.9.0",
     "stylelint-config-standard": "40.0.0",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.58.2",
+    "typescript-eslint": "8.59.0",
     "undici-types": "^8.1.0",
     "web-ext": "10.1.0",
     "webpack-cli": "^7.0.2"
@@ -49,7 +49,7 @@
     "@zxcvbn-ts/language-common": "^3.0.4",
     "@zxcvbn-ts/language-en": "^3.0.2",
     "bootstrap": "^5.3.3",
-    "dompurify": "3.4.0",
+    "dompurify": "3.4.1",
     "filesize": "11.0.16",
     "fs-extra": "^11.3.4",
     "globby": "^16.2.0",
