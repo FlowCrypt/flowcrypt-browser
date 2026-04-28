@@ -15,6 +15,10 @@ import { SksConfig, getMockSksEndpoints } from '../sks/sks-endpoints';
 import { getMockCustomerUrlFesEndpoints } from '../fes/customer-url-fes-endpoints';
 import { getMockS3Endpoints } from '../s3/s3-endpoints';
 
+const toError = (e: unknown): Error => {
+  return e instanceof Error ? e : new Error(String(e));
+};
+
 export class HttpAuthErr extends Error {}
 export class HttpClientErr extends Error {
   public constructor(
@@ -163,13 +167,13 @@ export class Api<REQ, RES> {
         });
       } catch (e) {
         console.error('exception when starting mock server', e);
-        reject(e as Error);
+        reject(toError(e));
       }
     });
   };
 
   public close = (): Promise<void> => {
-    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(err as Error) : resolve())));
+    return new Promise((resolve, reject) => this.server.close((err: unknown) => (err ? reject(toError(err)) : resolve())));
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -278,7 +282,7 @@ export class Api<REQ, RES> {
         try {
           resolve(Buffer.concat(body));
         } catch (e) {
-          reject(e as Error);
+          reject(toError(e));
         }
       });
     });

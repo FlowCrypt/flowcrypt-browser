@@ -394,7 +394,7 @@ export class GoogleData {
       id,
       threadId: parseResult.threadId ?? null, // eslint-disable-line no-null/no-null
       historyId: '',
-      labelIds: ['SENT' as GmailMsg$labelId],
+      labelIds: ['SENT'],
       payload: {
         mimeType,
         headers,

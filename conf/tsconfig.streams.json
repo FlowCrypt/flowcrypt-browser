@@ -5,6 +5,8 @@
     "allowJs": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmitOnError": true,
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

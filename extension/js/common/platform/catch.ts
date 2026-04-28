@@ -4,7 +4,7 @@
 
 import type { ExternalService as IExternalService } from '../api/account-servers/external-service.js';
 import { Env } from '../browser/env.js';
-import { Url } from '../core/common.js';
+import { Str, Url } from '../core/common.js';
 import { FLAVOR, VERSION } from '../core/const.js';
 import { CatchHelper } from './catch-helper.js';
 import { ErrorReport, UnreportableError } from './error-report.js';
@@ -49,14 +49,10 @@ export class Catch {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
-    if (typeof e === 'string') {
-      return `[typeof:string] ${e}`;
+    if (typeof e === 'object') {
+      return `[typeof:object:${Object.prototype.toString.call(e)}] ${Str.stringify(e)}`;
     }
-    try {
-      return `[typeof:${typeof e}:${String(e)}] ${JSON.stringify(e)}`;
-    } catch {
-      return `[unstringifiable typeof:${typeof e}:${String(e)}]`;
-    }
+    return `[typeof:${typeof e}] ${Str.stringify(e)}`;
   }
 
   public static hasStack(e: unknown): e is ObjWithStack {
@@ -315,7 +311,7 @@ export class Catch {
   private static formExceptionFromThrown(thrown: unknown, errMsg?: string, url?: string, line?: number, col?: number, isManuallyCalled?: boolean): Error {
     let exception: Error;
     if (typeof thrown !== 'object') {
-      exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${String(thrown as unknown)}`);
+      exception = new Error(`THROWN_NON_OBJECT[${typeof thrown}]: ${Catch.stringify(thrown)}`);
     } else if (errMsg && url && typeof line !== 'undefined' && !col && !thrown && !isManuallyCalled) {
       exception = new Error(`LIMITED_ERROR: ${errMsg}`);
     } else if (thrown instanceof Error) {

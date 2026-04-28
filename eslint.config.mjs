@@ -1,4 +1,5 @@
-// Importing necessary ESLint plugins
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
 import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
 import headerPlugin from '@tony.ganchev/eslint-plugin-header';
@@ -10,13 +11,12 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import pluginJs from '@eslint/js';
 import globals from 'globals';
 
-const mergeConfigs = (configs, key) => configs.reduce((acc, cfg) => ({ ...acc, ...(cfg[key] || {}) }), {});
+const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
+const mergeRules = configs => Object.assign({}, ...configs.map(cfg => cfg.rules));
 const { strictTypeChecked, stylisticTypeChecked } = tseslint.configs;
 
-const strictTypeCheckedPlugins = mergeConfigs(strictTypeChecked, 'plugins');
-const strictTypeCheckedRules = mergeConfigs(strictTypeChecked, 'rules');
-const stylisticPlugins = mergeConfigs(stylisticTypeChecked, 'plugins');
-const stylisticRules = mergeConfigs(stylisticTypeChecked, 'rules');
+const strictTypeCheckedRules = mergeRules(strictTypeChecked);
+const stylisticRules = mergeRules(stylisticTypeChecked);
 
 const jsConfigRules = {
   complexity: 'off',
@@ -66,27 +66,32 @@ const jsConfigRules = {
       destructuring: 'all',
     },
   ],
+  'prefer-promise-reject-errors': 'off',
   radix: 'off',
   'require-atomic-updates': 0,
   'sort-imports': 'off',
   'local-rules/standard-loops': 'error',
 };
+
+const basePlugins = {
+  header: headerPlugin,
+  jsdoc: jsdocPlugin,
+  'prefer-arrow': preferArrowPlugin,
+  'no-null': noNullPlugin,
+  'local-rules': localRulesPlugin,
+};
+
 const commonConfig = {
   plugins: {
     '@typescript-eslint': tseslint.plugin,
     'no-only-tests': noOnlyTestsPlugin,
-    header: headerPlugin,
-    jsdoc: jsdocPlugin,
-    'prefer-arrow': preferArrowPlugin,
-    'no-null': noNullPlugin,
-    'local-rules': localRulesPlugin,
-    ...strictTypeCheckedPlugins,
-    ...stylisticPlugins,
+    ...basePlugins,
   },
   languageOptions: {
     parser: tseslint.parser,
     parserOptions: {
       project: true,
+      tsconfigRootDir,
     },
   },
   rules: {
@@ -172,6 +177,21 @@ const commonConfig = {
   },
 };
 
+const tsProjectLanguageOptions = project => ({
+  ...commonConfig.languageOptions,
+  parserOptions: {
+    project,
+    tsconfigRootDir,
+  },
+});
+
+const tsProjectConfig = (files, project, rules = {}) => ({
+  ...commonConfig,
+  files,
+  languageOptions: tsProjectLanguageOptions(project),
+  ...(Object.keys(rules).length ? { rules: { ...commonConfig.rules, ...rules } } : {}),
+});
+
 export default [
   {
     ignores: [
@@ -188,51 +208,18 @@ export default [
   },
   pluginJs.configs.recommended,
   eslintConfigPrettier,
-  {
-    ...commonConfig,
-    files: ['extension/**/*.ts'],
-    languageOptions: {
-      ...commonConfig.languageOptions,
-      parserOptions: {
-        project: './tsconfig.json',
-      },
-    },
-  },
-  {
-    ...commonConfig,
-    files: ['tooling/**/*.ts'],
-    languageOptions: {
-      ...commonConfig.languageOptions,
-      parserOptions: {
-        project: './conf/tsconfig.tooling.json',
-      },
-    },
-  },
-  {
-    ...commonConfig,
-    files: ['test/**/*.ts'],
-    languageOptions: {
-      ...commonConfig.languageOptions,
-      parserOptions: {
-        project: './conf/tsconfig.test.eslint.json',
-      },
-    },
-    rules: {
-      ...commonConfig.rules,
-      '@typescript-eslint/no-unused-expressions': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-    },
-  },
+  tsProjectConfig(['extension/**/*.ts'], './tsconfig.json'),
+  tsProjectConfig(['tooling/**/*.ts'], './conf/tsconfig.tooling.json'),
+  tsProjectConfig(['test/**/*.ts'], './conf/tsconfig.test.eslint.json', {
+    '@typescript-eslint/no-unused-expressions': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/no-unsafe-call': 'off',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
+  }),
   ...tseslint.config({
     files: ['extension/js/content_scripts/webmail/**/*.ts'],
-    languageOptions: {
-      parserOptions: {
-        project: './conf/tsconfig.content_scripts.json',
-      },
-    },
+    languageOptions: tsProjectLanguageOptions('./conf/tsconfig.content_scripts.json'),
   }),
   {
     files: ['scripts/**/*.js'],
@@ -245,11 +232,7 @@ export default [
       },
     },
     plugins: {
-      header: headerPlugin,
-      jsdoc: jsdocPlugin,
-      'prefer-arrow': preferArrowPlugin,
-      'no-null': noNullPlugin,
-      'local-rules': localRulesPlugin,
+      ...basePlugins,
     },
     rules: { ...pluginJs.configs.recommended.rules, ...jsConfigRules },
   },

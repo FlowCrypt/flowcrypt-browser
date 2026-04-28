@@ -56,7 +56,7 @@ export class Downloader {
           resolve({ result: download });
         })
         .catch((e: unknown) => {
-          reject(e as Error);
+          reject(e instanceof Error ? e : new Error(Catch.stringify(e)));
         });
     });
   };
@@ -87,7 +87,7 @@ export class Downloader {
           resolve(msg.raw || '');
         })
         .catch((e: unknown) => {
-          reject(e as Error);
+          reject(e instanceof Error ? e : new Error(Catch.stringify(e)));
         });
     });
   };
@@ -108,7 +108,7 @@ export class Downloader {
           resolve(msg);
         })
         .catch((e: unknown) => {
-          reject(e as Error);
+          reject(e instanceof Error ? e : new Error(Catch.stringify(e)));
         });
     });
   };

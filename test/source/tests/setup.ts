@@ -2250,7 +2250,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const title = await settingsPage.read('@container-overlay-prompt-text');
         expect(title).to.contain(
           'Failed to store newly generated key on FlowCrypt Email Key Manager, ' +
-          'No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet. Please ask your administrator.'
+            'No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet. Please ask your administrator.'
         );
         await settingsPage.click('@action-show-overlay-details');
         await settingsPage.waitAll('@container-overlay-details');
@@ -2258,7 +2258,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const details = await settingsPage.read('@container-overlay-details');
         expect(details).to.contain(
           `405 when PUT-ing https://localhost:${t.context.urls?.port}/flowcrypt-email-key-manager/v1/keys/private string: ` +
-          'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet'
+            'privateKey -> No key has been generated for reject.client.keypair@key-manager-autogen.flowcrypt.test yet'
         );
         expect(details).to.not.contain('PRIVATE KEY');
       })
@@ -2379,7 +2379,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         const rawMessage = await Parse.convertBase64ToMimeMsg(sentMsg.raw!);
         const fromEmailHeaderLine = rawMessage.headerLines[2].line;
         const toEmailHeaderLine = rawMessage.headerLines[3].line;
-        const subjectLine = String(rawMessage.headers.get('subject') as unknown);
+        const subjectHeader = rawMessage.headers.get('subject');
+        const subjectLine = typeof subjectHeader === 'string' ? subjectHeader : JSON.stringify(subjectHeader);
         const adminPrivateKey = testConstants.prvBackupToDesignatedMailboxTestPrvKey;
         const parsedAdminPrivateKey = await KeyUtil.parse(adminPrivateKey);
         const passphrase = 'super hard to guess passphrase';

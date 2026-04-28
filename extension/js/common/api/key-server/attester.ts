@@ -94,7 +94,7 @@ export class Attester extends Api {
   };
 
   private jsonPost = async <RT>(path: string, values: Dict<Serializable>, hdrs?: Dict<string>): Promise<RT> => {
-    return (await Api.apiCall(ATTESTER_API_HOST, path, { data: values, fmt: 'JSON' }, undefined, { 'api-version': '3', ...(hdrs ?? {}) }, 'json')) as RT;
+    return await Api.apiCall(ATTESTER_API_HOST, path, { data: values, fmt: 'JSON' }, undefined, { 'api-version': '3', ...(hdrs ?? {}) }, 'json');
   };
 
   private pubCall = async (resource: string, data?: string, hdrs?: Dict<string>): Promise<string> => {
