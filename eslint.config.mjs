@@ -66,6 +66,7 @@ const jsConfigRules = {
       destructuring: 'all',
     },
   ],
+  'prefer-promise-reject-errors': 'off',
   radix: 'off',
   'require-atomic-updates': 0,
   'sort-imports': 'off',

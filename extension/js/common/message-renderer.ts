@@ -446,7 +446,7 @@ export class MessageRenderer {
           resolve(await this.processedMessages.await(msgId, processed));
         })
         .catch((e: unknown) => {
-          reject(e as Error);
+          reject(e instanceof Error ? e : new Error(Catch.stringify(e)));
         });
     });
   };

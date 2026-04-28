@@ -162,7 +162,7 @@ export class BrowserHandle {
       };
       this.browser.on('targetcreated', listener);
       triggeringAction().catch((e: unknown) => {
-        console.error(e as Error);
+        console.error(e);
       });
     });
   };

@@ -413,7 +413,7 @@ export class Api {
     headers?: AjaxHeaders,
     resFmt?: T
   ): Promise<FetchResult<T, RT>> {
-    progress = progress || ({} as ProgressCbs);
+    progress = progress || {};
     let formattedData: FormData | string | undefined;
     let dataPart: AjaxParams = { method: 'GET' };
     if (values) {

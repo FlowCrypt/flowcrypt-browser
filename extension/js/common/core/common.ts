@@ -137,8 +137,38 @@ export class Str {
     return list.map(x => Str.formatEmailWithOptionalNameEx(x, forceBrackets)).join(', ');
   };
 
+  public static stringify = (obj: unknown, space?: number): string => {
+    if (typeof obj === 'object') {
+      try {
+        return JSON.stringify(obj, undefined, space) ?? '';
+      } catch {
+        return '[unstringifiable object]';
+      }
+    }
+    if (typeof obj === 'function') {
+      return `[function ${obj.name || 'anonymous'}]`;
+    }
+    if (typeof obj === 'undefined') {
+      return '';
+    }
+    if (typeof obj === 'symbol') {
+      return obj.description ?? '';
+    }
+    switch (typeof obj) {
+      case 'string':
+        return obj;
+      case 'number':
+        return obj.toString();
+      case 'boolean':
+        return obj ? 'true' : 'false';
+      case 'bigint':
+        return obj.toString();
+    }
+    return '';
+  };
+
   public static prettyPrint = (obj: unknown) => {
-    return typeof obj === 'object' ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj as unknown);
+    return Str.stringify(obj, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />');
   };
 
   public static normalizeSpaces = (str: string) => {
