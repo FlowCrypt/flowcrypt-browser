@@ -49,6 +49,9 @@ export class Catch {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
+    if (typeof e === 'object') {
+      return `[typeof:object:${Object.prototype.toString.call(e)}] ${Str.stringify(e)}`;
+    }
     return `[typeof:${typeof e}] ${Str.stringify(e)}`;
   }
 
