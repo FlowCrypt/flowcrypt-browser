@@ -40,7 +40,7 @@ export class OAuth {
   public static GOOGLE_OAUTH_CONFIG = {
     client_id: '717284730244-5oejn54f10gnrektjdc4fv4rbic1bj1p.apps.googleusercontent.com',
     client_secret: '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',
-    redirect_uri: 'https://www.google.com/robots.txt',
+    redirect_uri: chrome.identity.getRedirectURL('oauth'),
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${OAUTH_GOOGLE_API_HOST}/token`,
     state_header: 'CRYPTUP_STATE_',
