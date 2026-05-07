@@ -3,6 +3,7 @@
   "name": "FlowCrypt: Encrypt Gmail with PGP",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "version": "[will be replaced during build]",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArV4mhxGkdt2FcJoWJhZrzNUftI0S7i55jMooL+FLjRSyK1hh6G4so7KLYhY/Tc327luMwWFkCAcdsamjbhOfJneBMZ0IT7swAS3zsC87vLE5YeWO2CX02FvHjgXm60T1Fk4gJh/zqCp4OLjyawoJRyuovvVN0LwH4j6DjHn3nodl2YeY+4K7jzFGHj6+68tlok9BtI6k8tntIbnFToRr9gVR85UT+W8rKXqx20Kne14k2my5fjrGZjEpK74YU6QNlKRzprVqpNEE989sxNk1tL6xKYgoDO9m8JZtuFKFsoQY/fV8xhNkXB19KLVJEW8aqPG/0ZTTMg9llZI8c6Yx+QIDAQAB",
   "action": {
     "default_icon": {
       "16": "/img/logo/flowcrypt-logo-16-16.png",
