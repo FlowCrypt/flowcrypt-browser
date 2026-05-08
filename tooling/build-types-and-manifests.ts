@@ -1,4 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
+/// <reference types="@types/chrome" />
+
 import { copySync } from 'fs-extra';
 import { readFileSync, writeFileSync } from 'fs';
 const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
@@ -198,9 +200,22 @@ const makeContentScriptTestsBuild = (sourceBuildType: string) => {
   );
 };
 
+const makeConsumerLocalBuild = () => {
+  const localBuildType = 'chrome-consumer-local';
+  const publicKey =
+    'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArV4mhxGkdt2FcJoWJhZrzNUftI0S7i55jMooL+FLjRSyK1hh6G4so7KLYhY/Tc327luMwWFkCAcdsamjbhOfJneBMZ0IT7swAS3zsC87vLE5YeWO2CX02FvHjgXm60T1Fk4gJh/zqCp4OLjyawoJRyuovvVN0LwH4j6DjHn3nodl2YeY+4K7jzFGHj6+68tlok9BtI6k8tntIbnFToRr9gVR85UT+W8rKXqx20Kne14k2my5fjrGZjEpK74YU6QNlKRzprVqpNEE989sxNk1tL6xKYgoDO9m8JZtuFKFsoQY/fV8xhNkXB19KLVJEW8aqPG/0ZTTMg9llZI8c6Yx+QIDAQAB';
+  copySync(buildDir(CHROME_CONSUMER), buildDir(localBuildType));
+  edit(`${buildDir(localBuildType)}/manifest.json`, code => {
+    const manifest = JSON.parse(code) as chrome.runtime.ManifestV3;
+    manifest.key = publicKey;
+    return JSON.stringify(manifest, undefined, 2);
+  });
+};
+
 updateEnterpriseBuild();
 makeMockBuild(CHROME_CONSUMER);
 makeMockBuild(CHROME_ENTERPRISE);
 makeLocalFesBuild(CHROME_ENTERPRISE);
+makeConsumerLocalBuild();
 makeContentScriptTestsBuild('chrome-consumer-mock');
 // makeContentScriptTestsBuild('firefox-consumer'); // for manual testing of content script in Firefox
