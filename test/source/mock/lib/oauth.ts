@@ -46,7 +46,7 @@ export class OauthMock {
     this.accessTokenByRefreshToken[refreshToken] = accessToken;
     this.acctByAccessToken[accessToken] = acct;
     this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
-    const url = new URL(redirect_uri ?? `https://google.localhost:${port}/robots.txt`);
+    const url = new URL(redirect_uri ?? `https://google.localhost:${port}/oauth2/callback`);
     url.searchParams.set('code', authCode);
     url.searchParams.set('scope', scope);
     // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
