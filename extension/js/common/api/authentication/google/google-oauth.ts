@@ -277,7 +277,7 @@ export class GoogleOAuth extends OAuth {
       access_type: 'offline',
       prompt: 'consent',
       state: authReq.expectedState,
-      redirect_uri: this.GOOGLE_OAUTH_CONFIG.redirect_uri,
+      redirect_uri: this.getRedirectUri(),
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     });
@@ -309,7 +309,7 @@ export class GoogleOAuth extends OAuth {
           code,
           client_id: this.GOOGLE_OAUTH_CONFIG.client_id,
           client_secret: this.GOOGLE_OAUTH_CONFIG.client_secret,
-          redirect_uri: this.GOOGLE_OAUTH_CONFIG.redirect_uri,
+          redirect_uri: this.getRedirectUri(),
         }),
         /* eslint-enable @typescript-eslint/naming-convention */
         method: 'POST',

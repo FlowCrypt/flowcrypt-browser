@@ -101,7 +101,7 @@ export class ConfiguredIdpOAuth extends OAuth {
           refreshToken,
           client_id: authConf.oauth.clientId,
 
-          redirect_uri: chrome.identity.getRedirectURL('oauth'),
+          redirect_uri: this.getRedirectUri(),
         },
         dataType: 'JSON',
         /* eslint-enable @typescript-eslint/naming-convention */
@@ -121,7 +121,7 @@ export class ConfiguredIdpOAuth extends OAuth {
       prompt: 'login',
       state,
 
-      redirect_uri: chrome.identity.getRedirectURL('oauth'),
+      redirect_uri: this.getRedirectUri(),
       scope: this.OAUTH_REQUEST_SCOPES.join(' '),
       login_hint: acctEmail,
     });
@@ -207,7 +207,7 @@ export class ConfiguredIdpOAuth extends OAuth {
           code,
           client_id: authConf.oauth.clientId,
 
-          redirect_uri: chrome.identity.getRedirectURL('oauth'),
+          redirect_uri: this.getRedirectUri(),
         },
         dataType: 'JSON',
         /* eslint-enable @typescript-eslint/naming-convention */
