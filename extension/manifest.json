@@ -56,6 +56,11 @@
         "/lib/emailjs/emailjs-mime-parser.js",
         "/js/content_scripts/webmail_bundle.js"
       ]
+    },
+    {
+      "matches": ["https://www.google.com/oauth2/callback*"],
+      "js": ["/js/common/oauth2/oauth2_inject.js"],
+      "run_at": "document_start"
     }
   ],
   "background": {
