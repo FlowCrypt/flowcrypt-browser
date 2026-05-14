@@ -133,13 +133,13 @@ export const getMockGoogleEndpoints = (oauth: OauthMock, config: GoogleConfig | 
           } else if (!proceed) {
             return oauth.renderText('redirect with proceed=true to continue');
           } else {
-            return oauth.successResult(parsePort(req), login_hint, state, scope, redirect_uri);
+            return oauth.successResult(login_hint, state, scope, redirect_uri);
           }
         } else if (client_id === OauthMock.customIDPClientId) {
           if (!proceed) {
             return oauth.renderText('redirect with proceed=true to continue');
           }
-          return oauth.successResult(parsePort(req), login_hint, state, scope, redirect_uri);
+          return oauth.successResult(login_hint, state, scope, redirect_uri);
         }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
