@@ -102,7 +102,7 @@ addManifest('chrome-enterprise', manifest => {
     'https://flowcrypt.com/*',
   ];
   for (const csDef of manifest.content_scripts ?? []) {
-    csDef.matches = csDef.matches?.filter(host => host === 'https://mail.google.com/*' || host === 'https://www.google.com/oauth2/callback*');
+    csDef.matches = csDef.matches?.filter(host => host === 'https://mail.google.com/*');
   }
   manifest.content_scripts = (manifest.content_scripts ?? []).filter(csDef => csDef.matches?.length); // remove empty defs
   if (!manifest.content_scripts.length) {
@@ -174,10 +174,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
   edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
-    code
-      .replace(/https:\/\/mail\.google\.com/g, mockGmailPage)
-      .replace(/https:\/\/www\.google\.com/g, `https://google.localhost:${MOCK_PORT}`)
-      .replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
+    code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
   );
 };
 

@@ -6,10 +6,7 @@ import { Url } from '../../../core/common.js';
 import { FLAVOR, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
 import { ApiErr } from '../../shared/api-error.js';
 import { Ajax, Api } from '../../shared/api.js';
-
-import { Bm, ScreenDimensions } from '../../../browser/browser-msg.js';
 import { InMemoryStoreKeys } from '../../../core/const.js';
-import { OAuth2 } from '../../../oauth2/oauth2.js';
 import { CatchHelper } from '../../../platform/catch-helper.js';
 import { AcctStore, AcctStoreDict } from '../../../platform/store/acct-store.js';
 import { InMemoryStore } from '../../../platform/store/in-memory-store.js';
@@ -18,7 +15,6 @@ import { AuthorizationHeader, AuthReq, AuthRes, OAuth, OAuthTokensResponse } fro
 import { ExternalService } from '../../account-servers/external-service.js';
 import { GoogleAuthErr } from '../../shared/api-error.js';
 import { Assert, AssertError } from '../../../assert.js';
-import { Ui } from '../../../browser/ui.js';
 import { ConfiguredIdpOAuth } from '../configured-idp-oauth.js';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -110,17 +106,7 @@ export class GoogleOAuth extends OAuth {
     }
   }
 
-  public static async newAuthPopup({
-    acctEmail,
-    scopes,
-    save,
-    screenDimensions,
-  }: {
-    acctEmail?: string;
-    scopes?: string[];
-    save?: boolean;
-    screenDimensions?: ScreenDimensions;
-  }): Promise<AuthRes> {
+  public static async newAuthPopup({ acctEmail, scopes, save }: { acctEmail?: string; scopes?: string[]; save?: boolean }): Promise<AuthRes> {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -133,18 +119,12 @@ export class GoogleOAuth extends OAuth {
     }
     const authRequest = GoogleOAuth.newAuthRequest(acctEmail, scopes);
     const authUrl = GoogleOAuth.apiGoogleAuthCodeUrl(authRequest);
-    // Added below logic because in service worker, it's not possible to access window object.
-    // Therefore need to retrieve screenDimensions when calling service worker and pass it to OAuth2
-    if (!screenDimensions) {
-      screenDimensions = Ui.getScreenDimensions();
-    }
-    const authWindowResult = await OAuth2.webAuthFlow(authUrl, screenDimensions);
     const authRes = await GoogleOAuth.getAuthRes({
       acctEmail,
       save,
       requestedScopes: scopes,
       expectedState: authRequest.expectedState,
-      authWindowResult,
+      authUrl,
     });
     if (authRes.result === 'Success') {
       if (!authRes.id_token) {
@@ -211,24 +191,24 @@ export class GoogleOAuth extends OAuth {
     save,
     requestedScopes,
     expectedState,
-    authWindowResult,
+    authUrl,
   }: {
     acctEmail?: string;
     save: boolean;
     requestedScopes: string[];
     expectedState: string;
-    authWindowResult: Bm.AuthWindowResult;
+    authUrl: string;
   }): Promise<AuthRes> {
     /* eslint-disable @typescript-eslint/naming-convention */
     try {
-      if (!authWindowResult.url) {
+      const redirectUri = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true });
+      if (chrome.runtime.lastError || !redirectUri || redirectUri?.includes('access_denied')) {
+        return { acctEmail, result: 'Denied', error: `Failed to launch web auth flow`, id_token: undefined };
+      }
+      if (!redirectUri) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
       }
-      if (authWindowResult.error) {
-        return { acctEmail, result: 'Denied', error: authWindowResult.error, id_token: undefined };
-      }
-
-      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], authWindowResult.url);
+      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], redirectUri);
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');

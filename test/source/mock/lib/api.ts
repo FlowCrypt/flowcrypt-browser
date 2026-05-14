@@ -308,7 +308,7 @@ export class Api<REQ, RES> {
 
   private throttledResponse = async (response: http2.Http2ServerResponse, data: Buffer) => {
     // If google oauth2 or custom oauth login, then redirect to url
-    if (/^https:\/\/(google\.localhost:[0-9]+\/oauth2\/callback|[a-zA-Z0-9]+\.chromiumapp\.org)/.test(data.toString())) {
+    if (/^https:\/\/[a-zA-Z0-9]+\.chromiumapp\.org/.test(data.toString())) {
       response.writeHead(302, { Location: data.toString() }); // eslint-disable-line @typescript-eslint/naming-convention
     } else {
       const chunkSize = 100 * 1024;
