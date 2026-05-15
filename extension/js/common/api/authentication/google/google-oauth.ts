@@ -204,19 +204,12 @@ export class GoogleOAuth extends OAuth {
       const redirectUri = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true });
       if (chrome.runtime.lastError || !redirectUri || redirectUri?.includes('access_denied')) {
         const errorMsg = chrome.runtime.lastError?.message || 'access_denied';
-        if (
-          errorMsg.toLowerCase().includes('user') ||
-          errorMsg.toLowerCase().includes('cancel') ||
-          errorMsg.toLowerCase().includes('deny') ||
-          errorMsg.toLowerCase().includes('denied') ||
-          errorMsg.toLowerCase().includes('close')
-        ) {
+        const normalizedErrorMsg = errorMsg.toLowerCase();
+        const userCancelled = ['user', 'cancel', 'deny', 'denied', 'close'].some(keyword => normalizedErrorMsg.includes(keyword));
+        if (userCancelled) {
           return { acctEmail, result: 'Closed', error: errorMsg, id_token: undefined };
         }
         return { acctEmail, result: 'Denied', error: `Failed to launch web auth flow: ${errorMsg}`, id_token: undefined };
-      }
-      if (!redirectUri) {
-        return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
       }
       const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], redirectUri);
       const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
