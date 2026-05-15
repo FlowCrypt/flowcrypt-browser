@@ -98,6 +98,6 @@
   ],
   "minimum_chrome_version": "96",
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; frame-ancestors https://mail.google.com 'self'; img-src 'self' https://* data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self';"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; frame-src 'self' https://mail.google.com/ blob:; worker-src 'self'; connect-src 'self' https://*.google.com https://*.googleapis.com https://flowcrypt.com; default-src 'self'; frame-ancestors 'self' https://mail.google.com; base-uri 'self'; form-action 'self' https://accounts.google.com; font-src 'self' data:; manifest-src 'self'; object-src 'none'; media-src 'self' blob: https:; require-trusted-types-for 'script'; trusted-types default DOMPurify; upgrade-insecure-requests; block-all-mixed-content;"
   }
 }
