@@ -65,7 +65,13 @@ export class OAuth {
     if (!chrome?.identity?.getRedirectURL) {
       throw new Error('chrome.identity.getRedirectURL is not available in this context');
     }
-    return chrome.identity.getRedirectURL('oauth');
+    const redirectUri = chrome.identity.getRedirectURL('oauth');
+    if (navigator.userAgent.includes('Firefox')) {
+      const url = new URL(redirectUri);
+      const subdomain = url.hostname.split('.')[0];
+      return `http://127.0.0.1/mozoauth2/${subdomain}`;
+    }
+    return redirectUri;
   }
   /* eslint-enable @typescript-eslint/naming-convention */
   /**
