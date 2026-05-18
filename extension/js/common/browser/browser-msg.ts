@@ -85,7 +85,7 @@ export namespace Bm {
   };
   export type InMemoryStoreGet = { acctEmail: string; key: string };
   export type GetApiAuthorization = { idToken: string };
-  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[]; screenDimensions: ScreenDimensions };
+  export type ReconnectAcctAuthPopup = { acctEmail: string; scopes?: string[] };
   export type ReconnectCustomIDPAcctAuthPopup = { acctEmail: string };
   export type Ajax = { req: ApiAjax; resFmt: ResFmt };
   export type AjaxProgress = { operationId: string; percent?: number; loaded: number; total: number; expectedTransferSize: number };
