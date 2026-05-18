@@ -6,6 +6,7 @@ import { GoogleAuthWindowResult$result } from '../../../browser/browser-msg.js';
 import { Buf } from '../../../core/buf.js';
 import { Str } from '../../../core/common.js';
 import { GOOGLE_OAUTH_SCREEN_HOST, OAUTH_GOOGLE_API_HOST } from '../../../core/const.js';
+import { Catch } from '../../../platform/catch.js';
 import { GmailRes } from '../../email-provider/gmail/gmail-parser.js';
 import { Api } from '../../shared/api.js';
 
@@ -66,7 +67,7 @@ export class OAuth {
       throw new Error('chrome.identity.getRedirectURL is not available in this context');
     }
     const redirectUri = chrome.identity.getRedirectURL('oauth');
-    if (navigator.userAgent.includes('Firefox')) {
+    if (Catch.isFirefox()) {
       const url = new URL(redirectUri);
       const subdomain = url.hostname.split('.')[0];
       return `http://127.0.0.1/mozoauth2/${subdomain}`;
