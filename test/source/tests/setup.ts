@@ -100,6 +100,9 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     test(
       'settings > login > close oauth window > close popup',
       testWithBrowser(async (t, browser) => {
+        t.context.mockApi!.configProvider = new ConfigurationProvider({
+          attester: { pubkeyLookup: {} },
+        });
         const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(
           t,
           browser,
