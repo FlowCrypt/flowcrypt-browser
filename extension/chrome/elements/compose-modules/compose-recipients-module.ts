@@ -878,7 +878,6 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({
             acctEmail: this.view.acctEmail,
             scopes: GoogleOAuth.defaultScopes('contacts'),
-            screenDimensions: Ui.getScreenDimensions(),
           });
           if (authResult.result === 'Success') {
             this.googleContactsSearchEnabled = true;
