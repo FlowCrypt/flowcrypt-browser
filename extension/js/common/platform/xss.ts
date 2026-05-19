@@ -137,7 +137,7 @@ export class Xss {
         } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
           // replace remote image with remote_image_container
           const remoteImgEl = `
-        <div class="remote_image_container" data-src="${src}" data-test="remote-image-container">
+        <div class="remote_image_container" data-src="${Xss.escape(src)}" data-test="remote-image-container">
           <span>Authenticity of this remote image cannot be verified.</span>
         </div>`;
           Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
@@ -147,7 +147,7 @@ export class Xss {
       // Handle custom containers or CID-patterned src
       if ((node.classList.contains('remote_image_container') || CID_PATTERN.test(node.getAttribute('src') ?? '')) && imgHandling === 'IMG-TO-PLAIN-TEXT') {
         const replacement = node.getAttribute('data-src') ?? node.getAttribute('alt') ?? '';
-        Xss.replaceElementDANGEROUSLY(node, replacement); // xss-safe-value
+        Xss.replaceElementDANGEROUSLY(node, Xss.escape(replacement)); // xss-safe-value
       }
 
       // Handle links (target and rel attributes)
@@ -171,7 +171,7 @@ export class Xss {
     for (const imageContainer of imageContainerList) {
       const imgUrl = imageContainer.dataset.src;
       if (imgUrl) {
-        Xss.sanitizeAppend(imageContainer, `<img src="${imgUrl}"/>`);
+        Xss.sanitizeAppend(imageContainer, `<img src="${Xss.escape(imgUrl)}"/>`);
       }
     }
   };
