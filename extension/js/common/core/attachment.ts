@@ -294,7 +294,7 @@ export class Attachment {
       'wsf',
       'wsh',
       'xll',
-    ].some(exeFileExtension => this.name.endsWith('.' + exeFileExtension));
+    ].some(exeFileExtension => this.name.toLocaleLowerCase().endsWith('.' + exeFileExtension));
   };
 
   private isPrivateKey = (): boolean => {
