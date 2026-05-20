@@ -2266,7 +2266,9 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId = '187365d19ec9a10c';
         const threadId2 = '18736a0687a8426b';
         const threadId3 = '187cfc92db548a0c';
-        const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
+        const threadId4 = '19e4457908e16113';
+        const expectedErrMsg =
+          'This attachment may be unsafe and has not been checked for viruses. Only proceed if you trust the sender and were expecting this file.';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
@@ -2370,6 +2372,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         );
         expect(Object.entries(downloadedFile8).length).to.equal(1);
         expect(Object.keys(downloadedFile8)[0]).to.match(/sample.*\.bat/);
+        const inboxPage4 = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId4}`);
+        const attachmentFrame3 = await inboxPage4.getFrame(['attachment.htm']);
+        await attachmentFrame3.waitAndClick('@download-attachment');
+        const executableFile = await inboxPage4.awaitDownloadTriggeredByClicking(() =>
+          PageRecipe.waitForModalAndRespond(inboxPage4, 'confirm', {
+            contentToCheck: expectedErrMsg,
+            clickOn: 'confirm',
+          })
+        );
+        expect(Object.entries(executableFile).length).to.equal(1);
+        expect(Object.keys(executableFile)[0]).to.match(/test.*\.BAT/);
       })
     );
 

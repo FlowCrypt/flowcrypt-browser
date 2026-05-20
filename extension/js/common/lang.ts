@@ -156,6 +156,7 @@ export const Lang = {
     deleteKeyConfirm: (fingerprint: string) => `Are you sure you want to remove encryption key with fingerprint ${fingerprint}?`,
   },
   attachment: {
-    executableFileWarning: 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?', // xss-escaped
+    executableFileWarning:
+      'This attachment may be unsafe and has not been checked for viruses. Only proceed if you trust the sender and were expecting this file.', // xss-escaped
   },
 };
