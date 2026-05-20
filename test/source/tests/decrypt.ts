@@ -2267,7 +2267,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         const threadId2 = '18736a0687a8426b';
         const threadId3 = '187cfc92db548a0c';
         const threadId4 = '19e4457908e16113';
-        const expectedErrMsg = 'This executable file was not checked for viruses, and may be dangerous to download or run. Proceed anyway?';
+        const expectedErrMsg =
+          'This attachment may be unsafe and has not been checked for viruses. Only proceed if you trust the sender and were expecting this file.';
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         const pgpBlockPage = await inboxPage.getFrame(['pgp_block.htm']);
