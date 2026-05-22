@@ -205,6 +205,10 @@ const makeConsumerLocalBuild = () => {
   edit(`${buildDir(localBuildType)}/manifest.json`, code => {
     const manifest = JSON.parse(code) as chrome.runtime.ManifestV3;
     manifest.key = publicKey;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const csp = manifest.content_security_policy!.extension_pages;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    manifest.content_security_policy!.extension_pages = csp!.replace(/connect-src[^;]*/, "connect-src 'self' https://localhost:*");
     return JSON.stringify(manifest, undefined, 2);
   });
 };
