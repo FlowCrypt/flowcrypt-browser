@@ -173,9 +173,16 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
-  edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
-    code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
-  );
+  edit(`${buildDir(mockBuildType)}/manifest.json`, code => {
+    let updatedCode = code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*');
+    const manifest = JSON.parse(updatedCode) as chrome.runtime.ManifestV3;
+    if (manifest.content_security_policy?.extension_pages) {
+      const csp = manifest.content_security_policy.extension_pages;
+      manifest.content_security_policy.extension_pages = csp.replace(/connect-src[^;]*/, "connect-src 'self' https://localhost:*");
+      updatedCode = JSON.stringify(manifest, undefined, 2);
+    }
+    return updatedCode;
+  });
 };
 
 const makeLocalFesBuild = (sourceBuildType: string) => {
@@ -205,10 +212,6 @@ const makeConsumerLocalBuild = () => {
   edit(`${buildDir(localBuildType)}/manifest.json`, code => {
     const manifest = JSON.parse(code) as chrome.runtime.ManifestV3;
     manifest.key = publicKey;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const csp = manifest.content_security_policy!.extension_pages;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    manifest.content_security_policy!.extension_pages = csp!.replace(/connect-src[^;]*/, "connect-src 'self' https://localhost:*");
     return JSON.stringify(manifest, undefined, 2);
   });
 };
