@@ -90,8 +90,8 @@ export const isCreatePrivateFormInputCorrect = async (section: string, clientCon
           Please write down your passphrase and store it in safe place or even two.
           It is needed in order to access your FlowCrypt account.
         </div>
-        <div class="passphrase-sticky-note">${notePp}</div>
-      `;
+        <div class="passphrase-sticky-note">${Xss.escape(notePp)}</div>
+      `; // xss-escaped
     return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
   }
   return true;
