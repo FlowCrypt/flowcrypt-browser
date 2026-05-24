@@ -59,7 +59,7 @@
     "node-forge": "1.4.0",
     "postcss-html": "^1.8.1",
     "squire-rte": "2.4.5",
-    "sweetalert2": "11.26.24",
+    "sweetalert2": "11.26.25",
     "tap-xunit": "^2.4.1"
   },
   "scripts": {
