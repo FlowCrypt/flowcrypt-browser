@@ -179,7 +179,10 @@ const makeMockBuild = (sourceBuildType: string) => {
     if (manifest.content_security_policy?.extension_pages) {
       const csp = manifest.content_security_policy.extension_pages;
       if (csp) {
-        let updatedCsp = csp.replace(/connect-src[^;]*/, "connect-src 'self' https://localhost:* https://flowcrypt.com https://fes.flowcrypt.test");
+        let updatedCsp = csp.replace(
+          /connect-src[^;]*/,
+          "connect-src 'self' https://localhost:* https://flowcrypt.com https://fes.flowcrypt.test https://fes.standardsubdomainfes.localhost"
+        );
         updatedCsp += "; style-src 'self' 'unsafe-inline'";
         manifest.content_security_policy.extension_pages = updatedCsp;
       }
