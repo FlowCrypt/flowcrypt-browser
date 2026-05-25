@@ -178,7 +178,11 @@ const makeMockBuild = (sourceBuildType: string) => {
     const manifest = JSON.parse(updatedCode) as chrome.runtime.ManifestV3;
     if (manifest.content_security_policy?.extension_pages) {
       const csp = manifest.content_security_policy.extension_pages;
-      manifest.content_security_policy.extension_pages = csp.replace(/connect-src[^;]*/, "connect-src 'self' https://localhost:* https://flowcrypt.com");
+      if (csp) {
+        let updatedCsp = csp.replace(/connect-src[^;]*/, "connect-src 'self' https://localhost:* https://flowcrypt.com https://fes.flowcrypt.test");
+        updatedCsp += "; style-src 'self' 'unsafe-inline'";
+        manifest.content_security_policy.extension_pages = updatedCsp;
+      }
       updatedCode = JSON.stringify(manifest, undefined, 2);
     }
     return updatedCode;
