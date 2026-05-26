@@ -181,7 +181,7 @@ const makeMockBuild = (sourceBuildType: string) => {
       if (csp) {
         let updatedCsp = csp.replace(
           /connect-src[^;]*/,
-          "connect-src 'self' https://localhost:* https://flowcrypt.com https://fes.flowcrypt.test https://fes.standardsubdomainfes.localhost:* https://fes.key-manager-server-offline.flowcrypt.test https://google.com https://flowcrypt.s3.amazonaws.com"
+          "connect-src 'self' https://localhost:* https://flowcrypt.com https://fes.flowcrypt.test https://fes.standardsubdomainfes.localhost:* https://fes.key-manager-server-offline.flowcrypt.test https://google.com https://flowcrypt.s3.amazonaws.com https://flowcrypt.com https://*.flowcrypt.com https://flowcrypt.s3.amazonaws.com https://google.com https://localhost:* https://*.localhost:* https://google.localhost https://gmail.localhost:*;"
         );
         updatedCsp += "; style-src 'self' 'unsafe-inline'";
         manifest.content_security_policy.extension_pages = updatedCsp;
