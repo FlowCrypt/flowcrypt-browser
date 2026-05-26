@@ -92,6 +92,6 @@
   ],
   "minimum_chrome_version": "96",
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; default-src 'self'; frame-ancestors 'self' https://mail.google.com; img-src 'self' https://* data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; connect-src 'self' https://flowcrypt.com https://*.flowcrypt.com https://flowcrypt.s3.amazonaws.com;"
+    "extension_pages": "script-src 'self'; default-src 'self'; frame-ancestors 'self' https://mail.google.com; img-src 'self' https://* data: blob:; frame-src 'self' blob:; worker-src 'self'; form-action 'none'; media-src 'none'; font-src 'none'; manifest-src 'none'; object-src 'none'; base-uri 'self'; connect-src 'self' https://flowcrypt.com https://*.flowcrypt.com https://flowcrypt.s3.amazonaws.com https://google.com;"
   }
 }
