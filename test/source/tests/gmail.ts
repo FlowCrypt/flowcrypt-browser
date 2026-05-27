@@ -748,21 +748,21 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         // 1. Verify buttons on the newest message (usually expanded by default)
         await Util.sleep(3);
         let messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
-        const newestMessage = messages[messages.length - 1]; 
+        const newestMessage = messages[messages.length - 1];
         const newestMenuBtn = await newestMessage.$('[aria-label="More message options"]');
         await newestMenuBtn?.click();
         await Util.sleep(1);
-        
+
         await gmailPage.waitAll('.action_reply_message_button');
         const collapsedMessage = await gmailPage.target.$('[role="listitem"] .adf.ads');
         if (collapsedMessage) {
-            await collapsedMessage.click();
-            await Util.sleep(2);
+          await collapsedMessage.click();
+          await Util.sleep(2);
         }
 
         // Now find the 3-dot menu on this expanded older message.
         // After expansion, it should have .adn.ads class active/visible.
-        
+
         messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
         const olderExpandedMessage = messages[0];
         const olderMenuBtn = await olderExpandedMessage.$('[aria-label="More message options"]');

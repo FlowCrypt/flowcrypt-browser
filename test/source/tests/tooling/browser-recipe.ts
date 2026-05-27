@@ -81,7 +81,7 @@ export class BrowserRecipe {
       // close announcement about updated UI
       await context.waitAndClick('.fKz7Od', { delay: 1 });
     }
-    await context.waitAny(['a.gb_de', 'a.gb_Vc', 'a.gb_he']); // Google hangout logo
+    await context.waitAll('button.jVwmLb'); // new chat button
     return googleChatPage;
   };
 
