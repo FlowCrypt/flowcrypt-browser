@@ -30,7 +30,8 @@ export const getParsedCliParams = () => {
   if (!testGroup) {
     testGroup = process.argv.includes('UNIT-TESTS') ? 'UNIT-TESTS' : process.argv.includes('FLAKY-GROUP') ? 'FLAKY-GROUP' : 'STANDARD-GROUP';
   }
-  const buildDir = join(ROOT_DIR, `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`);
+  const buildVariant = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER-LOCAL' : testVariant;
+  const buildDir = join(ROOT_DIR, `build/chrome-${buildVariant.toLowerCase()}`);
   const poolSizeArg = process.argv.find(a => a.startsWith('--pool-size='));
   const poolSize = poolSizeArg ? parseInt(poolSizeArg.split('=')[1], 10) : undefined;
   const poolSizeOne = poolSize === 1;
