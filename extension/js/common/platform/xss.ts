@@ -49,7 +49,7 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
-  private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
+  private static FORBID_CSS_STYLE = /z-index:[^;]+(?=;|$)|position:[^;]+(?=;|$)|background[^;]+(?=;|$)/gi;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
@@ -118,6 +118,7 @@ export class Xss {
         const style = node.getAttribute('style')?.toLowerCase();
         if (style && (style.includes('url(') || style.includes('@import'))) {
           node.removeAttribute('style'); // don't want any leaks through css url()
+          return; // stop processing: do not re-add any part of this style attribute
         }
         // strip css styles that could use to overlap with the extension UI
         if (style && Xss.FORBID_CSS_STYLE.test(style)) {
