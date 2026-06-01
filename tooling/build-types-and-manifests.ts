@@ -173,23 +173,9 @@ const makeMockBuild = (sourceBuildType: string) => {
   edit(`${buildDir(mockBuildType)}/js/common/core/const.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/common/platform/catch.js`, editor);
   edit(`${buildDir(mockBuildType)}/js/content_scripts/webmail_bundle.js`, editor);
-  edit(`${buildDir(mockBuildType)}/manifest.json`, code => {
-    let updatedCode = code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*');
-    const manifest = JSON.parse(updatedCode) as chrome.runtime.ManifestV3;
-    if (manifest.content_security_policy?.extension_pages) {
-      const csp = manifest.content_security_policy.extension_pages;
-      if (csp) {
-        let updatedCsp = csp.replace(
-          /connect-src[^;]*/,
-          "connect-src 'self' https://localhost:* https://flowcrypt.com https://fes.flowcrypt.test https://fes.standardsubdomainfes.localhost:* https://fes.key-manager-server-offline.flowcrypt.test https://google.com https://www.google.com https://*.flowcrypt.com https://flowcrypt.s3.amazonaws.com https://*.localhost:* https://google.localhost:* https://gmail.localhost:*;"
-        );
-        updatedCsp += "; style-src 'self' 'unsafe-inline'";
-        manifest.content_security_policy.extension_pages = updatedCsp;
-      }
-      updatedCode = JSON.stringify(manifest, undefined, 2);
-    }
-    return updatedCode;
-  });
+  edit(`${buildDir(mockBuildType)}/manifest.json`, code =>
+    code.replace(/https:\/\/mail\.google\.com/g, mockGmailPage).replace(/https:\/\/\*\.google.com\/\*/, 'https://google.localhost/*')
+  );
 };
 
 const makeLocalFesBuild = (sourceBuildType: string) => {
