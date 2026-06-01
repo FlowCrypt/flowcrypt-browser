@@ -49,7 +49,8 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
-  private static FORBID_CSS_STYLE = /z-index:[^;]+(?=;|$)|position:[^;]+(?=;|$)|background[^;]+(?=;|$)/gi;
+  private static FORBID_CSS_STYLE =
+    /z-index:[^;]+(?=;|$)|position:[^;]+(?=;|$)|background[^;]+(?=;|$)|display:\s*none|visibility:\s*hidden|opacity:\s*0(?:\.\d+)?|transform:[^;]+|clip(?:-path)?:[^;]+|margin(?:-top|-right|-bottom|-left)?:[^;]+|padding(?:-top|-right|-bottom|-left)?:[^;]+|border(?:-top|-right|-bottom|-left|-width|-style|-color)?:[^;]+|top:[^;]+|left:[^;]+|right:[^;]+|bottom:[^;]+|filter:[^;]+|pointer-events:\s*none|font-size:\s*0(?:px|em|rem)?|line-height:\s*0(?:px|em|rem)?|width:\s*0(?:px)?|height:\s*0(?:px)?|text-indent:\s*-\d/gi;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
@@ -115,15 +116,16 @@ export class Xss {
       // Handle style attributes
       if (node.hasAttribute('style')) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        const style = node.getAttribute('style')?.toLowerCase();
-        if (style && (style.includes('url(') || style.includes('@import'))) {
-          node.removeAttribute('style'); // don't want any leaks through css url()
-          return; // stop processing: do not re-add any part of this style attribute
-        }
-        // strip css styles that could use to overlap with the extension UI
+        let style = node.getAttribute('style') || '';
+        style = Xss.sanitizeCssStyle(style);
         if (style && Xss.FORBID_CSS_STYLE.test(style)) {
           const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
           node.setAttribute('style', updatedStyle);
+        } else if (style) {
+          // if style was modified but still present, update it
+          node.setAttribute('style', style);
+        } else {
+          node.removeAttribute('style');
         }
       }
 
@@ -273,6 +275,33 @@ export class Xss {
     if (!DOMPurify.isSupported) {
       throw new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.');
     }
+  };
+
+  /**
+   * Remove @import rules and any url(...) that would cause an out‑of‑band request.
+   * Only data: and cid: URLs are allowed.
+   */
+  private static sanitizeCssStyle = (css: string): string => {
+    let cleaned = css.replace(/@import\s+[^;]*;?/gi, '');
+    const urlRegex = /url\(\s*(["']?)(.*?)\1\s*\)/gi;
+    let match;
+    // eslint-disable-next-line no-null/no-null
+    while ((match = urlRegex.exec(cleaned)) !== null) {
+      const fullMatch = match[0];
+      const url = match[2];
+      // Only allow data: and cid: schemes
+      const isSafe = /^(data:|cid:)/i.test(url);
+      if (!isSafe) {
+        // Remove the unsafe url(...) token completely
+        cleaned = cleaned.replace(fullMatch, '');
+      }
+    }
+    // Clean up leftover artifacts: empty declarations, double semicolons
+    cleaned = cleaned
+      .replace(/;\s*;/g, ';')
+      .replace(/^\s*;\s*/, '')
+      .trim();
+    return cleaned;
   };
 
   /**
