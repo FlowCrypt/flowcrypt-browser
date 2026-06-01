@@ -175,13 +175,16 @@ View.run(
       }
       const key = await KeyUtil.parse(armoredPubkey);
       $('.hide_when_rendering_subpage').css('display', 'none');
-      Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${email}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`);
+      Xss.sanitizeRender('h1', `${this.backBtn}${this.space}${Xss.escape(email)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`); // xss-escaped
       $('#view_contact .key_dump').text(armoredPubkey);
       $('#view_contact #container-pubkey-details').text(
         [
           `Type: ${key.family}`,
           `Fingerprint: ${Str.spaced(key.id || 'none')}`,
-          `Users: ${key.users?.map(u => u.email).filter(Boolean).join(', ')}`,
+          `Users: ${key.users
+            ?.map(u => u.email)
+            .filter(Boolean)
+            .join(', ')}`,
           `Created on: ${key.created ? new Date(key.created) : ''}`,
           `Expiration: ${key.expiration ? new Date(key.expiration) : 'Does not expire'}`,
           `Last signature: ${key.lastModified ? new Date(key.lastModified) : ''}`,
