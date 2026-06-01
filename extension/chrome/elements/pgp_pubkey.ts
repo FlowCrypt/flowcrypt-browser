@@ -190,7 +190,7 @@ View.run(
 
     private showKeyNotUsableError = async () => {
       $('.error_container').removeClass('hidden');
-      $('.error_introduce_label').html(`This OpenPGP key is not usable.<br/><small>(${await this.getErrorText()})</small>`); // xss-escaped
+      $('.error_introduce_label').html(`This OpenPGP key is not usable.<br/><small>(${Xss.escape(await this.getErrorText())})</small>`); // xss-escaped
       $('.hide_if_error').hide();
       $('.fingerprints, .add_contact, #manual_import_warning').remove();
       const email = this.firstParsedPublicKey ? KeyUtil.getPrimaryEmail(this.firstParsedPublicKey) : undefined;
