@@ -50,7 +50,7 @@ export class Xss {
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static FORBID_CSS_STYLE =
-    /z-index:[^;]+(?=;|$)|position:[^;]+(?=;|$)|background[^;]+(?=;|$)|display:\s*none|visibility:\s*hidden|opacity:\s*0(?:\.\d+)?|transform:[^;]+|clip(?:-path)?:[^;]+|margin(?:-top|-right|-bottom|-left)?:[^;]+|padding(?:-top|-right|-bottom|-left)?:[^;]+|border(?:-top|-right|-bottom|-left|-width|-style|-color)?:[^;]+|top:[^;]+|left:[^;]+|right:[^;]+|bottom:[^;]+|filter:[^;]+|pointer-events:\s*none|font-size:\s*0(?:px|em|rem)?|line-height:\s*0(?:px|em|rem)?|width:\s*0(?:px)?|height:\s*0(?:px)?|text-indent:\s*-\d/gi;
+    /(?:^|;)\s*(?:z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:/i;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
