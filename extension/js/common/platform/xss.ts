@@ -283,19 +283,11 @@ export class Xss {
    */
   private static sanitizeCssStyle = (css: string): string => {
     let cleaned = css.replace(/@import\s+[^;]*;?/gi, '');
-    const urlRegex = /url\(\s*(["']?)(.*?)\1\s*\)/gi;
-    let match;
-    // eslint-disable-next-line no-null/no-null
-    while ((match = urlRegex.exec(cleaned)) !== null) {
-      const fullMatch = match[0];
-      const url = match[2];
+    cleaned = cleaned.replace(/url\(\s*(["']?)(.*?)\1\s*\)/gi, (fullMatch: string, _, url: string) => {
       // Only allow data: and cid: schemes
       const isSafe = /^(data:|cid:)/i.test(url);
-      if (!isSafe) {
-        // Remove the unsafe url(...) token completely
-        cleaned = cleaned.replace(fullMatch, '');
-      }
-    }
+      return isSafe ? fullMatch : '';
+    });
     // Clean up leftover artifacts: empty declarations, double semicolons
     cleaned = cleaned
       .replace(/;\s*;/g, ';')
