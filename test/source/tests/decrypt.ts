@@ -2261,6 +2261,28 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      `decrypt - css sanitizer must not allow UI redress or url() leakage`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '19e9782fbc7127c4';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-block-content', 'sanitization test payload');
+        expect(await pgpBlock.isElementPresent('[style*="position"]')).to.equal(false);
+        expect(await pgpBlock.isElementPresent('[style*="z-index"]')).to.equal(false);
+        const hasUrlCss = await pgpBlock.target.evaluate(() =>
+          [...document.querySelectorAll('*')].some(el => (el.getAttribute('style') || '').includes('url('))
+        );
+        expect(hasUrlCss).to.equal(false);
+        expect(await pgpBlock.isElementPresent('[style*="transform"]')).to.equal(false);
+        expect(await pgpBlock.isElementPresent('[style*="opacity"]')).to.equal(false);
+        await inboxPage.close();
+      })
+    );
+
+    test(
       'settings - test for warning modal when downloading an executable file',
       testWithBrowser(async (t, browser) => {
         const threadId = '187365d19ec9a10c';
