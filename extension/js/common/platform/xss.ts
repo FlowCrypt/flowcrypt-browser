@@ -282,18 +282,19 @@ export class Xss {
    * Only data: and cid: URLs are allowed.
    */
   private static sanitizeCssStyle = (css: string): string => {
-    let cleaned = css.replace(/@import\s+[^;]*;?/gi, '');
-    cleaned = cleaned.replace(/url\(\s*(["']?)(.*?)\1\s*\)/gi, (fullMatch: string, _, url: string) => {
-      // Only allow data: and cid: schemes
-      const isSafe = /^(data:|cid:)/i.test(url);
-      return isSafe ? fullMatch : '';
-    });
-    // Clean up leftover artifacts: empty declarations, double semicolons
-    cleaned = cleaned
-      .replace(/;\s*;/g, ';')
-      .replace(/^\s*;\s*/, '')
-      .trim();
-    return cleaned;
+    return css
+      .split(';')
+      .map(part => part.trim())
+      .filter(part => {
+        return !/^(z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:/i.test(
+          part
+        );
+      })
+      .filter(part => {
+        // remove url + import safely
+        return !/@import|url\(/i.test(part);
+      })
+      .join('; ');
   };
 
   /**
