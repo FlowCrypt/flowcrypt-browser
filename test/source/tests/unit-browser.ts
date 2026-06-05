@@ -59,6 +59,15 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
                   returnError: new HttpClientErr('Pubkey not found', Status.NOT_FOUND),
                 },
               },
+              attester: {
+                ldapRelay: {
+                  'x@example.com@flowcrypt.test': {
+                    pubkey: somePubkey,
+                    domainToCheck: 'attacker.example',
+                  },
+                },
+                pubkeyLookup: {},
+              },
             });
           }
           /* The "test" parameter is utilized by the unit test named "Catcher does not include query string on report." */

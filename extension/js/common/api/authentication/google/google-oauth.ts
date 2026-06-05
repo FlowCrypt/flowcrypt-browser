@@ -41,7 +41,7 @@ export class GoogleOAuth extends OAuth {
   public static async getTokenInfo(accessToken: string): Promise<GoogleTokenInfo> {
     return await Api.ajax(
       {
-        url: `${OAUTH_GOOGLE_API_HOST}/tokeninfo?access_token=${accessToken}`,
+        url: `${OAUTH_GOOGLE_API_HOST}/tokeninfo?${new URLSearchParams([['access_token', accessToken]]).toString()}`,
         method: 'GET',
         timeout: 10000,
         stack: CatchHelper.stackTrace(),

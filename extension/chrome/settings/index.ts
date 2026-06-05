@@ -163,8 +163,7 @@ View.run(
         this.setHandler(async () => {
           const prvs = await KeyStoreUtil.parse(await KeyStore.getRequired(this.acctEmail!));
           const mostUsefulPrv = KeyStoreUtil.chooseMostUseful(prvs, 'EVEN-IF-UNUSABLE');
-          const escapedFp = Xss.escape(mostUsefulPrv!.key.id);
-          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/my_key.htm', `&fingerprint=${escapedFp}`);
+          await Settings.renderSubPage(this.acctEmail, this.tabId, 'modules/my_key.htm', { fingerprint: mostUsefulPrv!.key.id });
         })
       );
       $('.action_show_encrypted_inbox').on(
@@ -538,7 +537,7 @@ View.run(
         }
 
         const escapedEmail = Xss.escape(KeyUtil.getPrimaryEmail(prv) || '');
-        const escapedLink = `<a href="#" data-test="action-show-key-${originalIndex}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${ki.id}">${escapedEmail}</a>`;
+        const escapedLink = `<a href="#" data-test="action-show-key-${originalIndex}" class="action_show_key" page="modules/my_key.htm" addurltext="&fingerprint=${encodeURIComponent(ki.id)}">${escapedEmail}</a>`;
         const fpHtml = `<span class="good" style="font-family: monospace;">${Str.spaced(Xss.escape(ki.fingerprints[0]))}</span>`;
 
         const rowClass = isExpired ? 'key-content-row expired' : 'key-content-row';

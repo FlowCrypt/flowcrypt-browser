@@ -367,7 +367,7 @@ export class Ui {
   };
 
   public static getTestCompatibilityLink = (acctEmail: string): string => {
-    return `<a href="/chrome/settings/modules/compatibility.htm?acctEmail=${acctEmail}" target="_blank">Test your OpenPGP key compatibility</a>`;
+    return `<a href="${Url.create('/chrome/settings/modules/compatibility.htm', { acctEmail })}" target="_blank">Test your OpenPGP key compatibility</a>`;
   };
 
   public static getScreenDimensions = (): ScreenDimensions => {

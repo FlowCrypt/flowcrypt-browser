@@ -11,7 +11,7 @@ import { GoogleOAuth } from '../../authentication/google/google-oauth.js';
 import { CatchHelper } from '../../../platform/catch-helper.js';
 export class Google {
   public static webmailUrl = (acctEmail: string) => {
-    return `https://mail.google.com/mail/u/${acctEmail}`;
+    return `https://mail.google.com/mail/u/${encodeURIComponent(acctEmail)}`;
   };
 
   public static gmailCall = async <RT>(acctEmail: string, path: string, params?: AjaxParams, progress?: ProgressCbs): Promise<RT> => {
