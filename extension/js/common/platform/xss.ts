@@ -283,6 +283,7 @@ export class Xss {
    */
   private static sanitizeCssStyle = (css: string): string => {
     return css
+      .replace(/\/\*[\s\S]*?\*\//g, '')
       .split(';')
       .map(part => part.trim())
       .filter(part => {
