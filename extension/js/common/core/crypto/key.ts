@@ -495,13 +495,12 @@ export class KeyUtil {
     return keys.map(k => ({ id: k.id, emails: k.users.map(u => u.email).filter((e): e is string => !!e), armored: KeyUtil.armor(k), family: k.family }));
   }
 
-  public static validateChecksum(armoredText: string): boolean {
+  public static isChecksumMismatch(armoredText: string): boolean {
     // Regex to capture any PGP armor block, e.g. SIGNATURE, MESSAGE, etc.
     // It captures: the block type in group (1), and the content in group (2)
     const pgpBlockRegex = /-----BEGIN PGP ([A-Z ]+)-----([\s\S]*?)-----END PGP \1-----/g;
 
     let match: RegExpExecArray | null;
-    let validFound = false;
 
     // Iterate over all PGP blocks in the text
     while ((match = pgpBlockRegex.exec(armoredText))) {
@@ -553,12 +552,12 @@ export class KeyUtil {
       const rawData = decodedChunks.join('');
       // eslint-disable-next-line @typescript-eslint/no-misused-spread
       const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
-      if (KeyUtil.crc24(dataBytes) === providedCRC) {
-        validFound = true;
+      if (KeyUtil.crc24(dataBytes) !== providedCRC) {
+        return true;
       }
     }
 
-    return validFound;
+    return false;
   }
 
   private static crc24 = (dataBytes: Uint8Array): number => {
