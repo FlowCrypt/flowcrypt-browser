@@ -42,7 +42,8 @@ export class Attester extends Api {
   public doLookupLdap = async (email: string, server?: string): Promise<PubkeysSearchResult> => {
     const ldapServer = server ?? `keys.${Str.getDomainFromEmailAddress(email)}`;
     try {
-      const r = await this.pubCall(`ldap-relay?server=${ldapServer}&search=${email}`);
+      const query = new URLSearchParams({ server: ldapServer, search: email });
+      const r = await this.pubCall(`ldap-relay?${query.toString()}`);
       return await this.getPubKeysSearchResult(r);
     } catch (e) {
       // treat error 500 as error 404 on this particular endpoint
@@ -73,7 +74,7 @@ export class Attester extends Api {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
-    await this.pubCall(`pub/${email}`, pubkey, { authorization: `Bearer ${idToken}` });
+    await this.pubCall(`pub/${encodeURIComponent(email)}`, pubkey, { authorization: `Bearer ${idToken}` });
   };
 
   /**
@@ -85,7 +86,7 @@ export class Attester extends Api {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
-    return await this.pubCall(`pub/${email}`, pubkey);
+    return await this.pubCall(`pub/${encodeURIComponent(email)}`, pubkey);
   };
 
   public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
@@ -109,7 +110,7 @@ export class Attester extends Api {
 
   private doLookup = async (email: string): Promise<PubkeysSearchResult> => {
     try {
-      const r = await this.pubCall(`pub/${email}`);
+      const r = await this.pubCall(`pub/${encodeURIComponent(email)}`);
       return await this.getPubKeysSearchResult(r);
     } catch (e) {
       if (ApiErr.isNotFound(e)) {

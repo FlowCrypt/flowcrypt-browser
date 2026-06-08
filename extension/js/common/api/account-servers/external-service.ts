@@ -5,7 +5,7 @@ import { AuthenticationConfiguration } from '../../authentication-configuration.
 import { ClientConfigurationError, ClientConfigurationJson } from '../../client-configuration.js';
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
-import { Dict, Str } from '../../core/common.js';
+import { Dict, Str, Url } from '../../core/common.js';
 import { FLAVOR, SHARED_TENANT_API_HOST } from '../../core/const.js';
 import { ErrorReport } from '../../platform/error-report.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
@@ -95,13 +95,18 @@ export class ExternalService extends Api {
 
   public fetchAndSaveClientConfiguration = async (): Promise<ClientConfigurationJson> => {
     const auth = await this.request<AuthenticationConfiguration>(
-      `/api/${this.apiVersion}/client-configuration/authentication?domain=${this.domain}`,
+      Url.create(`/api/${this.apiVersion}/client-configuration/authentication`, { domain: this.domain }),
       undefined,
       undefined,
       false
     );
     await AcctStore.set(this.acctEmail, { authentication: auth });
-    const r = await this.request<FesRes.ClientConfiguration>(`/api/${this.apiVersion}/client-configuration?domain=${this.domain}`, undefined, undefined, false);
+    const r = await this.request<FesRes.ClientConfiguration>(
+      Url.create(`/api/${this.apiVersion}/client-configuration`, { domain: this.domain }),
+      undefined,
+      undefined,
+      false
+    );
     if (r.clientConfiguration && !r.clientConfiguration.flags) {
       throw new ClientConfigurationError('missing_flags');
     }
@@ -173,7 +178,7 @@ export class ExternalService extends Api {
   };
 
   public messageGatewayUpdate = async (externalId: string, emailGatewayMessageId: string) => {
-    await this.request(`/api/${this.apiVersion}/message/${externalId}/gateway`, {
+    await this.request(`/api/${this.apiVersion}/message/${encodeURIComponent(externalId)}/gateway`, {
       fmt: 'JSON',
       data: {
         emailGatewayMessageId,
@@ -278,5 +283,5 @@ export class ExternalService extends Api {
       cc: process(recipients.cc),
       bcc: process(recipients.bcc),
     };
-  }
+  };
 }

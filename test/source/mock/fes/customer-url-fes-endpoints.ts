@@ -106,7 +106,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       const port = parsePort(req);
       const gatewayMatch = /\/api\/v1\/messages\/([^/]+)\/gateway/.exec(req.url);
       if (gatewayMatch && parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
-        const externalId = gatewayMatch[1];
+        const externalId = decodeURIComponent(gatewayMatch[1]);
         if (externalId === 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID') {
           throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
         }
@@ -141,7 +141,7 @@ export const getMockCustomerUrlFesEndpoints = (config: FesConfig | undefined): H
       const port = parsePort(req);
       const gatewayMatch = /\/api\/v1\/message\/([^/]+)\/gateway/.exec(req.url);
       if (gatewayMatch && parseAuthority(req) === standardFesUrl(port) && req.method === 'POST') {
-        const externalId = gatewayMatch[1];
+        const externalId = decodeURIComponent(gatewayMatch[1]);
         if (externalId === 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID') {
           throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
         }
