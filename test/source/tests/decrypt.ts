@@ -2261,6 +2261,41 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
     );
 
     test(
+      `decrypt - css sanitizer must not allow UI redress or url() leakage`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '19e9cc77867bba39';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitForContent('@pgp-block-content', 'sanitization test payload');
+        const styles = await pgpBlock.target.evaluate(() => [...document.querySelectorAll('[style]')].map(el => el.getAttribute('style') || ''));
+        const combined = styles.join(' ').toLowerCase();
+        expect(combined.includes('position')).to.equal(false);
+        expect(combined.includes('z-index')).to.equal(false);
+        expect(combined.includes('top:')).to.equal(false);
+        expect(combined.includes('left:')).to.equal(false);
+        expect(combined.includes('width:')).to.equal(false);
+        expect(combined.includes('height:')).to.equal(false);
+        expect(combined.includes('opacity')).to.equal(false);
+        expect(combined.includes('transform')).to.equal(false);
+        expect(combined.includes('pointer-events')).to.equal(false);
+        expect(combined.includes('font-size')).to.equal(false);
+        expect(combined.includes('line-height')).to.equal(false);
+        expect(combined.includes('text-indent')).to.equal(false);
+        expect(combined.includes('filter')).to.equal(false);
+        expect(combined.includes('clip-path')).to.equal(false);
+        expect(combined.includes('url(')).to.equal(false);
+        expect(combined.includes('@import')).to.equal(false);
+        expect(combined.includes('po/**/sition:fixed')).to.equal(false);
+        // verify safe styles survive
+        expect(combined.includes('color:green')).to.equal(true);
+        await inboxPage.close();
+      })
+    );
+
+    test(
       'settings - test for warning modal when downloading an executable file',
       testWithBrowser(async (t, browser) => {
         const threadId = '187365d19ec9a10c';

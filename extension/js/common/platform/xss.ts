@@ -49,7 +49,8 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
-  private static FORBID_CSS_STYLE = /z-index:[^;]+;|position:[^;]+;|background[^;]+;/g;
+  private static FORBID_CSS_STYLE =
+    /(?:^|;)\s*(?:z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:[^;]*;?/gi;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
@@ -115,14 +116,16 @@ export class Xss {
       // Handle style attributes
       if (node.hasAttribute('style')) {
         // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        const style = node.getAttribute('style')?.toLowerCase();
-        if (style && (style.includes('url(') || style.includes('@import'))) {
-          node.removeAttribute('style'); // don't want any leaks through css url()
-        }
-        // strip css styles that could use to overlap with the extension UI
+        let style = node.getAttribute('style') || '';
+        style = Xss.sanitizeCssStyle(style);
         if (style && Xss.FORBID_CSS_STYLE.test(style)) {
           const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
           node.setAttribute('style', updatedStyle);
+        } else if (style) {
+          // if style was modified but still present, update it
+          node.setAttribute('style', style);
+        } else {
+          node.removeAttribute('style');
         }
       }
 
@@ -272,6 +275,43 @@ export class Xss {
     if (!DOMPurify.isSupported) {
       throw new Error('Your browser is not supported. Please use Firefox, Chrome or Edge.');
     }
+  };
+
+  /**
+   *  Decode CSS escape sequences before applying security checks
+   */
+  private static normalizeCssEscapes = (css: string): string => {
+    return css.replace(/\\(?:\r\n|[\n\r\f])|\\([0-9a-fA-F]{1,6}\s?|.)/g, (_match: string, escaped: string | undefined) => {
+      if (typeof escaped === 'undefined') {
+        return '';
+      }
+      if (/^[0-9a-fA-F]/.test(escaped)) {
+        const codePoint = Number.parseInt(escaped.trim(), 16);
+        return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : '';
+      }
+      return escaped;
+    });
+  };
+
+  /**
+   * Remove @import rules and any url(...) that would cause an out‑of‑band request.
+   * Only data: and cid: URLs are allowed.
+   */
+  private static sanitizeCssStyle = (css: string): string => {
+    return css
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .split(';')
+      .map(part => this.normalizeCssEscapes(part.trim()))
+      .filter(part => {
+        return !/^(z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:/i.test(
+          part
+        );
+      })
+      .filter(part => {
+        // remove url + import safely
+        return !/@import|url\(/i.test(part);
+      })
+      .join('; ');
   };
 
   /**
