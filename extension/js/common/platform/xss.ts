@@ -278,6 +278,22 @@ export class Xss {
   };
 
   /**
+   *  Decode CSS escape sequences before applying security checks
+   */
+  private static normalizeCssEscapes = (css: string): string => {
+    return css.replace(/\\(?:\r\n|[\n\r\f])|\\([0-9a-fA-F]{1,6}\s?|.)/g, (_match: string, escaped: string | undefined) => {
+      if (typeof escaped === 'undefined') {
+        return '';
+      }
+      if (/^[0-9a-fA-F]/.test(escaped)) {
+        const codePoint = Number.parseInt(escaped.trim(), 16);
+        return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : '';
+      }
+      return escaped;
+    });
+  };
+
+  /**
    * Remove @import rules and any url(...) that would cause an out‑of‑band request.
    * Only data: and cid: URLs are allowed.
    */
@@ -285,7 +301,7 @@ export class Xss {
     return css
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .split(';')
-      .map(part => part.trim())
+      .map(part => this.normalizeCssEscapes(part.trim()))
       .filter(part => {
         return !/^(z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:/i.test(
           part
