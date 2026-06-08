@@ -214,7 +214,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     '/shared-tenant-fes/api/v1/messages/?': async ({ body }, req) => {
       const gatewayMatch = /\/shared-tenant-fes\/api\/v1\/messages\/([^/]+)\/gateway/.exec(req.url);
       if (gatewayMatch && req.method === 'POST') {
-        const externalId = gatewayMatch[1];
+        const externalId = decodeURIComponent(gatewayMatch[1]);
         if (externalId === 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID') {
           throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
         }
@@ -253,7 +253,7 @@ export const getMockSharedTenantFesEndpoints = (config: FesConfig | undefined): 
     '/shared-tenant-fes/api/v1/message/?': async ({ body }, req) => {
       const gatewayMatch = /\/shared-tenant-fes\/api\/v1\/message\/([^/]+)\/gateway/.exec(req.url);
       if (gatewayMatch && req.method === 'POST') {
-        const externalId = gatewayMatch[1];
+        const externalId = decodeURIComponent(gatewayMatch[1]);
         if (externalId === 'FES-MOCK-EXTERNAL-FOR-GATEWAYFAILURE@EXAMPLE.COM-ID') {
           throw new HttpClientErr(`Test error`, Status.BAD_REQUEST);
         }

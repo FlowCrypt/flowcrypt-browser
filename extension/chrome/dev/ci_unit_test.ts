@@ -8,6 +8,7 @@ import { AttachmentUI } from '../../js/common/ui/attachment-ui.js';
 import { ApiErr } from '../../js/common/api/shared/api-error.js';
 import { Mime } from '../../js/common/core/mime.js';
 import { Attachment } from '../../js/common/core/attachment.js';
+import { Attester } from '../../js/common/api/key-server/attester.js';
 import { Wkd } from '../../js/common/api/key-server/wkd.js';
 import { MsgUtil } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { Sks } from '../../js/common/api/key-server/sks.js';
@@ -32,6 +33,7 @@ const libs: unknown[] = [
   ApiErr,
   Attachment,
   AttachmentUI,
+  Attester,
   Buf,
   ExpirationCache,
   KeyUtil,

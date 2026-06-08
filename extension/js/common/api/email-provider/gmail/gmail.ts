@@ -36,7 +36,12 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
 
   public threadGet = async (threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb, retryCount = 0): Promise<GmailRes.GmailThread> => {
     try {
-      return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${threadId}`, { method: 'GET', data: { format } }, { download: progressCb });
+      return await Google.gmailCall<GmailRes.GmailThread>(
+        this.acctEmail,
+        `threads/${encodeURIComponent(threadId)}`,
+        { method: 'GET', data: { format } },
+        { download: progressCb }
+      );
     } catch (e) {
       if (ApiErr.isRateLimit(e) && retryCount < MAX_RATE_LIMIT_ERROR_RETRY_COUNT) {
         await Time.sleep(1000);
@@ -60,7 +65,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public threadModify = async (id: string, rmLabels: string[], addLabels: string[]): Promise<GmailRes.GmailThread> => {
-    return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${id}/modify`, {
+    return await Google.gmailCall<GmailRes.GmailThread>(this.acctEmail, `threads/${encodeURIComponent(id)}/modify`, {
       method: 'POST',
       data: {
         removeLabelIds: rmLabels || [], // todo - insufficient permission - need https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
@@ -79,11 +84,11 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public draftDelete = async (id: string): Promise<GmailRes.GmailDraftDelete> => {
-    return await Google.gmailCall<GmailRes.GmailDraftDelete>(this.acctEmail, 'drafts/' + id, { method: 'DELETE' });
+    return await Google.gmailCall<GmailRes.GmailDraftDelete>(this.acctEmail, `drafts/${encodeURIComponent(id)}`, { method: 'DELETE' });
   };
 
   public draftUpdate = async (id: string, mimeMsg: string, threadId: string): Promise<GmailRes.GmailDraftUpdate> => {
-    return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, `drafts/${id}`, {
+    return await Google.gmailCall<GmailRes.GmailDraftUpdate>(this.acctEmail, `drafts/${encodeURIComponent(id)}`, {
       method: 'PUT',
       data: {
         message: { raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(), threadId },
@@ -92,7 +97,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public draftGet = async (id: string, format: GmailResponseFormat = 'full'): Promise<GmailRes.GmailDraftGet> => {
-    return await Google.gmailCall<GmailRes.GmailDraftGet>(this.acctEmail, `drafts/${id}`, { method: 'GET', data: { format } });
+    return await Google.gmailCall<GmailRes.GmailDraftGet>(this.acctEmail, `drafts/${encodeURIComponent(id)}`, { method: 'GET', data: { format } });
   };
 
   public draftList = async (): Promise<GmailRes.GmailDraftList> => {
@@ -139,7 +144,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     try {
       return await Google.gmailCall<GmailRes.GmailMsg>(
         this.acctEmail,
-        `messages/${msgId}`,
+        `messages/${encodeURIComponent(msgId)}`,
         { method: 'GET', data: { format: format || 'full' } },
         progressCb ? { download: progressCb } : undefined
       );
@@ -164,10 +169,13 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public attachmentGet = async (attachment: Attachment, progress?: { download: ProgressCb }): Promise<GmailRes.GmailAttachment> => {
+    if (!attachment.msgId || !attachment.id) {
+      throw new Error('Attachment is missing Gmail message id or attachment id');
+    }
     type RawGmailAttRes = { attachmentId: string; size: number; data: string };
     const { attachmentId, size, data } = await Google.gmailCall<RawGmailAttRes>(
       this.acctEmail,
-      `messages/${attachment.msgId}/attachments/${attachment.id}`,
+      `messages/${encodeURIComponent(attachment.msgId)}/attachments/${encodeURIComponent(attachment.id)}`,
       { method: 'GET' },
       progress
     );
@@ -227,7 +235,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
       };
       GoogleOAuth.googleApiAuthHeader(this.acctEmail)
         .then(async authHeader => {
-          const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attachmentId}`;
+          const url = `${GMAIL_GOOGLE_API_HOST}/gmail/v1/users/me/messages/${encodeURIComponent(msgId)}/attachments/${encodeURIComponent(attachmentId)}`;
           const response: Response = await fetch(url, {
             method: 'GET',
             headers: authHeader,

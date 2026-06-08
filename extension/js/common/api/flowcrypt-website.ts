@@ -11,7 +11,7 @@ namespace FlowCryptWebsiteRes {
 
 export class FlowCryptWebsite extends Api {
   public static pubKeyUrl = (resource: string) => {
-    return `https://flowcrypt.com/pub/${resource}`;
+    return `https://flowcrypt.com/pub/${encodeURIComponent(resource)}`;
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {

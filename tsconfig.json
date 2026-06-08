@@ -14,6 +14,7 @@
     "strict": true,
     "useUnknownInCatchVariables": false,
     "outDir": "build/generic-extension-wip",
+    "rootDir": "./extension",
     "moduleResolution": "bundler",
     "skipLibCheck": true,
     "paths": {
