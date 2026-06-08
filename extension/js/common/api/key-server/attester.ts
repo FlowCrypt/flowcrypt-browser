@@ -3,7 +3,7 @@
 'use strict';
 
 import { Api } from './../shared/api.js';
-import { Dict, Str } from '../../core/common.js';
+import { Dict, Str, Url } from '../../core/common.js';
 import { PubkeysSearchResult } from './../pub-lookup.js';
 import { AjaxErr, ApiErr } from '../shared/api-error.js';
 import { ClientConfiguration } from '../../client-configuration';
@@ -74,7 +74,7 @@ export class Attester extends Api {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
-    await this.pubCall(`pub/${encodeURIComponent(email)}`, pubkey, { authorization: `Bearer ${idToken}` });
+    await this.pubCall(`pub/${Url.encodeEmailAddressForPathSegment(email)}`, pubkey, { authorization: `Bearer ${idToken}` });
   };
 
   /**
@@ -86,7 +86,7 @@ export class Attester extends Api {
     if (!this.clientConfiguration.canSubmitPubToAttester()) {
       throw new Error('Cannot replace pubkey at attester because your organisation rules forbid it');
     }
-    return await this.pubCall(`pub/${encodeURIComponent(email)}`, pubkey);
+    return await this.pubCall(`pub/${Url.encodeEmailAddressForPathSegment(email)}`, pubkey);
   };
 
   public welcomeMessage = async (email: string, pubkey: string, idToken: string | undefined): Promise<{ sent: boolean }> => {
@@ -110,7 +110,7 @@ export class Attester extends Api {
 
   private doLookup = async (email: string): Promise<PubkeysSearchResult> => {
     try {
-      const r = await this.pubCall(`pub/${encodeURIComponent(email)}`);
+      const r = await this.pubCall(`pub/${Url.encodeEmailAddressForPathSegment(email)}`);
       return await this.getPubKeysSearchResult(r);
     } catch (e) {
       if (ApiErr.isNotFound(e)) {

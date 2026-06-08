@@ -3,6 +3,7 @@
 
 import { Api } from './shared/api.js';
 import { Browser } from '../browser/browser.js';
+import { Url } from '../core/common.js';
 import { CatchHelper } from '../platform/catch-helper.js';
 
 namespace FlowCryptWebsiteRes {
@@ -11,7 +12,7 @@ namespace FlowCryptWebsiteRes {
 
 export class FlowCryptWebsite extends Api {
   public static pubKeyUrl = (resource: string) => {
-    return `https://flowcrypt.com/pub/${encodeURIComponent(resource)}`;
+    return `https://flowcrypt.com/pub/${Url.encodeEmailAddressForPathSegment(resource)}`;
   };
 
   public static retrieveBlogPosts = async (): Promise<FlowCryptWebsiteRes.FcBlogPost[]> => {
