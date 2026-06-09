@@ -85,6 +85,20 @@ Something wrong with this key`),
         }
       );
     });
+    test(`[unit][KeyUtil.isChecksumMismatch] detects only present checksum mismatches`, t => {
+      const armoredWithValidChecksum = `-----BEGIN PGP MESSAGE-----
+
+aGVsbG8=
+=R/WK
+-----END PGP MESSAGE-----`;
+      const armoredWithInvalidChecksum = armoredWithValidChecksum.replace('=R/WK', '=AAAA');
+      const armoredWithoutChecksum = armoredWithValidChecksum.replace('\n=R/WK', '');
+
+      expect(KeyUtil.isChecksumMismatch(armoredWithValidChecksum)).to.equal(false);
+      expect(KeyUtil.isChecksumMismatch(armoredWithInvalidChecksum)).to.equal(true);
+      expect(KeyUtil.isChecksumMismatch(armoredWithoutChecksum)).to.equal(false);
+      t.pass();
+    });
     test(`[unit][OpenPGPKey.parse] throws on invalid input`, async t => {
       await t.throwsAsync(
         () =>

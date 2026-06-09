@@ -774,7 +774,7 @@ export class MessageRenderer {
         renderModule,
         this.getRetryVerification(signerEmail, verificationPubs => MessageRenderer.decryptFunctionToVerifyRes(() => decrypt(verificationPubs))),
         plainSubject,
-        !KeyUtil.validateChecksum(encryptedData.toString())
+        typeof encryptedData === 'string' && KeyUtil.isChecksumMismatch(encryptedData)
       );
     } else if (result.error.type === DecryptErrTypes.format) {
       if (fallbackToPlainText) {
