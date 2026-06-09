@@ -471,6 +471,10 @@ export class Url {
     return link;
   };
 
+  public static encodeEmailAddressForPathSegment = (email: string) => {
+    return encodeURIComponent(email).replace(/%40/gi, '@');
+  };
+
   public static removeParamsFromUrl = (url: string, paramsToDelete: string[]) => {
     const urlParts = url.split('?');
     if (!urlParts[1]) {
