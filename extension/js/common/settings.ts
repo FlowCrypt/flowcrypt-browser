@@ -44,7 +44,6 @@ export class Settings {
         userInputs: PgpPwd.weakWords(),
       },
     };
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const zxcvbn = new zxcvbnts.core.ZxcvbnFactory(options) as { check(passphrase: string): { guesses: number } };
     const guesses = zxcvbn.check(passphrase).guesses;
     return PgpPwd.estimateStrength(guesses, type);
