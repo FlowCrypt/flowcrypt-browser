@@ -84,8 +84,8 @@ export class ExpirationCache<V> {
         keysToDelete.push(key);
       }
     }
-    for (const key of keysToDelete) {
-      await this.set(key);
+    if (keysToDelete.length) {
+      await storageRemove('session', keysToDelete);
     }
   };
 

@@ -44,7 +44,7 @@ export class Settings {
         userInputs: PgpPwd.weakWords(),
       },
     };
-    const zxcvbn = new zxcvbnts.core.ZxcvbnFactory(options);
+    const zxcvbn = new zxcvbnts.core.ZxcvbnFactory(options) as { check(passphrase: string): { guesses: number } };
     const guesses = zxcvbn.check(passphrase).guesses;
     return PgpPwd.estimateStrength(guesses, type);
   }
