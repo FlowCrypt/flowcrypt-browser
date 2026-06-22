@@ -1655,21 +1655,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - public key is rendered minimized for outgoing messages',
       testWithBrowser(async (t, browser) => {
         const assertOutgoingPubkeyFrameIsMinimized = async (page: ControllablePage) => {
-          for (const attempt of [1, 2, 3]) {
-            const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm'], { sleep: attempt === 1 ? 1 : 0, timeout: 20 });
-            try {
-              await pubkeyFrame.waitUntilViewLoaded(90);
-              await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
-              expect(await pubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
-              return;
-            } catch (e) {
-              if (attempt === 3) {
-                throw e;
-              }
-              t.log(`Retrying minimized pubkey frame assertion (${attempt + 1}/3)`);
-              await Util.sleep(1);
-            }
-          }
+          const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { timeout: 30 });
+          await pubkeyFrame.waitUntilViewLoaded(90);
+          await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
+          await pubkeyFrame.target.waitForFunction(
+            () => {
+              const addContactButton = document.querySelector<HTMLElement>('[data-test="action-add-contact"]');
+              return Boolean(addContactButton && !addContactButton.offsetHeight);
+            },
+            { timeout: 30_000 }
+          );
+          expect(await pubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
         };
 
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
@@ -1684,7 +1680,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         await gmailPage.waitAll('iframe');
         expect((await gmailPage.getFramesUrls(['pgp_block.htm'])).length).to.equal(1);
         expect((await gmailPage.getFramesUrls(['attachment.htm'])).length).to.equal(0); // invisible
-        await Util.sleep(2);
         await assertOutgoingPubkeyFrameIsMinimized(gmailPage);
       })
     );
