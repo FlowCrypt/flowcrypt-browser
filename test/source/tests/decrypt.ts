@@ -1656,7 +1656,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       testWithBrowser(async (t, browser) => {
         const assertOutgoingPubkeyFrameIsMinimized = async (page: ControllablePage) => {
           const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { timeout: 30 });
-          await pubkeyFrame.waitUntilViewLoaded(90);
           await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
           await pubkeyFrame.target.waitForFunction(
             () => {
