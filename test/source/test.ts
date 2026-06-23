@@ -24,7 +24,7 @@ import { defineSetupTests } from './tests/setup';
 import { defineUnitBrowserTests } from './tests/unit-browser';
 import { defineUnitNodeTests } from './tests/unit-node';
 
-export const { testVariant, testGroup, oneIfNotPooled, poolSize, buildDir, isMock } = getParsedCliParams();
+export const { testVariant, testGroup, oneIfNotPooled, poolSize, buildDir, extensionId, isMock } = getParsedCliParams();
 export const internalTestState = { expectIntentionalErrReport: false }; // updated when a particular test that causes an error is run
 const DEBUG_BROWSER_LOG = false; // set to true to print / export information from browser
 const DEBUG_MOCK_LOG = false; // set to true to print mock server logs
@@ -65,7 +65,7 @@ const testWithBrowser = (
     if (isMock) {
       t.context.mockApi = mockApi;
     } else {
-      t.context.urls = new TestUrls(await browserPool.getExtensionId(t));
+      t.context.urls = new TestUrls(extensionId ?? (await browserPool.getExtensionId(t)));
     }
     try {
       await browserPool.withNewBrowserTimeoutAndRetry(

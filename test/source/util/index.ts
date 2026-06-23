@@ -1,6 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import * as fs from 'fs';
+import { createHash } from 'crypto';
 import { join } from 'path';
 import { ElementHandle, Keyboard, KeyInput } from 'puppeteer';
 import { BrowserHandle } from '../browser/browser-handle.js';
@@ -32,12 +33,22 @@ export const getParsedCliParams = () => {
   }
   const buildVariant = testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER-LOCAL' : testVariant;
   const buildDir = join(ROOT_DIR, `build/chrome-${buildVariant.toLowerCase()}`);
+  const extensionId = testVariant === 'CONSUMER-LIVE-GMAIL' ? getExtensionIdFromManifestKey(buildDir) : undefined;
   const poolSizeArg = process.argv.find(a => a.startsWith('--pool-size='));
   const poolSize = poolSizeArg ? parseInt(poolSizeArg.split('=')[1], 10) : undefined;
   const poolSizeOne = poolSize === 1;
   const oneIfNotPooled = (suggestedPoolSize: number) => (poolSizeOne ? 1 : suggestedPoolSize);
   console.info(`TEST_VARIANT: ${testVariant}:${testGroup}, (build dir: ${buildDir}, poolSize: ${poolSize ?? 'default'})`);
-  return { testVariant, testGroup, oneIfNotPooled, poolSize, buildDir, isMock: testVariant.includes('-MOCK') };
+  return { testVariant, testGroup, oneIfNotPooled, poolSize, buildDir, extensionId, isMock: testVariant.includes('-MOCK') };
+};
+
+const getExtensionIdFromManifestKey = (buildDir: string): string => {
+  const manifest = JSON.parse(fs.readFileSync(join(buildDir, 'manifest.json'), 'utf8')) as { key?: string };
+  if (!manifest.key) {
+    throw new Error(`Cannot determine fixed extension id because manifest key is missing from ${buildDir}/manifest.json`);
+  }
+  const hash = createHash('sha256').update(Buffer.from(manifest.key, 'base64')).digest('hex').slice(0, 32);
+  return hash.replace(/[0-9a-f]/g, c => String.fromCharCode('a'.charCodeAt(0) + parseInt(c, 16)));
 };
 
 export type TestMessage = {
