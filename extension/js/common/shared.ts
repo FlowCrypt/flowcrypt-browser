@@ -11,7 +11,11 @@ import { ContactStore } from './platform/store/contact-store.js';
  */
 export const compareAndSavePubkeysToStorage = async ({ email, name }: EmailParts, fetchedPubkeys: string[], storedPubkeys: PubkeyInfo[]): Promise<boolean> => {
   let updated = false;
+  const lowerEmail = email.toLowerCase();
   for (const fetched of await Promise.all(fetchedPubkeys.map(KeyUtil.parse))) {
+    if (!fetched.users.some(u => u.email === lowerEmail)) {
+      continue;
+    }
     const stored = storedPubkeys.find(p => KeyUtil.identityEquals(p.pubkey, fetched))?.pubkey;
     if (!stored || KeyUtil.isFetchedNewer({ fetched, stored })) {
       await ContactStore.update(undefined, email, { pubkey: fetched, pubkeyLastCheck: Date.now(), name });

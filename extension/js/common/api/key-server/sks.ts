@@ -4,9 +4,10 @@
 
 import { Api } from './../shared/api.js';
 import { ApiErr } from '../shared/api-error.js';
+import { KeyUtil } from '../../core/crypto/key.js';
 import { PgpArmor } from '../../core/crypto/pgp/pgp-armor.js';
 import { PubkeySearchResult } from './../pub-lookup.js';
-import { Url } from '../../core/common.js';
+import { Str, Url } from '../../core/common.js';
 
 export class Sks extends Api {
   private static MR_VERSION_1 = 'info:1:';
@@ -48,24 +49,32 @@ export class Sks extends Api {
     if (!Object.keys(foundUidsByLongid).length) {
       return { pubkey: null }; // eslint-disable-line no-null/no-null
     }
+    const lowerEmail = email.toLowerCase();
     for (const longid of Object.keys(foundUidsByLongid)) {
       for (const uid of foundUidsByLongid[longid]) {
-        if (uid.includes(email)) {
-          // todo - use fingerprint here
-          return await this.lookupFingerprint(longid); // try to find first pubkey where uid matches what we search for
+        const parsedEmail = Str.parseEmail(uid, 'DO-NOT-VALIDATE').email;
+        if (parsedEmail === lowerEmail) {
+          return await this.lookupFingerprint(longid, email);
         }
       }
     }
-    return await this.lookupFingerprint(Object.keys(foundUidsByLongid)[0]); // else return the first pubkey
+    return { pubkey: null }; // eslint-disable-line no-null/no-null
   };
 
-  public lookupFingerprint = async (fingerprintOrLongid: string): Promise<PubkeySearchResult> => {
+  public lookupFingerprint = async (fingerprintOrLongid: string, expectedEmail?: string): Promise<PubkeySearchResult> => {
     if (fingerprintOrLongid.includes('@')) {
       throw new Error('Expected fingerprint or longid, got email');
     }
     const pubkey = await this.get(`/pks/lookup?op=get&search=0x${fingerprintOrLongid}&options=mr`);
     if (!pubkey?.includes(String(PgpArmor.headers('publicKey').end))) {
       return { pubkey: null }; // eslint-disable-line no-null/no-null
+    }
+    if (expectedEmail) {
+      const parsed = await KeyUtil.parse(pubkey);
+      const hasMatchingEmail = parsed.users.some(u => u.email === expectedEmail.toLowerCase());
+      if (!hasMatchingEmail) {
+        return { pubkey: null }; // eslint-disable-line no-null/no-null
+      }
     }
     return { pubkey };
   };
