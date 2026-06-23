@@ -533,7 +533,7 @@ export class Url {
 }
 
 export const emailKeyIndex = (scope: string, key: string): string => {
-  return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+  return `${scope.toLowerCase()}_${key}`;
 };
 
 export const asyncSome = async <T>(arr: T[], predicate: (e: T) => Promise<boolean>) => {

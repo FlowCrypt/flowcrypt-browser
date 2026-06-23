@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { storageGetAll, storageRemove } from '../common/browser/chrome.js';
+import { storageGetAll, storageRemove, storageSet } from '../common/browser/chrome.js';
 import { KeyInfoWithIdentity, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
@@ -278,4 +278,56 @@ const moveContactsBatchToEmailsAndPubkeys = async (db: IDBDatabase, count?: numb
     });
   }
   return converted.length;
+};
+
+export const migrateAcctStorageNamespace = async () => {
+  const globalStore = await GlobalStore.get(['acct_storage_namespace_migrated']);
+  if (globalStore.acct_storage_namespace_migrated) {
+    return;
+  }
+  const acctEmails = await GlobalStore.acctEmailsGet();
+  if (!acctEmails.length) {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    await GlobalStore.set({ acct_storage_namespace_migrated: true });
+    return;
+  }
+  const strippedToEmail: { [stripped: string]: string } = {};
+  for (const email of acctEmails) {
+    const stripped = email.replace(/[^A-Za-z0-9]+/g, '').toLowerCase();
+    const existing = strippedToEmail[stripped];
+    if (existing && existing.toLowerCase() !== email.toLowerCase()) {
+      throw new Error(
+        `Account storage namespace collision detected: "${existing}" and "${email}" ` +
+          `both resolve to storage key "${stripped}". Migration cannot proceed safely. ` +
+          `Please remove one account before upgrading.`
+      );
+    }
+    strippedToEmail[stripped] = email;
+  }
+  const storageLocal = await storageGetAll('local');
+  for (const email of acctEmails) {
+    const oldStripped = email.replace(/[^A-Za-z0-9]+/g, '').toLowerCase();
+    const oldPrefix = `cryptup_${oldStripped}_`;
+    const newPrefix = `cryptup_${email.toLowerCase()}_`;
+    const oldKeys: string[] = [];
+    const newEntries: { [key: string]: unknown } = {};
+    for (const storageKey of Object.keys(storageLocal)) {
+      if (storageKey.startsWith(oldPrefix)) {
+        const suffix = storageKey.substring(oldPrefix.length);
+        const newKey = `${newPrefix}${suffix}`;
+        if (storageKey !== newKey) {
+          oldKeys.push(storageKey);
+          newEntries[newKey] = storageLocal[storageKey];
+        }
+      }
+    }
+    if (oldKeys.length) {
+      await storageSet('local', newEntries);
+      await storageRemove('local', oldKeys);
+      console.info(`Migrated ${oldKeys.length} storage keys for account "${email}"`);
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  await GlobalStore.set({ acct_storage_namespace_migrated: true });
+  console.info('Account storage namespace migration complete');
 };

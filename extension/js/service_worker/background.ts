@@ -10,7 +10,14 @@ import { BgHandlers } from './bg-handlers.js';
 import { Catch } from '../common/platform/catch.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { BgUtils } from './bgutils.js';
-import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateSearchables, updateX509FingerprintsAndLongids } from './migrations.js';
+import {
+  migrateAcctStorageNamespace,
+  migrateGlobal,
+  moveContactsToEmailsAndPubkeys,
+  updateOpgpRevocations,
+  updateSearchables,
+  updateX509FingerprintsAndLongids,
+} from './migrations.js';
 import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-store.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
@@ -27,6 +34,7 @@ console.info('background.js service worker starting');
 
   try {
     await migrateGlobal();
+    await migrateAcctStorageNamespace();
     await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
     storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {

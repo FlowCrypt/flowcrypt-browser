@@ -23,6 +23,7 @@ export type GlobalStoreDict = {
   contact_store_opgp_revoked_flags_updated?: boolean;
   contact_store_searchable_pruned?: boolean;
   local_drafts?: Dict<LocalDraft>;
+  acct_storage_namespace_migrated?: boolean;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 
@@ -38,7 +39,8 @@ export type GlobalIndex =
   | 'contact_store_opgp_revoked_flags_updated'
   | 'contact_store_searchable_pruned'
   | 'local_drafts'
-  | 'stored_key_info_migrated';
+  | 'stored_key_info_migrated'
+  | 'acct_storage_namespace_migrated';
 
 /**
  * Locally stored data that is not associated with any email account
