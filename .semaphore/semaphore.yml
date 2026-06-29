@@ -17,17 +17,20 @@ blocks:
       minutes: 45
     task:
       secrets:
-        - name: flowcrypt-browser-ci-secrets
+        - &flowcrypt_ci_secrets
+          name: flowcrypt-browser-ci-secrets
       env_vars:
-        - name: SEMAPHORE_GIT_DIR
+        - &flowcrypt_git_dir
+          name: SEMAPHORE_GIT_DIR
           value: /home/semaphore/git/flowcrypt-browser
       prologue:
-        commands:
+        commands: &flowcrypt_ci_prologue
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
-          - npm install
+          - cache restore flowcrypt-browser-npm-$(checksum package-lock.json) || true
+          - npm ci --cache ~/.npm --prefer-offline
+          - cache store flowcrypt-browser-npm-$(checksum package-lock.json) ~/.npm || true
           - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
-          - npm run-script pretest
       jobs:
         - name: consumer mock - standard test group
           commands:
@@ -44,10 +47,13 @@ blocks:
           commands:
             - npm run-script test_ci_chrome_enterprise
       epilogue:
-        always:
+        always: &flowcrypt_ci_epilogue_always
           commands:
-            - '[[ -f report.xml ]] && test-results publish report.xml'
-        on_fail:
+            - |
+              if [[ -f report.xml ]]; then
+                test-results publish report.xml
+              fi
+        on_fail: &flowcrypt_ci_epilogue_on_fail
           commands:
             - |
               shopt -s nullglob
@@ -64,33 +70,18 @@ blocks:
       minutes: 60
     task:
       secrets:
-        - name: flowcrypt-browser-ci-secrets
+        - *flowcrypt_ci_secrets
       env_vars:
-        - name: SEMAPHORE_GIT_DIR
-          value: /home/semaphore/git/flowcrypt-browser
+        - *flowcrypt_git_dir
       prologue:
-        commands:
-          - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
-          - cd ~/git/flowcrypt-browser
-          - npm install
-          - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
-          - npm run-script pretest
+        commands: *flowcrypt_ci_prologue
       jobs:
         - name: Live Gmail tests
           commands:
             - npm run-script test_ci_chrome_consumer_live_gmail
       epilogue:
-        always:
-          commands:
-            - '[[ -f report.xml ]] && test-results publish report.xml'
-        on_fail:
-          commands:
-            - |
-              shopt -s nullglob
-              for file in build/test/test/debugArtifacts/debugHtmlAttachment-*.html; do
-                echo "Uploading debug file $file as job artifact..."
-                artifact push job "$file" --force
-              done
+        always: *flowcrypt_ci_epilogue_always
+        on_fail: *flowcrypt_ci_epilogue_on_fail
 
   - name: Other tests
     dependencies: []
@@ -102,17 +93,11 @@ blocks:
           type: e1-standard-2
           os_image: ubuntu2404
       secrets:
-        - name: flowcrypt-browser-ci-secrets
+        - *flowcrypt_ci_secrets
       env_vars:
-        - name: SEMAPHORE_GIT_DIR
-          value: /home/semaphore/git/flowcrypt-browser
+        - *flowcrypt_git_dir
       prologue:
-        commands:
-          - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
-          - cd ~/git/flowcrypt-browser
-          - npm install
-          - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
-          - npm run-script pretest
+        commands: *flowcrypt_ci_prologue
       jobs:
         - name: code quality
           commands:
@@ -131,6 +116,8 @@ blocks:
           commands:
             - npm run-script test_local_unit_enterprise
             - '[[ -f report.xml ]] && test-results publish report.xml'
+      epilogue:
+        always: *flowcrypt_ci_epilogue_always
 
 after_pipeline:
   task:
