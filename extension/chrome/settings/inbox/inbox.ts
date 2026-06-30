@@ -185,7 +185,12 @@ export class InboxView extends View {
   private addBrowserMsgListeners = () => {
     BrowserMsg.addListener('add_end_session_btn', () => this.injector.insertEndSessionBtn(this.acctEmail));
     BrowserMsg.addListener('set_active_window', async ({ frameId }: Bm.ComposeWindow) => {
-      this.injector.setActiveComposeWindow(frameId);
+      if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
+        return; // already active
+      }
+      $(`.secure_compose_window`).removeClass('previous_active');
+      $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
     BrowserMsg.addListener('close_compose_window', async ({ frameId }: Bm.ComposeWindow) => {
       $(`.secure_compose_window[data-frame-id="${frameId}"]`).remove();

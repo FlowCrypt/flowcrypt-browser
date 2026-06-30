@@ -68,26 +68,13 @@ export class Injector {
     const alreadyOpenedCount = this.S.now('secure_compose_window').length;
     if (alreadyOpenedCount < 3) {
       const composeWin = $(this.factory.embeddedCompose(draftId, openInFullScreen, thunderbirdMsgId, replyOption, replyMsgId));
-      const frameId = composeWin.data('frame-id') as string;
       composeWin.attr('data-order', alreadyOpenedCount + 1);
-      composeWin.on('click focusin', () => this.setActiveComposeWindow(frameId));
-      composeWin.find('iframe').on('focus', () => this.setActiveComposeWindow(frameId));
       this.S.cached('body').append(composeWin); // xss-safe-factory
-      this.setActiveComposeWindow(frameId);
       return true;
     } else {
       Ui.toast('Only 3 FlowCrypt windows can be opened at a time', false, 3, 'top', 'error');
       return false;
     }
-  };
-
-  public setActiveComposeWindow = (frameId: string) => {
-    if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
-      return; // already active
-    }
-    $(`.secure_compose_window`).removeClass('previous_active');
-    $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
-    $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
   };
 
   public btns = () => {

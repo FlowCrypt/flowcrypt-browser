@@ -152,7 +152,12 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   ) => {
     BrowserMsg.addListener('set_active_window', async req => {
       const { frameId } = req as Bm.ComposeWindow;
-      inject.setActiveComposeWindow(frameId);
+      if ($(`.secure_compose_window.active[data-frame-id="${frameId}"]`).length) {
+        return; // already active
+      }
+      $(`.secure_compose_window`).removeClass('previous_active');
+      $(`.secure_compose_window.active`).addClass('previous_active').removeClass('active');
+      $(`.secure_compose_window[data-frame-id="${frameId}"]`).addClass('active');
     });
     BrowserMsg.addListener('close_compose_window', async req => {
       const { frameId } = req as Bm.ComposeWindow;
