@@ -78,6 +78,7 @@ export class OauthPageRecipe extends PageRecipe {
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
       googleContinueAuthBtn: '.VfPpkd-LgbsSe',
+      googleSignInWithGoogleContinueBtn: '//button[.//span[normalize-space(.)="Continue"]]',
     };
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL, .yAlK0b';
@@ -122,6 +123,17 @@ export class OauthPageRecipe extends PageRecipe {
         // additional confirmation screen
         const actionButtons = await oauthPage.target.$$(selectors.googleContinueAuthBtn);
         await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
+      }
+      if (await oauthPage.isElementPresent(selectors.googleSignInWithGoogleContinueBtn)) {
+        // "Sign in with Google" can show a re-auth confirmation before the OAuth approval screen.
+        await oauthPage.waitForNavigationIfAny(
+          () => oauthPage.waitAndClick(selectors.googleSignInWithGoogleContinueBtn, { delay: 1 }),
+          OauthPageRecipe.longTimeout
+        );
+        await Util.sleep(2);
+        if (oauthPage.page.isClosed()) {
+          return;
+        }
       }
       await oauthPage.waitAny([selectors.googleApproveBtn, selectors.auth0username]);
       if (await oauthPage.isElementPresent(selectors.auth0username)) {
