@@ -109,10 +109,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const primarySignature = 'Test primary signature';
         const aliasSignature = 'Test alias signature';
-        const acctAliases = [{
-          ...flowcryptCompatibilityAliasList[0],
-          signature: aliasSignature,
-        }];
+        const acctAliases = [
+          {
+            ...flowcryptCompatibilityAliasList[0],
+            signature: aliasSignature,
+          },
+        ];
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           google: { acctAliases, acctPrimarySignature: primarySignature },
           attester: { includeHumanKey: true },
@@ -1922,8 +1924,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-
-
     test(
       'compose - check existing draft not saved without changes',
       testWithBrowser(async (t, browser) => {
@@ -2187,6 +2187,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
         await inboxPage.waitAndFocus('iframe');
         await firstComposeFrame.waitAndFocus('@input-body');
+        await inboxPage.waitAll(['.secure_compose_window[data-order="1"].active', '.secure_compose_window[data-order="3"].previous_active']);
         // make sure the 1st compose window is active, and the 3rd is previous_active
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'active')).to.be.true;
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'active')).to.be.false;
@@ -3511,8 +3512,9 @@ const sendTextAndVerifyPresentInSentMsg = async (
   text: string,
   sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {}
 ) => {
-  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''
-    } Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${
+    sendingOpt.encrypt ? 'Encrypted' : ''
+  } Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   const acctEmail = 'flowcrypt.compatibility@gmail.com';
