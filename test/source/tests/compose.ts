@@ -1463,9 +1463,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await composePage.waitAndClick('@encrypted-reply');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
-        await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+        await composePage.target.evaluate(() => $('#recipients_placeholder:visible').trigger('click'));
         await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
-        await composePage.waitAndClick('@action-remove-senderdomaincom-recipient');
+        await composePage.waitAll('@action-remove-senderdomaincom-recipient');
+        await composePage.target.evaluate(() => $('[data-test="action-remove-senderdomaincom-recipient"]').trigger('click'));
         await expectRecipientElements(composePage, { to: [] });
       })
     );
@@ -1708,20 +1709,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             contacts: [recipient],
           },
         });
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+        let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await Util.sleep(2);
         await ComposePageRecipe.showRecipientInput(composePage);
-        let loadingIconPromise: Promise<void>;
         if (testVariant === 'CONSUMER-MOCK') {
           await composePage.type('@input-to', 'contact');
           // allow contacts scope
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
-          loadingIconPromise = composePage.waitAll('@pgp-loading-icon');
           await OauthPageRecipe.google(t, oauthPopup, account, 'approve');
-        } else {
-          loadingIconPromise = composePage.waitAll('@pgp-loading-icon');
-          await composePage.type('@input-to', 'contact');
+          await composePage.waitTillGone('@action-auth-with-contacts-scope');
+          await composePage.close();
+          composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+          await ComposePageRecipe.showRecipientInput(composePage);
         }
+        const loadingIconPromise = composePage.waitAll('@pgp-loading-icon');
+        await composePage.type('@input-to', 'contact');
         await loadingIconPromise;
         await composePage.waitTillGone('@pgp-loading-icon', { timeout: 10 });
       })
