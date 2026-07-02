@@ -1711,16 +1711,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await Util.sleep(2);
         await ComposePageRecipe.showRecipientInput(composePage);
-        await composePage.type('@input-to', 'contact');
+        let loadingIconPromise: Promise<void>;
         if (testVariant === 'CONSUMER-MOCK') {
+          await composePage.type('@input-to', 'contact');
           // allow contacts scope
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
+          loadingIconPromise = composePage.waitAll('@pgp-loading-icon');
           await OauthPageRecipe.google(t, oauthPopup, account, 'approve');
+        } else {
+          loadingIconPromise = composePage.waitAll('@pgp-loading-icon');
+          await composePage.type('@input-to', 'contact');
         }
-        await Util.sleep(1);
-        await composePage.waitAll('@pgp-loading-icon');
-        await Util.sleep(3); // Wait for 3 seconds to allow PGP status update and loading icon to disappear
-        await composePage.notPresent('@pgp-loading-icon');
+        await loadingIconPromise;
+        await composePage.waitTillGone('@pgp-loading-icon', { timeout: 10 });
       })
     );
 
