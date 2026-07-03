@@ -1668,10 +1668,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
             contacts: [recipient],
           },
         });
+        const searchContacts = async (composePage: ControllablePage) => {
+          await composePage.waitAndFocus('@input-to');
+          await composePage.target.evaluate(() => {
+            const input = document.querySelector<HTMLInputElement>('[data-test="input-to"]')!;
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+          await composePage.type('@input-to', 'contact');
+        };
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.waitAndClick('@action-show-cc');
-        await composePage.type('@input-to', 'contact');
+        await searchContacts(composePage);
         if (testVariant === 'CONSUMER-MOCK') {
           // consumer does not get Contacts scope automatically (may scare users when they install)
           // first search, did not yet receive contacts scope - should find no contacts
@@ -1679,13 +1688,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           // allow contacts scope, and expect that it will find a contact
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
           await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+          await composePage.waitTillGone('@action-auth-with-contacts-scope');
+          await searchContacts(composePage);
         }
-        await Util.sleep(3);
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
         // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
+        await composePage.close();
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.waitAndClick('@action-show-cc');
-        await composePage.type('@input-to', 'contact');
+        await searchContacts(composePage);
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
         await composePage.notPresent('@action-auth-with-contacts-scope');
       })
