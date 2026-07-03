@@ -2188,9 +2188,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const framesUrls = await inboxPage.getFramesUrls(['compose.htm']);
         expect(framesUrls.length).to.equal(3);
         // focus the 1st one
-        const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
-        const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
-        await inboxPage.waitAndFocus('iframe');
+        const firstFrameId = await PageRecipe.getElementAttribute(secureComposeWindows[0], 'data-frame-id');
+        const firstComposeFrame = await inboxPage.getFrame(['compose.htm', `frameId=${firstFrameId}`]);
+        await inboxPage.waitAndFocus(`iframe#${firstFrameId}`);
         await firstComposeFrame.waitAndFocus('@input-body');
         await inboxPage.waitAll(['.secure_compose_window[data-order="1"].active', '.secure_compose_window[data-order="3"].previous_active']);
         // make sure the 1st compose window is active, and the 3rd is previous_active
