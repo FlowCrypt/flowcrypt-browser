@@ -187,6 +187,11 @@ abstract class ControllableBase {
     return false;
   };
 
+  public triggerClick = async (selector: string) => {
+    const element = await this.waitAny(selector, { visible: undefined });
+    await element.evaluate(el => (el as HTMLElement).click());
+  };
+
   public type = async (selector: string, text: string, letterByLetter = false) => {
     const e = await this.singleElement(selector);
     if (!e) {

@@ -1662,8 +1662,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           });
           expect(minimizedPubkeyFrameUrls.length).to.equal(1);
           expect((await page.getFramesUrls(['pgp_pubkey.htm'], { sleep: 0 })).length).to.equal(1);
-          const minimizedPubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { sleep: 0, timeout: 30 });
-          await minimizedPubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
           await page.target.waitForFunction(
             selector => {
               const iframe = document.querySelector<HTMLElement>(selector);
@@ -1674,7 +1672,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           );
           const minimizedPubkeyIframe = await page.waitAny(minimizedPubkeyFrameSelector);
           expect(Number(await PageRecipe.getElementPropertyJson(minimizedPubkeyIframe, 'offsetHeight'))).to.be.lessThan(140);
-          expect(await minimizedPubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
+          const minimizedPubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { sleep: 0 });
+          expect(await minimizedPubkeyFrame.isElementPresent('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
         };
 
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');

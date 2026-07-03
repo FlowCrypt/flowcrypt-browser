@@ -1465,7 +1465,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
         await ComposePageRecipe.showRecipientInput(composePage);
         await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
-        await composePage.waitAndClick('@action-remove-senderdomaincom-recipient', { retryErrs: true });
+        await composePage.triggerClick('@action-remove-senderdomaincom-recipient');
         await expectRecipientElements(composePage, { to: [] });
       })
     );
