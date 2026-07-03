@@ -221,6 +221,20 @@ abstract class ControllableBase {
     }
   };
 
+  public clearAndType = async (selector: string, text: string, letterByLetter = false) => {
+    await this.waitAndFocus(selector);
+    await this.target.evaluate(s => {
+      const el = document.querySelector<HTMLInputElement | HTMLElement>(s)!;
+      if (el.isContentEditable) {
+        el.textContent = '';
+      } else {
+        (el as HTMLInputElement).value = '';
+      }
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, this.selector(selector));
+    await this.type(selector, text, letterByLetter);
+  };
+
   public attr = async (selector: string, attr: string): Promise<string | null> => {
     return await this.target.evaluate(
       (selector, attr) => {
@@ -333,6 +347,14 @@ abstract class ControllableBase {
   public waitAndFocus = async (selector: string) => {
     await this.waitAll(selector);
     await this.target.focus(this.selector(selector));
+  };
+
+  public waitForAppearThenGone = async (
+    selector: string,
+    { appearTimeout = TIMEOUT_ELEMENT_APPEAR, goneTimeout = TIMEOUT_ELEMENT_GONE }: { appearTimeout?: number; goneTimeout?: number } = {}
+  ) => {
+    await this.waitAll(selector, { timeout: appearTimeout });
+    await this.waitTillGone(selector, { timeout: goneTimeout });
   };
 
   public waitAndRespondToModal = async (
@@ -743,7 +765,7 @@ class ConsoleEvent {
 }
 
 export class ControllablePage extends ControllableBase {
-  public declare target: Page;
+  declare public target: Page;
   public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
   private preventclose = false;
@@ -940,7 +962,7 @@ export class ControllablePage extends ControllableBase {
 }
 
 export class ControllableFrame extends ControllableBase {
-  public declare target: Frame;
+  declare public target: Frame;
   public frame: Frame;
 
   public constructor(

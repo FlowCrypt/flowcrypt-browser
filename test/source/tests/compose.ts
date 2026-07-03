@@ -1463,10 +1463,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         });
         await composePage.waitAndClick('@encrypted-reply');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
-        await composePage.target.evaluate(() => $('#recipients_placeholder:visible').trigger('click'));
+        await ComposePageRecipe.showRecipientInput(composePage);
         await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
-        await composePage.waitAll('@action-remove-senderdomaincom-recipient');
-        await composePage.target.evaluate(() => $('[data-test="action-remove-senderdomaincom-recipient"]').trigger('click'));
+        await composePage.waitAndClick('@action-remove-senderdomaincom-recipient', { retryErrs: true });
         await expectRecipientElements(composePage, { to: [] });
       })
     );
@@ -1669,13 +1668,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           },
         });
         const searchContacts = async (composePage: ControllablePage) => {
-          await composePage.waitAndFocus('@input-to');
-          await composePage.target.evaluate(() => {
-            const input = document.querySelector<HTMLInputElement>('[data-test="input-to"]')!;
-            input.value = '';
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-          });
-          await composePage.type('@input-to', 'contact');
+          await composePage.clearAndType('@input-to', 'contact');
         };
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
@@ -1733,10 +1726,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
           await ComposePageRecipe.showRecipientInput(composePage);
         }
-        const loadingIconPromise = composePage.waitAll('@pgp-loading-icon');
+        const loadingIconPromise = composePage.waitForAppearThenGone('@pgp-loading-icon', { goneTimeout: 10 });
         await composePage.type('@input-to', 'contact');
         await loadingIconPromise;
-        await composePage.waitTillGone('@pgp-loading-icon', { timeout: 10 });
       })
     );
 
