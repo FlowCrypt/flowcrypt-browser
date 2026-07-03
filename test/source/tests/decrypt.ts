@@ -1655,16 +1655,23 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - public key is rendered minimized for outgoing messages',
       testWithBrowser(async (t, browser) => {
         const assertOutgoingPubkeyFrameIsMinimized = async (page: ControllablePage) => {
-          const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { timeout: 30 });
-          await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
-          await pubkeyFrame.target.waitForFunction(
-            () => {
-              const addContactButton = document.querySelector<HTMLElement>('[data-test="action-add-contact"]');
-              return Boolean(addContactButton && !addContactButton.offsetHeight);
+          const minimizedPubkeyFrameSelector = 'iframe[src*="pgp_pubkey.htm"][src*="minimized=___cu_true___"]';
+          const minimizedPubkeyFrameUrls = await page.getFramesUrls(['pgp_pubkey.htm', 'minimized=___cu_true___'], {
+            sleep: 0,
+            appearIn: 30,
+          });
+          expect(minimizedPubkeyFrameUrls.length).to.equal(1);
+          expect((await page.getFramesUrls(['pgp_pubkey.htm'], { sleep: 0 })).length).to.equal(1);
+          await page.target.waitForFunction(
+            selector => {
+              const iframe = document.querySelector<HTMLElement>(selector);
+              return Boolean(iframe && iframe.offsetHeight > 80 && iframe.offsetHeight < 140);
             },
-            { timeout: 30_000 }
+            { timeout: 30_000 },
+            minimizedPubkeyFrameSelector
           );
-          expect(await pubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
+          const minimizedPubkeyFrame = await page.waitAny(minimizedPubkeyFrameSelector);
+          expect(Number(await PageRecipe.getElementPropertyJson(minimizedPubkeyFrame, 'offsetHeight'))).to.be.lessThan(140);
         };
 
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
