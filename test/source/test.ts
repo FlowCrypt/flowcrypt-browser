@@ -38,7 +38,7 @@ const consts = {
   TIMEOUT_EACH_RETRY: minutes(4),
   TIMEOUT_ALL_RETRIES: minutes(55),
   ATTEMPTS: testGroup === 'STANDARD-GROUP' ? oneIfNotPooled(3) : process.argv.includes('--retry=false') ? 1 : 3,
-  POOL_SIZE: poolSize ?? (isMock ? 20 : 3),
+  POOL_SIZE: poolSize ?? (isMock ? 4 : 3),
   IS_LOCAL_DEBUG: process.argv.includes('--debug') ? true : false, // run locally by developer, not in ci
 };
 

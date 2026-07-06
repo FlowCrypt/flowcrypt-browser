@@ -7,7 +7,6 @@ import { CommonAcct } from '../../test';
 import { EvaluateFunc } from 'puppeteer';
 import { PageRecipe } from './abstract-page-recipe';
 import { Util } from '../../util';
-import { expect } from 'chai';
 
 type RecipientType = 'to' | 'cc' | 'bcc';
 type Recipients = {
@@ -171,12 +170,19 @@ export class ComposePageRecipe extends PageRecipe {
   };
 
   public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
-    await Util.sleep(5);
-    const contacts = await composePage.waitAny('@container-contacts');
-    const contactsList = await contacts.$$('li');
-    for (const [index, contact] of contactsList.entries()) {
-      expect(await PageRecipe.getElementPropertyJson(contact, 'textContent')).to.equal(emails[index]);
-    }
+    const expectedJson = JSON.stringify(emails);
+    await composePage.target.waitForFunction(
+      (expectedJson: string) => {
+        const contactsContainer = document.querySelector<HTMLElement>('#contacts');
+        if (!contactsContainer || window.getComputedStyle(contactsContainer).display === 'none' || contactsContainer.offsetHeight === 0) {
+          return false;
+        }
+        const actual = Array.from(document.querySelectorAll('#contacts li')).map(contact => contact.textContent || '');
+        return JSON.stringify(actual) === expectedJson;
+      },
+      { timeout: 20000 },
+      expectedJson
+    );
   };
 
   public static pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {
