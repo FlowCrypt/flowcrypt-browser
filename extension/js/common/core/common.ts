@@ -560,7 +560,7 @@ export const stringTuple = <T extends string[]>(...data: T): T => {
 };
 
 export const checkValidURL = (url: string): boolean => {
-  const pattern = /(http|https):\/\/([a-z0-9-]+((\.[a-z0-9-]+)+)?)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@\-\/]))?/;
+  const pattern = /^https?:\/\/([a-z0-9-]+(\.[a-z0-9-]+)+)?(:\d+)?(\/[\w#!:.?+=&%@\-\/]*)?$/i;
   return pattern.test(url);
 };
 
