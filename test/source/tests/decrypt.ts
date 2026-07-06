@@ -169,7 +169,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     test(
       `decrypt - show remote image warning regardless of URL scheme casing`,
       testWithBrowser(async (t, browser) => {
-        const threadId = '19f36e6fc5838dac';
+        const threadId = '19f36e657937a128';
         const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
         const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
         await inboxPage.waitForSelTestState('ready');
