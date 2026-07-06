@@ -167,6 +167,25 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
+      `decrypt - show remote image warning regardless of URL scheme casing`,
+      testWithBrowser(async (t, browser) => {
+        const threadId = '19f36e6fc5838dac';
+        const { acctEmail } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        const inboxPage = await browser.newExtensionPage(t, `chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`);
+        await inboxPage.waitForSelTestState('ready');
+        await inboxPage.waitAll('iframe');
+        const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
+        await pgpBlock.waitAll('@remote-image-container img');
+        const src = await pgpBlock.target.evaluate(() => {
+          return document.querySelector('[data-test="remote-image-container"] img')?.getAttribute('src');
+        });
+        expect(src).to.match(/^HTTPS/);
+        await pgpBlock.waitForContent('@remote-image-container', 'Authenticity of this remote image cannot be verified.');
+        await inboxPage.close();
+      })
+    );
+
+    test(
       `decrypt - show inline image when user clicks show image`,
       testWithBrowser(async (t, browser) => {
         const threadId = '1850f9608240f758';
