@@ -560,8 +560,12 @@ export const stringTuple = <T extends string[]>(...data: T): T => {
 };
 
 export const checkValidURL = (url: string): boolean => {
-  const pattern = /^https?:\/\/([a-z0-9-]+(\.[a-z0-9-]+)+)?(:\d+)?(\/[\w#!:.?+=&%@\-\/]*)?$/i;
-  return pattern.test(url);
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+  } catch {
+    return false;
+  }
 };
 
 /**
