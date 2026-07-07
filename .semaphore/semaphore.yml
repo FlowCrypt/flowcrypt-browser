@@ -16,6 +16,10 @@ blocks:
     execution_time_limit:
       minutes: 45
     task:
+      agent:
+        machine:
+          type: f1-standard-2
+          os_image: ubuntu2404
       secrets:
         - &flowcrypt_ci_secrets
           name: flowcrypt-browser-ci-secrets
