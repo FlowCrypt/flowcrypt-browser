@@ -1676,16 +1676,18 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           // first search, did not yet receive contacts scope - should find no contacts
           await ComposePageRecipe.expectContactsResultEqual(composePage, ['No Contacts Found']);
           // allow contacts scope, and expect that it will find a contact
+          const contactsResultPromise = ComposePageRecipe.expectContactsResultEqual(composePage, [recipient]);
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
           await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+          await contactsResultPromise;
+        } else {
+          await ComposePageRecipe.expectContactsResultEqual(composePage, [recipient]);
         }
-        await Util.sleep(3);
-        await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
         // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.waitAndClick('@action-show-cc');
         await composePage.type('@input-to', 'contact');
-        await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
+        await ComposePageRecipe.expectContactsResultEqual(composePage, [recipient]);
         await composePage.notPresent('@action-auth-with-contacts-scope');
       })
     );
@@ -2186,8 +2188,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // focus the 1st one
         const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
         const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
-        await inboxPage.waitAndFocus('iframe');
-        await firstComposeFrame.waitAndFocus('@input-body');
+        await firstComposeFrame.waitAndClick('@input-body');
         await inboxPage.target.waitForFunction(
           () =>
             document.querySelector('.secure_compose_window[data-order="1"]')?.classList.contains('active') &&
