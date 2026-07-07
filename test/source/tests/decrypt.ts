@@ -175,7 +175,6 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await inboxPage.waitForSelTestState('ready');
         await inboxPage.waitAll('iframe');
         const pgpBlock = await inboxPage.getFrame(['pgp_block.htm']);
-        await pgpBlock.waitAll('@remote-image-container img');
         const src = await pgpBlock.target.evaluate(() => {
           return document.querySelector('[data-test="remote-image-container"] img')?.getAttribute('src');
         });
