@@ -308,8 +308,8 @@ export class Xss {
         );
       })
       .filter(part => {
-        // remove url + import safely
-        return !/@import|url\(/i.test(part);
+        // remove url + import + image-set safely
+        return !/@import|url\(|image-set\(/i.test(part);
       })
       .join('; ');
   };
