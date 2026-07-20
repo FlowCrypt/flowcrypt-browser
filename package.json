@@ -38,7 +38,7 @@
     "pdfjs-dist": "6.1.200",
     "postcss-html": "1.8.1",
     "prettier": "3.9.5",
-    "puppeteer": "25.3.0",
+    "puppeteer": "25.1.0",
     "stylelint": "17.14.1",
     "stylelint-config-standard": "40.0.0",
     "tap-xunit": "2.4.1",
