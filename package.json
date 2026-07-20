@@ -42,7 +42,7 @@
     "stylelint": "17.14.1",
     "stylelint-config-standard": "40.0.0",
     "tap-xunit": "2.4.1",
-    "typescript": "6.0.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.3",
     "typescript-eslint": "8.64.0",
     "undici-types": "8.7.0",
     "web-ext": "10.5.0",
