@@ -49,3 +49,33 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeAndStripAllTags preserves leading tabs`)
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips image-set() CSS tracking`);
+(async () => {
+  const dirty = `<div style="background-image: image-set(&quot;https://attacker.example/track.png&quot; 1x)">message body</div>`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/image-set/i.test(clean)) {
+    throw Error(`image-set() was not stripped from sanitized HTML: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips -webkit-image-set() CSS tracking`);
+(async () => {
+  const dirty = `<div style="background-image: -webkit-image-set(url(&quot;https://attacker.example/track.png&quot;) 1x)">message body</div>`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/-webkit-image-set/i.test(clean)) {
+    throw Error(`-webkit-image-set() was not stripped from sanitized HTML: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips url() in CSS`);
+(async () => {
+  const dirty = `<div style="background-image: url('https://attacker.example/track.png')">message body</div>`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/url\(/i.test(clean)) {
+    throw Error(`url() was not stripped from sanitized HTML: ${clean}`);
+  }
+  return 'pass';
+})();

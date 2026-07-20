@@ -2301,8 +2301,8 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
         expect(combined.includes('url(')).to.equal(false);
         expect(combined.includes('@import')).to.equal(false);
         expect(combined.includes('po/**/sition:fixed')).to.equal(false);
-        // verify safe styles survive
-        expect(combined.includes('color:green')).to.equal(true);
+        // verify safe styles survive (browser-normalized output includes a space after the colon)
+        expect(combined.includes('color: green')).to.equal(true);
         await inboxPage.close();
       })
     );
