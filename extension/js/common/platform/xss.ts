@@ -49,9 +49,78 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
   private static FORBID_ATTR = ['background'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
-  private static FORBID_CSS_STYLE =
-    /(?:^|;)\s*(?:z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:[^;]*;?/gi;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
+  /* eslint-disable @typescript-eslint/naming-convention */
+  private static readonly ALLOWED_EMAIL_CSS_PROPERTIES = new Set<string>([
+    // Colors
+    'color',
+    'background-color',
+    // Fonts
+    'font-family',
+    'font-style',
+    'font-variant',
+    'font-weight',
+    'letter-spacing',
+    'word-spacing',
+    // Text
+    'text-align',
+    'text-decoration',
+    'text-decoration-color',
+    'text-decoration-line',
+    'text-decoration-style',
+    'text-transform',
+    'vertical-align',
+    'white-space',
+    'word-break',
+    'overflow-wrap',
+    // Spacing
+    'margin',
+    'margin-top',
+    'margin-right',
+    'margin-bottom',
+    'margin-left',
+    'padding',
+    'padding-top',
+    'padding-right',
+    'padding-bottom',
+    'padding-left',
+    // Borders
+    'border',
+    'border-top',
+    'border-right',
+    'border-bottom',
+    'border-left',
+    'border-color',
+    'border-style',
+    'border-width',
+    'border-top-color',
+    'border-top-style',
+    'border-top-width',
+    'border-right-color',
+    'border-right-style',
+    'border-right-width',
+    'border-bottom-color',
+    'border-bottom-style',
+    'border-bottom-width',
+    'border-left-color',
+    'border-left-style',
+    'border-left-width',
+    'border-radius',
+    'border-top-left-radius',
+    'border-top-right-radius',
+    'border-bottom-right-radius',
+    'border-bottom-left-radius',
+    // Lists and tables
+    'list-style-type',
+    'border-collapse',
+    'border-spacing',
+    'caption-side',
+    'empty-cells',
+    // Direction and writing
+    'direction',
+    'unicode-bidi',
+  ]);
+  /* eslint-enable @typescript-eslint/naming-convention */
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -115,14 +184,8 @@ export class Xss {
 
       // Handle style attributes
       if (node.hasAttribute('style')) {
-        // mitigation rather than a fix, which will involve updating CSP, see https://github.com/FlowCrypt/flowcrypt-browser/issues/2648
-        let style = node.getAttribute('style') || '';
-        style = Xss.sanitizeCssStyle(style);
-        if (style && Xss.FORBID_CSS_STYLE.test(style)) {
-          const updatedStyle = style.replace(Xss.FORBID_CSS_STYLE, '');
-          node.setAttribute('style', updatedStyle);
-        } else if (style) {
-          // if style was modified but still present, update it
+        const style = Xss.sanitizeCssStyle(node.getAttribute('style') || '');
+        if (style) {
           node.setAttribute('style', style);
         } else {
           node.removeAttribute('style');
@@ -278,40 +341,23 @@ export class Xss {
   };
 
   /**
-   *  Decode CSS escape sequences before applying security checks
-   */
-  private static normalizeCssEscapes = (css: string): string => {
-    return css.replace(/\\(?:\r\n|[\n\r\f])|\\([0-9a-fA-F]{1,6}\s?|.)/g, (_match: string, escaped: string | undefined) => {
-      if (typeof escaped === 'undefined') {
-        return '';
-      }
-      if (/^[0-9a-fA-F]/.test(escaped)) {
-        const codePoint = Number.parseInt(escaped.trim(), 16);
-        return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : '';
-      }
-      return escaped;
-    });
-  };
-
-  /**
-   * Remove @import rules and any url(...) that would cause an out‑of‑band request.
-   * Only data: and cid: URLs are allowed.
+   * Sanitize a CSS style string by keeping only explicitly allowed properties.
+   * Uses the browser's native CSS parser for robustness (handles comments,
+   * escape sequences, shorthand, vendor prefixes, etc.).
    */
   private static sanitizeCssStyle = (css: string): string => {
-    return css
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .split(';')
-      .map(part => this.normalizeCssEscapes(part.trim()))
-      .filter(part => {
-        return !/^(z-index|position|display|visibility|opacity|transform|clip-path|clip|top|left|right|bottom|pointer-events|font-size|line-height|width|height|text-indent|filter)\s*:/i.test(
-          part
-        );
-      })
-      .filter(part => {
-        // remove url + import + image-set safely
-        return !/@import|url\(|image-set\(/i.test(part);
-      })
-      .join('; ');
+    if (!css || typeof document === 'undefined') {
+      return '';
+    }
+    const style = document.createElement('span').style;
+    style.cssText = css;
+    for (const property of Array.from(style)) {
+      const value = style.getPropertyValue(property).trim();
+      if (!this.ALLOWED_EMAIL_CSS_PROPERTIES.has(property.toLowerCase()) || !value) {
+        style.removeProperty(property);
+      }
+    }
+    return style.cssText;
   };
 
   /**
