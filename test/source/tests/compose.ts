@@ -2199,7 +2199,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
         const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
         await inboxPage.waitAndFocus('.secure_compose_window[data-order="1"] iframe');
-        await firstComposeFrame.waitAndFocus('@input-body');
+        await firstComposeFrame.waitAndClick('@input-body');
         await inboxPage.target.waitForFunction(
           () => {
             const firstCompose = document.querySelector('.secure_compose_window[data-order="1"]');

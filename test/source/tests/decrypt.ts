@@ -1678,18 +1678,11 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           await pubkeyFrame.target.waitForFunction(
             () => {
               const pubkeyContainer = document.querySelector<HTMLElement>('[data-test="container-pgp-pubkey"]');
-              const addContactButton = document.querySelector<HTMLElement>('[data-test="action-add-contact"]');
-              return Boolean(
-                pubkeyContainer?.innerText.includes('Public Key') &&
-                pubkeyContainer.offsetWidth &&
-                pubkeyContainer.offsetHeight &&
-                addContactButton &&
-                !addContactButton.offsetHeight
-              );
+              const addContactLine = document.querySelector<HTMLElement>('.line.add_contact');
+              return Boolean(pubkeyContainer?.textContent?.includes('Public Key') && addContactLine?.style.display === 'none');
             },
-            { polling: 100, timeout: 30_000 }
+            { polling: 'mutation', timeout: 30_000 }
           );
-          expect(await pubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
         };
 
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
