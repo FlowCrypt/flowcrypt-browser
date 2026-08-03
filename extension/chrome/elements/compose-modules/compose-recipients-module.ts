@@ -774,8 +774,8 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
   };
 
   private renderSearchRes = async (input: JQuery, contacts: ContactPreview[], query: ProviderContactsQuery) => {
-    if (!input.is(':focus')) {
-      // focus was moved away from input
+    if (input.get(0) !== document.activeElement) {
+      // Browser-level focus may move to an OAuth popup while the recipient input remains active in this document.
       return;
     }
     if ((input.val() as string).toLowerCase() !== query.substring.toLowerCase()) {

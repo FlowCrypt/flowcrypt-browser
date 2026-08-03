@@ -325,7 +325,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             'confirm',
             'cancel',
             'Messages to some recipients were sent successfully, while messages to flowcrypt.compatibility@gmail.com, Mr Cc <cc@example.com> ' +
-            'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
+              'encountered error(s) from Gmail. Please help us improve FlowCrypt by reporting the error to us.'
           );
           await composePage.close();
           expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
@@ -350,7 +350,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             'error',
             'confirm',
             'Messages to some recipients were sent successfully, while messages to invalid@example.com ' +
-            'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
+              'encountered error(s) from Gmail: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.'
           );
           await composePage.close();
           expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
@@ -375,7 +375,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
             'error',
             'confirm',
             'Messages to some recipients were sent successfully, while messages to timeout@example.com ' +
-            'encountered network errors. Please check your internet connection and try again.'
+              'encountered network errors. Please check your internet connection and try again.'
           );
           await composePage.close();
           expect((await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject).length).to.equal(++expectedNumberOfPassedMessages);
@@ -568,6 +568,7 @@ export const defineFlakyTests = (testVariant: TestVariant, testWithBrowser: Test
           'testsearchorder7@flowcrypt.com',
           'testsearchorder8@flowcrypt.com',
         ]);
+        await inboxPage.page.bringToFront();
         await composeFrame.waitAndClick('@action-close-new-message');
         await inboxPage.waitTillGone('@container-new-message');
         // add key + send

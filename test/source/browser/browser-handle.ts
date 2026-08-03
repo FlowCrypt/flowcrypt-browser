@@ -39,6 +39,7 @@ export class BrowserHandle {
       });
     }
     await page.setViewport(this.viewport);
+    await page.bringToFront();
     const controllablePage = new ControllablePage(t, page);
     if (url) {
       if (initialScript) {

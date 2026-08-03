@@ -171,12 +171,22 @@ export class ComposePageRecipe extends PageRecipe {
   };
 
   public static expectContactsResultEqual = async (composePage: ControllablePage | ControllableFrame, emails: string[]) => {
-    await Util.sleep(5);
-    const contacts = await composePage.waitAny('@container-contacts');
-    const contactsList = await contacts.$$('li');
-    for (const [index, contact] of contactsList.entries()) {
-      expect(await PageRecipe.getElementPropertyJson(contact, 'textContent')).to.equal(emails[index]);
-    }
+    const contactsSelector = '[data-test="container-contacts"]';
+    const result = await composePage.target.waitForFunction(
+      (selector, expectedEmails) => {
+        const contactsContainer = document.querySelector<HTMLElement>(selector);
+        if (!contactsContainer?.offsetWidth || !contactsContainer.offsetHeight) {
+          return false;
+        }
+        const actualEmails = Array.from(contactsContainer.querySelectorAll('li'), contact => contact.textContent);
+        return actualEmails.length === expectedEmails.length && actualEmails.every((email, index) => email === expectedEmails[index]) ? actualEmails : false;
+      },
+      { polling: 'mutation', timeout: 20_000 },
+      contactsSelector,
+      emails
+    );
+    expect(await result.jsonValue()).to.deep.equal(emails);
+    await result.dispose();
   };
 
   public static pastePublicKeyManuallyNoClose = async (composeFrame: ControllableFrame, inboxPage: ControllablePage, recipient: string, pub: string) => {

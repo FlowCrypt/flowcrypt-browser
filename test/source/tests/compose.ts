@@ -109,10 +109,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       testWithBrowser(async (t, browser) => {
         const primarySignature = 'Test primary signature';
         const aliasSignature = 'Test alias signature';
-        const acctAliases = [{
-          ...flowcryptCompatibilityAliasList[0],
-          signature: aliasSignature,
-        }];
+        const acctAliases = [
+          {
+            ...flowcryptCompatibilityAliasList[0],
+            signature: aliasSignature,
+          },
+        ];
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
           google: { acctAliases, acctPrimarySignature: primarySignature },
           attester: { includeHumanKey: true },
@@ -1677,8 +1679,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
           await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
         }
-        await Util.sleep(3);
         await ComposePageRecipe.expectContactsResultEqual(composePage, ['contact.test@flowcrypt.com']);
+        await composePage.page.bringToFront();
         // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
         composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
         await composePage.waitAndClick('@action-show-cc');
@@ -1710,15 +1712,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await Util.sleep(2);
         await ComposePageRecipe.showRecipientInput(composePage);
         await composePage.type('@input-to', 'contact');
+        const loadingIconSelector = '[data-test="pgp-loading-icon"]';
+        const waitForLoadingIcon = (timeout: number) =>
+          composePage.target.waitForFunction(
+            selector => {
+              const loadingIcon = document.querySelector<HTMLElement>(selector);
+              return Boolean(loadingIcon?.offsetWidth && loadingIcon.offsetHeight);
+            },
+            { polling: 'mutation', timeout },
+            loadingIconSelector
+          );
         if (testVariant === 'CONSUMER-MOCK') {
           // allow contacts scope
+          const loadingIconAppeared = waitForLoadingIcon(90_000);
+          // Popup creation can fail before Promise.all observes this waiter.
+          void loadingIconAppeared.catch(() => undefined);
           const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'));
-          await OauthPageRecipe.google(t, oauthPopup, account, 'approve');
+          await Promise.all([loadingIconAppeared, OauthPageRecipe.google(t, oauthPopup, account, 'approve')]);
+          await composePage.page.bringToFront();
+        } else {
+          await waitForLoadingIcon(20_000);
         }
-        await Util.sleep(1);
-        await composePage.waitAll('@pgp-loading-icon');
-        await Util.sleep(3); // Wait for 3 seconds to allow PGP status update and loading icon to disappear
-        await composePage.notPresent('@pgp-loading-icon');
+        await composePage.target.waitForFunction(selector => !document.querySelector(selector), { polling: 'mutation', timeout: 20_000 }, loadingIconSelector);
       })
     );
 
@@ -1921,8 +1936,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await ComposePageRecipe.sendAndClose(composePage);
       })
     );
-
-
 
     test(
       'compose - check existing draft not saved without changes',
@@ -2185,8 +2198,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         // focus the 1st one
         const firstFrameId = /frameId=.*?&/s.exec(framesUrls[0])![0];
         const firstComposeFrame = await inboxPage.getFrame(['compose.htm', firstFrameId]);
-        await inboxPage.waitAndFocus('iframe');
+        await inboxPage.waitAndFocus('.secure_compose_window[data-order="1"] iframe');
         await firstComposeFrame.waitAndFocus('@input-body');
+        await inboxPage.target.waitForFunction(
+          () => {
+            const firstCompose = document.querySelector('.secure_compose_window[data-order="1"]');
+            const secondCompose = document.querySelector('.secure_compose_window[data-order="2"]');
+            const thirdCompose = document.querySelector('.secure_compose_window[data-order="3"]');
+            if (!firstCompose || !secondCompose || !thirdCompose) {
+              return false;
+            }
+            return (
+              firstCompose.classList.contains('active') &&
+              !firstCompose.classList.contains('previous_active') &&
+              !secondCompose.classList.contains('active') &&
+              !secondCompose.classList.contains('previous_active') &&
+              !thirdCompose.classList.contains('active') &&
+              thirdCompose.classList.contains('previous_active')
+            );
+          },
+          { polling: 'mutation', timeout: 20_000 }
+        );
         // make sure the 1st compose window is active, and the 3rd is previous_active
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="1"]', 'active')).to.be.true;
         expect(await inboxPage.hasClass('.secure_compose_window[data-order="2"]', 'active')).to.be.false;
@@ -3511,8 +3543,9 @@ const sendTextAndVerifyPresentInSentMsg = async (
   text: string,
   sendingOpt: { encrypt?: boolean; sign?: boolean; richtext?: boolean } = {}
 ) => {
-  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${sendingOpt.encrypt ? 'Encrypted' : ''
-    } Message With Test Text ${text} ${Util.lousyRandom()}`;
+  const subject = `Test Sending ${sendingOpt.sign ? 'Signed' : ''} ${
+    sendingOpt.encrypt ? 'Encrypted' : ''
+  } Message With Test Text ${text} ${Util.lousyRandom()}`;
   const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
   await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, subject, text, sendingOpt);
   const acctEmail = 'flowcrypt.compatibility@gmail.com';
