@@ -1673,16 +1673,16 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - public key is rendered minimized for outgoing messages',
       testWithBrowser(async (t, browser) => {
         const assertOutgoingPubkeyFrameIsMinimized = async (page: ControllablePage) => {
+          await page.waitAll('iframe.pgp_block.publicKey', { timeout: 30 });
           const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { timeout: 30 });
-          await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Public Key', 30);
           await pubkeyFrame.target.waitForFunction(
             () => {
-              const addContactButton = document.querySelector<HTMLElement>('[data-test="action-add-contact"]');
-              return Boolean(addContactButton && !addContactButton.offsetHeight);
+              const pubkeyContainer = document.querySelector<HTMLElement>('[data-test="container-pgp-pubkey"]');
+              const addContactLine = document.querySelector<HTMLElement>('.line.add_contact');
+              return Boolean(pubkeyContainer?.textContent?.includes('Public Key') && addContactLine?.style.display === 'none');
             },
-            { timeout: 30_000 }
+            { polling: 'mutation', timeout: 30_000 }
           );
-          expect(await pubkeyFrame.isElementVisible('@action-add-contact')).to.be.false; // hidden because sender matches acctEmail
         };
 
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
