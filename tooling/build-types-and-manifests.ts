@@ -36,6 +36,15 @@ addManifest('firefox-consumer', manifest => {
       strict_min_version: '112.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
+  // Web Streams are broken in the Firefox content-script sandbox (Permission denied to access
+  // property "autoAllocateChunkSize" - https://bugzilla.mozilla.org/show_bug.cgi?id=1757836).
+  // Load the streams-fix shim + web-streams-polyfill BEFORE openpgp.js, so that stream objects
+  // created by openpgp.js / web-stream-tools live in a single (sandbox) realm.
+  // This is only needed in the content script: extension pages and the service worker are
+  // privileged and keep using the native implementations.
+  for (const csDef of manifest.content_scripts ?? []) {
+    csDef.js = ['/lib/streams-firefox-fix.js', '/lib/web-streams-polyfill.min.js', ...(csDef.js ?? [])];
+  }
   manifest.background = {
     type: 'module',
     scripts: ['/js/service_worker/background.js'],
