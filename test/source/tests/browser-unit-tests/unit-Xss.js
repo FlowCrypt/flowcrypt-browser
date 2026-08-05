@@ -79,3 +79,104 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips url() in CSS`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags sends remote srcset on cid image to consent flow (IMG-KEEP)`);
+(async () => {
+  const dirty = `<img src="cid:known-cid" srcset="https://attacker.example/track.png 1x">message body`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  const doc = new DOMParser().parseFromString(clean, 'text/html');
+  const imgs = Array.from(doc.querySelectorAll('img'));
+  for (const img of imgs) {
+    if (/^https?:/i.test(img.getAttribute('src') || '') || /^https?:/i.test(img.getAttribute('srcset') || '')) {
+      throw Error(`remote-loading img survived sanitization: ${clean}`);
+    }
+  }
+  const containers = doc.querySelectorAll('.remote_image_container');
+  if (containers.length !== 1) {
+    throw Error(`expected exactly one remote_image_container placeholder but got ${clean}`);
+  }
+  if (containers[0].getAttribute('data-src') !== 'https://attacker.example/track.png') {
+    throw Error(`unexpected data-src "${containers[0].getAttribute('data-src')}" in ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags sends multi-candidate remote srcset to consent flow (IMG-KEEP)`);
+(async () => {
+  const dirty = `<img src="cid:known-cid" srcset="cid:known-cid 1x, https://attacker.example/track.png 2x, https://attacker.example/track2.png 640w">message body`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  const doc = new DOMParser().parseFromString(clean, 'text/html');
+  for (const img of Array.from(doc.querySelectorAll('img'))) {
+    if (/^https?:/i.test(img.getAttribute('src') || '') || /^https?:/i.test(img.getAttribute('srcset') || '')) {
+      throw Error(`remote-loading img survived sanitization: ${clean}`);
+    }
+  }
+  const containers = doc.querySelectorAll('.remote_image_container');
+  if (containers.length !== 1) {
+    throw Error(`expected exactly one remote_image_container placeholder but got ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags sends srcset-only remote image to consent flow (IMG-KEEP)`);
+(async () => {
+  const dirty = `<img srcset="https://attacker.example/track.png 1x, https://attacker.example/track2.png 2x">message body`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  const doc = new DOMParser().parseFromString(clean, 'text/html');
+  for (const img of Array.from(doc.querySelectorAll('img'))) {
+    if (/^https?:/i.test(img.getAttribute('src') || '') || /^https?:/i.test(img.getAttribute('srcset') || '')) {
+      throw Error(`remote-loading img survived sanitization: ${clean}`);
+    }
+  }
+  const containers = doc.querySelectorAll('.remote_image_container');
+  if (containers.length !== 1) {
+    throw Error(`expected exactly one remote_image_container placeholder but got ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags sends protocol-relative remote src to consent flow (IMG-KEEP)`);
+(async () => {
+  const dirty = `<img src="//attacker.example/track.png">message body`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  const doc = new DOMParser().parseFromString(clean, 'text/html');
+  for (const img of Array.from(doc.querySelectorAll('img'))) {
+    if (img.getAttribute('src') || img.getAttribute('srcset')) {
+      throw Error(`remote-loading img survived sanitization: ${clean}`);
+    }
+  }
+  const containers = doc.querySelectorAll('.remote_image_container');
+  if (containers.length !== 1) {
+    throw Error(`expected exactly one remote_image_container placeholder but got ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags keeps local data srcset images untouched (IMG-KEEP)`);
+(async () => {
+  const dirty = `<img src="data:image/png;base64,AAAA" srcset="data:image/png;base64,AAAA 1x, data:image/png;base64,BBBB 2x">message body`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  const doc = new DOMParser().parseFromString(clean, 'text/html');
+  const containers = doc.querySelectorAll('.remote_image_container');
+  if (containers.length !== 0) {
+    throw Error(`local image unexpectedly converted to a placeholder: ${clean}`);
+  }
+  const imgs = Array.from(doc.querySelectorAll('img'));
+  if (imgs.length !== 1) {
+    throw Error(`expected the local image to be preserved: ${clean}`);
+  }
+  if (!imgs[0].getAttribute('srcset')) {
+    throw Error(`local srcset was dropped although it is not remote: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeAndStripAllTags leaks no remote srcset URL into text (IMG-TO-PLAIN-TEXT)`);
+(async () => {
+  const dirty = `<img src="cid:known-cid" srcset="https://attacker.example/track.png 1x">message body`;
+  const text = Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(dirty, '\n', false));
+  if (text.includes('https://attacker.example') || text.includes('srcset')) {
+    throw Error(`remote srcset URL leaked into plain text: ${text}`);
+  }
+  return 'pass';
+})();

@@ -102,6 +102,9 @@ export class MessageRenderer {
         if (contentIdAttachment) {
           inlineCIDAttachments.add(contentIdAttachment);
           currentNode.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
+          // a CID-backed inline image must not carry other resource-loading attributes (eg srcset) that
+          // could reference an external URL and trigger a remote request outside of the consent flow
+          currentNode.removeAttribute('srcset');
         }
       }
     });

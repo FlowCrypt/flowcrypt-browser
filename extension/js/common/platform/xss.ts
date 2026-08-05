@@ -196,14 +196,24 @@ export class Xss {
       if (node.tagName === 'IMG') {
         const img = node as HTMLImageElement; // Narrow type to HTMLImageElement
         const src = img.getAttribute('src');
+        const srcset = img.getAttribute('srcset');
+        // an image is remote when `src` or any `srcset` candidate references an external URL; `srcset`
+        // (and protocol-relative `//` URLs) must be covered too, otherwise they could be used to trigger
+        // a remote request that bypasses the remote-image consent flow
+        let remoteSrc: string | undefined;
+        if (src && Xss.isRemoteUrl(src)) {
+          remoteSrc = src;
+        } else if (srcset) {
+          remoteSrc = Xss.getRemoteUrlFromSrcset(srcset);
+        }
         if (imgHandling === 'IMG-DEL') {
           img.remove(); // just skip images
-        } else if (!src) {
-          img.remove(); // src that exists but is null is suspicious
-        } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
+        } else if (!src && !srcset) {
+          img.remove(); // an image without any source is suspicious
+        } else if (imgHandling === 'IMG-KEEP' && remoteSrc) {
           // replace remote image with remote_image_container
           const remoteImgEl = `
-        <div class="remote_image_container" data-src="${Xss.escape(src)}" data-test="remote-image-container">
+        <div class="remote_image_container" data-src="${Xss.escape(remoteSrc)}" data-test="remote-image-container">
           <span>Authenticity of this remote image cannot be verified.</span>
         </div>`;
           Xss.replaceElementDANGEROUSLY(img, remoteImgEl); // xss-safe-value
@@ -358,6 +368,34 @@ export class Xss {
       }
     }
     return style.cssText;
+  };
+
+  /**
+   * Check whether a URL would be fetched by the browser from a remote origin.
+   * Besides plain http(s) URLs this also covers protocol-relative URLs (eg `//attacker.example/x.png`),
+   * which the browser resolves against the current page's protocol but which `checkValidURL` misses.
+   */
+  private static isRemoteUrl = (url: string): boolean => {
+    const trimmed = url.trim();
+    return checkValidURL(trimmed) || trimmed.startsWith('//');
+  };
+
+  /**
+   * Return the first remote URL among the candidates of an `srcset` attribute.
+   * Each comma-separated candidate is a URL optionally followed by a descriptor (eg `1x`, `2x`, `640w`).
+   */
+  private static getRemoteUrlFromSrcset = (srcset: string): string | undefined => {
+    for (const candidate of srcset.split(',')) {
+      const trimmed = candidate.trim();
+      if (!trimmed) {
+        continue;
+      }
+      const url = trimmed.split(/\s+/)[0];
+      if (Xss.isRemoteUrl(url)) {
+        return url;
+      }
+    }
+    return undefined;
   };
 
   /**
