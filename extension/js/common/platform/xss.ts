@@ -47,7 +47,7 @@ export class Xss {
     'col',
   ];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
-  private static FORBID_ATTR = ['background'];
+  private static FORBID_ATTR = ['background', 'srcset'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
   /* eslint-disable @typescript-eslint/naming-convention */
