@@ -79,3 +79,42 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips url() in CSS`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips srcset attribute from img`);
+(async () => {
+  const dirty = `<img src="cid:test-image" srcset="https://accounts.google.com/Logout?me.png 1x, https://attacker.example/track.png 2x" width="200" height="100">`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/srcset/i.test(clean)) {
+    throw Error(`srcset was not stripped from sanitized HTML: ${clean}`);
+  }
+  if (!/src="cid:test-image"/.test(clean)) {
+    throw Error(`expected cid src to be preserved, got: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize (used for CID replacement) strips srcset attribute from img`);
+(async () => {
+  const dirty = `<img src="cid:test-image" srcset="https://accounts.google.com/Logout?me.png 1x" alt="inline">`;
+  const clean = Xss.htmlSanitize(dirty);
+  if (/srcset/i.test(clean)) {
+    throw Error(`srcset was not stripped from sanitized HTML: ${clean}`);
+  }
+  if (!/src="cid:test-image"/.test(clean)) {
+    throw Error(`expected cid src to be preserved, got: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags keeps srcset-less inline images and gates remote src`);
+(async () => {
+  const dirty = `<img src="https://attacker.example/track.png" srcset="https://attacker.example/track2.png 1x">`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/srcset/i.test(clean)) {
+    throw Error(`srcset was not stripped from sanitized HTML: ${clean}`);
+  }
+  if (!/remote_image_container/.test(clean)) {
+    throw Error(`expected remote src to be replaced with remote_image_container, got: ${clean}`);
+  }
+  return 'pass';
+})();
