@@ -201,6 +201,11 @@ export class Xss {
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
         } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
+          const pathname = new URL(src).pathname.toLowerCase();
+          if (pathname.includes('/logout') || pathname.includes('/signout')) {
+            img.remove();
+            return;
+          }
           // replace remote image with remote_image_container
           const remoteImgEl = `
         <div class="remote_image_container" data-src="${Xss.escape(src)}" data-test="remote-image-container">
