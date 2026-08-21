@@ -412,7 +412,7 @@ export class Mime {
       if (!Mime.isSignedContentNode(current)) {
         return currentSubject || fallbackSubject;
       }
-      fallbackSubject = currentSubject;
+      fallbackSubject = currentSubject || fallbackSubject;
       /* eslint-disable no-underscore-dangle */
       const childNodes = current._childNodes;
       if (childNodes === false || !childNodes.length) {
@@ -421,7 +421,7 @@ export class Mime {
       current = childNodes[0];
       /* eslint-enable no-underscore-dangle */
     }
-    return undefined;
+    return fallbackSubject;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
