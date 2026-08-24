@@ -431,6 +431,13 @@ export class KeyUtil {
     }
   }
 
+  public static async isRevoked(key: Key): Promise<boolean> {
+    if (key.family === 'openpgp') {
+      return await OpenPGPKey.isRevoked(key);
+    }
+    return key.revoked;
+  }
+
   public static async keyInfoObj(prv: Key): Promise<KeyInfoWithIdentity> {
     if (!prv.isPrivate) {
       throw new Error('Key passed into KeyUtil.keyInfoObj must be a Private Key');

@@ -10,7 +10,14 @@ import { BgHandlers } from './bg-handlers.js';
 import { Catch } from '../common/platform/catch.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { BgUtils } from './bgutils.js';
-import { migrateGlobal, moveContactsToEmailsAndPubkeys, updateOpgpRevocations, updateSearchables, updateX509FingerprintsAndLongids } from './migrations.js';
+import {
+  migrateGlobal,
+  moveContactsToEmailsAndPubkeys,
+  revalidateStoredRevocations,
+  updateOpgpRevocations,
+  updateSearchables,
+  updateX509FingerprintsAndLongids,
+} from './migrations.js';
 import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-store.js';
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
@@ -41,6 +48,7 @@ console.info('background.js service worker starting');
   try {
     db = await ContactStore.dbOpen(); // takes 4-10 ms first time
     await updateOpgpRevocations(db);
+    await revalidateStoredRevocations(db);
     await updateX509FingerprintsAndLongids(db);
     await updateSearchables(db);
     await moveContactsToEmailsAndPubkeys(db);

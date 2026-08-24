@@ -235,7 +235,7 @@ export class OpenPGPKey {
         curve: algoInfo.curve,
         algorithmId: opgp.enums.publicKey[algoInfo.algorithm],
       },
-      revoked: opgpKey.revocationSignatures.length > 0,
+      revoked: await opgpKey.isRevoked(),
     } as Key);
     const keyWithPrivateFields = key as KeyWithPrivateFields;
     keyWithPrivateFields.internal = opgpKey;
@@ -303,6 +303,11 @@ export class OpenPGPKey {
   public static async keyHasNoUsers(pubkey: Key): Promise<boolean> {
     const key = await OpenPGPKey.extractExternalLibraryObjFromKey(pubkey);
     return key.users.length === 0;
+  }
+
+  public static async isRevoked(key: Key): Promise<boolean> {
+    const opgpKey = await OpenPGPKey.extractExternalLibraryObjFromKey(key);
+    return await opgpKey.isRevoked();
   }
 
   public static async diagnose(pubkey: Key, passphrase: string): Promise<Map<string, string>> {
