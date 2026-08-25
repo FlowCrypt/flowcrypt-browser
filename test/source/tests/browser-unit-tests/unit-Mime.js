@@ -311,3 +311,150 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue 3352`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Mime.decode parses nested signed message exactly once`);
+(async () => {
+  const nestedSignedMime = [
+    'Content-Type: multipart/signed; protocol="application/pgp-signature"; micalg="pgp-sha256"; boundary="b0"',
+    'MIME-Version: 1.0',
+    '',
+    '--b0',
+    'Content-Type: multipart/signed; protocol="application/pgp-signature"; micalg="pgp-sha256"; boundary="b1"',
+    '',
+    '--b1',
+    'Content-Type: multipart/signed; protocol="application/pgp-signature"; micalg="pgp-sha256"; boundary="b2"',
+    '',
+    '--b2',
+    'Content-Type: text/plain',
+    'Subject: nested subject',
+    '',
+    'hello nested world',
+    '--b2',
+    'Content-Type: application/pgp-signature',
+    '',
+    'sig2',
+    '--b2--',
+    '--b1',
+    'Content-Type: application/pgp-signature',
+    '',
+    'sig1',
+    '--b1--',
+    '--b0',
+    'Content-Type: application/pgp-signature',
+    '',
+    'sig0',
+    '--b0--',
+  ].join('\r\n');
+
+  const countDecodeCalls = async mime => {
+    const originalDecode = Mime.decode;
+    let decodeCalls = 0;
+    Mime.decode = (...args) => {
+      decodeCalls++;
+      return originalDecode(...args);
+    };
+    try {
+      return { decoded: await Mime.decode(mime), decodeCalls };
+    } finally {
+      Mime.decode = originalDecode;
+    }
+  };
+
+  const nestedResult = await countDecodeCalls(nestedSignedMime);
+  if (nestedResult.decodeCalls !== 1) {
+    throw Error(`Mime.decode was called ${nestedResult.decodeCalls} times for a nested signed message, expecting exactly 1`);
+  }
+  if (nestedResult.decoded.subject !== 'nested subject') {
+    throw Error(`unexpected subject '${nestedResult.decoded.subject}', expecting 'nested subject'`);
+  }
+
+  const controlMime = [
+    'Content-Type: multipart/mixed; boundary="m0"',
+    'MIME-Version: 1.0',
+    'Subject: control',
+    '',
+    '--m0',
+    'Content-Type: multipart/mixed; boundary="m1"',
+    '',
+    '--m1',
+    'Content-Type: multipart/mixed; boundary="m2"',
+    '',
+    '--m2',
+    'Content-Type: text/plain',
+    '',
+    'hello',
+    '--m2',
+    'Content-Type: application/octet-stream',
+    '',
+    'data',
+    '--m2--',
+    '--m1',
+    'Content-Type: application/octet-stream',
+    '',
+    'data',
+    '--m1--',
+    '--m0',
+    'Content-Type: application/octet-stream',
+    '',
+    'data',
+    '--m0--',
+  ].join('\r\n');
+
+  const controlResult = await countDecodeCalls(controlMime);
+  if (controlResult.decodeCalls !== 1) {
+    throw Error(`Mime.decode was called ${controlResult.decodeCalls} times for an unsigned control message, expecting exactly 1`);
+  }
+  if (controlResult.decoded.subject !== 'control') {
+    throw Error(`unexpected subject '${controlResult.decoded.subject}', expecting 'control'`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Mime.decode extracts subject from Thunderbird-style signed content`);
+(async () => {
+  const thunderbirdSignedMime = [
+    'Content-Type: multipart/signed; protocol="application/pgp-signature"; micalg="pgp-sha256"; boundary="tb"',
+    'MIME-Version: 1.0',
+    '',
+    'This is an OpenPGP/MIME signed message.',
+    '',
+    '--tb',
+    'Content-Type: multipart/alternative; boundary="alt"',
+    'Subject: Encrypted Subject: hello thunderbird',
+    '',
+    '--alt',
+    'Content-Type: text/plain',
+    '',
+    'plain body',
+    '--alt',
+    'Content-Type: text/html',
+    '',
+    '<html><body>html body</body></html>',
+    '--alt--',
+    '--tb',
+    'Content-Type: application/pgp-signature',
+    '',
+    'sig',
+    '--tb--',
+  ].join('\r\n');
+
+  const originalDecode = Mime.decode;
+  let decodeCalls = 0;
+  Mime.decode = (...args) => {
+    decodeCalls++;
+    return originalDecode(...args);
+  };
+  let decoded;
+  try {
+    decoded = await Mime.decode(thunderbirdSignedMime);
+  } finally {
+    Mime.decode = originalDecode;
+  }
+  if (decodeCalls !== 1) {
+    throw Error(`Mime.decode was called ${decodeCalls} times for a signed message, expecting exactly 1`);
+  }
+  if (decoded.subject !== 'Encrypted Subject: hello thunderbird') {
+    throw Error(`unexpected subject '${decoded.subject}', expecting 'Encrypted Subject: hello thunderbird'`);
+  }
+  return 'pass';
+})();
