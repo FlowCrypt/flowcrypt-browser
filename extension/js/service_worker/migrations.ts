@@ -216,6 +216,48 @@ export const updateOpgpRevocations = async (db: IDBDatabase): Promise<void> => {
   console.info('done updating');
 };
 
+type StoredRevocation = { fingerprint: string; armoredKey?: string };
+
+export const revalidateStoredRevocations = async (db: IDBDatabase): Promise<void> => {
+  const globalStore = await GlobalStore.get(['contact_store_revocations_revalidated']);
+  if (globalStore.contact_store_revocations_revalidated) {
+    return;
+  }
+  console.info('re-validating stored revocation records...');
+  const tx = db.transaction(['revocations'], 'readonly');
+  const records = await new Promise<StoredRevocation[]>((resolve, reject) => {
+    const search = tx.objectStore('revocations').getAll();
+    ContactStore.setReqPipe(search, resolve, reject);
+  });
+  const bogusFingerprints: string[] = [];
+  for (const record of records) {
+    if (!record.armoredKey) {
+      continue;
+    }
+    try {
+      const key = await KeyUtil.parse(record.armoredKey);
+      if (key.family === 'openpgp' && (key.id !== record.fingerprint || !key.revoked)) {
+        bogusFingerprints.push(record.fingerprint);
+      }
+    } catch (e) {
+      console.error(`Skipping unparsable stored revocation record ${record.fingerprint}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  if (bogusFingerprints.length) {
+    const txUpdate = db.transaction(['revocations'], 'readwrite');
+    await new Promise((resolve, reject) => {
+      ContactStore.setTxHandlers(txUpdate, resolve, reject);
+      const revocationsStore = txUpdate.objectStore('revocations');
+      for (const fingerprint of bogusFingerprints) {
+        revocationsStore.delete(fingerprint);
+      }
+    });
+  }
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  await GlobalStore.set({ contact_store_revocations_revalidated: true });
+  console.info('done re-validating stored revocation records');
+};
+
 export const moveContactsToEmailsAndPubkeys = async (db: IDBDatabase): Promise<void> => {
   if (!db.objectStoreNames.contains('contacts')) {
     return;

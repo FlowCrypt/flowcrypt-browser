@@ -188,6 +188,28 @@ Something wrong with this key`),
       expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPub)).to.equal(revocationCertificate);
       expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPrv)).to.equal(revocationCertificate);
     });
+    test(`[unit][OpenPGPKey.parse] does not treat a foreign revocation signature packet as key revocation`, async t => {
+      const attackerPrv = await OpenPGPKey.parse(testConstants.existingPrv);
+      const attackerRevocationCertificate = await OpenPGPKey.getOrCreateRevocationCertificate(attackerPrv);
+      if (!attackerRevocationCertificate) {
+        throw new Error();
+      }
+      const attackerRevokedPub = await OpenPGPKey.applyRevocationCertificate(await KeyUtil.asPublicKey(attackerPrv), attackerRevocationCertificate);
+      expect(attackerRevokedPub.revoked).to.be.true;
+      const victimPub = await KeyUtil.parse(testConstants.somerevokedValid);
+      expect(victimPub.revoked).to.be.false;
+      const attackerOpgpPub = await opgp.readKey({ armoredKey: KeyUtil.armor(attackerRevokedPub) });
+      const victimPackets = (await opgp.readKey({ armoredKey: KeyUtil.armor(victimPub) })).toPacketList();
+      victimPackets.splice(1, 0, attackerOpgpPub.revocationSignatures[0]);
+      const forgedArmored = new opgp.PublicKey(victimPackets).armor();
+      const forgedOpgp = await opgp.readKey({ armoredKey: forgedArmored });
+      expect(forgedOpgp.revocationSignatures.length).to.equal(1);
+      expect(await forgedOpgp.isRevoked()).to.be.false;
+      const forgedParsed = await KeyUtil.parse(forgedArmored);
+      expect(forgedParsed.id).to.equal(victimPub.id);
+      expect(forgedParsed.revoked).to.be.false;
+      t.pass();
+    });
     test(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
       expect(
         MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")

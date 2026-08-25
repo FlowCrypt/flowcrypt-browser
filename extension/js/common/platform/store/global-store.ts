@@ -21,6 +21,7 @@ export type GlobalStoreDict = {
   stored_key_info_migrated?: boolean;
   contact_store_x509_fingerprints_and_longids_updated?: boolean;
   contact_store_opgp_revoked_flags_updated?: boolean;
+  contact_store_revocations_revalidated?: boolean;
   contact_store_searchable_pruned?: boolean;
   local_drafts?: Dict<LocalDraft>;
 };
@@ -36,6 +37,7 @@ export type GlobalIndex =
   | 'key_info_store_fingerprints_added'
   | 'contact_store_x509_fingerprints_and_longids_updated'
   | 'contact_store_opgp_revoked_flags_updated'
+  | 'contact_store_revocations_revalidated'
   | 'contact_store_searchable_pruned'
   | 'local_drafts'
   | 'stored_key_info_migrated';
