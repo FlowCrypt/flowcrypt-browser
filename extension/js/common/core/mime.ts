@@ -60,6 +60,7 @@ export type MimeProccesedMsg = {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
+  private static readonly MAX_SIGNED_CONTENT_DEPTH = 50;
   public static processBody(decoded: MessageBody): MsgBlock[] {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
@@ -198,15 +199,15 @@ export class Mime {
     };
     return await new Promise((resolve, reject) => {
       try {
-        parser.onend = async () => {
+        parser.onend = () => {
           try {
             for (const name of Object.keys(parser.node.headers)) {
               mimeContent.headers[name] = parser.node.headers[name][0].value;
             }
             mimeContent.rawSignedContent = Mime.retrieveRawSignedContent([parser.node]);
-            if (!mimeContent.subject && mimeContent.rawSignedContent) {
-              const rawSignedContentDecoded = await Mime.decode(Buf.fromUtfStr(mimeContent.rawSignedContent));
-              mimeContent.subject = rawSignedContentDecoded.subject;
+            const signedContentNode = Mime.retrieveSignedContentNode([parser.node]);
+            if (!mimeContent.subject && signedContentNode) {
+              mimeContent.subject = Mime.getSubjectFromNode(signedContentNode);
             }
             for (const node of Object.values(leafNodes)) {
               const nodeType = Mime.getNodeType(node);
@@ -356,31 +357,76 @@ export class Mime {
     return { ...result, from };
   }
 
-  private static retrieveRawSignedContent(nodes: MimeParserNode[]): string | undefined {
+  private static isSignedContentNode(node: MimeParserNode): boolean {
+    /* eslint-disable no-underscore-dangle */
+    if (node._isMultipart === 'signed') {
+      return true;
+    }
+    return (
+      node._isMultipart === 'mixed' &&
+      node._childNodes !== false &&
+      node._childNodes.length === 2 &&
+      (Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature' || node._childNodes[1].contentType?.params?.name === 'signature.asc')
+    );
+    /* eslint-enable no-underscore-dangle */
+  }
+
+  private static retrieveSignedContentNode(nodes: MimeParserNode[], depth = 0): MimeParserNode | undefined {
+    if (depth > Mime.MAX_SIGNED_CONTENT_DEPTH) {
+      return undefined;
+    }
     for (const node of nodes) {
       /* eslint-disable no-underscore-dangle */
       if (!node._childNodes || !node._childNodes.length) {
         continue; // signed nodes tend contain two children: content node, signature node. If no node, then this is not pgp/mime signed content
       }
-      const isSigned = node._isMultipart === 'signed';
-      const isMixedWithSig =
-        node._isMultipart === 'mixed' &&
-        node._childNodes.length === 2 &&
-        (Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature' || node._childNodes[1].contentType?.params?.name === 'signature.asc');
-      if (isSigned || isMixedWithSig) {
-        // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
-        // however emailjs parser will replace it to <LF>, so we fix it here
-        let rawSignedContent = node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
-        if (rawSignedContent.endsWith('--')) {
-          // end of boundary without a mandatory newline
-          rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
-        }
-        return rawSignedContent;
+      if (Mime.isSignedContentNode(node)) {
+        return node._childNodes[0];
       }
-      return Mime.retrieveRawSignedContent(node._childNodes);
+      return Mime.retrieveSignedContentNode(node._childNodes, depth + 1);
+      /* eslint-enable no-underscore-dangle */
     }
-    /* eslint-enable no-underscore-dangle */
     return undefined;
+  }
+
+  private static retrieveRawSignedContent(nodes: MimeParserNode[]): string | undefined {
+    const signedContentNode = Mime.retrieveSignedContentNode(nodes);
+    if (!signedContentNode) {
+      return undefined;
+    }
+    // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
+    // however emailjs parser will replace it to <LF>, so we fix it here
+    let rawSignedContent = signedContentNode.raw.replace(/\r?\n/g, '\r\n');
+    if (rawSignedContent.endsWith('--')) {
+      // end of boundary without a mandatory newline
+      rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
+    }
+    return rawSignedContent;
+  }
+
+  private static getSubjectFromNode(node: MimeParserNode): string | undefined {
+    let current = node;
+    let fallbackSubject: string | undefined;
+    for (let depth = 0; depth <= Mime.MAX_SIGNED_CONTENT_DEPTH; depth++) {
+      const currentSubject = current.headers.subject?.[0]?.value;
+      fallbackSubject = currentSubject || fallbackSubject;
+      if (!Mime.isSignedContentNode(current)) {
+        const nestedSignedContentNode = Mime.retrieveSignedContentNode([current]);
+        if (!nestedSignedContentNode) {
+          return fallbackSubject;
+        }
+        current = nestedSignedContentNode;
+        continue;
+      }
+      /* eslint-disable no-underscore-dangle */
+      const childNodes = current._childNodes;
+      if (childNodes === false || !childNodes.length) {
+        return currentSubject || fallbackSubject;
+      }
+      current = childNodes[0];
+      /* eslint-enable no-underscore-dangle */
+    }
+    return fallbackSubject;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
