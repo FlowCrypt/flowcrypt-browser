@@ -224,21 +224,19 @@ export const revalidateStoredRevocations = async (db: IDBDatabase): Promise<void
     return;
   }
   console.info('re-validating stored revocation records...');
-  let records: StoredRevocation[] = [];
-  {
-    const tx = db.transaction(['revocations'], 'readonly');
-    records = await new Promise((resolve, reject) => {
-      const search = tx.objectStore('revocations').getAll();
-      ContactStore.setReqPipe(search, resolve, reject);
-    });
-  }
+  const tx = db.transaction(['revocations'], 'readonly');
+  const records = await new Promise<StoredRevocation[]>((resolve, reject) => {
+    const search = tx.objectStore('revocations').getAll();
+    ContactStore.setReqPipe(search, resolve, reject);
+  });
   const bogusFingerprints: string[] = [];
   for (const record of records) {
     if (!record.armoredKey) {
       continue;
     }
     try {
-      if (!(await KeyUtil.parse(record.armoredKey)).revoked) {
+      const key = await KeyUtil.parse(record.armoredKey);
+      if (key.family === 'openpgp' && (key.id !== record.fingerprint || !key.revoked)) {
         bogusFingerprints.push(record.fingerprint);
       }
     } catch (e) {
