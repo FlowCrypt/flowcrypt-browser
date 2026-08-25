@@ -409,10 +409,15 @@ export class Mime {
     let fallbackSubject: string | undefined;
     for (let depth = 0; depth <= Mime.MAX_SIGNED_CONTENT_DEPTH; depth++) {
       const currentSubject = current.headers.subject?.[0]?.value;
-      if (!Mime.isSignedContentNode(current)) {
-        return currentSubject || fallbackSubject;
-      }
       fallbackSubject = currentSubject || fallbackSubject;
+      if (!Mime.isSignedContentNode(current)) {
+        const nestedSignedContentNode = Mime.retrieveSignedContentNode([current]);
+        if (!nestedSignedContentNode) {
+          return fallbackSubject;
+        }
+        current = nestedSignedContentNode;
+        continue;
+      }
       /* eslint-disable no-underscore-dangle */
       const childNodes = current._childNodes;
       if (childNodes === false || !childNodes.length) {
