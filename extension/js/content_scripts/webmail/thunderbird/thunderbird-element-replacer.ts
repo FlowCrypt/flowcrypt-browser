@@ -55,7 +55,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
               }
             }
             const pgpBlock = this.generatePgpBlockTemplate(encryptionStatus, verificationStatus, decryptedMsg);
-            $('body').html(pgpBlock); // xss-sanitized
+            $('body').html(pgpBlock); // xss-escaped
           } else {
             const decryptErr = result as DecryptError;
             let decryptionErrorMsg = '';
@@ -68,7 +68,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
               decryptionErrorMsg = `decrypt error: ${(result as DecryptError).error.message}`;
             }
             const pgpBlock = this.generatePgpBlockTemplate(decryptionErrorMsg, 'not signed', this.emailBodyFromThunderbirdMail);
-            $('body').html(pgpBlock); // xss-sanitized
+            $('body').html(pgpBlock); // xss-escaped
           }
         } else if (this.isCleartextMsg(fullMsg)) {
           const message = await openpgp.readCleartextMessage({ cleartextMessage: this.emailBodyFromThunderbirdMail });
@@ -82,7 +82,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             verificationStatus = `could not verify signature: ${result.error}`;
           }
           const pgpBlock = this.generatePgpBlockTemplate('not encrypted', verificationStatus, signedMessage);
-          $('body').html(pgpBlock); // xss-sanitized
+          $('body').html(pgpBlock); // xss-escaped
         }
         // todo: detached signed message via https://github.com/FlowCrypt/flowcrypt-browser/issues/5668
       }
@@ -93,8 +93,8 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
     return `
       <div ${encryptionStatus === 'encrypted' ? 'class="pgp_secure"' : 'class="pgp_neutral"'}>
         <div>
-          <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${encryptionStatus}</div>
-          <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${verificationStatus}</div>
+          <div id="pgp_encryption" class="pgp_badge short ${encryptionStatus === 'encrypted' ? 'green_label' : 'red_label'}">${Xss.escape(encryptionStatus)}</div>
+          <div id="pgp_signature" class="pgp_badge short ${verificationStatus === 'signed' ? 'green_label' : 'red_label'}">${Xss.escape(verificationStatus)}</div>
         </div>
         <div class="pgp_block">
         <pre>${Xss.escape(messageToRender)}</pre>

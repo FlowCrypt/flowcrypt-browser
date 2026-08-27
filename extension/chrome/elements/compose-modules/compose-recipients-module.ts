@@ -809,7 +809,7 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
           ulHtml += '<img class="loading-icon" data-test="pgp-loading-icon" src="/img/svgs/spinner-green-small.svg" />';
           contact.pgpLoading
             .then(hasPgp => {
-              Xss.replaceElementDANGEROUSLY($(`[email="${contact.email}"] .loading-icon`)[0], this.getPgpIconHtml(hasPgp)); // xss-escaped
+              Xss.replaceElementDANGEROUSLY($(`[email="${contact.email}"] .loading-icon`)[0], this.getPgpIconHtml(hasPgp)); // xss-direct
             })
             .catch(() => {
               this.failedLookupEmails.push(contact.email);

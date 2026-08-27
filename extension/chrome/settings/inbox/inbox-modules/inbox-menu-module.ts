@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from '../../../../js/common/platform/catch.js';
-import { Dict } from '../../../../js/common/core/common.js';
+import { checkValidURL, Dict } from '../../../../js/common/core/common.js';
 import { GmailRes } from '../../../../js/common/api/email-provider/gmail/gmail-parser.js';
 import { Google } from '../../../../js/common/api/email-provider/gmail/google.js';
 import { InboxView } from '../inbox.js';
@@ -122,7 +122,8 @@ export class InboxMenuModule extends ViewModule<InboxView> {
     if (chooseAccountEl) {
       chooseAccountEl.title = this.view.acctEmail;
     }
-    if (this.view.picture) {
+    if (this.view.picture && checkValidURL(this.view.picture)) {
+      // xss-safe-value
       $('img.main-profile-img')
         .attr('src', this.view.picture)
         .on(

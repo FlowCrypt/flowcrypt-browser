@@ -195,7 +195,7 @@ export class AttachmentDownloadView extends View {
 
   private renderHeader = () => {
     const span = $(`<span>${this.isEncrypted ? 'ENCRYPTED\n' : 'PLAIN\n'} FILE</span>`);
-    this.header.empty().append(span); // xss-escaped
+    this.header.empty().append(span); // xss-direct
   };
 
   private getFileIconSrc = () => {
