@@ -301,7 +301,6 @@ View.run(
           this.checkGoogleAcct().catch(Catch.reportErr);
           this.checkFcAcctAndContactPage().catch(Catch.reportErr);
           if (storage.picture && checkValidURL(storage.picture)) {
-            // xss-safe-value
             $('img.main-profile-img')
               .attr('src', storage.picture)
               .on(

@@ -123,7 +123,6 @@ export class InboxMenuModule extends ViewModule<InboxView> {
       chooseAccountEl.title = this.view.acctEmail;
     }
     if (this.view.picture && checkValidURL(this.view.picture)) {
-      // xss-safe-value
       $('img.main-profile-img')
         .attr('src', this.view.picture)
         .on(
