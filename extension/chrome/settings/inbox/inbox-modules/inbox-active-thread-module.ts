@@ -184,9 +184,9 @@ export class InboxActiveThreadModule extends ViewModule<InboxView> {
       }
       const exportBtn = this.debugEmails.includes(this.view.acctEmail) ? '<a href="#" class="action-export">download api export</a>' : '';
       const r =
-        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(messageInfo.from?.full || 'unknown')} <span style="float:right;">${
+        `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(messageInfo.from?.full || 'unknown')} <span style="float:right;">${Xss.escape(
           GmailParser.findHeader(msg, 'Date') ?? ''
-        } ${exportBtn}</p>` + // xss-direct
+        )} ${exportBtn}</p>` + // xss-direct
         loaderContext.getRenderedMessageXssSafe() +
         loaderContext.getRenderedAttachmentsXssSafe();
       $('.thread').append(this.wrapMsg(htmlId, r)); // xss-safe-value

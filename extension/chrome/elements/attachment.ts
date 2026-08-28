@@ -182,7 +182,7 @@ export class AttachmentDownloadView extends View {
         Failed to decrypt.
         <details ${this.errorDetailsOpened ? 'open' : ''}>
           <summary>see error details</summary>
-          <pre data-test="error-details">${e.stack}\n\nDecryptError:\n${JSON.stringify(e.decryptError, undefined, 2)}</pre>
+          <pre data-test="error-details">${Xss.escape(String(e.stack ?? e))}\n\nDecryptError:\n${Xss.escape(JSON.stringify(e.decryptError, undefined, 2))}</pre>
         </details>
       `
       );
