@@ -89,7 +89,7 @@ export class KeyImportUi {
       for (const option of ['generate_private_key', 'submit_pubkey']) {
         const dataTestValue = `input-email-alias-${option}-${e.replace(/[^a-z0-9]+/g, '')}`;
         $(`.${option}_addresses`).append(
-          `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-name="${sendAs?.[e].name ?? ''}" data-test="${dataTestValue}" />${Xss.escape(e)}</label><br/>`
+          `<label><input type="checkbox" class="input_email_alias_${option}" data-email="${Xss.escape(e)}" data-name="${Xss.escape(sendAs?.[e].name ?? '')}" data-test="${dataTestValue}" />${Xss.escape(e)}</label><br/>`
         ); // xss-escaped
       }
     }

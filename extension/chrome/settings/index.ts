@@ -5,7 +5,7 @@
 import { Bm, BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { Ui } from '../../js/common/browser/ui.js';
 import { KeyUtil, KeyInfoWithIdentity } from '../../js/common/core/crypto/key.js';
-import { Str, Url, UrlParams } from '../../js/common/core/common.js';
+import { checkValidURL, Str, Url, UrlParams } from '../../js/common/core/common.js';
 import { ApiErr, EnterpriseServerAuthErr } from '../../js/common/api/shared/api-error.js';
 import { Assert } from '../../js/common/assert.js';
 
@@ -300,7 +300,7 @@ View.run(
           }
           this.checkGoogleAcct().catch(Catch.reportErr);
           this.checkFcAcctAndContactPage().catch(Catch.reportErr);
-          if (storage.picture) {
+          if (storage.picture && checkValidURL(storage.picture)) {
             $('img.main-profile-img')
               .attr('src', storage.picture)
               .on(

@@ -237,11 +237,11 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       const header =
         `<div ${dirAttr}>` +
         `---------- Forwarded message ---------<br/>` +
-        `From: ${from}<br>` +
-        `Date: ${dateStr}<br>` +
-        `Subject: ${this.messageToReplyOrForward.headers.subject}<br>` +
-        `To: ${this.messageToReplyOrForward.headers.to.join(', ')}<br>` +
-        (this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${this.messageToReplyOrForward.headers.cc?.join(', ')}` : '') +
+        `From: ${Xss.escape(from || '')}<br>` +
+        `Date: ${Xss.escape(dateStr)}<br>` +
+        `Subject: ${Xss.escape(this.messageToReplyOrForward.headers.subject || '')}<br>` +
+        `To: ${Xss.escape(this.messageToReplyOrForward.headers.to.join(', '))}<br>` +
+        (this.messageToReplyOrForward.headers.cc?.length ? `Cc: ${Xss.escape(this.messageToReplyOrForward.headers.cc.join(', '))}` : '') +
         `</div>`;
       return `${header}<br><br>${escapedText}`;
     }
