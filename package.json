@@ -61,7 +61,8 @@
     "linkifyjs": "4.3.3",
     "node-forge": "1.4.0",
     "squire-rte": "2.4.8",
-    "sweetalert2": "11.26.25"
+    "sweetalert2": "11.26.25",
+    "web-streams-polyfill": "3.3.3"
   },
   "scripts": {
     "build": "npm run symlink-core && node ./scripts/build.js",

@@ -67,6 +67,9 @@ const copyDependencies = async () => {
     // Reference: https://github.com/mozilla/pdf.js/issues/18006#issuecomment-2078739672
     ['pdfjs-dist/legacy/build/pdf.min.mjs', 'lib/pdf.min.mjs'],
     ['pdfjs-dist/legacy/build/pdf.worker.min.mjs', 'lib/pdf.worker.min.mjs'],
+    // polyfill Web Streams in the Firefox content-script sandbox, see
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1757836
+    ['web-streams-polyfill/dist/polyfill.min.js', 'lib/web-streams-polyfill.min.js'],
     ['bootstrap/dist/js/bootstrap.min.js', 'lib/bootstrap/bootstrap.min.js'],
     ['bootstrap/dist/css/bootstrap.min.css', 'lib/bootstrap/bootstrap.min.css'],
   ];
