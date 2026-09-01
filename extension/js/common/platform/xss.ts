@@ -47,7 +47,33 @@ export class Xss {
     'col',
   ];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
-  private static FORBID_ATTR = ['background', 'srcset'];
+  private static FORBID_ATTR = ['background', 'srcset', 'ping'];
+  private static FORBID_TAGS = [
+    'script',
+    'noscript',
+    'style',
+    'link',
+    'meta',
+    'base',
+    'title',
+    'head',
+    'html',
+    'body',
+    'template',
+    'iframe',
+    'object',
+    'embed',
+    'svg',
+    'math',
+    'form',
+    'input',
+    'textarea',
+    'dialog',
+    'video',
+    'audio',
+    'source',
+    'canvas',
+  ];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
   /* eslint-disable @typescript-eslint/naming-convention */
@@ -120,6 +146,7 @@ export class Xss {
     'direction',
     'unicode-bidi',
   ]);
+  private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip']); // xss-none
   /* eslint-enable @typescript-eslint/naming-convention */
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
@@ -151,14 +178,38 @@ export class Xss {
    */
   public static htmlSanitize = (dirtyHtml: string, tagCheck = false): string => {
     Xss.throwIfNotSupported();
+    const purgeStyleHook = (node: Node) => {
+      if (!(node instanceof Element)) {
+        return;
+      }
+      // Strip the CSS properties that enable overlays, click-jacking and obfuscation, while keeping
+      // the inline styles FlowCrypt renders itself. The stricter ALLOWED_EMAIL_CSS_PROPERTIES
+      // allowlist is only applied on the htmlSanitizeKeepBasicTags path.
+      if (node.hasAttribute('style')) {
+        const style = Xss.purgeDangerousCss(node.getAttribute('style') || ''); // xss-none
+        if (style) {
+          node.setAttribute('style', style);
+        } else {
+          node.removeAttribute('style');
+        }
+      }
+      // Reverse tabnabbing: ensure new-tab links always carry noopener/noreferrer.
+      if (node.tagName === 'A' && (node.getAttribute('target') || '').toLowerCase().includes('_blank')) {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    };
+    DOMPurify.addHook('afterSanitizeAttributes', purgeStyleHook);
     /* eslint-disable @typescript-eslint/naming-convention */
-    return DOMPurify.sanitize(dirtyHtml, {
+    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
+      FORBID_TAGS: Xss.FORBID_TAGS,
       ...(tagCheck && { ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS }),
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
+    DOMPurify.removeHook('afterSanitizeAttributes', purgeStyleHook);
+    return cleanHtml;
   };
 
   /**
@@ -359,6 +410,31 @@ export class Xss {
     for (const property of Array.from(style)) {
       const value = style.getPropertyValue(property).trim();
       if (!this.ALLOWED_EMAIL_CSS_PROPERTIES.has(property.toLowerCase()) || !value) {
+        style.removeProperty(property);
+      }
+    }
+    return style.cssText;
+  };
+
+  /**
+   * Remove only the CSS properties that enable overlays, click-jacking and obfuscation, keeping
+   * every other (presentational) property. Unlike sanitizeCssStyle this does not enforce an
+   * allowlist, so FlowCrypt's own inline styles survive on the permissive htmlSanitize path.
+   * `position` is only stripped when used with an overlay-capable value (fixed/absolute/sticky).
+   */
+  private static purgeDangerousCss = (css: string): string => {
+    // xss-none
+    if (!css || typeof document === 'undefined') {
+      return css;
+    }
+    const style = document.createElement('span').style;
+    style.cssText = css;
+    for (const property of Array.from(style)) {
+      const lower = property.toLowerCase();
+      if (lower === 'position' && ['fixed', 'absolute', 'sticky'].includes(style.getPropertyValue(property).trim().toLowerCase())) {
+        style.removeProperty(property);
+      } else if (this.DANGEROUS_CSS_PROPERTIES.has(lower)) {
+        // xss-none
         style.removeProperty(property);
       }
     }

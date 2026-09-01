@@ -236,7 +236,7 @@ export class Ui {
     },
     confirmWithCheckbox: async (label: string, html = ''): Promise<boolean> => {
       const userResponsePromise = Ui.swal().fire({
-        html,
+        html: Xss.htmlSanitize(html),
         input: 'checkbox',
         inputPlaceholder: label,
         allowOutsideClick: false,
