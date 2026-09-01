@@ -496,7 +496,7 @@ export class MessageRenderer {
     const fromString = GmailParser.findHeader(fullMsg, 'from');
     const from = fromString ? Str.parseEmail(fromString) : undefined;
     const fromEmail = from?.email ?? '';
-    const fromHtml = from?.name ? `<b>${Xss.escape(from.name)}</b> &lt;${fromEmail}&gt;` : fromEmail;
+    const fromHtml = from?.name ? `<b>${Xss.escape(from.name)}</b> &lt;${Xss.escape(fromEmail)}&gt;` : Xss.escape(fromEmail);
     /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const ccString = GmailParser.findHeader(fullMsg, 'cc')
       ? `Cc: <span data-test="print-cc">${Xss.escape(GmailParser.findHeader(fullMsg, 'cc')!)}</span><br/>`
@@ -518,7 +518,7 @@ export class MessageRenderer {
           <span data-test="print-from">From: ${fromHtml}</span>
         </div>
         <div class="float-right">
-          <span data-test="print-date">${sentDateStr}</span>
+          <span data-test="print-date">${Xss.escape(sentDateStr ?? '')}</span>
         </div>
       </div>
       <span data-test="print-to">To: ${Xss.escape(GmailParser.findHeader(fullMsg, 'to') ?? '')}</span><br/>
@@ -780,7 +780,7 @@ export class MessageRenderer {
       if (fallbackToPlainText) {
         renderModule.renderAsRegularContent(Str.with(encryptedData));
       } else {
-        renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, Str.with(encryptedData));
+        renderModule.renderErr(Lang.pgpBlock.badFormat + '\n\n' + Xss.escape(result.error.message), Str.with(encryptedData));
       }
     } else if (result.longids.needPassphrase.length) {
       renderModule.renderPassphraseNeeded(result.longids.needPassphrase);
@@ -799,16 +799,19 @@ export class MessageRenderer {
         renderModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
       } else if (result.error.type === DecryptErrTypes.noMdc) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        renderModule.renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
+        renderModule.renderErr(Xss.escape(result.error.message), result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
       } else if (result.error) {
-        renderModule.renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, Str.with(encryptedData));
+        renderModule.renderErr(
+          `${Lang.pgpBlock.cantOpen}\n\n<em>${Xss.escape(result.error.type)}: ${Xss.escape(result.error.message)}</em>`,
+          Str.with(encryptedData)
+        );
       } else {
         // should generally not happen
         renderModule.renderErr(
           Lang.pgpBlock.cantOpen +
             Lang.general.writeMeToFixIt(await isCustomerUrlFesUsed(this.acctEmail)) +
             '\n\nDiagnostic info: "' +
-            JSON.stringify(result) +
+            Xss.escape(JSON.stringify(result)) +
             '"',
           Str.with(encryptedData)
         );

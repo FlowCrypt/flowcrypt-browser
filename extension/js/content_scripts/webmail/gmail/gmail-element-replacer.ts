@@ -946,7 +946,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-factory
         for (const draftId of draftIdsSortedByTimestamp) {
           const draft = offlineComposeDrafts[draftId];
-          const draftLink = $(`<a href>${new Date(draft.timestamp).toLocaleString()}</a>`);
+          const draftLink = $(`<a href>${Xss.escape(new Date(draft.timestamp).toLocaleString())}</a>`);
           draftLink.on('click', event => {
             event.preventDefault();
             this.injector.openComposeWin(draftId);

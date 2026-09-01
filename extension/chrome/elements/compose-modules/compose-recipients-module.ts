@@ -807,9 +807,13 @@ export class ComposeRecipientsModule extends ViewModule<ComposeView> {
         ulHtml += `<li class="select_contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.pgpLoading) {
           ulHtml += '<img class="loading-icon" data-test="pgp-loading-icon" src="/img/svgs/spinner-green-small.svg" />';
+          const emailForSelector = contact.email
+            .replace(/<\/?b>/g, '')
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"');
           contact.pgpLoading
             .then(hasPgp => {
-              Xss.replaceElementDANGEROUSLY($(`[email="${contact.email}"] .loading-icon`)[0], this.getPgpIconHtml(hasPgp)); // xss-direct
+              Xss.replaceElementDANGEROUSLY($(`[email="${emailForSelector}"] .loading-icon`)[0], this.getPgpIconHtml(hasPgp)); // xss-direct
             })
             .catch(() => {
               this.failedLookupEmails.push(contact.email);
