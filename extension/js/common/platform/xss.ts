@@ -180,9 +180,6 @@ export class Xss {
       if (!(node instanceof Element)) {
         return;
       }
-      // Strip the CSS properties that enable overlays, click-jacking and obfuscation, while keeping
-      // the inline styles FlowCrypt renders itself. The stricter ALLOWED_EMAIL_CSS_PROPERTIES
-      // allowlist is only applied on the htmlSanitizeKeepBasicTags path.
       if (node.hasAttribute('style')) {
         const style = Xss.purgeDangerousCss(node.getAttribute('style') || ''); // xss-none
         if (style) {
@@ -191,7 +188,6 @@ export class Xss {
           node.removeAttribute('style');
         }
       }
-      // Reverse tabnabbing: ensure new-tab links always carry noopener/noreferrer.
       if (node.tagName === 'A' && (node.getAttribute('target') || '').toLowerCase().includes('_blank')) {
         node.setAttribute('rel', 'noopener noreferrer');
       }
@@ -414,12 +410,6 @@ export class Xss {
     return style.cssText;
   };
 
-  /**
-   * Remove only the CSS properties that enable overlays, click-jacking and obfuscation, keeping
-   * every other (presentational) property. Unlike sanitizeCssStyle this does not enforce an
-   * allowlist, so FlowCrypt's own inline styles survive on the permissive htmlSanitize path.
-   * `position` is only stripped when used with an overlay-capable value (fixed/absolute/sticky).
-   */
   private static purgeDangerousCss = (css: string): string => {
     // xss-none
     if (!css || typeof document === 'undefined') {
