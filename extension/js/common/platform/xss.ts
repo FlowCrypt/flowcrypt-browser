@@ -420,7 +420,12 @@ export class Xss {
       const lower = property.toLowerCase();
       if (lower === 'position' && ['fixed', 'absolute', 'sticky'].includes(style.getPropertyValue(property).trim().toLowerCase())) {
         style.removeProperty(property);
-      } else if (this.DANGEROUS_CSS_PROPERTIES.has(lower)) { // xss-none
+      } else if (
+        this.DANGEROUS_CSS_PROPERTIES.has(lower) || // xss-none
+        lower === 'backdrop-filter' ||
+        lower.startsWith('mask') ||
+        lower.startsWith('-webkit-mask')
+      ) {
         style.removeProperty(property);
       }
     }
