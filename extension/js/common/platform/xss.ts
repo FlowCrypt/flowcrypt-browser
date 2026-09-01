@@ -76,7 +76,6 @@ export class Xss {
   ];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
-  /* eslint-disable @typescript-eslint/naming-convention */
   private static readonly ALLOWED_EMAIL_CSS_PROPERTIES = new Set<string>([
     // Colors
     'color',
@@ -147,7 +146,6 @@ export class Xss {
     'unicode-bidi',
   ]);
   private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip']); // xss-none
-  /* eslint-enable @typescript-eslint/naming-convention */
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -381,13 +379,13 @@ export class Xss {
   };
 
   // prettier-ignore
-  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
-    el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
+  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function
+    el.outerHTML = safeHtml; // xss-dangerous-function
   };
 
   // prettier-ignore
-  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
-    el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
+  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function
+    el.innerHTML = safeHtml; // xss-dangerous-function
   };
 
   private static throwIfNotSupported = () => {
