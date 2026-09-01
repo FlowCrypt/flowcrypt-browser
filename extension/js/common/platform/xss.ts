@@ -409,8 +409,8 @@ export class Xss {
     return style.cssText;
   };
 
-  private static purgeDangerousCss = (css: string): string => {
-    // xss-none
+  // prettier-ignore
+  private static purgeDangerousCss = (css: string): string => { // xss-none
     if (!css || typeof document === 'undefined') {
       return css;
     }
@@ -420,8 +420,7 @@ export class Xss {
       const lower = property.toLowerCase();
       if (lower === 'position' && ['fixed', 'absolute', 'sticky'].includes(style.getPropertyValue(property).trim().toLowerCase())) {
         style.removeProperty(property);
-      } else if (this.DANGEROUS_CSS_PROPERTIES.has(lower)) {
-        // xss-none
+      } else if (this.DANGEROUS_CSS_PROPERTIES.has(lower)) { // xss-none
         style.removeProperty(property);
       }
     }
