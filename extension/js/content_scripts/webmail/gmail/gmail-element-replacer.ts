@@ -191,7 +191,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       let currentEmailContainer = $(emailContainer);
       if (!this.isPlainTextOrHtml(blocksFromEmailContainer)) {
         const { renderedXssSafe: renderedFromEmailContainerXssSafe } = this.messageRenderer.renderMsg({ blocks: blocksFromEmailContainer }, false); // xss-safe-value
-        currentEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+        currentEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory
       }
 
       let blocks: MsgBlock[] = [];
@@ -238,7 +238,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replacing');
       }
-      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(currentEmailContainer, 'set', renderedXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+      GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(currentEmailContainer, 'set', renderedXssSafe); // xss-safe-factory
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer replaced');
       }
@@ -946,7 +946,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         $(this.sel.draftsList).append(offlineDraftsContainer); // xss-safe-factory
         for (const draftId of draftIdsSortedByTimestamp) {
           const draft = offlineComposeDrafts[draftId];
-          const draftLink = $(`<a href>${new Date(draft.timestamp).toLocaleString()}</a>`);
+          const draftLink = $(`<a href>${Xss.escape(new Date(draft.timestamp).toLocaleString())}</a>`);
           draftLink.on('click', event => {
             event.preventDefault();
             this.injector.openComposeWin(draftId);

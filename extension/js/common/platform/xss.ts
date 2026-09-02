@@ -47,10 +47,34 @@ export class Xss {
     'col',
   ];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target', 'fingerprint', 'cryptup-data'];
-  private static FORBID_ATTR = ['background', 'srcset'];
+  private static FORBID_ATTR = ['background', 'srcset', 'ping'];
+  private static FORBID_TAGS = [
+    'script',
+    'noscript',
+    'style',
+    'link',
+    'meta',
+    'base',
+    'title',
+    'head',
+    'html',
+    'body',
+    'template',
+    'iframe',
+    'object',
+    'embed',
+    'math',
+    'form',
+    'textarea',
+    'menu',
+    'dialog',
+    'video',
+    'audio',
+    'source',
+    'canvas',
+  ];
   private static HREF_REGEX_CACHE: RegExp | undefined;
   private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
-  /* eslint-disable @typescript-eslint/naming-convention */
   private static readonly ALLOWED_EMAIL_CSS_PROPERTIES = new Set<string>([
     // Colors
     'color',
@@ -120,7 +144,7 @@ export class Xss {
     'direction',
     'unicode-bidi',
   ]);
-  /* eslint-enable @typescript-eslint/naming-convention */
+  private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip']); // xss-none
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -151,14 +175,34 @@ export class Xss {
    */
   public static htmlSanitize = (dirtyHtml: string, tagCheck = false): string => {
     Xss.throwIfNotSupported();
+    const purgeStyleHook = (node: Node) => {
+      if (!(node instanceof Element)) {
+        return;
+      }
+      if (node.hasAttribute('style')) {
+        const style = Xss.purgeDangerousCss(node.getAttribute('style') || ''); // xss-none
+        if (style) {
+          node.setAttribute('style', style);
+        } else {
+          node.removeAttribute('style');
+        }
+      }
+      if (node.tagName === 'A' && (node.getAttribute('target') || '').toLowerCase().includes('_blank')) {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    };
+    DOMPurify.addHook('afterSanitizeAttributes', purgeStyleHook);
     /* eslint-disable @typescript-eslint/naming-convention */
-    return DOMPurify.sanitize(dirtyHtml, {
+    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       ADD_ATTR: Xss.ADD_ATTR,
       FORBID_ATTR: Xss.FORBID_ATTR,
+      FORBID_TAGS: Xss.FORBID_TAGS,
       ...(tagCheck && { ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS }),
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     /* eslint-enable @typescript-eslint/naming-convention */
+    DOMPurify.removeHook('afterSanitizeAttributes', purgeStyleHook);
+    return cleanHtml;
   };
 
   /**
@@ -330,13 +374,13 @@ export class Xss {
   };
 
   // prettier-ignore
-  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
-    el.outerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
+  public static replaceElementDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function
+    el.outerHTML = safeHtml; // xss-dangerous-function
   };
 
   // prettier-ignore
-  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function - must pass a sanitized value
-    el.innerHTML = safeHtml; // xss-dangerous-function - must pass a sanitized value
+  public static setElementContentDANGEROUSLY = (el: Element, safeHtml: string) => { // xss-dangerous-function
+    el.innerHTML = safeHtml; // xss-dangerous-function
   };
 
   private static throwIfNotSupported = () => {
@@ -359,6 +403,30 @@ export class Xss {
     for (const property of Array.from(style)) {
       const value = style.getPropertyValue(property).trim();
       if (!this.ALLOWED_EMAIL_CSS_PROPERTIES.has(property.toLowerCase()) || !value) {
+        style.removeProperty(property);
+      }
+    }
+    return style.cssText;
+  };
+
+  // prettier-ignore
+  private static purgeDangerousCss = (css: string): string => { // xss-none
+    if (!css || typeof document === 'undefined') {
+      return css;
+    }
+    const style = document.createElement('span').style;
+    style.cssText = css;
+    for (const property of Array.from(style)) {
+      const lower = property.toLowerCase();
+      const value = style.getPropertyValue(property).trim().toLowerCase();
+      if (lower === 'position' && (['fixed', 'absolute', 'sticky'].includes(value) || value.includes('var('))) {
+        style.removeProperty(property);
+      } else if (
+        this.DANGEROUS_CSS_PROPERTIES.has(lower) || // xss-none
+        lower === 'backdrop-filter' ||
+        lower.startsWith('mask') ||
+        lower.startsWith('-webkit-mask')
+      ) {
         style.removeProperty(property);
       }
     }
