@@ -418,7 +418,8 @@ export class Xss {
     style.cssText = css;
     for (const property of Array.from(style)) {
       const lower = property.toLowerCase();
-      if (lower === 'position' && ['fixed', 'absolute', 'sticky'].includes(style.getPropertyValue(property).trim().toLowerCase())) {
+      const value = style.getPropertyValue(property).trim().toLowerCase();
+      if (lower === 'position' && (['fixed', 'absolute', 'sticky'].includes(value) || value.includes('var('))) {
         style.removeProperty(property);
       } else if (
         this.DANGEROUS_CSS_PROPERTIES.has(lower) || // xss-none
