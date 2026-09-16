@@ -9,6 +9,11 @@ body {
   padding: 0;
 }
 
+/* Reserve the width before async account detection reveals the popup content. */
+html.extension-popup {
+  width: 364px;
+}
+
 .action_open_settings {
   display: block;
   position: absolute;
