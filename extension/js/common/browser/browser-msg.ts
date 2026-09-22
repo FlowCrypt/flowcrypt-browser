@@ -452,7 +452,9 @@ export class BrowserMsg {
   public static async createIntervalAlarm(action: string, periodInMinutes: number) {
     const alarmName = `${action}_interval`;
 
-    await chrome.alarms.create(alarmName, { periodInMinutes });
+    if (!(await chrome.alarms.get(alarmName))) {
+      await chrome.alarms.create(alarmName, { periodInMinutes });
+    }
   }
 
   public static intervalAddListener(name: string, handler: IntervalHandler) {

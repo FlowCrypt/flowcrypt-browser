@@ -4,6 +4,7 @@
 
 import { GoogleOAuth } from '../common/api/authentication/google/google-oauth.js';
 import { Bm, BrowserMsg } from '../common/browser/browser-msg.js';
+import { storageGet, storageSet } from '../common/browser/chrome.js';
 import { emailKeyIndex } from '../common/core/common.js';
 import { ExpirationCache } from '../common/core/expiration-cache.js';
 import { BgHandlers } from './bg-handlers.js';
@@ -31,12 +32,10 @@ const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60
 // Start initialization after all event listeners below have been registered synchronously.
 const ready = Promise.resolve().then(async () => {
   let storage: GlobalStoreDict;
-  await chrome.alarms.clearAll();
   await BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
 
   try {
     await migrateGlobal();
-    await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
     storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {
     await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
@@ -90,11 +89,27 @@ if (Catch.isThunderbirdMail()) {
 BrowserMsg.bgListen(ready);
 BrowserMsg.alarmListen();
 
+chrome.runtime.onInstalled.addListener(() => {
+  void ready
+    .then(async () => {
+      await GlobalStore.set({ version: Number(VERSION.replace(/\./g, '')) });
+      await BgHandlers.updateUninstallUrl({});
+    })
+    .catch(Catch.reportErr);
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  // Wake the worker on browser startup so the per-session initialization below runs.
+});
+
 void ready
   .then(async () => {
-    await BgHandlers.updateUninstallUrl({});
-    injectFcIntoWebmail();
-
+    // Session storage survives worker restarts, but is cleared on disable, reload, update, and browser restart.
+    const session = await storageGet('session', ['webmailInjectionStarted']);
+    if (!session.webmailInjectionStarted) {
+      injectFcIntoWebmail();
+      await storageSet('session', { webmailInjectionStarted: true });
+    }
     if (Catch.isThunderbirdMail()) {
       await BgHandlers.thunderbirdContentScriptRegistration();
     }
