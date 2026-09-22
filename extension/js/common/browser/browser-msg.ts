@@ -452,14 +452,16 @@ export class BrowserMsg {
   public static async createIntervalAlarm(action: string, periodInMinutes: number) {
     const alarmName = `${action}_interval`;
 
-    await chrome.alarms.create(alarmName, { periodInMinutes });
+    if (!(await chrome.alarms.get(alarmName))) {
+      await chrome.alarms.create(alarmName, { periodInMinutes });
+    }
   }
 
   public static intervalAddListener(name: string, handler: IntervalHandler) {
     BrowserMsg.INTERVAL_HANDLERS[name] = handler;
   }
 
-  public static bgListen() {
+  public static bgListen(ready: Promise<void>) {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, _sender, rawRespond: (rawRes: Bm.RawResponse) => void) => {
       const respondIfPageStillOpen = (response: Bm.RawResponse) => {
         try {
@@ -480,7 +482,10 @@ export class BrowserMsg {
         if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) {
           // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
-          BrowserMsg.sendRawResponse(handler(msg.data.bm), respondIfPageStillOpen);
+          BrowserMsg.sendRawResponse(
+            ready.then(() => handler(msg.data.bm)),
+            respondIfPageStillOpen
+          );
           return true; // will respond
         } else {
           // broadcast message that backend does not have a handler for - ignored
