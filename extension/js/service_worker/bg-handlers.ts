@@ -117,7 +117,7 @@ export class BgHandlers {
       });
     });
 
-  public static thunderbirdSecureComposeHandler = () => {
+  public static thunderbirdSecureComposeHandler = (ready: Promise<void>) => {
     const handleClickEvent = async (tabId: number, acctEmail: string, thunderbirdMsgId: number, composeMethod?: messenger.compose._ComposeDetailsType) => {
       const accountEmails = await GlobalStore.acctEmailsGet();
       const useFullScreenSecureCompose = (await messenger.windows.getCurrent()).type === 'messageCompose';
@@ -132,6 +132,7 @@ export class BgHandlers {
       }
     };
     messenger.composeAction.onClicked.addListener(async tab => {
+      await ready;
       const messageDetails = await messenger.compose.getComposeDetails(Number(tab.id));
       const composeMethod = messageDetails.type;
       const msgId = Number(messageDetails.relatedMessageId);
@@ -139,6 +140,7 @@ export class BgHandlers {
       if (acctEmail) await handleClickEvent(Number(tab.id), acctEmail, msgId, composeMethod);
     });
     messenger.messageDisplayAction.onClicked.addListener(async tab => {
+      await ready;
       const tabId = Number(tab.id);
       const messageDetails = await messenger.messageDisplay.getDisplayedMessage(tabId);
       if (messageDetails) {
