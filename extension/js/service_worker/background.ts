@@ -25,10 +25,12 @@ import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-
 
 console.info('background.js service worker starting');
 
-(async () => {
-  let db: IDBDatabase;
+let db: IDBDatabase;
+const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60 * 1000); // 4 hours
+
+// Start initialization after all event listeners below have been registered synchronously.
+const ready = Promise.resolve().then(async () => {
   let storage: GlobalStoreDict;
-  const inMemoryStore = new ExpirationCache<string>('in_memory_store', 4 * 60 * 60 * 1000); // 4 hours
   await chrome.alarms.clearAll();
   await BrowserMsg.createIntervalAlarm('delete_expired', 1); // each minute
 
@@ -56,34 +58,45 @@ console.info('background.js service worker starting');
     await BgUtils.handleStoreErr(e);
     return;
   }
-  // storage related handlers
+});
 
-  BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
-  BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
-  BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));
+BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
+BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
+BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));
 
-  BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
-  BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
-  BrowserMsg.bgAddListener('expirationCacheGet', BgHandlers.expirationCacheGetHandler);
-  BrowserMsg.bgAddListener('expirationCacheSet', BgHandlers.expirationCacheSetHandler);
-  BrowserMsg.bgAddListener('expirationCacheDeleteExpired', BgHandlers.expirationCacheDeleteExpiredHandler);
-  BrowserMsg.bgAddListener('getApiAuthorization', BgHandlers.getApiAuthorization);
-  BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
-  BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
-  BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
-  BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
-  BrowserMsg.bgAddListener('reconnect_custom_idp_acct_auth_popup', (r: Bm.ReconnectCustomIDPAcctAuthPopup) => ConfiguredIdpOAuth.newAuthPopup(r.acctEmail));
-  BrowserMsg.intervalAddListener('delete_expired', inMemoryStore.deleteExpired);
-  BrowserMsg.bgListen();
-  BrowserMsg.alarmListen();
-  await BgHandlers.updateUninstallUrl({});
-  injectFcIntoWebmail();
+BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
+BrowserMsg.bgAddListener('ajaxGmailAttachmentGetChunk', BgHandlers.ajaxGmailAttachmentGetChunkHandler);
+BrowserMsg.bgAddListener('expirationCacheGet', BgHandlers.expirationCacheGetHandler);
+BrowserMsg.bgAddListener('expirationCacheSet', BgHandlers.expirationCacheSetHandler);
+BrowserMsg.bgAddListener('expirationCacheDeleteExpired', BgHandlers.expirationCacheDeleteExpiredHandler);
+BrowserMsg.bgAddListener('getApiAuthorization', BgHandlers.getApiAuthorization);
+BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
+BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
+BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
+BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleOAuth.newAuthPopup(r));
+BrowserMsg.bgAddListener('reconnect_custom_idp_acct_auth_popup', (r: Bm.ReconnectCustomIDPAcctAuthPopup) => ConfiguredIdpOAuth.newAuthPopup(r.acctEmail));
+BrowserMsg.intervalAddListener('delete_expired', async () => {
+  await ready;
+  return inMemoryStore.deleteExpired();
+});
 
-  if (Catch.isThunderbirdMail()) {
-    BgHandlers.thunderbirdSecureComposeHandler();
-    await BgHandlers.thunderbirdContentScriptRegistration();
-    BrowserMsg.bgAddListener('thunderbirdGetCurrentUser', BgHandlers.thunderbirdGetCurrentUserHandler);
-    BrowserMsg.bgAddListener('thunderbirdMsgGet', BgHandlers.thunderbirdMsgGetHandler);
-    BrowserMsg.bgAddListener('thunderbirdOpenPassphraseDialog', BgHandlers.thunderbirdOpenPassphraseDialog);
-  }
-})().catch(Catch.reportErr);
+if (Catch.isThunderbirdMail()) {
+  BgHandlers.thunderbirdSecureComposeHandler(ready);
+  BrowserMsg.bgAddListener('thunderbirdGetCurrentUser', BgHandlers.thunderbirdGetCurrentUserHandler);
+  BrowserMsg.bgAddListener('thunderbirdMsgGet', BgHandlers.thunderbirdMsgGetHandler);
+  BrowserMsg.bgAddListener('thunderbirdOpenPassphraseDialog', BgHandlers.thunderbirdOpenPassphraseDialog);
+}
+
+BrowserMsg.bgListen(ready);
+BrowserMsg.alarmListen();
+
+void ready
+  .then(async () => {
+    await BgHandlers.updateUninstallUrl({});
+    injectFcIntoWebmail();
+
+    if (Catch.isThunderbirdMail()) {
+      await BgHandlers.thunderbirdContentScriptRegistration();
+    }
+  })
+  .catch(Catch.reportErr);
