@@ -5,6 +5,7 @@
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { CatchHelper } from '../../platform/catch-helper.js';
+import { Catch } from '../../platform/catch.js';
 import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
@@ -134,12 +135,19 @@ export class Api {
         }
       }
     }
+    const abortController = new AbortController();
+    const timeout = req.timeout ?? 20000;
+    let timeoutId = Catch.setHandledTimeout(() => abortController.abort(), timeout);
+    const restartTimeout = () => {
+      clearTimeout(timeoutId);
+      timeoutId = Catch.setHandledTimeout(() => abortController.abort(), timeout);
+    };
     const requestInit: RequestInit = {
       method: req.method,
       headers: headersInit,
       body,
       mode: 'cors',
-      signal: AbortSignal.timeout(req.timeout ?? 20000),
+      signal: abortController.signal,
     };
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
@@ -171,6 +179,7 @@ export class Api {
       }
       const transformResponseWithProgress = () => {
         if (req.progress && response.body) {
+          restartTimeout();
           const contentLength = response.headers.get('content-length');
           // real content length is approximately 140% of content-length header value
           const total = contentLength ? parseInt(contentLength) * 1.4 : 0;
@@ -181,6 +190,7 @@ export class Api {
           const bodyWithProgress = response.body.pipeThrough(
             new TransformStream<Uint8Array, Uint8Array>({
               transform: (chunk, controller) => {
+                restartTimeout();
                 downloadedBytes += chunk.length;
                 if (downloadProgress) {
                   downloadProgress(undefined, downloadedBytes, total);
@@ -195,6 +205,7 @@ export class Api {
                 }
                 controller.enqueue(chunk);
               },
+              flush: () => clearTimeout(timeoutId),
             })
           );
           return new Response(bodyWithProgress, {
@@ -236,6 +247,8 @@ export class Api {
         throw e;
       }
       throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
