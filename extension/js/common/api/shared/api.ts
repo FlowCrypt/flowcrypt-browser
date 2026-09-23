@@ -5,7 +5,6 @@
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { CatchHelper } from '../../platform/catch-helper.js';
-import { Catch } from '../../platform/catch.js';
 import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
@@ -137,10 +136,10 @@ export class Api {
     }
     const abortController = new AbortController();
     const timeout = req.timeout ?? 20000;
-    let timeoutId = Catch.setHandledTimeout(() => abortController.abort(), timeout);
+    let timeoutId = setTimeout(() => abortController.abort(), timeout); // error-handled: fetch and response errors are handled below
     const restartTimeout = () => {
       clearTimeout(timeoutId);
-      timeoutId = Catch.setHandledTimeout(() => abortController.abort(), timeout);
+      timeoutId = setTimeout(() => abortController.abort(), timeout); // error-handled: fetch and response errors are handled below
     };
     const requestInit: RequestInit = {
       method: req.method,
