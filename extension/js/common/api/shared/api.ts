@@ -5,7 +5,7 @@
 import { Attachment } from '../../core/attachment.js';
 import { Buf } from '../../core/buf.js';
 import { CatchHelper } from '../../platform/catch-helper.js';
-import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams, Value } from '../../core/common.js';
+import { Dict, EmailParts, HTTP_STATUS_TEXTS, Url, UrlParams } from '../../core/common.js';
 import { secureRandomBytes } from '../../platform/util.js';
 import { ApiErr, AjaxErr } from './api-error.js';
 import { Serializable } from '../../platform/store/abstract-store.js';
@@ -52,7 +52,7 @@ export type Ajax = {
   url: string;
   headers?: AjaxHeaders;
   progress?: ProgressCbs;
-  timeout?: number; // todo: implement
+  timeout?: number;
   stack: string;
 } & AjaxParams;
 type RawAjaxErr = {
@@ -67,23 +67,6 @@ export type ProgressCb = (percent: number | undefined, loaded: number, total: nu
 export type ProgressCbs = { upload?: ProgressCb | null; download?: ProgressCb | null; operationId?: string; expectedTransferSize?: number; frameId?: string };
 
 type FetchResult<T extends ResFmt, RT> = T extends undefined ? undefined : T extends 'text' ? string : RT;
-
-export const supportsRequestStreams = (() => {
-  // temporary disabled because of https://github.com/FlowCrypt/flowcrypt-browser/issues/5612
-  return false;
-  // let duplexAccessed = false;
-
-  // const hasContentType = new Request('https://localhost', {
-  //   body: new ReadableStream(),
-  //   method: 'POST',
-  //   get duplex() {
-  //     duplexAccessed = true;
-  //     return 'half';
-  //   },
-  // } as RequestInit).headers.has('Content-Type');
-
-  // return duplexAccessed && !hasContentType;
-})();
 
 export class Api {
   public static async download(url: string, progress?: ProgressCb, timeout?: number): Promise<Buf> {
@@ -125,17 +108,7 @@ export class Api {
     }
     Api.throwIfApiPathTraversalAttempted(req.url);
     const headersInit: [string, string][] = req.headers ? Object.entries(req.headers) : [];
-    // capitalize? .map(([key, value]) => { return [Str.capitalize(key), value]; })
-    const newTimeoutPromise = (): Promise<never> => {
-      return new Promise((_resolve, reject) => {
-        /* error-handled */ setTimeout(() => {
-          reject(AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext)); // Reject the promise with a timeout error
-        }, req.timeout ?? 20000);
-      });
-    };
     let body: BodyInit | undefined;
-    let duplex: 'half' | undefined;
-    let uploadPromise: () => void | Promise<void> = Value.noop;
     let url: string;
     if (req.method === 'GET' || req.method === 'DELETE') {
       if (typeof req.data === 'undefined') {
@@ -151,24 +124,7 @@ export class Api {
             body = JSON.stringify(req.data);
             headersInit.push(['Content-Type', 'application/json; charset=UTF-8']);
           } else if (req.dataType === 'TEXT') {
-            if (supportsRequestStreams && req.progress?.upload) {
-              const upload = req.progress?.upload;
-              const transformStream = new TransformStream();
-              uploadPromise = async () => {
-                const transformWriter = transformStream.writable.getWriter();
-                for (let offset = 0; offset < req.data.length; ) {
-                  const chunkSize = Math.min(1000, req.data.length - offset);
-                  await Promise.race([transformWriter.write(Buf.fromRawBytesStr(req.data, offset, offset + chunkSize)), newTimeoutPromise()]);
-                  upload((offset / req.data.length) * 100, offset, req.data.length);
-                  offset += chunkSize;
-                }
-                await Promise.race([transformWriter.close(), newTimeoutPromise()]);
-              };
-              body = transformStream.readable;
-              duplex = 'half'; // activate upload progress mode
-            } else {
-              body = req.data;
-            }
+            body = req.data;
             if (typeof req.contentType === 'string') {
               headersInit.push(['Content-Type', req.contentType]);
             }
@@ -179,20 +135,24 @@ export class Api {
       }
     }
     const abortController = new AbortController();
-    const requestInit: RequestInit & { duplex?: 'half' } = {
+    const timeout = req.timeout ?? 20000;
+    let timeoutId = setTimeout(() => abortController.abort(), timeout); // error-handled: fetch and response errors are handled below
+    const restartTimeout = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => abortController.abort(), timeout); // error-handled: fetch and response errors are handled below
+    };
+    const requestInit: RequestInit = {
       method: req.method,
       headers: headersInit,
       body,
-      duplex,
       mode: 'cors',
       signal: abortController.signal,
     };
     let readyState = 1; // OPENED
     const reqContext = { url: req.url, method: req.method, data: body, stack: req.stack };
+    const isTimeoutError = (e: unknown): boolean => e instanceof Error && (e.name === 'TimeoutError' || e.name === 'AbortError');
     try {
-      const fetchPromise = fetch(url, requestInit);
-      await uploadPromise();
-      const response = await Promise.race([fetchPromise, newTimeoutPromise()]);
+      const response = await fetch(url, requestInit);
       if (!response.ok) {
         let responseText: string | undefined;
         readyState = 2; // HEADERS_RECEIVED
@@ -200,7 +160,10 @@ export class Api {
           readyState = 3; // LOADING
           responseText = await response.text();
           readyState = 4; // DONE
-        } catch {
+        } catch (e) {
+          if (isTimeoutError(e)) {
+            throw e;
+          }
           // continue processing without reponseText
         }
         throw AjaxErr.fromXhr(
@@ -213,68 +176,53 @@ export class Api {
           reqContext
         );
       }
-      const transformResponseWithProgressAndTimeout = () => {
+      const transformResponseWithProgress = () => {
         if (req.progress && response.body) {
+          restartTimeout();
           const contentLength = response.headers.get('content-length');
           // real content length is approximately 140% of content-length header value
           const total = contentLength ? parseInt(contentLength) * 1.4 : 0;
-          const transformStream = new TransformStream();
-          const transformWriter = transformStream.writable.getWriter();
-          const reader = response.body.getReader();
           const downloadProgress = req.progress.download;
-          return {
-            pipe: async () => {
-              let downloadedBytes = 0;
-              while (true) {
-                const { done, value } = await Promise.race([reader.read(), newTimeoutPromise()]);
-                if (done) {
-                  await transformWriter.close();
-                  return;
-                }
-                downloadedBytes += value.length;
+          const expectedTransferSize = req.progress.expectedTransferSize;
+          const operationId = req.progress.operationId;
+          let downloadedBytes = 0;
+          const bodyWithProgress = response.body.pipeThrough(
+            new TransformStream<Uint8Array, Uint8Array>({
+              transform: (chunk, controller) => {
+                restartTimeout();
+                downloadedBytes += chunk.length;
                 if (downloadProgress) {
                   downloadProgress(undefined, downloadedBytes, total);
-                } else if (req.progress?.expectedTransferSize && req.progress.operationId) {
+                } else if (expectedTransferSize && operationId) {
                   BrowserMsg.send.ajaxProgress('broadcast', {
                     percent: undefined,
                     loaded: downloadedBytes,
                     total,
-                    expectedTransferSize: req.progress.expectedTransferSize,
-                    operationId: req.progress.operationId,
+                    expectedTransferSize,
+                    operationId,
                   });
                 }
-                await transformWriter.write(value);
-              }
-            },
-            response: new Response(transformStream.readable, {
-              status: response.status,
-              headers: response.headers,
-            }),
-          };
+                controller.enqueue(chunk);
+              },
+              flush: () => clearTimeout(timeoutId),
+            })
+          );
+          return new Response(bodyWithProgress, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+          });
         } else {
-          return {
-            response,
-            pipe: async () => {
-              /* no-op */
-            },
-          }; // original response
+          return response;
         }
       };
 
       if (resFmt === 'text') {
-        const transformed = transformResponseWithProgressAndTimeout();
-        return (await Promise.all([transformed.response.text(), transformed.pipe()]))[0] as FetchResult<T, RT>;
+        return (await transformResponseWithProgress().text()) as FetchResult<T, RT>;
       } else if (resFmt === 'json') {
         try {
-          const transformed = transformResponseWithProgressAndTimeout();
-          return (
-            await Promise.all([
-              transformed.response.text().then(text => {
-                return (text ? JSON.parse(text) : {}) as T; // Handle empty response body
-              }),
-              transformed.pipe(),
-            ])
-          )[0] as FetchResult<T, RT>;
+          const text = await transformResponseWithProgress().text();
+          return (text ? JSON.parse(text) : {}) as FetchResult<T, RT>; // Handle empty response body
         } catch (e) {
           // handle empty response https://github.com/FlowCrypt/flowcrypt-browser/issues/5601
           if (e instanceof SyntaxError && (e.message === 'Unexpected end of JSON input' || e.message.startsWith('JSON.parse: unexpected end of data'))) {
@@ -287,8 +235,8 @@ export class Api {
       }
     } catch (e) {
       if (e instanceof Error) {
-        if (e.name === 'AbortError') {
-          // we assume there was a timeout
+        if (isTimeoutError(e)) {
+          // The request's only abort signal is its timeout signal.
           throw AjaxErr.fromXhr({ readyState, status: -1, statusText: 'timeout' }, reqContext);
         }
         if (e.name === 'TypeError' && ApiErr.isNetErr(e)) {
@@ -299,7 +247,7 @@ export class Api {
       }
       throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);
     } finally {
-      abortController.abort();
+      clearTimeout(timeoutId);
     }
   }
 
