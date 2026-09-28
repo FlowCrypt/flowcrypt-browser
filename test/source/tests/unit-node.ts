@@ -1177,7 +1177,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
 
-      const encryptedData = /-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s.exec(Buf.fromBase64UrlStr(msg.raw!).toUtfStr())![0];
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
+      const encryptedData = /-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s.exec(msgText)![0];
 
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
       const kisWithPp = [
@@ -1217,9 +1218,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const encryptedData = /\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s.exec(
-        Buf.fromBase64UrlStr(msg.raw!).toUtfStr()
-      )![0];
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
+      const encryptedData = /\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s.exec(msgText)![0];
       // actual key the message was signed with
       const signerPubkey = testConstants.pubkey2864E326A5BE488A;
       // better key
