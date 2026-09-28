@@ -71,6 +71,19 @@ BROWSER_UNIT_TEST_NAME(`Catcher does not include query string on report`);
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`ApiErr recognizes standard errors with shadowed or missing prototypes`);
+(async () => {
+  const shadowed = { internal: 'auth', message: 'expired', hasOwnProperty: undefined };
+  if (!ApiErr.isStandardErr(shadowed, 'auth')) {
+    throw new Error('Expected an error with a shadowed hasOwnProperty field to be recognized');
+  }
+  const withoutPrototype = Object.assign(Object.create(null), { internal: 'subscription', message: 'expired' });
+  if (!ApiErr.isStandardErr(withoutPrototype, 'subscription')) {
+    throw new Error('Expected an error without Object.prototype to be recognized');
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`Catcher reports correct URL for Gmail environment`);
 (async () => {
   const originalEnv = Catch.RUNTIME_ENVIRONMENT;

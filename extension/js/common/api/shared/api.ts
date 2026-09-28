@@ -329,8 +329,7 @@ export class Api {
   }
 
   public static randomFortyHexChars(): string {
-    const bytes = Array.from(secureRandomBytes(20));
-    return bytes.map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
+    return secureRandomBytes(20).toHex();
   }
 
   public static isRecipientHeaderNameType(value: string): value is 'to' | 'cc' | 'bcc' {

@@ -527,9 +527,9 @@ export class KeyUtil {
 
       // Get the base64 after the '='
       const checksumLine = dataCandidates[checksumIndex].slice(1);
-      let providedBytes: string;
+      let providedBytes: Uint8Array;
       try {
-        providedBytes = atob(checksumLine);
+        providedBytes = Uint8Array.fromBase64(checksumLine, { lastChunkHandling: 'loose' });
       } catch {
         continue; // Not valid base64, skip
       }
@@ -538,14 +538,14 @@ export class KeyUtil {
       if (providedBytes.length !== 3) {
         continue;
       }
-      const providedCRC = (providedBytes.charCodeAt(0) << 16) | (providedBytes.charCodeAt(1) << 8) | providedBytes.charCodeAt(2);
+      const providedCRC = (providedBytes[0] << 16) | (providedBytes[1] << 8) | providedBytes[2];
 
       // Decode all lines before the checksum line
       const dataLines = dataCandidates.slice(0, checksumIndex);
-      const decodedChunks: string[] = [];
+      const decodedChunks: Uint8Array[] = [];
       for (const line of dataLines) {
         try {
-          decodedChunks.push(atob(line));
+          decodedChunks.push(Uint8Array.fromBase64(line, { lastChunkHandling: 'loose' }));
         } catch {
           // skip lines that aren't valid base64
         }
@@ -556,9 +556,7 @@ export class KeyUtil {
       }
 
       // Join all decoded base64 data and calculate its CRC
-      const rawData = decodedChunks.join('');
-      // eslint-disable-next-line @typescript-eslint/no-misused-spread
-      const dataBytes = new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+      const dataBytes = Buf.concat(decodedChunks);
       if (KeyUtil.crc24(dataBytes) !== providedCRC) {
         return true;
       }
