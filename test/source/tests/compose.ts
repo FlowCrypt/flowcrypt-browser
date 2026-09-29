@@ -1483,13 +1483,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_reply');
+        await composePage.waitForSelTestState('ready');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_forward');
+        await composePage.waitForContent('@input-body', 'Forwarded message');
         await composePage.waitUntilFocused('@input-to');
         await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_reply_all');
+        await composePage.waitForSelTestState('ready');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
       })
     );
