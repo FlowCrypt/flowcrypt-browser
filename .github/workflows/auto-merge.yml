@@ -4,7 +4,6 @@ on:
   pull_request:
     types:
       - opened
-      - reopened
       - synchronize
 
 jobs:
@@ -22,6 +21,5 @@ jobs:
       - name: Enable squash auto-merge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          # Keep this as a Dependabot secret so the eventual merge triggers push workflows.
           GH_TOKEN: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
