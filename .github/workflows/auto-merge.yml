@@ -1,47 +1,27 @@
 name: Auto merge
 
-# both actions get started on PR create/update
-# approve gets done right away
-# merge sleeps and retries until CI finishes successfully up to 25 minutes
-# not ideal, much better would be to trigger merge later, exactly whenever CI finishes. But couldn't make make it work.
-
-# Trigger the workflow on pull request
 on:
-  pull_request_target:
+  pull_request:
     types:
-      - synchronize
       - opened
+      - reopened
+      - synchronize
 
 jobs:
-
-  autoapprove:
-    name: Approve
+  dependabot:
+    name: Approve and enable auto-merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'FlowCrypt/flowcrypt-browser'
     runs-on: ubuntu-latest
     steps:
-      - name: Auto approve
-        uses: hmarr/auto-approve-action@v4.0.0 # Custom action for auto approval already available on marketplace
-        # Perform the auto approve action only when the PR is raised by dependabot
-        if: github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]'
-        with:
-          # Create a personal access token and store it under the Secrets section of the particular repository
-          # with the key "GITHUB_ACTIONS_TOKEN"
-          github-token: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
+      - name: Approve pull request
+        run: gh pr review --approve "$PR_URL"
+        env:
+          GH_TOKEN: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
 
-  automerge:
-    name: Enable automerge on dependabot PRs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Enable automerge on dependabot PRs
-        uses: daneden/enable-automerge-action@v1
-        with:
-          # A personal access token that you have generated and saved in the
-          # repo or org’s encrypted secrets
-          github-token: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
-
-          # The name of the PR author to enable automerge for
-          # Defaults to dependabot[bot]
-          allowed-author: "dependabot[bot]"
-
-          # Allowed values: MERGE | SQUASH | REBASE
-          # Defaults to MERGE
-          merge-method: SQUASH
+      - name: Enable squash auto-merge
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          # Keep this as a Dependabot secret so the eventual merge triggers push workflows.
+          GH_TOKEN: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
