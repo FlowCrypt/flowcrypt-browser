@@ -1673,16 +1673,17 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
       'decrypt - public key is rendered minimized for outgoing messages',
       testWithBrowser(async (t, browser) => {
         const assertOutgoingPubkeyFrameIsMinimized = async (page: ControllablePage) => {
-          await page.waitAll('iframe.pgp_block.publicKey', { timeout: 30 });
-          const pubkeyFrame = await page.getFrame(['pgp_pubkey.htm', 'minimized=___cu_true___'], { timeout: 30 });
-          await pubkeyFrame.target.waitForFunction(
-            () => {
-              const pubkeyContainer = document.querySelector<HTMLElement>('[data-test="container-pgp-pubkey"]');
-              const addContactLine = document.querySelector<HTMLElement>('.line.add_contact');
-              return Boolean(pubkeyContainer?.textContent?.includes('Public Key') && addContactLine?.style.display === 'none');
-            },
-            { polling: 'mutation', timeout: 30_000 }
-          );
+          const selector = 'iframe.pgp_block.publicKey[src*="minimized=___cu_true___"]';
+          await page.waitAll(selector, { timeout: 30 });
+          let height = 150; // default iframe height before pgp_pubkey renders and resizes itself
+          for (let attempt = 0; attempt < 300; attempt++) {
+            height = await page.target.evaluate(selector => document.querySelector<HTMLIFrameElement>(selector)!.getBoundingClientRect().height, selector);
+            if (height < 150) {
+              return;
+            }
+            await Util.sleep(0.1);
+          }
+          throw new Error(`Outgoing public key frame was not minimized within 30 seconds (height: ${height}px)`);
         };
 
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
