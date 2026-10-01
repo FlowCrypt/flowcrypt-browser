@@ -9,7 +9,7 @@ on:
 jobs:
   dependabot:
     name: Approve and enable auto-merge
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'FlowCrypt/flowcrypt-browser'
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]' && github.repository == 'FlowCrypt/flowcrypt-browser'
     runs-on: ubuntu-latest
     steps:
       - name: Approve pull request
