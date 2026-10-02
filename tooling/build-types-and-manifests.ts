@@ -33,7 +33,7 @@ addManifest('firefox-consumer', manifest => {
     gecko: {
       id: 'firefox@cryptup.io',
       update_url: 'https://flowcrypt.com/api/update/firefox', // eslint-disable-line @typescript-eslint/naming-convention
-      strict_min_version: '112.0', // eslint-disable-line @typescript-eslint/naming-convention
+      strict_min_version: '134.0', // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
   manifest.background = {
@@ -41,8 +41,8 @@ addManifest('firefox-consumer', manifest => {
     scripts: ['/js/service_worker/background.js'],
   };
   // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
-  const { service_worker, ...newManifest } = manifest.background as chrome.runtime.ManifestV3;
-  manifest = newManifest;
+  const { service_worker, ...newBackground } = manifest.background as chrome.runtime.ManifestV2['background'] & { service_worker?: string };
+  manifest.background = newBackground;
   manifest.permissions = manifest.permissions?.filter((p: string) => p !== 'unlimitedStorage');
   delete manifest.minimum_chrome_version;
 });
@@ -73,7 +73,11 @@ addManifest(
       default_icon: '/img/logo/flowcrypt-logo-64-64.png', // eslint-disable-line @typescript-eslint/naming-convention
     };
     delete manifest.minimum_chrome_version;
-    (manifest.browser_specific_settings as messenger._manifest.FirefoxSpecificProperties).strict_min_version = '102.0';
+    (
+      manifest.browser_specific_settings as {
+        gecko: messenger._manifest.FirefoxSpecificProperties;
+      }
+    ).gecko.strict_min_version = '140.0';
     manifest.background = {
       type: 'module',
       scripts: ['/js/service_worker/background.js'],

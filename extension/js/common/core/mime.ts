@@ -492,11 +492,8 @@ export class Mime {
   private static fromEqualSignNotationAsBuf(str: string): Buf {
     return Buf.fromRawBytesStr(
       str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
-        const bytes = equalSignUtfPart
-          .replace(/^=/, '')
-          .split('=')
-          .map(twoHexDigits => parseInt(twoHexDigits, 16));
-        return new Buf(bytes).toRawBytesStr();
+        const bytes = Uint8Array.fromHex(equalSignUtfPart.replaceAll('=', ''));
+        return new Buf(bytes.buffer, bytes.byteOffset, bytes.byteLength).toRawBytesStr();
       })
     );
   }

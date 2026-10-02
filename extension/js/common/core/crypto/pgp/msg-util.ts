@@ -315,7 +315,7 @@ export class MsgUtil {
 
     for (const term of disallowTerms) {
       // Escape term for regex
-      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedTerm = Str.regexEscape(term);
       // Use regex to ensure the term appears as a separate token
       // (^|\W) ensures the term is at start or preceded by non-word char
       // (\W|$) ensures the term is followed by non-word char or end
