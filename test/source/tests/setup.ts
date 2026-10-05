@@ -97,6 +97,71 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test.todo('setup - no connection when submitting public key - retry prompt shows and works');
 
+    const acctWithoutBackups = 'flowcrypt.test.key.imported@gmail.com';
+    const acctWithBackups = 'flowcrypt.compatibility@gmail.com';
+    const screenSelectors = {
+      choices: ['@action-step1easyormanual-choose-manual-create', '@action-step1easyormanual-choose-manual-enter'],
+      recovery: ['@input-recovery-pass-phrase'],
+    };
+    const lookupFailureCases: {
+      failure: string;
+      status: number;
+      acct: string;
+      expectedScreen: keyof typeof screenSelectors;
+    }[] = [
+      {
+        failure: 'connection reset',
+        status: 0,
+        acct: acctWithoutBackups,
+        expectedScreen: 'choices',
+      },
+      {
+        failure: 'HTTP 503 with backups',
+        status: 503,
+        acct: acctWithBackups,
+        expectedScreen: 'recovery',
+      },
+    ];
+    for (const { failure, status, acct, expectedScreen } of lookupFailureCases) {
+      test(
+        `setup - keys.openpgp.org ${failure} - ${expectedScreen === 'recovery' ? 'recover' : 'import'} key`,
+        testWithBrowser(async (t, browser) => {
+          t.context.mockApi!.configProvider = new ConfigurationProvider({
+            attester: { pubkeyLookup: {}, ldapRelay: {} },
+          });
+          const settingsPage = await browser.newExtensionSettingsPage(t, acct);
+          const requests = { lookup: 0, backups: 0 };
+          await settingsPage.page.setRequestInterception(true);
+          settingsPage.page.on('request', async request => {
+            const requestUrl = new URL(request.url());
+            if (requestUrl.pathname.startsWith('/keys-openpgp-org/vks/v1/by-email/')) {
+              requests.lookup++;
+              if (status === 0) {
+                await request.abort('connectionreset');
+              } else {
+                await request.respond({ status, body: 'Keyserver unavailable' });
+              }
+              return;
+            } else if (requestUrl.pathname === '/gmail/v1/users/me/messages' && requestUrl.searchParams.get('q')?.includes('subject:')) {
+              requests.backups++;
+            }
+            await request.continue();
+          });
+          const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+          await OauthPageRecipe.google(t, oauthPopup, acct, 'approve');
+          await settingsPage.waitAll(screenSelectors[expectedScreen]);
+          expect(await settingsPage.isElementVisible('#step_1_easy_or_manual')).to.equal(expectedScreen === 'choices');
+          expect(requests).to.deep.equal({ lookup: 1, backups: 1 });
+          await settingsPage.notPresent('@action-overlay-retry');
+          if (expectedScreen === 'recovery') {
+            await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true });
+          } else {
+            await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+          }
+        })
+      );
+    }
+
     test(
       'settings > login > close oauth window > close popup',
       testWithBrowser(async (t, browser) => {
