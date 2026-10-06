@@ -127,12 +127,12 @@ export class MsgUtil {
         // 10XX XXXX - potential old pgp packet tag
         tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
       }
-      if (Object.values(opgp.enums.packet).includes(tagNumber)) {
+      if (Object.values<number | string>(opgp.enums.packet).includes(tagNumber)) {
         // Indeed a valid OpenPGP packet tag number
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
-        const msgTypes = [
+        const msgTypes: number[] = [
           t.publicKeyEncryptedSessionKey,
           t.symEncryptedIntegrityProtectedData,
           t.modificationDetectionCode,
