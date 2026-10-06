@@ -3,7 +3,8 @@
 import { Config, Util, TestMessage, TestMessageAndSession } from '../../util';
 
 import { AvaContext } from '.';
-import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from '../../browser';
+import { BrowserHandle } from '../../browser/browser-handle';
+import { Controllable, ControllableFrame, ControllablePage } from '../../browser/controllable';
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';

@@ -19,7 +19,7 @@ import {
   singlePubKeyAttesterConfig,
 } from '../mock/attester/attester-key-constants';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
-import { ControllablePage } from '../browser';
+import { ControllablePage } from '../browser/controllable';
 import { minutes } from './tooling';
 
 export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
