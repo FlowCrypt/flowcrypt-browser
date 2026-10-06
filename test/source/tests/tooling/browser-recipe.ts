@@ -7,7 +7,7 @@ import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from
 import { OauthPageRecipe } from './../page-recipe/oauth-page-recipe';
 import { SetupPageRecipe } from './../page-recipe/setup-page-recipe';
 import { TestUrls } from '../../browser/test-urls';
-import { gmail_v1, google } from 'googleapis';
+import { gmail_v1, gmail as createGmail } from '@googleapis/gmail';
 import { testVariant } from '../../test';
 import { testConstants } from './consts';
 import { PageRecipe } from '../page-recipe/abstract-page-recipe';
@@ -228,7 +228,7 @@ export class BrowserRecipe {
     BrowserRecipe.getFromInMemoryStore(controllable, acctEmail, 'customIdpIdToken');
 
   public static deleteAllDraftsInGmailAccount = async (accessToken: string): Promise<void> => {
-    const gmail = google.gmail({ version: 'v1' });
+    const gmail = createGmail({ version: 'v1' });
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const list = await gmail.users.drafts.list({ userId: 'me', access_token: accessToken });
     if (list.data.drafts) {
@@ -237,7 +237,7 @@ export class BrowserRecipe {
   };
 
   public static deleteDrafts = async (drafts: gmail_v1.Schema$Draft[], accessToken: string) => {
-    const gmail = google.gmail({ version: 'v1' });
+    const gmail = createGmail({ version: 'v1' });
     await Promise.all(
       drafts
         .filter(draft => draft.id)

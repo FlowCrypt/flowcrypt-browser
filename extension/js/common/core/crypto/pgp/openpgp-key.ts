@@ -20,7 +20,7 @@ export class OpenPGPKey {
   // mapping of algo names to required param count, lazy initialized
   private static paramCountByAlgo: { [key: number]: { pub: number; priv: number } };
 
-  private static readonly noKeyFlags = 0 as OpenPGP.enums.keyFlags;
+  private static readonly noKeyFlags = 0;
 
   public static parse = async (text: string): Promise<Key> => {
     const keys = await OpenPGPKey.parseMany(text);
@@ -283,7 +283,7 @@ export class OpenPGPKey {
     }
   }
 
-  public static keyFlagsToString(flags: OpenPGP.enums.keyFlags): string {
+  public static keyFlagsToString(flags: number): string {
     const strs: string[] = [];
     if (flags & opgp.enums.keyFlags.encryptCommunication) {
       strs.push('encrypt_communication');
@@ -590,7 +590,7 @@ export class OpenPGPKey {
     return signature;
   }
 
-  private static getValidEncryptionKeyPacketFlags(key: OpenPGP.Key | OpenPGP.Subkey, verifiedSignature: OpenPGP.SignaturePacket): OpenPGP.enums.keyFlags {
+  private static getValidEncryptionKeyPacketFlags(key: OpenPGP.Key | OpenPGP.Subkey, verifiedSignature: OpenPGP.SignaturePacket): number {
     if (!verifiedSignature.keyFlags || verifiedSignature.revoked !== false) {
       // Sanity check
       return this.noKeyFlags;
@@ -608,7 +608,7 @@ export class OpenPGPKey {
     return verifiedSignature.keyFlags[0] & (opgp.enums.keyFlags.encryptCommunication | opgp.enums.keyFlags.encryptStorage);
   }
 
-  private static getValidSigningKeyPacketFlags(key: OpenPGP.Key | OpenPGP.Subkey, verifiedSignature: OpenPGP.SignaturePacket): OpenPGP.enums.keyFlags {
+  private static getValidSigningKeyPacketFlags(key: OpenPGP.Key | OpenPGP.Subkey, verifiedSignature: OpenPGP.SignaturePacket): number {
     if (!verifiedSignature.keyFlags || verifiedSignature.revoked !== false) {
       // Sanity check
       return this.noKeyFlags;
@@ -625,7 +625,7 @@ export class OpenPGPKey {
     return verifiedSignature.keyFlags[0] & (opgp.enums.keyFlags.signData | opgp.enums.keyFlags.certifyKeys);
   }
 
-  private static async getSubKeySigningFlags(key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> {
+  private static async getSubKeySigningFlags(key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<number> {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
@@ -639,7 +639,7 @@ export class OpenPGPKey {
     return this.noKeyFlags;
   }
 
-  private static async getSubKeyEncryptionFlags(key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<OpenPGP.enums.keyFlags> {
+  private static async getSubKeyEncryptionFlags(key: OpenPGP.Key, subKey: OpenPGP.Subkey): Promise<number> {
     const primaryKey = key.keyPacket;
     // await subKey.verify(primaryKey);
     const dataToVerify = { key: primaryKey, bind: subKey.keyPacket };
@@ -650,7 +650,7 @@ export class OpenPGPKey {
     return this.noKeyFlags;
   }
 
-  private static async getPrimaryKeyFlags(key: OpenPGP.Key): Promise<OpenPGP.enums.keyFlags> {
+  private static async getPrimaryKeyFlags(key: OpenPGP.Key): Promise<number> {
     // Note: The selected selfCertification (and hence the flags) will differ based on the current date
     const primaryUser = await Catch.undefinedOnException(key.getPrimaryUser());
     const selfCertification = primaryUser?.selfCertification;
