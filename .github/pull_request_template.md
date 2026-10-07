@@ -22,4 +22,5 @@ I have reviewed that this PR... _(tick whichever items you personally focused on
 - [ ] code is readable and understandable
 - [ ] is accompanied with tests, or tests are not needed
 - [ ] is free of vulnerabilities
+- [ ] if this PR fixes a security issue: I tried to bypass the new fix, and failed _(leave unticked if this PR is not a security fix)_
 - [ ] is documented clearly and usefully, or doesn't need documentation
