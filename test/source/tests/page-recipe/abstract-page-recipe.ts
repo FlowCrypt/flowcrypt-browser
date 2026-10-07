@@ -1,9 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { BrowserHandle, Controllable, ControllablePage } from '../../browser';
+import type { BrowserHandle } from '../../browser/browser-handle';
+import type { Controllable, ControllablePage } from '../../browser/controllable';
 
-import { AvaContext } from '../tooling/';
-import { ElementHandle } from 'puppeteer';
+import type { AvaContext } from '../tooling/';
+import type { ElementHandle } from 'puppeteer';
 import { Util } from '../../util';
 
 type ModalOpts = {

@@ -1,10 +1,10 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
+import type { AddressObject, ParsedMail, StructuredHeader } from 'mailparser';
 
 import { readdir, readFile } from 'fs';
 import { Util } from '../../util/index';
-import { ParseMsgResult } from '../../util/parse';
+import type { ParseMsgResult } from '../../util/parse';
 import { Buf } from '../../core/buf';
 import { Xss } from '../../platform/xss';
 

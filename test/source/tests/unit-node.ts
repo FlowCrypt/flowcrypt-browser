@@ -2848,7 +2848,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
 
     test(`[unit][PgpArmor.dearmor] correctly handles long string`, async t => {
       const source = Buffer.from('The test string concatenated many times to produce large output'.repeat(100000));
-      const type = 3;
+      const type = opgp.enums.armor.message;
       const armored = PgpArmor.armor(type, source);
       const dearmored = await PgpArmor.dearmor(armored);
       expect(dearmored.type).to.equal(type);

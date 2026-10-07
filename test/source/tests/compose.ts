@@ -2,7 +2,8 @@
 
 import test from 'ava';
 
-import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from './../browser';
+import { BrowserHandle } from './../browser/browser-handle';
+import { Controllable, ControllableFrame, ControllablePage } from './../browser/controllable';
 import { Config, Util } from './../util';
 import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
