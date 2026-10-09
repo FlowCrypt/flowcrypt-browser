@@ -2,17 +2,15 @@
 
 'use strict';
 
-import { base64decode, base64encode } from '../platform/util.js';
-
 export class Buf extends Uint8Array {
   public static concat = (arrays: Uint8Array[]): Buf => {
-    const result = new Uint8Array(arrays.reduce((totalLen, arr) => totalLen + arr.length, 0));
+    const result = new Buf(arrays.reduce((totalLen, arr) => totalLen + arr.length, 0));
     let offset = 0;
     for (const array of arrays) {
       result.set(array, offset);
       offset += array.length;
     }
-    return Buf.fromUint8(result);
+    return result;
   };
 
   public static with = (input: Uint8Array | Buf | string): Buf => {
@@ -39,57 +37,13 @@ export class Buf extends Uint8Array {
   };
 
   public static fromUtfStr = (utfStr: string): Buf => {
-    // adapted from https://github.com/feross/buffer/blob/master/index.js see https://github.com/feross/buffer/blob/master/LICENSE (MIT as of Jan 2018)
-    let codePoint;
-    const length = utfStr.length;
-    let leadSurrogate: number | undefined;
-    const bytes: number[] = [];
-    for (let i = 0; i < length; ++i) {
-      codePoint = utfStr.charCodeAt(i);
-      if (codePoint > 0xd7ff && codePoint < 0xe000) {
-        // is surrogate component
-        if (!leadSurrogate) {
-          // last char was a lead
-          if (codePoint > 0xdbff) {
-            // no lead yet
-            bytes.push(0xef, 0xbf, 0xbd); // unexpected trail
-            continue;
-          } else if (i + 1 === length) {
-            bytes.push(0xef, 0xbf, 0xbd);
-            continue;
-          }
-          leadSurrogate = codePoint; // valid lead
-          continue;
-        }
-        if (codePoint < 0xdc00) {
-          // 2 leads in a row
-          bytes.push(0xef, 0xbf, 0xbd);
-          leadSurrogate = codePoint;
-          continue;
-        }
-        codePoint = (((leadSurrogate - 0xd800) << 10) | (codePoint - 0xdc00)) + 0x10000; // valid surrogate pair
-      } else if (leadSurrogate) {
-        bytes.push(0xef, 0xbf, 0xbd);
-      }
-      leadSurrogate = undefined;
-      // encode utf8
-      if (codePoint < 0x80) {
-        bytes.push(codePoint);
-      } else if (codePoint < 0x800) {
-        bytes.push((codePoint >> 0x6) | 0xc0, (codePoint & 0x3f) | 0x80);
-      } else if (codePoint < 0x10000) {
-        bytes.push((codePoint >> 0xc) | 0xe0, ((codePoint >> 0x6) & 0x3f) | 0x80, (codePoint & 0x3f) | 0x80);
-      } else if (codePoint < 0x110000) {
-        bytes.push((codePoint >> 0x12) | 0xf0, ((codePoint >> 0xc) & 0x3f) | 0x80, ((codePoint >> 0x6) & 0x3f) | 0x80, (codePoint & 0x3f) | 0x80);
-      } else {
-        throw new Error('Invalid code point');
-      }
-    }
-    return new Buf(bytes);
+    const bytes = new TextEncoder().encode(utfStr);
+    return new Buf(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   };
 
   public static fromBase64Str = (b64str: string): Buf => {
-    return Buf.fromRawBytesStr(base64decode(b64str));
+    const bytes = Uint8Array.fromBase64(b64str, { lastChunkHandling: 'loose' });
+    return new Buf(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   };
 
   public static fromBase64UrlStr = (b64UrlStr: string): Buf => {
@@ -186,22 +140,15 @@ export class Buf extends Uint8Array {
   };
 
   public toHexStr = (uppercaseFlag = true): string => {
-    const chars: string[] = [];
-    for (const v of this.values()) {
-      let char = ('00' + v.toString(16)).slice(-2);
-      if (uppercaseFlag) {
-        char = char.toUpperCase();
-      }
-      chars.push(char);
-    }
-    return chars.join('');
+    const hex = this.toHex();
+    return uppercaseFlag ? hex.toUpperCase() : hex;
   };
 
   public toBase64Str = (): string => {
-    return base64encode(this.toRawBytesStr());
+    return this.toBase64();
   };
 
   public toBase64UrlStr = (): string => {
-    return this.toBase64Str().replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return this.toBase64({ alphabet: 'base64url', omitPadding: true });
   };
 }

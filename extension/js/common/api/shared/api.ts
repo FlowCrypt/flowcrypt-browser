@@ -245,7 +245,7 @@ export class Api {
         }
         throw e;
       }
-      throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`);
+      throw new Error(`Unknown fetch error (${String(e)}) type when calling ${req.url}`, { cause: e });
     } finally {
       clearTimeout(timeoutId);
     }
@@ -309,7 +309,7 @@ export class Api {
       if (Api.isRawAjaxErr(e)) {
         throw AjaxErr.fromXhr(e, { ...req, stack: CatchHelper.stackTrace() });
       }
-      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
+      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`, { cause: e });
     }
   }
 
@@ -329,8 +329,7 @@ export class Api {
   }
 
   public static randomFortyHexChars(): string {
-    const bytes = Array.from(secureRandomBytes(20));
-    return bytes.map(b => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');
+    return secureRandomBytes(20).toHex();
   }
 
   public static isRecipientHeaderNameType(value: string): value is 'to' | 'cc' | 'bcc' {

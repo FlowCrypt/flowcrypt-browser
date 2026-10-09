@@ -109,7 +109,7 @@ export class GmailMsg {
 
 export class GmailParser {
   public static findHeader = (apiGmailMsgObj: GmailMsg | GmailMsg$payload, headerName: string) => {
-    const node: GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as GmailMsg).payload! : (apiGmailMsgObj as GmailMsg$payload);
+    const node: GmailMsg$payload = Object.hasOwn(apiGmailMsgObj, 'payload') ? (apiGmailMsgObj as GmailMsg).payload! : (apiGmailMsgObj as GmailMsg$payload);
     if (typeof node.headers !== 'undefined') {
       for (const header of node.headers) {
         if (header.name.toLowerCase() === headerName.toLowerCase()) {
@@ -228,7 +228,7 @@ export class GoogleData {
       let htmlData: string | undefined;
       let processedParts: GmailMsg$payload$part[] = [];
       if (payload.mimeType === 'text/plain') {
-        const textData = Buf.fromBase64Str(payload.body!.data!).toUtfStr();
+        const textData = Buf.fromBase64UrlStr(payload.body!.data!).toUtfStr();
         htmlData = GoogleData.htmlFromText(textData);
       } else {
         ({ htmlData, processedParts } = GoogleData.getHtmlDataToDisplay(payload) ?? { htmlData: undefined, processedParts: [] });
@@ -321,9 +321,9 @@ export class GoogleData {
         // consume both html and text
         processedParts.push(textPart);
       }
-      return { htmlData: Buf.fromBase64Str(htmlPart.body!.data!).toUtfStr(), processedParts };
+      return { htmlData: Buf.fromBase64UrlStr(htmlPart.body!.data!).toUtfStr(), processedParts };
     } else if (typeof textPart?.body?.data !== 'undefined') {
-      const textData = Buf.fromBase64Str(textPart.body.data).toUtfStr();
+      const textData = Buf.fromBase64UrlStr(textPart.body.data).toUtfStr();
       return { htmlData: GoogleData.htmlFromText(textData), processedParts: [textPart] };
     }
     // search inside multipart/alternative

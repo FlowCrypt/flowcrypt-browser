@@ -194,7 +194,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         currentEmailContainer = GmailLoaderContext.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', renderedFromEmailContainerXssSafe); // xss-safe-factory
       }
 
-      let blocks: MsgBlock[] = [];
+      let blocks: MsgBlock[];
       let messageInfo: MessageInfo | undefined;
       try {
         let body: MessageBody | undefined;

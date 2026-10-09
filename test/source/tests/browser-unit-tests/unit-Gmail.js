@@ -19,3 +19,27 @@
  *    the async functions. For the rest, do not change the structure or our parser will get confused.
  *    Do not put any code whatsoever outside of the async functions.
  */
+
+BROWSER_UNIT_TEST_NAME(`[unit][Gmail.attachmentGetChunk] decodes a response split between Base64 padding characters`);
+(async () => {
+  const { GoogleOAuth } = await import('/js/common/api/authentication/google/google-oauth.js');
+  const originalGoogleApiAuthHeader = GoogleOAuth.googleApiAuthHeader;
+  const originalFetch = window.fetch;
+  const attachment = new Uint8Array(1000);
+  const encodedAttachment = Buf.fromUint8(attachment).toBase64Str();
+  const response = JSON.stringify({ size: attachment.length, data: encodedAttachment });
+  const responseThroughFirstPaddingCharacter = response.slice(0, response.lastIndexOf('='));
+
+  try {
+    GoogleOAuth.googleApiAuthHeader = async () => ({ authorization: 'Bearer test' });
+    window.fetch = async () => new Response(responseThroughFirstPaddingCharacter);
+    const decoded = await new Gmail('test@example.com').attachmentGetChunk('message', 'attachment', 'attachment');
+    if (decoded.length !== attachment.length || decoded.some((byte, index) => byte !== attachment[index])) {
+      throw Error('Decoded attachment chunk does not match the attachment');
+    }
+  } finally {
+    GoogleOAuth.googleApiAuthHeader = originalGoogleApiAuthHeader;
+    window.fetch = originalFetch;
+  }
+  return 'pass';
+})();

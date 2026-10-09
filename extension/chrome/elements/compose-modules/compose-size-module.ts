@@ -65,7 +65,7 @@ export class ComposeSizeModule extends ViewModule<ComposeView> {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.view.S.cached('input_text').css('max-width', this.view.S.cached('body').width()! - 20 + 'px'); // body should always be present
       let minHeight = 0;
-      let currentHeight = 0;
+      let currentHeight: number;
       if (this.view.S.cached('compose_table').is(':visible')) {
         currentHeight = this.view.S.cached('compose_table').outerHeight() || 0;
         minHeight = 260;

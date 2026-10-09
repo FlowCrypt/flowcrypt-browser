@@ -66,7 +66,7 @@ export class SetupWithEmailKeyManagerModule {
             ppOptions: setupOptions,
           });
         } catch (e) {
-          throw new Error(`Could not store keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`);
+          throw new Error(`Could not store keys from EKM due to error: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
         }
       } else if (this.view.clientConfiguration.canCreateKeys()) {
         // generate keys on client and store them on key manager
