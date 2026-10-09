@@ -119,7 +119,7 @@ export class MsgUtil {
     // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
     if ((firstByte & 0b10000000) === 0b10000000) {
       // 1XXX XXXX - potential pgp packet tag
-      let tagNumber = 0; // zero is a forbidden tag number
+      let tagNumber: number;
       if ((firstByte & 0b11000000) === 0b11000000) {
         // 11XX XXXX - potential new pgp packet tag
         tagNumber = firstByte & 0b00111111; // 11TTTTTT where T is tag number bit

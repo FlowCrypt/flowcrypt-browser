@@ -120,7 +120,7 @@ export class KeyUtil {
   }
 
   public static filterKeysByTypeAndSenderEmail(keys: KeyInfoWithIdentity[], email: string, type: 'openpgp' | 'x509' | undefined): KeyInfoWithIdentity[] {
-    let foundKeys: KeyInfoWithIdentity[] = [];
+    let foundKeys: KeyInfoWithIdentity[];
     const lowerEmail = email.toLowerCase();
     if (type) {
       foundKeys = keys.filter(key => key.emails?.includes(lowerEmail) && key.family === type);

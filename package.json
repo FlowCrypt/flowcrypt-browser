@@ -2,10 +2,14 @@
   "name": "flowcrypt-browser",
   "version": "8.5.15",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
+  "engines": {
+    "node": ">=24"
+  },
   "resolutions": {
     "graceful-fs": "4.1.13"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@googleapis/gmail": "22.0.1",
     "@microsoft/eslint-formatter-sarif": "3.1.0",
     "@openpgp/web-stream-tools": "0.3.1",
@@ -30,14 +34,15 @@
     "eslint-plugin-prefer-arrow": "1.2.3",
     "fs-extra": "11.4.1",
     "globby": "16.2.4",
+    "globals": "17.13.0",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
-    "mailparser": "3.9.36",
+    "mailparser": "3.9.37",
     "openpgp": "6.3.2",
     "pdfjs-dist": "6.4.299",
     "postcss-html": "2.0.0",
     "prettier": "3.9.9",
-    "puppeteer": "25.12.0",
+    "puppeteer": "25.13.0",
     "stylelint": "17.16.0",
     "stylelint-config-standard": "40.0.0",
     "tap-xunit": "2.4.1",
