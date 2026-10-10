@@ -9,6 +9,7 @@ import { SetupView } from '../setup.js';
 import { KeyStore } from '../../../js/common/platform/store/key-store.js';
 import { Ui } from '../../../js/common/browser/ui.js';
 import { PgpPwd } from '../../../js/common/core/crypto/pgp/pgp-password.js';
+import { ApiErr } from '../../../js/common/api/shared/api-error.js';
 import $ from 'jquery';
 
 export class SetupRenderModule {
@@ -103,41 +104,47 @@ export class SetupRenderModule {
   };
 
   public renderSetupDialog = async (): Promise<void> => {
-    let keyserverRes;
+    let hasPublicKeys: boolean | undefined;
     try {
-      keyserverRes = await this.view.pubLookup.lookupEmail(this.view.acctEmail);
+      hasPublicKeys = (await this.view.pubLookup.lookupEmail(this.view.acctEmail)).pubkeys.length > 0;
     } catch (e) {
-      await Settings.promptToRetry(
-        e,
-        Lang.setup.failedToCheckIfAcctUsesEncryption,
-        () => this.renderSetupDialog(),
-        Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
-      );
-      return;
+      if (!ApiErr.isNetErr(e) && !ApiErr.isServerErr(e)) {
+        await Settings.promptToRetry(
+          e,
+          Lang.setup.failedToCheckIfAcctUsesEncryption,
+          () => this.renderSetupDialog(),
+          Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
+        );
+        return;
+      }
+      console.warn('Public key lookup unavailable during setup. Continuing setup.', e);
     }
-    if (keyserverRes.pubkeys.length) {
+    // An unavailable lookup cannot tell us whether the account has an existing key backup.
+    if (this.view.storage.email_provider === 'gmail' && this.view.clientConfiguration.canBackupKeys() && hasPublicKeys !== false) {
+      try {
+        const backups = await this.view.gmail.fetchKeyBackups();
+        this.view.fetchedKeyBackups = backups.keyinfos.backups;
+        this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
+      } catch (e) {
+        await Settings.promptToRetry(
+          e,
+          Lang.setup.failedToCheckAccountBackups,
+          () => this.renderSetupDialog(),
+          Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
+        );
+        return;
+      }
+      if (this.view.fetchedKeyBackupsUniqueLongids.length) {
+        this.displayBlock('step_2_recovery');
+        return;
+      }
+    }
+    if (hasPublicKeys) {
       if (!this.view.clientConfiguration.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         this.displayBlock('step_2b_manual_enter');
       } else if (this.view.storage.email_provider === 'gmail') {
-        try {
-          const backups = await this.view.gmail.fetchKeyBackups();
-          this.view.fetchedKeyBackups = backups.keyinfos.backups;
-          this.view.fetchedKeyBackupsUniqueLongids = backups.longids.backups;
-        } catch (e) {
-          await Settings.promptToRetry(
-            e,
-            Lang.setup.failedToCheckAccountBackups,
-            () => this.renderSetupDialog(),
-            Lang.general.contactIfNeedAssistance(this.view.isCustomerUrlFesUsed())
-          );
-          return;
-        }
-        if (this.view.fetchedKeyBackupsUniqueLongids.length) {
-          this.displayBlock('step_2_recovery');
-        } else {
-          this.displayBlock('step_0_found_key');
-        }
+        this.displayBlock('step_0_found_key');
       } else {
         // cannot read gmail to find a backup, or this is outlook
         throw new Error('Not able to load backups from inbox due to missing permissions');
