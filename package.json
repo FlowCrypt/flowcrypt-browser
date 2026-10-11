@@ -27,7 +27,7 @@
     "chai-as-promised": "8.0.2",
     "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-jsdoc": "65.2.0",
+    "eslint-plugin-jsdoc": "65.2.1",
     "eslint-plugin-local-rules": "3.0.2",
     "eslint-plugin-no-null": "1.0.2",
     "eslint-plugin-no-only-tests": "3.4.0",
