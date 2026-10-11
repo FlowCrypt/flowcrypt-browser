@@ -87,9 +87,9 @@ export class PgpArmor {
 
       // Build regex patterns from headers, escaping special regex characters
       const patterns = pgpHeaders.map(header => {
-        const escapedBegin = header.begin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedBegin = Str.regexEscape(header.begin);
         // header.end can be string or RegExp, handle both cases
-        const escapedEnd = typeof header.end === 'string' ? header.end.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : header.end.source; // If it's already a RegExp, use its source
+        const escapedEnd = typeof header.end === 'string' ? Str.regexEscape(header.end) : header.end.source; // If it's already a RegExp, use its source
         return `(${escapedBegin}[\\s\\S]*?${escapedEnd})`;
       });
 

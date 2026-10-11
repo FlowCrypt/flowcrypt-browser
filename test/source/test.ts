@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import './node-runtime-polyfills';
 import test, { Implementation } from 'ava';
 import { exec } from 'child_process';
 import { promisify } from 'util';

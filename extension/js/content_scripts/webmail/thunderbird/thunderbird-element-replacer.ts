@@ -58,7 +58,7 @@ export class ThunderbirdElementReplacer extends WebmailElementReplacer {
             $('body').html(pgpBlock); // xss-escaped
           } else {
             const decryptErr = result as DecryptError;
-            let decryptionErrorMsg = '';
+            let decryptionErrorMsg: string;
             if (decryptErr.error?.type === DecryptErrTypes.needPassphrase) {
               const acctEmail = String(await BrowserMsg.send.bg.await.thunderbirdGetCurrentUser());
               const longids = decryptErr.longids.needPassphrase.join(',');

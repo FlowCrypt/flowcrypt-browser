@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { base64decode, base64encode } from '../platform/util.js';
 import { Xss } from '../platform/xss.js';
 import { Buf } from './buf.js';
 import { MOCK_PORT } from './const.js';
@@ -254,7 +253,7 @@ export class Str {
   };
 
   public static regexEscape = (toBeUsedInRegex: string) => {
-    return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return RegExp.escape(toBeUsedInRegex);
   };
 
   public static escapeTextAsRenderableHtml = (text: string) => {
@@ -328,29 +327,21 @@ export class Str {
   };
 
   private static base64urlUtfEncode = (str: string) => {
-    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {
       return str;
     }
-    return base64encode(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16))))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+    if (!str.isWellFormed()) {
+      throw new URIError('URI malformed');
+    }
+    return new TextEncoder().encode(str).toBase64({ alphabet: 'base64url', omitPadding: true });
   };
 
   private static base64urlUtfDecode = (str: string) => {
-    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {
       return str;
     }
-
-    return decodeURIComponent(
-      Array.prototype.map
-        .call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join('')
-    );
+    const bytes = Uint8Array.fromBase64(str.replace(/-/g, '+').replace(/_/g, '/'), { lastChunkHandling: 'loose' });
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
   };
 }
 
@@ -368,15 +359,7 @@ export class DateUtility {
 
 export class Value {
   public static arr = {
-    unique: <T>(array: T[]): T[] => {
-      const unique: T[] = [];
-      for (const v of array) {
-        if (!unique.includes(v)) {
-          unique.push(v);
-        }
-      }
-      return unique;
-    },
+    unique: <T>(array: T[]): T[] => [...new Set(array)],
     withoutKey: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
     withoutVal: <T>(array: T[], withoutVal: T) => {
       const result: T[] = [];
@@ -560,12 +543,8 @@ export const stringTuple = <T extends string[]>(...data: T): T => {
 };
 
 export const checkValidURL = (url: string): boolean => {
-  try {
-    const parsedUrl = new URL(url);
-    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  const parsedUrl = URL.parse(url);
+  return parsedUrl?.protocol === 'http:' || parsedUrl?.protocol === 'https:';
 };
 
 /**

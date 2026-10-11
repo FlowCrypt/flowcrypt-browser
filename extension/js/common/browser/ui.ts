@@ -34,11 +34,10 @@ export class CommonHandlers {
 
   public static sendRequestAndHandleAsyncResult = async <T>(send: (requestUid: string) => void): Promise<T> => {
     const requestUid = Str.sloppyRandom(10);
-    const p = new Promise((resolve: (value: T) => void) => {
-      CommonHandlers.respondMap.set(requestUid, resolve);
-    });
+    const { promise, resolve } = Promise.withResolvers<T>();
+    CommonHandlers.respondMap.set(requestUid, resolve);
     send(requestUid);
-    return await p;
+    return await promise;
   };
 
   // for specific types

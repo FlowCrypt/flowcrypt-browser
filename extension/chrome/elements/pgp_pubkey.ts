@@ -140,9 +140,8 @@ View.run(
     };
 
     private getErrorText = async () => {
-      let errorStr = '';
       const { keys, errs } = await KeyUtil.readMany(Buf.fromUtfStr(this.armoredPubkey));
-      errorStr = errs.join('\n');
+      let errorStr = errs.join('\n');
       for (const key of keys) {
         const errorMessage = await OpenPGPKey.checkPublicKeyError(key);
         if (errorMessage) {

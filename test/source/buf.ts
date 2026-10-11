@@ -1,11 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import './node-runtime-polyfills';
 import test from 'ava';
 import { Buf } from '../../extension/js/common/core/buf.js';
 import { equals } from './tests/unit-node.js';
-
-global.btoa = (binary: string): string => Buffer.from(binary, 'binary').toString('base64');
-global.atob = (b64tr: string): string => Buffer.from(b64tr, 'base64').toString('binary');
 
 const lousyRandomBytes = (len = 30): Uint8Array => {
   const a = new Uint8Array(len);
@@ -61,9 +59,41 @@ test('1000x Buf.fromBase64Str(Buf.fromUint8(data).toBase64Str()) = data', async 
   t.pass();
 });
 
+test('Buf Base64 input handling', t => {
+  for (const encoded of ['', 'Zg', 'Zg==', 'Zh==', 'Zm9v', ' Zm9v\n']) {
+    const expected = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
+    const decoded = Buf.fromBase64Str(encoded);
+    t.true(decoded instanceof Buf);
+    equals(decoded, expected);
+  }
+  for (const encoded of ['Z', 'Zg=', 'Zm$v']) {
+    t.throws(() => Buf.fromBase64Str(encoded), { instanceOf: SyntaxError });
+  }
+});
+
+test('Buf Base64URL decoding accepts standard and URL-safe alphabets', t => {
+  const expected = new Uint8Array([251, 255]);
+  equals(Buf.fromBase64UrlStr('+/8='), expected);
+  equals(Buf.fromBase64UrlStr('-_8'), expected);
+  t.is(Buf.fromUint8(expected).toBase64UrlStr(), '-_8');
+});
+
+test('Buf hex encoding preserves uppercase-by-default behavior', t => {
+  const bytes = Buf.fromUint8(new Uint8Array([0, 10, 171, 255]));
+  t.is(bytes.toHexStr(), '000AABFF');
+  t.is(bytes.toHexStr(false), '000aabff');
+});
+
 test('Buf.fromUtfStr(UTF8) = UTF8_AS_BYTES', async t => {
   equals(Buf.fromUtfStr(UTF8), UTF8_AS_BYTES);
+  equals(Buf.fromUtfStr('\ud800\ud800'), Buffer.from('\ufffd\ufffd'));
   t.pass();
+});
+
+test('Buf.concat returns a Buf containing all input bytes', async t => {
+  const concatenated = Buf.concat([new Uint8Array([1, 2]), new Uint8Array(), new Uint8Array([3, 4])]);
+  t.true(concatenated instanceof Buf);
+  equals(concatenated, new Uint8Array([1, 2, 3, 4]));
 });
 
 test('Buf.fromUint8(UTF8_AS_BYTES).toUtfStr() = UTF8', async t => {

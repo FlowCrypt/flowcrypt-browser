@@ -252,7 +252,7 @@ export class Catch {
     if (thrown instanceof Error) {
       // reporting stack may differ from the stack of the actual error, both may be interesting
       thrown.stack += Catch.formattedStackBlock('Catch.reportErr calling stack', CatchHelper.stackTrace());
-      if (thrown.hasOwnProperty('workerStack')) {
+      if (Object.hasOwn(thrown, 'workerStack')) {
         // https://github.com/openpgpjs/openpgpjs/issues/656#event-1498323188
         thrown.stack += Catch.formattedStackBlock('openpgp.js worker stack', (thrown as Error & { workerStack: string }).workerStack);
       }
@@ -316,7 +316,7 @@ export class Catch {
       exception = new Error(`LIMITED_ERROR: ${errMsg}`);
     } else if (thrown instanceof Error) {
       exception = thrown;
-      if (thrown.hasOwnProperty('thrown')) {
+      if (Object.hasOwn(thrown, 'thrown')) {
         // this is created by custom async stack reporting in tooling/tsc-compiler.ts
         exception.stack += `\n\ne.thrown:\n${Catch.stringify((thrown as Error & { thrown: string }).thrown)}`;
       }
@@ -356,8 +356,8 @@ export class Catch {
 
   private static isPromiseRejectionEvent(ev: unknown): ev is PromiseRejectionEvent {
     if (ev && typeof ev === 'object') {
-      const eHasReason = ev.hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
-      const eHasPromise = ev.hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      const eHasReason = Object.hasOwn(ev, 'reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = Object.hasOwn(ev, 'promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
       return eHasReason && eHasPromise;
     }
     return false;
