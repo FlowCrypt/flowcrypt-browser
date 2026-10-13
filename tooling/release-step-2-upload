@@ -65,7 +65,7 @@ with open('./tooling/release-firefox-latest-update.json', 'w') as outfile:
             "update_hash": f"sha256:{get_hash(ff_path_saved)}",
             "applications": {
               "gecko": {
-                "strict_min_version": "112.0"
+                "strict_min_version": "134.0"
               }
             }
           }
@@ -89,4 +89,3 @@ for filepath in replace_version_in_web_files:
     wp.write(replaced)
 
 os.system('cd ../flowcrypt-web && git pull && git checkout -b release-%s && git commit -a --message=\'firefox v%s links updated\' && git push origin release-%s && cd ../flowcrypt-browser' % (dashed_version, version, dashed_version))
-

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["es6", "dom"],
+    "lib": ["es2022", "dom", "es2024.promise", "es2024.string", "es2025.regexp", "esnext.typedarrays"],
     "alwaysStrict": true,
     "noImplicitAny": true,
     "noFallthroughCasesInSwitch": true,

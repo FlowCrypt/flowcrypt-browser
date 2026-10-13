@@ -312,6 +312,27 @@ BROWSER_UNIT_TEST_NAME(`Mime attachment file name issue 3352`);
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`Mime.decode decodes quoted-printable attachment bytes`);
+(async () => {
+  const mime = [
+    'Content-Type: application/octet-stream; name="bytes.bin"',
+    'Content-Disposition: attachment; filename="bytes.bin"',
+    'Content-Transfer-Encoding: quoted-printable',
+    '',
+    '=00=0A=7F=80=FF',
+  ].join('\r\n');
+  const decoded = await Mime.decode(mime);
+  if (decoded.attachments.length !== 1) {
+    throw Error(`Expected one attachment, got ${decoded.attachments.length}`);
+  }
+  const bytes = decoded.attachments[0].getData();
+  const expected = [0, 10, 127, 128, 255];
+  if (bytes.length !== expected.length || bytes.some((byte, index) => byte !== expected[index])) {
+    throw Error(`Expected quoted-printable bytes ${expected.join(',')}, got ${Array.from(bytes).join(',')}`);
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`Mime.decode parses nested signed message exactly once`);
 (async () => {
   const nestedSignedMime = [

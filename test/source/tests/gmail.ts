@@ -3,8 +3,9 @@
 import test from 'ava';
 
 import { expect } from 'chai';
-import { BrowserHandle, ControllablePage, TIMEOUT_PAGE_LOAD } from './../browser';
-import { Controllable } from './../browser/controllable';
+import { BrowserHandle } from './../browser/browser-handle';
+import { Controllable, ControllablePage } from './../browser/controllable';
+import { TIMEOUT_PAGE_LOAD } from './../browser';
 import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { TestVariant, Util } from './../util';

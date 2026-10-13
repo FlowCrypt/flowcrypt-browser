@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2025",
+    "lib": ["ES2025", "DOM", "DOM.Iterable", "DOM.AsyncIterable", "WebWorker.ImportScripts", "ScriptHost", "ESNext.TypedArrays"],
     "module": "es2022",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,

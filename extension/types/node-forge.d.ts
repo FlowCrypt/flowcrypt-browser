@@ -337,7 +337,7 @@ declare module "node-forge" {
             /**
              * Attribute value data type
              */
-            valueTagClass: number;
+            valueTagClass: asn1.Type;
             /**
              * Extensions
              */

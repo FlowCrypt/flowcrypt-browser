@@ -119,7 +119,7 @@ export class MsgUtil {
     // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
     if ((firstByte & 0b10000000) === 0b10000000) {
       // 1XXX XXXX - potential pgp packet tag
-      let tagNumber = 0; // zero is a forbidden tag number
+      let tagNumber: number;
       if ((firstByte & 0b11000000) === 0b11000000) {
         // 11XX XXXX - potential new pgp packet tag
         tagNumber = firstByte & 0b00111111; // 11TTTTTT where T is tag number bit
@@ -127,12 +127,12 @@ export class MsgUtil {
         // 10XX XXXX - potential old pgp packet tag
         tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
       }
-      if (Object.values(opgp.enums.packet).includes(tagNumber)) {
+      if (Object.values<number | string>(opgp.enums.packet).includes(tagNumber)) {
         // Indeed a valid OpenPGP packet tag number
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may be
         const t = opgp.enums.packet;
-        const msgTypes = [
+        const msgTypes: number[] = [
           t.publicKeyEncryptedSessionKey,
           t.symEncryptedIntegrityProtectedData,
           t.modificationDetectionCode,
@@ -315,7 +315,7 @@ export class MsgUtil {
 
     for (const term of disallowTerms) {
       // Escape term for regex
-      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedTerm = Str.regexEscape(term);
       // Use regex to ensure the term appears as a separate token
       // (^|\W) ensures the term is at start or preceded by non-word char
       // (\W|$) ensures the term is followed by non-word char or end

@@ -11,15 +11,18 @@ jobs:
     name: Approve and enable auto-merge
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]' && github.repository == 'FlowCrypt/flowcrypt-browser'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Approve pull request
         run: gh pr review --approve "$PR_URL"
         env:
-          GH_TOKEN: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}
 
       - name: Enable squash auto-merge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          GH_TOKEN: ${{ secrets.FLOWCRYPT_ROBOT_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ github.event.pull_request.html_url }}

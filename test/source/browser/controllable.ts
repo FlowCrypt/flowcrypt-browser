@@ -15,7 +15,6 @@ import { Util } from '../util';
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import { mkdirp } from 'mkdirp';
 import { Dict, asyncFilter } from '../core/common';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -560,7 +559,7 @@ abstract class ControllableBase {
     const files: Dict<Buffer> = {};
     const resolvePromise: Promise<void> = (async () => {
       const downloadPath = path.resolve(__dirname, 'download', Util.lousyRandom());
-      mkdirp.sync(downloadPath);
+      fs.mkdirSync(downloadPath, { recursive: true });
       const page = this.getPage().target;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
       await (page as any)._client().send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath });
@@ -743,7 +742,7 @@ class ConsoleEvent {
 }
 
 export class ControllablePage extends ControllableBase {
-  public declare target: Page;
+  declare public target: Page;
   public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
   private preventclose = false;
@@ -940,7 +939,7 @@ export class ControllablePage extends ControllableBase {
 }
 
 export class ControllableFrame extends ControllableBase {
-  public declare target: Frame;
+  declare public target: Frame;
   public frame: Frame;
 
   public constructor(

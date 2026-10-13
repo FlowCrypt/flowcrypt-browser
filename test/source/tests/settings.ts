@@ -20,7 +20,8 @@ import { Buf } from '../core/buf';
 import { GoogleData } from '../mock/google/google-data';
 import Parse from './../util/parse';
 import { KeyWithPrivateFields, OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { BrowserHandle, ControllablePage } from '../browser';
+import { BrowserHandle } from '../browser/browser-handle';
+import { ControllablePage } from '../browser/controllable';
 import { AvaContext } from './tooling';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey, testMatchPubKey } from '../mock/attester/attester-key-constants';
@@ -237,26 +238,26 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
         await contactsFrame.waitAll('@page-contacts');
         await Util.sleep(1);
-        
+
         // Trigger the export and capture the downloaded file
         const downloadedFiles = await contactsFrame.awaitDownloadTriggeredByClicking('@action-export-all-public-keys');
         expect(downloadedFiles['public-keys-export.asc']).to.exist;
-        
+
         // Verify the file content is not empty
         const fileContent = downloadedFiles['public-keys-export.asc'].toString();
-        
+
         // Verify the file contains PGP public key blocks
         expect(fileContent).to.contain('-----BEGIN PGP PUBLIC KEY BLOCK-----');
         expect(fileContent).to.contain('-----END PGP PUBLIC KEY BLOCK-----');
-        
+
         // Verify it contains the expected public keys (the account's own keys)
         const { keys } = await KeyUtil.readMany(Buf.fromUtfStr(fileContent));
-        
+
         // Verify the keys can be parsed (they're valid PGP keys)
         for (const key of keys) {
           expect(key.id).to.not.be.empty;
         }
-        
+
         await SettingsPageRecipe.closeDialog(settingsPage);
         await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
       })

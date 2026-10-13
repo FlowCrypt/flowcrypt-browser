@@ -1,10 +1,12 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import './node-runtime-polyfills';
 import test, { Implementation } from 'ava';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
-import { BrowserHandle, BrowserPool } from './browser';
+import { BrowserHandle } from './browser/browser-handle';
+import { BrowserPool } from './browser/browser-pool';
 import { AvaContext, TestContext, getDebugHtmlAtts, minutes, standaloneTestTimeout } from './tests/tooling';
 import { Util, getParsedCliParams } from './util';
 
