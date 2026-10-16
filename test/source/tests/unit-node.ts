@@ -43,6 +43,7 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
     test(`[unit][emailKeyIndex] gives distinct keys to emails that differ only in punctuation`, async t => {
       t.not(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('ab@corp.test', 'keys'));
       t.is(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('A-B@corp.test', 'keys'));
+      t.not(emailKeyIndex('İ@example.com', 'keys'), emailKeyIndex('i\u0307@example.com', 'keys'));
       t.pass();
     });
     test(`[unit][KeyUtil.parse] throw if parse methods expecting exactly one key find more than one`, async t => {

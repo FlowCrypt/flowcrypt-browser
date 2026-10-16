@@ -52,6 +52,15 @@ const migrateAccountStorageKeys = async () => {
   }
   console.info('migrating account storage keys to a collision-free format...');
   const acctEmails = await GlobalStore.acctEmailsGet();
+  const oldPrefixes = new Map<string, string>();
+  for (const acctEmail of acctEmails) {
+    const oldPrefix = `cryptup_${acctEmail.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_`;
+    const previousAcctEmail = oldPrefixes.get(oldPrefix);
+    if (previousAcctEmail && previousAcctEmail !== acctEmail) {
+      throw new Error(`Cannot migrate accounts ${previousAcctEmail} and ${acctEmail}: their legacy storage namespaces collide`);
+    }
+    oldPrefixes.set(oldPrefix, acctEmail);
+  }
   const storage = await storageGetAll('local');
   const updates: { [key: string]: unknown } = {};
   const removals: string[] = [];
