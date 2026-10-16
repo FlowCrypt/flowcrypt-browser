@@ -23,6 +23,7 @@ export type GlobalStoreDict = {
   contact_store_opgp_revoked_flags_updated?: boolean;
   contact_store_revocations_revalidated?: boolean;
   contact_store_searchable_pruned?: boolean;
+  email_key_index_migrated?: boolean;
   local_drafts?: Dict<LocalDraft>;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -39,6 +40,7 @@ export type GlobalIndex =
   | 'contact_store_opgp_revoked_flags_updated'
   | 'contact_store_revocations_revalidated'
   | 'contact_store_searchable_pruned'
+  | 'email_key_index_migrated'
   | 'local_drafts'
   | 'stored_key_info_migrated';
 

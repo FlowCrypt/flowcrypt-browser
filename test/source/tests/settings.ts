@@ -758,12 +758,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
         });
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
+        // Account storage keys derive from the email, escaping each non-alphanumeric character as `~<hex>` (eg `@` -> `~40`, `-` -> `~2d`, `.` -> `~2e`).
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A': savedPassphrase1,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys': keys,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys',
         ]);
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
         expect(savedPassphrase1).to.be.an('undefined');
@@ -776,13 +777,17 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
           content: ['changed correctly if this can be decrypted'],
         });
-        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
-          await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
+        const { 'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A': savedPassphrase2 } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A',
+          ]);
         expect(savedPassphrase2).to.be.an('undefined');
         // change pp - should not ask for pp because already in session
         await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
-        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase3 } =
-          await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
+        const { 'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A': savedPassphrase3 } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A',
+          ]);
         expect(savedPassphrase3).to.be.an('undefined');
         // test decrypt - should not ask for pp because already in session
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
@@ -881,7 +886,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await myKeyPage.waitAndClick('@action-fix-and-import-key');
         await Util.sleep(4); // wait for navigation to complete
-        const { cryptup_flowcryptcompatibilitygmailcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_flowcryptcompatibilitygmailcom_keys']);
+        const { 'cryptup_flowcrypt~2ecompatibility~40gmail~2ecom_keys': keys } = await settingsPage.getFromLocalStorage([
+          'cryptup_flowcrypt~2ecompatibility~40gmail~2ecom_keys',
+        ]);
         const pubkey = await KeyUtil.parse((keys as KeyInfoWithIdentity[])[0].public);
         const expectedExpiration = new Date().getFullYear() + 1;
         const pubkeyExpiration = new Date(pubkey.expiration!).getFullYear();
@@ -1176,9 +1183,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           contentToCheck: 'Public and private key updated locally',
           clickOn: 'cancel',
         });
-        const { cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92: savedPassphrase } = await settingsPage.getFromLocalStorage([
-          'cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92',
-        ]);
+        const { 'cryptup_flowcrypt~2etest~2ekey~2emultiple~40gmail~2ecom_passphrase_98ACFA1EADAB5B92': savedPassphrase } =
+          await settingsPage.getFromLocalStorage(['cryptup_flowcrypt~2etest~2ekey~2emultiple~40gmail~2ecom_passphrase_98ACFA1EADAB5B92']);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
       })
@@ -1818,12 +1824,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
         });
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
+        // Account storage keys derive from the email, escaping each non-alphanumeric character as `~<hex>` (eg `@` -> `~40`, `-` -> `~2d`, `.` -> `~2e`).
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A': savedPassphrase1,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys': keys,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys',
         ]);
         expect(savedPassphrase1).to.be.an('undefined');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
@@ -1841,8 +1848,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           contentToCheck: 'Public and private key updated locally',
           clickOn: 'cancel',
         });
-        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
-          await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
+        const { 'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A': savedPassphrase2 } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A',
+          ]);
         expect(savedPassphrase2).to.be.an('undefined');
         await settingsPage.close();
       })
@@ -1868,8 +1877,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
-        const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
-          await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
+        const {
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_rules': oldRules,
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_passphrase_07481C8ACF9D49FE': savedPassphrase1,
+        } = await settingsPage.getFromLocalStorage([
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_rules',
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_passphrase_07481C8ACF9D49FE',
+        ]);
         expect(savedPassphrase1).not.to.be.an('undefined');
         expect((oldRules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -1899,13 +1913,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // await PageRecipe.waitForModalAndRespond(?, 'confirm',
         //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
         const {
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules: newRules,
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys: keys,
+          'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_rules': newRules,
+          'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_07481C8ACF9D49FE': savedPassphrase2,
+          'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys': keys,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules',
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE',
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys',
+          'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_rules',
+          'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_07481C8ACF9D49FE',
+          'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys',
         ]);
         expect((newRules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
@@ -2123,8 +2137,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const acct2 = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
         const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
-        const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
-          await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
+        const {
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_rules': oldRules,
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_passphrase_07481C8ACF9D49FE': savedPassphrase1,
+        } = await settingsPage.getFromLocalStorage([
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_rules',
+          'cryptup_ci~2etests~2egmail~40flowcrypt~2etest_passphrase_07481C8ACF9D49FE',
+        ]);
         expect(savedPassphrase1).not.to.be.an('undefined');
         expect((oldRules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -2154,13 +2173,13 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         // await PageRecipe.waitForModalAndRespond(?, 'confirm',
         //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules: newRules,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_rules': newRules,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys': keys,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_07481C8ACF9D49FE': savedPassphrase2,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_rules',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_07481C8ACF9D49FE',
         ]);
         expect((newRules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
@@ -2184,11 +2203,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys1,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A': savedPassphrase1,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys': keys1,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_B8F687BCDE14435A',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys',
         ]);
         expect((keys1 as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
         expect(savedPassphrase1).to.be.an('undefined');
@@ -2197,11 +2216,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           isSavePassphraseHidden: true,
         });
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys2,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_98ACFA1EADAB5B92': savedPassphrase2,
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys': keys2,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_98ACFA1EADAB5B92',
+          'cryptup_user~40forbid~2dstoring~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_keys',
         ]);
         expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
         expect(savedPassphrase2).to.be.an('undefined');
