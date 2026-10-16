@@ -45,7 +45,7 @@ const addKeyInfoFingerprints = async () => {
 // Account storage keys used to be derived from the account email by stripping all non-alphanumeric
 // characters, which made distinct emails (eg `a-b@corp.test` and `ab@corp.test`) share one namespace.
 // Keys are now collision-free (see emailKeyIndex in core/common.ts), so re-index existing data.
-const migrateAccountStorageKeys = async () => {
+export const migrateAccountStorageKeys = async () => {
   const globalStore = await GlobalStore.get(['email_key_index_migrated']);
   if (globalStore.email_key_index_migrated) {
     return;

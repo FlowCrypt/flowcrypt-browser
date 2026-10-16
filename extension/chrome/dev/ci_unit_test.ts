@@ -16,7 +16,7 @@ import { Ui } from '../../js/common/browser/ui.js';
 import { AcctStore } from '../../js/common/platform/store/acct-store.js';
 import { ContactStore } from '../../js/common/platform/store/contact-store.js';
 import { GlobalStore } from '../../js/common/platform/store/global-store.js';
-import { revalidateStoredRevocations } from '../../js/service_worker/migrations.js';
+import { migrateAccountStorageKeys, revalidateStoredRevocations } from '../../js/service_worker/migrations.js';
 import { Debug } from '../../js/common/platform/debug.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { CatchHelper } from '../../js/common/platform/catch-helper.js';
@@ -56,6 +56,7 @@ const libs: unknown[] = [
   PgpArmor,
   Xss,
   revalidateStoredRevocations,
+  migrateAccountStorageKeys,
 ];
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // add them to global scope so ci can use them
