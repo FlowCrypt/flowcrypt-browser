@@ -1612,6 +1612,8 @@ td {
 }
 
 .pgp_badge {
+  position: relative;
+  z-index: 1;
   opacity: 1;
   margin-bottom: 1em;
   display: inline-block;
