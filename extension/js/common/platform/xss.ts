@@ -245,8 +245,15 @@ export class Xss {
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
         } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
-          const pathname = new URL(src).pathname.toLowerCase();
-          if (pathname.includes('/logout') || pathname.includes('/signout')) {
+          const pathname = new URL(src).pathname;
+          let decodedPathname = pathname;
+          try {
+            decodedPathname = decodeURIComponent(pathname);
+          } catch {
+            // Keep checking raw pathname when malformed percent encoding is present.
+          }
+          const normalizedPathnames = [pathname, decodedPathname].map(path => path.toLowerCase());
+          if (normalizedPathnames.some(path => path.includes('/logout') || path.includes('/signout'))) {
             img.remove();
             return;
           }
