@@ -134,6 +134,14 @@ BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
     throw Error(`pgp badge is not protected by its stacking order: position=${style.position}, z-index=${style.zIndex}`);
   }
   badge.remove();
+  const messageContent = document.createElement('div');
+  messageContent.id = 'pgp_block';
+  document.body.appendChild(messageContent);
+  const messageContentStyle = window.getComputedStyle(messageContent);
+  if (messageContentStyle.isolation !== 'isolate') {
+    throw Error(`pgp message content is not isolated: isolation=${messageContentStyle.isolation}`);
+  }
+  messageContent.remove();
   stylesheet.remove();
   return 'pass';
 })();

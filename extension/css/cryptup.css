@@ -1469,6 +1469,10 @@ td {
   min-height: 50px;
 }
 
+#pgp_block {
+  isolation: isolate;
+}
+
 #backup_block .backup_message_text {
   font-weight: 500 !important;
   font-size: 14px;
