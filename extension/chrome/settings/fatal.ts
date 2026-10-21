@@ -42,6 +42,14 @@ if (reason === 'db_corrupted') {
     details,
     `<p>browser.storage is undefined</p><p>If you are on Firefox, check for any special browser settings, or use a clean Firefox Profile.</p>`
   );
+} else if (reason === 'account_storage_key_collision') {
+  title.text('FlowCrypt found accounts with conflicting storage data.');
+  Xss.sanitizeRender(
+    details,
+    `<p>This FlowCrypt version improves storage handling for similar email addresses.</p>
+     <p>Open <a href="index.htm">account settings</a>, remove and reconfigure the affected accounts, then restart FlowCrypt.</p>
+     <p>Your existing storage data was not changed.</p>`
+  );
 } else {
   details.text(`Unknown reason. ${Lang.general.contactForSupportSentence()}`);
 }

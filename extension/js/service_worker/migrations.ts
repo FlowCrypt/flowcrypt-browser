@@ -31,6 +31,8 @@ type PubkeyMigrationData = {
   pubkeysToSave: Pubkey[];
 };
 
+export class AccountStorageKeyCollisionError extends Error {}
+
 const addKeyInfoFingerprints = async () => {
   for (const acctEmail of await GlobalStore.acctEmailsGet()) {
     const originalKis = await KeyStore.get(acctEmail);
@@ -57,7 +59,7 @@ export const migrateAccountStorageKeys = async () => {
     const oldPrefix = `cryptup_${acctEmail.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_`;
     const previousAcctEmail = oldPrefixes.get(oldPrefix);
     if (previousAcctEmail && previousAcctEmail !== acctEmail) {
-      throw new Error(`Cannot migrate accounts ${previousAcctEmail} and ${acctEmail}: their legacy storage namespaces collide`);
+      throw new AccountStorageKeyCollisionError(`Cannot migrate accounts ${previousAcctEmail} and ${acctEmail}: their legacy storage namespaces collide`);
     }
     oldPrefixes.set(oldPrefix, acctEmail);
   }
@@ -90,6 +92,7 @@ export const migrateAccountStorageKeys = async () => {
 };
 
 export const migrateGlobal = async () => {
+  await migrateAccountStorageKeys();
   const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added', 'local_drafts', 'stored_key_info_migrated']);
   if (!globalStore.key_info_store_fingerprints_added) {
     console.info('migrating KeyStorage to add fingerprints and emails of each key...');
@@ -143,7 +146,6 @@ export const migrateGlobal = async () => {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     await GlobalStore.set({ local_drafts: globalStore.local_drafts });
   }
-  await migrateAccountStorageKeys();
 };
 
 const processSmimeKey = (pubkey: Pubkey, tx: IDBTransaction, data: PubkeyMigrationData, next: () => void) => {
