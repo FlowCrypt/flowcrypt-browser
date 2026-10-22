@@ -20,17 +20,14 @@
  *    Do not put any code whatsoever outside of the async functions.
  */
 
-BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
+BROWSER_UNIT_TEST_NAME(`Wkd direct method when advanced policy is absent`);
 (async () => {
   const wkd = new Wkd();
-  let email;
-  email = 'john.doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
-    throw Error(`Wkd for ${email} didn't return a pubkey`);
-  }
-  email = 'John.Doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
-    throw Error(`Wkd for ${email} didn't return a pubkey`);
+  for (const email of ['john.doe@example.com', 'John.Doe@example.com', 'John.Doe@EXAMPLE.com']) {
+    const { pubkeys } = await wkd.lookupEmail(email);
+    if (pubkeys.length !== 1 || (await KeyUtil.parse(pubkeys[0])).id.toUpperCase() !== '094C3CBA696FA009F6015C473B635D858A1DB5E0') {
+      throw Error(`Wkd for ${email} didn't return the expected direct pubkey`);
+    }
   }
   return 'pass';
 })();
@@ -38,14 +35,11 @@ BROWSER_UNIT_TEST_NAME(`Wkd direct method`);
 BROWSER_UNIT_TEST_NAME(`Wkd advanced method`);
 (async () => {
   const wkd = new Wkd();
-  let email;
-  email = 'john.doe@localhost';
-  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
-    throw Error(`Wkd for ${email} didn't return a pubkey`);
-  }
-  email = 'John.Doe@localHOST';
-  if (!(await wkd.lookupEmail(email)).pubkeys.length) {
-    throw Error(`Wkd for ${email} didn't return a pubkey`);
+  for (const email of ['john.doe@localhost', 'John.Doe@localhost', 'John.Doe@localHOST']) {
+    const { pubkeys } = await wkd.lookupEmail(email);
+    if (pubkeys.length !== 1 || (await KeyUtil.parse(pubkeys[0])).id.toUpperCase() !== 'CB1B7A41BA7C1CBAA08A6166B902CB65C694D6B4') {
+      throw Error(`Wkd for ${email} didn't return the expected advanced pubkey`);
+    }
   }
   return 'pass';
 })();

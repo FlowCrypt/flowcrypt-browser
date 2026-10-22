@@ -145,39 +145,26 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    test(
-      'compose - check for sender [flowcrypt.compatibility@gmail.com] from a password-protected email',
-      testWithBrowser(async (t, browser) => {
-        const senderEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { acctAliases: flowcryptCompatibilityAliasList },
-        });
-        const msgPwd = 'super hard password for the message';
-        const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-        await ComposePageRecipe.selectFromOption(composePage, senderEmail);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
-        await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-        // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"
-      })
-    );
-
-    test(
-      'compose - check for sender [flowcryptcompatibility@gmail.com] (alias) from a password-protected email',
-      testWithBrowser(async (t, browser) => {
-        const senderEmail = 'flowcrypt.compatibility@gmail.com';
-        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
-          google: { acctAliases: flowcryptCompatibilityAliasList },
-        });
-        const msgPwd = 'super hard password for the message';
-        const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
-        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-        await ComposePageRecipe.selectFromOption(composePage, senderEmail);
-        await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
-        await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
-        // this test is using PwdEncryptedMessageWithFlowCryptComApiTestStrategy to check sent result based on subject "PWD encrypted message with flowcrypt.com/shared-tenant-fes"
-      })
-    );
+    for (const { senderEmail, aliasLabel } of [
+      { senderEmail: 'flowcrypt.compatibility@gmail.com', aliasLabel: '' },
+      { senderEmail: 'flowcryptcompatibility@gmail.com', aliasLabel: ' (alias)' },
+    ]) {
+      test(
+        `compose - check for sender [${senderEmail}]${aliasLabel} from a password-protected email`,
+        testWithBrowser(async (t, browser) => {
+          await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility', {
+            google: { acctAliases: flowcryptCompatibilityAliasList },
+          });
+          const msgPwd = 'super hard password for the message';
+          const subject = `PWD encrypted message with flowcrypt.com/shared-tenant-fes - from: ${senderEmail}`;
+          const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+          await ComposePageRecipe.selectFromOption(composePage, senderEmail);
+          await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
+          await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });
+          // PwdEncryptedMessageWithFlowCryptComApiTestStrategy checks the sender specified in the subject.
+        })
+      );
+    }
 
     test(
       'compose - check for sender [ci.tests.gmail@flowcrypt.test] from a password-protected email',
@@ -185,7 +172,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const senderEmail = 'ci.tests.gmail@flowcrypt.test';
         await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
         const msgPwd = 'super hard password for the message';
-        const subject = 'PWD encrypted message with flowcrypt.com/shared-tenant-fes';
+        const subject = `PWD encrypted message with flowcrypt.com/shared-tenant-fes - from: ${senderEmail}`;
         const composePage = await ComposePageRecipe.openStandalone(t, browser, senderEmail);
         await ComposePageRecipe.fillMsg(composePage, { to: 'test@email.com' }, subject);
         await ComposePageRecipe.sendAndClose(composePage, { password: msgPwd });

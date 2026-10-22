@@ -5,57 +5,55 @@ import test from 'ava';
 import { Buf } from '../../extension/js/common/core/buf.js';
 import { equals } from './tests/unit-node.js';
 
-const lousyRandomBytes = (len = 30): Uint8Array => {
-  const a = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    a[i] = Math.floor(Math.random() * 256);
-  }
-  return a;
-};
-
-const withThousandRandomInputs = (cb: (data: Uint8Array) => void) => {
-  for (let i = 0; i < 1000; i++) {
-    const input = lousyRandomBytes();
-    cb(input);
-  }
-};
+const BYTE_INPUTS = [
+  new Uint8Array(),
+  new Uint8Array([255]),
+  new Uint8Array([251, 255]),
+  new Uint8Array([251, 255, 255]),
+  // Exercise every padding length, all byte values, and raw-string chunk boundaries.
+  ...[4, 5, 6, 7, 8, 9, 29, 30, 31, 255, 256, 257, 32767, 32768, 32769].map(length => Uint8Array.from({ length }, (_, i) => (i * 73 + 251) % 256)),
+];
 
 const UTF8 = `გამარჯობა.\nこんにちは。\nЗдравствуй.\nChào bạn.\nDobrý deň!\n여보세요?\n你好。\r\n\t。 `;
 const UTF8_AS_BYTES = Buffer.from(UTF8);
 const UTF8_AS_RAW_STRING = Buffer.from(UTF8).toString('binary');
 
-test(`1000x Buf.fromUint8(data).toBase64Str() = Buffer.from(data).toString('base64')`, async t => {
-  withThousandRandomInputs(data => {
-    equals(Buf.fromUint8(data).toBase64Str(), Buffer.from(data).toString('base64'));
-  });
+test(`Buf.fromUint8(data).toBase64Str() = Buffer.from(data).toString('base64')`, t => {
+  for (const data of BYTE_INPUTS) {
+    t.is(Buf.fromUint8(data).toBase64Str(), Buffer.from(data).toString('base64'), `length ${data.length}`);
+  }
+});
+
+test(`Buf.fromUint8(data).toRawBytesStr() = Buffer.from(data).toString('binary')`, t => {
+  for (const data of BYTE_INPUTS) {
+    t.is(Buf.fromUint8(data).toRawBytesStr(), Buffer.from(data).toString('binary'), `length ${data.length}`);
+  }
+});
+
+test(`Buf.fromUint8(data).toBase64UrlStr() = Buffer.from(data).toString('base64url')`, t => {
+  for (const data of BYTE_INPUTS) {
+    t.is(Buf.fromUint8(data).toBase64UrlStr(), Buffer.from(data).toString('base64url'), `length ${data.length}`);
+  }
+});
+
+test(`Buf.fromBase64UrlStr(Buffer.from(data).toString('base64url')) = data`, t => {
+  for (const data of BYTE_INPUTS) {
+    equals(Buf.fromBase64UrlStr(Buffer.from(data).toString('base64url')), data);
+  }
   t.pass();
 });
 
-test(`1000x Buf.fromUint8(data).toRawBytesStr() = Buffer.from(data).toString('binary')`, async t => {
-  withThousandRandomInputs(data => {
-    equals(Buf.fromUint8(data).toRawBytesStr(), Buffer.from(data).toString('binary'));
-  });
+test(`Buf.fromRawBytesStr(Buffer.from(data).toString('binary')) = data`, t => {
+  for (const data of BYTE_INPUTS) {
+    equals(Buf.fromRawBytesStr(Buffer.from(data).toString('binary')), data);
+  }
   t.pass();
 });
 
-test('1000x Buf.fromBase64UrlStr(Buf.fromUint8(data).toBase64UrlStr()) = data', async t => {
-  withThousandRandomInputs(data => {
-    equals(Buf.fromBase64UrlStr(Buf.fromUint8(data).toBase64UrlStr()), data);
-  });
-  t.pass();
-});
-
-test('1000x Buf.fromRawBytesStr(Buf.fromUint8(data).toRawBytesStr()) = data', async t => {
-  withThousandRandomInputs(data => {
-    equals(Buf.fromRawBytesStr(Buf.fromUint8(data).toRawBytesStr()), data);
-  });
-  t.pass();
-});
-
-test('1000x Buf.fromBase64Str(Buf.fromUint8(data).toBase64Str()) = data', async t => {
-  withThousandRandomInputs(data => {
-    equals(Buf.fromBase64Str(Buf.fromUint8(data).toBase64Str()), data);
-  });
+test(`Buf.fromBase64Str(Buffer.from(data).toString('base64')) = data`, t => {
+  for (const data of BYTE_INPUTS) {
+    equals(Buf.fromBase64Str(Buffer.from(data).toString('base64')), data);
+  }
   t.pass();
 });
 

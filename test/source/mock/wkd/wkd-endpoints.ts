@@ -54,6 +54,9 @@ export const getMockWkdEndpoints = (config: WkdConfig | undefined): HandlersDefi
     '/.well-known/openpgpkey/localhost/policy': async () => {
       return ''; // allow advanced for localhost
     },
+    '/.well-known/openpgpkey/example.com/policy': async () => {
+      throw new HttpClientErr('Advanced policy not found', Status.NOT_FOUND); // exercise direct fallback
+    },
     '/.well-known/openpgpkey/policy': async () => {
       return ''; // allow direct for all
     },
