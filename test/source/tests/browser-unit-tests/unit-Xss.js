@@ -119,6 +119,33 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags keeps srcset-less inline i
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
+(async () => {
+  const stylesheet = document.createElement('link');
+  stylesheet.rel = 'stylesheet';
+  stylesheet.href = chrome.runtime.getURL('/css/cryptup.css');
+  document.head.appendChild(stylesheet);
+  await new Promise(resolve => stylesheet.addEventListener('load', () => resolve(), { once: true }));
+  const badge = document.createElement('div');
+  badge.className = 'pgp_badge';
+  document.body.appendChild(badge);
+  const style = window.getComputedStyle(badge);
+  if (style.position !== 'relative' || style.zIndex !== '1') {
+    throw Error(`pgp badge is not protected by its stacking order: position=${style.position}, z-index=${style.zIndex}`);
+  }
+  badge.remove();
+  const messageContent = document.createElement('div');
+  messageContent.id = 'pgp_block';
+  document.body.appendChild(messageContent);
+  const messageContentStyle = window.getComputedStyle(messageContent);
+  if (messageContentStyle.isolation !== 'isolate') {
+    throw Error(`pgp message content is not isolated: isolation=${messageContentStyle.isolation}`);
+  }
+  messageContent.remove();
+  stylesheet.remove();
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags rejects encoded logout image paths`);
 (async () => {
   const urls = [
