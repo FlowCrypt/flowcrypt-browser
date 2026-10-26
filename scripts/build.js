@@ -135,11 +135,6 @@ const main = async () => {
 
   runCmd('npx webpack', 'conf');
 
-  // to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
-  // cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build
-  // cp dist/forge.js ../flowcrypt-browser/extension/lib/forge.js
-  // WARN: the steps above are not working as of forge 0.10.0 due to eval/CSP mentioned here: https://github.com/digitalbazaar/forge/issues/814
-
   // remaining build steps sequentially
   await synchronizeFiles(OUTPUT_DIRECTORY);
   for (const file of ['manifest.json', '.web-extension-id']) {
