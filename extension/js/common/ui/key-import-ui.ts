@@ -108,7 +108,7 @@ export class KeyImportUi {
     }
   };
 
-  public onBadPassphrase: VoidCallback = () => undefined;
+  public onBadPassphrase: () => void = () => undefined;
 
   public shouldSubmitPubkey = (clientConfiguration: ClientConfiguration, checkboxSelector: string) => {
     if (clientConfiguration.mustSubmitToAttester() && !clientConfiguration.canSubmitPubToAttester()) {
