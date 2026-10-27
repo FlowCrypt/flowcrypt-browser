@@ -402,8 +402,8 @@ abstract class ControllableBase {
   };
 
   public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
-    const deadline = Date.now() + timeoutSec * 1000;
     await this.waitAny(selector, { timeout: timeoutSec });
+    const deadline = Date.now() + timeoutSec * 1000;
     const observedContentHistory: string[] = [];
     while (Date.now() < deadline) {
       const currentText = await this.read(selector, true);
