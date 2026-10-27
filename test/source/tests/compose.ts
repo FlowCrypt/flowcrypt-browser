@@ -1481,10 +1481,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_reply');
         await composePage.waitForSelTestState('ready');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_forward');
@@ -1494,6 +1496,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_reply_all');
         await composePage.waitForSelTestState('ready');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
       })
     );
