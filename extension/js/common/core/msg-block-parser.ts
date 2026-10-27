@@ -138,12 +138,9 @@ export class MsgBlockParser {
   }
 
   public static extractFcReplyToken(decryptedContent: string): unknown | undefined {
-    const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
-    if (fcTokenElement.length) {
-      const fcData = fcTokenElement.attr('cryptup-data');
-      if (fcData) {
-        return Str.htmlAttrDecode(fcData);
-      }
+    const match = /<div\b(?=[^>]*\bclass="[^"]*\bcryptup_reply\b[^"]*")[^>]*\bcryptup-data="([^"]+)"[^>]*><\/div>/i.exec(decryptedContent);
+    if (match) {
+      return Str.htmlAttrDecode(match[1]);
     }
     return undefined;
   }
