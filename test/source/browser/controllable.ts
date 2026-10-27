@@ -402,10 +402,10 @@ abstract class ControllableBase {
   };
 
   public waitForContent = async (selector: string, needle: string | RegExp, timeoutSec = 20, testLoopLengthMs = 100) => {
-    await this.waitAny(selector);
-    const start = Date.now();
+    const deadline = Date.now() + timeoutSec * 1000;
+    await this.waitAny(selector, { timeout: timeoutSec });
     const observedContentHistory: string[] = [];
-    while (Date.now() - start < timeoutSec * 1000) {
+    while (Date.now() < deadline) {
       const currentText = await this.read(selector, true);
       if (typeof needle === 'string') {
         // str
@@ -660,9 +660,8 @@ abstract class ControllableBase {
   };
 
   private waitAnyInternal = async (processedSelectors: string[], { timeout, visible }: { timeout: number; visible?: true }): Promise<ElementHandle> => {
-    const attemptsPerSecond = 20;
-    timeout = Math.max(timeout * attemptsPerSecond, 1);
-    while (timeout-- > 0) {
+    const deadline = Date.now() + timeout * 1000;
+    do {
       try {
         for (const selector of processedSelectors) {
           const elements = await (this.isXpath(selector) ? this.target.$$(`xpath/.${selector}`) : this.target.$$(selector));
@@ -678,8 +677,11 @@ abstract class ControllableBase {
           throw e;
         }
       }
-      await Util.sleep(1 / attemptsPerSecond);
-    }
+      if (Date.now() >= deadline) {
+        break;
+      }
+      await Util.sleep(0.05);
+    } while (Date.now() < deadline);
     throw Error(`waiting failed: Elements did not appear: ${processedSelectors.join(',')}`);
   };
 
