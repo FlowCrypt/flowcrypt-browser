@@ -3,7 +3,7 @@
   "version": "8.5.15",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "engines": {
-    "node": ">=24"
+    "node": "^24.22.1"
   },
   "resolutions": {
     "graceful-fs": "4.1.13"
