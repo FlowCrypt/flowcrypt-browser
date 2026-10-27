@@ -1238,7 +1238,7 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
           await pgpBlock.waitForSelTestState('ready');
           // Wait for print button to be enabled (data-test-print-ready="true")
           await pgpBlock.waitAll('[data-test="action-print"][data-test-print-ready="true"]', { timeout: 30 });
-          const expectedPrintDateString = new Date(1712818847000).toLocaleString();
+          const expectedPrintDateString = await page.target.evaluate(() => new Date(1712818847000).toLocaleString());
           const printPage = await browser.newPageTriggeredBy(t, () => pgpBlock.click('@action-print'));
           await printPage.waitForContent('@print-date', expectedPrintDateString);
           await printPage.waitForContent('@print-user-email', 'First Last <flowcrypt.compatibility@gmail.com>');
