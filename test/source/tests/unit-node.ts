@@ -20,7 +20,7 @@ import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
-import { Str, checkValidURL } from '../core/common';
+import { Str, checkValidURL, emailKeyIndex } from '../core/common';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password';
 
 use(chaiAsPromised);
@@ -40,6 +40,12 @@ export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
 
 export const defineUnitNodeTests = (testVariant: TestVariant) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
+    test(`[unit][emailKeyIndex] gives distinct keys to emails that differ only in punctuation`, async t => {
+      t.not(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('ab@corp.test', 'keys'));
+      t.is(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('A-B@corp.test', 'keys'));
+      t.not(emailKeyIndex('İ@example.com', 'keys'), emailKeyIndex('i\u0307@example.com', 'keys'));
+      t.pass();
+    });
     test(`[unit][KeyUtil.parse] throw if parse methods expecting exactly one key find more than one`, async t => {
       const unarmoredKeys = Buffer.from([
         ...(await PgpArmor.dearmor(testConstants.flowcryptcompatibilityPublicKey7FDE685548AEA788)).data,

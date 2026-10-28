@@ -12,6 +12,7 @@ import { Catch } from '../common/platform/catch.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { BgUtils } from './bgutils.js';
 import {
+  AccountStorageKeyCollisionError,
   migrateGlobal,
   moveContactsToEmailsAndPubkeys,
   revalidateStoredRevocations,
@@ -38,6 +39,9 @@ const ready = Promise.resolve().then(async () => {
     await migrateGlobal();
     storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {
+    if (e instanceof AccountStorageKeyCollisionError) {
+      await BgUtils.handleStoreErr(e, 'account_storage_key_collision');
+    }
     await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
     return;
   }
