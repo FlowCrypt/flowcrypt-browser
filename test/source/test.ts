@@ -12,7 +12,6 @@ import { Util, getParsedCliParams } from './util';
 
 import { mkdirSync, realpathSync } from 'fs';
 import { writeFile } from 'fs/promises';
-import { TestUrls } from './browser/test-urls';
 import { startAllApisMock } from './mock/all-apis-mock';
 import { reportedErrors } from './mock/fes/shared-tenant-fes-endpoints';
 import { defineComposeTests } from './tests/compose';
@@ -66,8 +65,6 @@ const testWithBrowser = (
     const mockApi = isMock ? await startMockApiAndCopyBuild(t) : undefined;
     if (isMock) {
       t.context.mockApi = mockApi;
-    } else {
-      t.context.urls = new TestUrls(extensionId ?? (await browserPool.getExtensionId(t)));
     }
     try {
       await browserPool.withNewBrowserTimeoutAndRetry(
@@ -108,7 +105,6 @@ const startMockApiAndCopyBuild = async (t: AvaContext) => {
   if (typeof address === 'object' && address) {
     const result = await asyncExec(`node ./scripts/config-mock-build.js ${buildDir} ${address.port}`);
     t.context.extensionDir = result.stdout;
-    t.context.urls = new TestUrls(await browserPool.getExtensionId(t), address.port);
   } else {
     t.log('Failed to get mock build address');
   }
