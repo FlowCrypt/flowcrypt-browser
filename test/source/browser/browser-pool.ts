@@ -3,11 +3,13 @@
 import { Util } from '../util';
 import { BrowserHandle } from './browser-handle';
 import { Consts } from '../test';
-import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
-import { launch } from 'puppeteer';
+import { TIMEOUT_DESTROY_UNEXPECTED_ALERT, TIMEOUT_ELEMENT_APPEAR } from '.';
+import { launch, TargetType } from 'puppeteer';
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests/tooling';
+import { ControllablePage } from './controllable';
+import { TestUrls } from './test-urls';
 
-class TimeoutError extends Error { }
+class TimeoutError extends Error {}
 
 export class BrowserPool {
   private semaphore: Semaphore;
@@ -24,7 +26,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
-  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
+  public newBrowserHandle = async (t: AvaContext) => {
     await this.semaphore.acquire();
     const extensionDir = t.context.extensionDir ?? this.extensionBuildDir;
     const args = [
@@ -58,51 +60,38 @@ export class BrowserPool {
       devtools: false,
       slowMo,
       timeout: 90000, // 90 seconds timeout for browser launch (CI can be slow)
+    }).catch((err: unknown) => {
+      this.semaphore.release();
+      throw err;
     });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
-    if (closeInitialPage) {
+    try {
+      const target = await browser.waitForTarget(
+        target =>
+          target.type() === TargetType.PAGE &&
+          target.url().startsWith('chrome-extension://') &&
+          new URL(target.url()).pathname === '/chrome/settings/initial.htm',
+        { timeout: TIMEOUT_ELEMENT_APPEAR * 1000 }
+      );
+      const address = t.context.mockApi?.server.address();
+      t.context.urls = new TestUrls(new URL(target.url()).hostname, typeof address === 'object' && address ? address.port : undefined);
+      const page = await target.page();
+      if (!page) {
+        throw new Error('Extension initial page is unavailable');
+      }
+      const initialPage = new ControllablePage(t, page);
+      handle.pages.push(initialPage);
+      await initialPage.waitAll('@initial-page');
+      await initialPage.close();
+      return handle;
+    } catch (err) {
       try {
-        const initialPage = await handle.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-        await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
-        await initialPage.close();
-      } catch (e) {
-        if (String(e).includes('Action did not trigger a new page within timeout period')) {
-          // could have opened before we had a chance to add a handler above
-          const pages = await handle.browser.pages();
-          const initialPage = pages.find(p => p.url().includes('chrome/settings/initial.htm'));
-          if (!initialPage) {
-            throw e;
-          }
-          await initialPage.close();
-        } else {
-          throw e;
-        }
-      }
-    }
-    return handle;
-  };
-
-  public getExtensionId = async (t: AvaContext): Promise<string> => {
-    const browser = await this.newBrowserHandle(t, false);
-    for (const i of [1, 2, 3, 4, 5]) {
-      await Util.sleep(2);
-      const pages = await browser.browser.pages();
-      const urls = pages.map(page => page.url());
-      const extensionUrl = urls.find(url => url !== 'about:blank');
-      if (extensionUrl) {
-        const match = extensionUrl.match(/[a-z]{32}/g);
-        if (match) {
-          await browser.close();
-          return match[0];
-        }
-      }
-      if (i === 5) {
         await browser.close();
-        throw new Error(`Cannot determine extension id from urls |${urls.join('|')}|`);
+      } finally {
+        this.semaphore.release();
       }
+      throw err;
     }
-    await browser.close();
-    throw new Error(`Cannot determine extension id from urls.`);
   };
 
   public cbWithTimeout = (cb: () => Promise<void>, timeout: number): Promise<void> => {

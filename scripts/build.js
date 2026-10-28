@@ -1,7 +1,7 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 const fs = require('fs-extra');
 const path = require('path');
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
 
 const ROOT_DIR = process.cwd();
 const OUTPUT_DIRECTORY = path.resolve(ROOT_DIR, './build/generic-extension-wip');
@@ -18,7 +18,14 @@ const runCmd = (cmd, cwdName = 'default') => {
   const cwd = safeDirs[cwdName];
   if (!cwd) throw new Error('Invalid working directory requested');
 
-  execSync(cmd, { stdio: 'inherit', cwd });
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, { stdio: 'inherit', cwd, shell: true });
+    child.on('error', reject);
+    child.on('close', (code, signal) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Command failed (${signal || code}): ${cmd}`));
+    });
+  });
 };
 
 /**
@@ -41,7 +48,7 @@ const synchronizeFiles = async destDir => {
 const buildTS = (useOurCompiler, config, incremental = false, buildInfo = '') => {
   const compiler = useOurCompiler ? `node ${path.join(BUILD_DIRECTORY, 'tooling/tsc-compiler')}` : 'npx tsc';
   const incArgs = incremental ? `--incremental --tsBuildInfoFile ${buildInfo}` : '';
-  runCmd(`${compiler} --project ${config} ${incArgs}`.trim());
+  return runCmd(`${compiler} --project ${config} ${incArgs}`.trim());
 };
 
 /**
@@ -103,16 +110,22 @@ const main = async () => {
     }
 
     fs.ensureDirSync(BUILD_DIRECTORY);
-    buildTS(false, './tsconfig.json', true, `${BUILD_DIRECTORY}/tsconfig.tsbuildinfo`);
-    buildTS(false, './conf/tsconfig.content_scripts.json', true, `${BUILD_DIRECTORY}/tsconfig.content_scripts.tsbuildinfo`);
-    buildTS(false, './conf/tsconfig.streams.json', true, `${BUILD_DIRECTORY}/tsconfig.streams.tsbuildinfo`);
   } else {
     fs.removeSync(BUILD_DIRECTORY);
-    runCmd('npx tsc --project ./conf/tsconfig.tooling.json');
+    await runCmd('npx tsc --project ./conf/tsconfig.tooling.json');
     fs.ensureDirSync(OUTPUT_DIRECTORY);
-    buildTS(true, './tsconfig.json');
-    buildTS(true, './conf/tsconfig.content_scripts.json');
-    buildTS(true, './conf/tsconfig.streams.json');
+  }
+
+  // These projects write to separate directories. Wait for every compiler before
+  // continuing, including on failure, so no compiler is left writing in the background.
+  const incremental = args.includes('--incremental');
+  const compilations = await Promise.allSettled([
+    buildTS(!incremental, './tsconfig.json', incremental, `${BUILD_DIRECTORY}/tsconfig.tsbuildinfo`),
+    buildTS(!incremental, './conf/tsconfig.content_scripts.json', incremental, `${BUILD_DIRECTORY}/tsconfig.content_scripts.tsbuildinfo`),
+    buildTS(!incremental, './conf/tsconfig.streams.json', incremental, `${BUILD_DIRECTORY}/tsconfig.streams.tsbuildinfo`),
+  ]);
+  for (const result of compilations) {
+    if (result.status === 'rejected') throw result.reason;
   }
 
   await copyDependencies();
@@ -133,12 +146,7 @@ const main = async () => {
     [...streamFiles, path.join(OUTPUT_DIRECTORY, 'lib/openpgp.js')]
   );
 
-  runCmd('npx webpack', 'conf');
-
-  // to update node-forge library, which is missing the non-minified version in dist, we have to build it manually
-  // cd ~/git && rm -rf ./forge && git clone https://github.com/digitalbazaar/forge.git && cd ./forge && npm install && npm run-script build
-  // cp dist/forge.js ../flowcrypt-browser/extension/lib/forge.js
-  // WARN: the steps above are not working as of forge 0.10.0 due to eval/CSP mentioned here: https://github.com/digitalbazaar/forge/issues/814
+  await runCmd('npx webpack --stats errors-warnings', 'conf');
 
   // remaining build steps sequentially
   await synchronizeFiles(OUTPUT_DIRECTORY);
@@ -147,14 +155,14 @@ const main = async () => {
   }
 
   for (const cmd of ['resolve-modules --project ./tsconfig.json', 'fill-values', 'bundle-content-scripts']) {
-    runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', cmd)}`);
+    await runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', cmd)}`);
   }
 
   for (const dir of ['chrome-enterprise', 'chrome-consumer', 'firefox-consumer', 'thunderbird-consumer']) {
     fs.copySync(OUTPUT_DIRECTORY, path.join(BUILD_DIRECTORY, dir));
   }
 
-  runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', 'build-types-and-manifests')}`);
+  await runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', 'build-types-and-manifests')}`);
   console.log('✅ Build completed successfully.');
 };
 
