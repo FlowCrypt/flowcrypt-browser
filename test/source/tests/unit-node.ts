@@ -1463,6 +1463,39 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       t.pass();
     });
 
+    test('[Attachment.isExecutableFile] detects executable extensions after filename normalization', async t => {
+      const isExecutable = (name: string) => new Attachment({ name, data: new Uint8Array() }).isExecutableFile();
+      const cases: [name: string, executable: boolean][] = [
+        ['invoice.exe', true],
+        ['invoice.exe.', true],
+        ['invoice.exe..', true],
+        ['invoice.exe. .', true],
+        ['INVOICE.EXE.', true],
+        ['invoice.exe ', true],
+        ['invoice.exe\t', true],
+        ['invoice.exe\n', true],
+        ['invoice.exe\u00a0', true],
+        ['invoice.exe.\u00a0', true],
+        ['invoice.exe\u0000', true],
+        ['invoice.exe\u0085', true],
+        ['invoice.exe\u200b', true],
+        ['invoice.exe\u202e', true],
+        ['invoice.exe\u3000', true],
+        ['invoice.exe.txt', false],
+        ['invoice.exe.txt.', false],
+        ['invoice.txt', false],
+        ['invoice', false],
+        ['invoice.exe\u202e.txt', false],
+        ['', false],
+        ['.', false],
+        ['   ', false],
+      ];
+      for (const [name, executable] of cases) {
+        expect(isExecutable(name), name).to.equal(executable);
+      }
+      t.pass();
+    });
+
     // public key that allows to encrypt for primary key - to simulate a bug in other implementation that wrongly encrypts for primary when it shouldn't
     // sec  rsa2048/F90C76AE611AFDEE
     //      created: 2020-10-15  expires: never       usage: SCE
