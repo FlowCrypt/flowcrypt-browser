@@ -240,6 +240,7 @@ export class Attachment {
   };
 
   public isExecutableFile = () => {
+    const name = this.name.replace(/[\s.\p{C}]+$/gu, '').toLowerCase();
     return [
       'ade',
       'adp',
@@ -308,7 +309,7 @@ export class Attachment {
       'xlsm',
       '7z',
       'ace',
-    ].some(exeFileExtension => this.name.toLowerCase().endsWith('.' + exeFileExtension));
+    ].some(exeFileExtension => name.endsWith('.' + exeFileExtension));
   };
 
   private isPrivateKey = (): boolean => {
