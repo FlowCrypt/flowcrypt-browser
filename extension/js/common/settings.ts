@@ -598,7 +598,13 @@ export class Settings {
 
   private static async fetchAcctAliasesFromGmail(acctEmail: string): Promise<Dict<SendAsAlias>> {
     const response = await new Gmail(acctEmail).fetchAcctAliases();
-    const namesRes = await Google.getNames(acctEmail);
+    const namesRes = await Google.getNames(acctEmail).catch((e: unknown) => {
+      if (!ApiErr.isRateLimit(e)) {
+        throw e;
+      }
+      // Profile names are optional: keep Gmail's display name if the People API quota is exhausted.
+      return undefined;
+    });
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const a of validAliases) {
@@ -610,7 +616,7 @@ export class Settings {
         footer: a.signature,
       };
       if (sendAsEmail === acctEmail.toLowerCase()) {
-        result[sendAsEmail].name = namesRes.names.find(name => name.metadata.primary ?? false)?.displayName;
+        result[sendAsEmail].name = namesRes?.names.find(name => name.metadata.primary ?? false)?.displayName ?? a.displayName;
       }
     }
     return result;

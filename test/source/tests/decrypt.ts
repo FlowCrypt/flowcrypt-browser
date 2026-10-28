@@ -2,12 +2,12 @@
 
 import test from 'ava';
 
-import { Config, TestVariant, Util } from './../util';
+import { Config, TestMessage, TestVariant, Util } from './../util';
 import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { InboxPageRecipe } from './page-recipe/inbox-page-recipe';
 import { SettingsPageRecipe } from './page-recipe/settings-page-recipe';
-import { TestWithBrowser } from './../test';
+import { CommonAcct, TestWithBrowser } from './../test';
 import { expect } from 'chai';
 import { PageRecipe } from './page-recipe/abstract-page-recipe';
 import {
@@ -430,224 +430,312 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
       })
     );
 
-    test(
-      `decrypt - without a subject`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1600f39127880eed',
-          {
-            content: ['This is a compatibility test email'],
-            unexpectedContent: ['Encrypted Subject:', '(no subject)'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted iso-2022-jp pgp/mime`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16f66f1da9d50d05',
-          {
-            content: ['ゾし逸現飲'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted iso-2022-jp, plain text`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16f431a0b9056562',
-          {
-            content: ['ゾし逸現飲'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - iso-2022-jp, signed plain text`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '18024d53a24b19ff',
-          {
-            content: ['テストです\nテスト'],
-            encryption: 'not encrypted',
-            signature: 'could not verify signature: missing pubkey 73A5534E5887BBAA',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - quoted part parsing will not crash browser`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16b7fce1c1589c0a',
-          {
-            content: ['point to them directly', 'free cert through', 'will honestly soon', 'dropped significantly'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-            quoted: true,
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [flowcrypt] signed message inline`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7f5e966792203',
-          {
-            content: ['Standard message', 'signed inline', 'should easily verify', 'This is email footer'],
-            encryption: 'not encrypted',
-            signature: 'could not verify signature: missing pubkey 06CA553EC2455D70',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - cleartext signed message detected in an attachment`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'ci.tests.gmail');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1885ded59a2b5a8d',
-          {
-            content: ['Standard message', 'signed inline', 'should easily verify', 'This is email footer'],
-            encryption: 'not encrypted',
-            signature: 'could not verify signature: missing pubkey 06CA553EC2455D70',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [gpgmail] signed message will get parsed and rendered (though verification fails, enigmail does the same)`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f81b5e6ed91b20',
-          {
-            content: ['Hi this is a signed message.'],
-            encryption: 'not encrypted',
-            signature: 'could not verify signature: missing pubkey 21FC55064B1DDC75',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [gpg] signed fully armored message`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1707b9c96c5d7893',
-          {
-            content: ['this was encrypted with gpg', 'gpg --sign --armor -r flowcrypt.compatibility@gmail.com ./text.txt'],
-            encryption: 'not encrypted',
-            signature: 'could not verify signature: signed by flowcrypt.compatibility@gmail.com but message is from sender@domain.com',
-            quoted: false,
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [flowcrypt] encrypted utf8`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7f5f098d6bc36',
-          {
-            content: ['გამარჯობა.', 'こんにちは。', 'Здравствуй.', 'Chào bạn.', 'Dobrý deň!', '여보세요?', '你好。'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [flowcrypt] encrypted thai utf8`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1645e37647db32f8',
-          {
-            content: ['ทดสอบ', 'นี้เป็นการทดสอบ', 'ภาษาไทย'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [facebook] encrypted utf8`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16180866d0ae26c3',
-          {
-            content: ['Сергій Ткаченко'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey 6859679E2F20BEF4',
-          },
-          authHdr
-        );
-      })
-    );
+    const decryptCases: { name: string; acct?: CommonAcct; msgId: string; expected: TestMessage }[] = [
+      {
+        name: `decrypt - without a subject`,
+        msgId: '1600f39127880eed',
+        expected: {
+          content: ['This is a compatibility test email'],
+          unexpectedContent: ['Encrypted Subject:', '(no subject)'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted iso-2022-jp pgp/mime`,
+        msgId: '16f66f1da9d50d05',
+        expected: {
+          content: ['ゾし逸現飲'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted iso-2022-jp, plain text`,
+        msgId: '16f431a0b9056562',
+        expected: {
+          content: ['ゾし逸現飲'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - iso-2022-jp, signed plain text`,
+        msgId: '18024d53a24b19ff',
+        expected: {
+          content: ['テストです\nテスト'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: missing pubkey 73A5534E5887BBAA',
+        },
+      },
+      {
+        name: `decrypt - quoted part parsing will not crash browser`,
+        msgId: '16b7fce1c1589c0a',
+        expected: {
+          content: ['point to them directly', 'free cert through', 'will honestly soon', 'dropped significantly'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+          quoted: true,
+        },
+      },
+      {
+        name: `decrypt - [flowcrypt] signed message inline`,
+        msgId: '15f7f5e966792203',
+        expected: {
+          content: ['Standard message', 'signed inline', 'should easily verify', 'This is email footer'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: missing pubkey 06CA553EC2455D70',
+        },
+      },
+      {
+        name: `decrypt - cleartext signed message detected in an attachment`,
+        acct: 'ci.tests.gmail',
+        msgId: '1885ded59a2b5a8d',
+        expected: {
+          content: ['Standard message', 'signed inline', 'should easily verify', 'This is email footer'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: missing pubkey 06CA553EC2455D70',
+        },
+      },
+      {
+        name: `decrypt - [gpgmail] signed message will get parsed and rendered (though verification fails, enigmail does the same)`,
+        msgId: '15f81b5e6ed91b20',
+        expected: {
+          content: ['Hi this is a signed message.'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: missing pubkey 21FC55064B1DDC75',
+        },
+      },
+      {
+        name: `decrypt - [gpg] signed fully armored message`,
+        msgId: '1707b9c96c5d7893',
+        expected: {
+          content: ['this was encrypted with gpg', 'gpg --sign --armor -r flowcrypt.compatibility@gmail.com ./text.txt'],
+          encryption: 'not encrypted',
+          signature: 'could not verify signature: signed by flowcrypt.compatibility@gmail.com but message is from sender@domain.com',
+          quoted: false,
+        },
+      },
+      {
+        name: `decrypt - [flowcrypt] encrypted utf8`,
+        msgId: '15f7f5f098d6bc36',
+        expected: {
+          content: ['გამარჯობა.', 'こんにちは。', 'Здравствуй.', 'Chào bạn.', 'Dobrý deň!', '여보세요?', '你好。'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [flowcrypt] encrypted thai utf8`,
+        msgId: '1645e37647db32f8',
+        expected: {
+          content: ['ทดสอบ', 'นี้เป็นการทดสอบ', 'ภาษาไทย'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [facebook] encrypted utf8`,
+        msgId: '16180866d0ae26c3',
+        expected: {
+          content: ['Сергій Ткаченко'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey 6859679E2F20BEF4',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted utf8`,
+        msgId: '1639b8ceb6c44a4c',
+        expected: {
+          content: ['TEST, ПРОВЕРКА', 'C увaжeниeм, Пaвлoвcкий Poмaн Oлeгoвич.'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+          quoted: true,
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted pgp/mime`,
+        msgId: '15f7fcace2d72246',
+        expected: {
+          content: ['This is an encrypted message.', 'Not much going on here.'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted inline`,
+        msgId: '15f7fcb7fabc7511',
+        expected: {
+          content: ['This is inline-encrypted message from Enigmail.', 'Yay.'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted+signed inline`,
+        msgId: '15f7fd2fd072cff2',
+        expected: {
+          content: ['This message is both encrypted + signed.'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted+signed pgp/mime`,
+        msgId: '15f7fd3ba3f37cf3',
+        expected: {
+          content: ['Message encrypted and signed using PGP/MIME.'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] encrypted+signed+file pgp/mime + load from gmail`,
+        msgId: '15f7fd7fe45fc026',
+        expected: {
+          content: ['Message encrypted and signed as a whole using PGP/MIME.', 'cape-town-central.jpg', '185.69 kB'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
+        },
+      },
+      {
+        name: `decrypt - encrypted missing checksum`,
+        msgId: '15f7ffbebc6ba296',
+        expected: {
+          content: ['400 library systems in 177 countries worldwide'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - pgp/mime with large attachment - mismatch`,
+        msgId: '162275c819bcbf9b',
+        expected: {
+          content: ['No decryption key packets found'],
+          error: 'decrypt error',
+          expectPercentageProgress: true,
+        },
+      },
+      {
+        name: `decrypt - pgp/mime with large attachment as message.asc`,
+        msgId: '1622eaa286f90737',
+        expected: {
+          content: ['This will will have a larger attachment below', 'image-large.jpg'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+          expectPercentageProgress: true,
+        },
+      },
+      {
+        name: `decrypt - pgp/mime with small attachments as message.asc`,
+        msgId: '16224f57d26e038e',
+        expected: {
+          content: ['Can you confirm this works.', 'Senior Consultant, Security'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey 6FC39F2CDD104B3C',
+        },
+      },
+      {
+        name: `decrypt - [flowcrypt] escape and keep tags in plain text`,
+        msgId: '1663ac8b70e22517',
+        expected: {
+          content: ['thispasswordhasa<tag>init'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [symantec] base64 german umlauts`,
+        msgId: '166117c082a73905',
+        expected: {
+          content: ['verspätet die gewünschte', 'Grüße', 'ä, ü, ö or ß'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [gnupg v2] thai text`,
+        msgId: '166147ea9bb6669d',
+        expected: {
+          content: ['still can read your message ยังคงอ่านได้อยู่', "This is time I can't read ครั้งนี้อ่านไม่ได้แล้ว"],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [gnupg v2] thai text in html`,
+        msgId: '16613ff9c3735102',
+        expected: {
+          content: ['เทสไทย', 'Vulnerability Assessment'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [enigmail] basic html`,
+        msgId: '1663a65bbd73ce1a',
+        expected: {
+          content: ['The following text is bold: this is bold'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey D97859FF68EA0F04',
+        },
+      },
+      {
+        name: `decrypt - [thunderbird] unicode chinese`,
+        msgId: '164563dc9e3a8549',
+        expected: {
+          content: ['這封信是用 Thunderbird 做加密與簽章所寄出。', '第四屆董事會成員、認證委員會委員'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey 0B38948F4CD565B5',
+          quoted: true,
+        },
+      },
+      {
+        name: `decrypt - [security] mdc - missing - error`,
+        msgId: '163df1bf12034b9d',
+        expected: {
+          error: 'decrypt error',
+          content: ['Security threat!', 'MDC', 'Display the message at your own risk.'],
+          unexpectedContent: ['As stated in subject', 'Shall not decrypt automatically', 'Has to show a warning'],
+        },
+      },
+      {
+        name: `decrypt - [security] mdc - modification detected - error`,
+        msgId: '163dee87a4bfed45',
+        expected: {
+          error: 'decrypt error',
+          content: ['Security threat - opening this message is dangerous because it was modified in transit.'],
+        },
+      },
+      {
+        name: `decrypt - [everdesk] message encrypted for sub but claims encryptedFor:primary,sub`,
+        msgId: '16d558cb71e8d510',
+        expected: {
+          content: ['this is a sample for FlowCrypt compatibility'],
+          encryption: 'encrypted',
+          signature: 'not signed',
+        },
+      },
+      {
+        name: `decrypt - [pep] pgp/mime message with text encoded as inline attachment`,
+        msgId: '16ff09b1baca2051',
+        expected: {
+          content: ['Subject: Re: Test from Tom iOS', 'test again', 'A message', 'Testing'],
+          encryption: 'encrypted',
+          signature: 'could not verify signature: missing pubkey A4556258EFD7EE07',
+          quoted: true,
+        },
+      },
+    ];
+    for (const { name, acct = 'compatibility', msgId, expected } of decryptCases) {
+      test(
+        name,
+        testWithBrowser(async (t, browser) => {
+          const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, acct);
+          await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, msgId, expected, authHdr);
+        })
+      );
+    }
 
     test(
       `decrypt - [gpgmail] encrypted utf8`,
@@ -668,151 +756,6 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
     );
 
     test(
-      `decrypt - [enigmail] encrypted utf8`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1639b8ceb6c44a4c',
-          {
-            content: ['TEST, ПРОВЕРКА', 'C увaжeниeм, Пaвлoвcкий Poмaн Oлeгoвич.'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-            quoted: true,
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted pgp/mime`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7fcace2d72246',
-          {
-            content: ['This is an encrypted message.', 'Not much going on here.'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted inline`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7fcb7fabc7511',
-          {
-            content: ['This is inline-encrypted message from Enigmail.', 'Yay.'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted+signed inline`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7fd2fd072cff2',
-          {
-            content: ['This message is both encrypted + signed.'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted+signed pgp/mime`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7fd3ba3f37cf3',
-          {
-            content: ['Message encrypted and signed using PGP/MIME.'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] encrypted+signed+file pgp/mime + load from gmail`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7fd7fe45fc026',
-          {
-            content: ['Message encrypted and signed as a whole using PGP/MIME.', 'cape-town-central.jpg', '185.69 kB'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey CBD1C3466E9C437F',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - encrypted missing checksum`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '15f7ffbebc6ba296',
-          {
-            content: ['400 library systems in 177 countries worldwide'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - pgp/mime with large attachment - mismatch`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '162275c819bcbf9b',
-          {
-            content: ['No decryption key packets found'],
-            error: 'decrypt error',
-            expectPercentageProgress: true,
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
       `decrypt - pgp/mime with large attachment`,
       testWithBrowser(async (t, browser) => {
         const { acctEmail, authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
@@ -827,187 +770,6 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithBrowser: Te
         await BrowserRecipe.pgpBlockCheck(t, await inboxPage.getFrame(['pgp_block.htm']), expectedMessage);
         await inboxPage.close();
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, msgId, expectedMessage, authHdr);
-      })
-    );
-
-    test(
-      `decrypt - pgp/mime with large attachment as message.asc`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1622eaa286f90737',
-          {
-            content: ['This will will have a larger attachment below', 'image-large.jpg'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-            expectPercentageProgress: true,
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - pgp/mime with small attachments as message.asc`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16224f57d26e038e',
-          {
-            content: ['Can you confirm this works.', 'Senior Consultant, Security'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey 6FC39F2CDD104B3C',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [flowcrypt] escape and keep tags in plain text`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1663ac8b70e22517',
-          {
-            content: ['thispasswordhasa<tag>init'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [symantec] base64 german umlauts`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '166117c082a73905',
-          {
-            content: ['verspätet die gewünschte', 'Grüße', 'ä, ü, ö or ß'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [gnupg v2] thai text`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '166147ea9bb6669d',
-          {
-            content: ['still can read your message ยังคงอ่านได้อยู่', "This is time I can't read ครั้งนี้อ่านไม่ได้แล้ว"],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [gnupg v2] thai text in html`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16613ff9c3735102',
-          {
-            content: ['เทสไทย', 'Vulnerability Assessment'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [enigmail] basic html`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '1663a65bbd73ce1a',
-          {
-            content: ['The following text is bold: this is bold'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey D97859FF68EA0F04',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [thunderbird] unicode chinese`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '164563dc9e3a8549',
-          {
-            content: ['這封信是用 Thunderbird 做加密與簽章所寄出。', '第四屆董事會成員、認證委員會委員'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey 0B38948F4CD565B5',
-            quoted: true,
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [security] mdc - missing - error`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '163df1bf12034b9d',
-          {
-            error: 'decrypt error',
-            content: ['Security threat!', 'MDC', 'Display the message at your own risk.'],
-            unexpectedContent: ['As stated in subject', 'Shall not decrypt automatically', 'Has to show a warning'],
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [security] mdc - modification detected - error`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '163dee87a4bfed45',
-          {
-            error: 'decrypt error',
-            content: ['Security threat - opening this message is dangerous because it was modified in transit.'],
-          },
-          authHdr
-        );
       })
     );
 
@@ -1087,43 +849,6 @@ XZ8r4OC6sguP/yozWlkG+7dDxsgKQVBENeG6Lw==
             content: [],
             encryption: 'not encrypted',
             signature: 'error verifying signature: Signed digest did not match',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [everdesk] message encrypted for sub but claims encryptedFor:primary,sub`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16d558cb71e8d510',
-          {
-            content: ['this is a sample for FlowCrypt compatibility'],
-            encryption: 'encrypted',
-            signature: 'not signed',
-          },
-          authHdr
-        );
-      })
-    );
-
-    test(
-      `decrypt - [pep] pgp/mime message with text encoded as inline attachment`,
-      testWithBrowser(async (t, browser) => {
-        const { authHdr } = await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
-        await BrowserRecipe.pgpBlockVerifyDecryptedContent(
-          t,
-          browser,
-          '16ff09b1baca2051',
-          {
-            content: ['Subject: Re: Test from Tom iOS', 'test again', 'A message', 'Testing'],
-            encryption: 'encrypted',
-            signature: 'could not verify signature: missing pubkey A4556258EFD7EE07',
-            quoted: true,
           },
           authHdr
         );

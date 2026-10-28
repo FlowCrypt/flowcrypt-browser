@@ -1007,33 +1007,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     // }));
 
     test(
-      'setup - recover with a passphrase - no remaining',
-      testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
-        t.context.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
-      })
-    );
-
-    test(
-      'setup - fail to recover with a wrong passphrase',
-      testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
-        t.context.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', {
-          hasRecoverMore: false,
-          wrongPp: true,
-        });
-      })
-    );
-
-    test(
       'setup - fail to recover with a wrong passphrase at first, then recover with good passphrase',
       testWithBrowser(async (t, browser) => {
         const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';

@@ -57,34 +57,25 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       });
       t.pass();
     });
-    test(`[unit][OpenPGPKey.parseMany] throws on invalid input`, async t => {
-      await t.throwsAsync(
-        () =>
-          OpenPGPKey.parseMany(`-----BEGIN PGP PUBLIC KEY BLOCK-----
+    const malformedKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: FlowCrypt Email Encryption
 Comment: Seamlessly send and receive encrypted email
 
-Something wrong with this key`),
-        {
+Something wrong with this key`;
+    const malformedKeyParsers = [
+      { name: 'OpenPGPKey.parseMany', parse: (input: string) => OpenPGPKey.parseMany(input) },
+      { name: 'KeyUtil.parseMany', parse: (input: string) => KeyUtil.parseMany(input) },
+      { name: 'OpenPGPKey.parse', parse: (input: string) => OpenPGPKey.parse(input) },
+      { name: 'KeyUtil.parse', parse: (input: string) => KeyUtil.parse(input) },
+    ];
+    for (const { name, parse } of malformedKeyParsers) {
+      test(`[unit][${name}] throws on invalid input`, async t => {
+        await t.throwsAsync(() => parse(malformedKey), {
           instanceOf: Error,
           message: 'Misformed armored text',
-        }
-      );
-    });
-    test(`[unit][KeyUtil.parseMany] throws on invalid input`, async t => {
-      await t.throwsAsync(
-        () =>
-          KeyUtil.parseMany(`-----BEGIN PGP PUBLIC KEY BLOCK-----
-Version: FlowCrypt Email Encryption
-Comment: Seamlessly send and receive encrypted email
-
-Something wrong with this key`),
-        {
-          instanceOf: Error,
-          message: 'Misformed armored text',
-        }
-      );
-    });
+        });
+      });
+    }
     test(`[unit][KeyUtil.isChecksumMismatch] detects only present checksum mismatches`, t => {
       const armoredWithValidChecksum = `-----BEGIN PGP MESSAGE-----
 
@@ -102,34 +93,6 @@ bG8=
       expect(KeyUtil.isChecksumMismatch(armoredWithMalformedChecksum)).to.equal(false);
       t.pass();
     });
-    test(`[unit][OpenPGPKey.parse] throws on invalid input`, async t => {
-      await t.throwsAsync(
-        () =>
-          OpenPGPKey.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
-Version: FlowCrypt Email Encryption
-Comment: Seamlessly send and receive encrypted email
-
-Something wrong with this key`),
-        {
-          instanceOf: Error,
-          message: 'Misformed armored text',
-        }
-      );
-    });
-    test(`[unit][KeyUtil.parse] throws on invalid input`, async t => {
-      await t.throwsAsync(
-        () =>
-          KeyUtil.parse(`-----BEGIN PGP PUBLIC KEY BLOCK-----
-Version: FlowCrypt Email Encryption
-Comment: Seamlessly send and receive encrypted email
-
-Something wrong with this key`),
-        {
-          instanceOf: Error,
-          message: 'Misformed armored text',
-        }
-      );
-    });
     test(`[unit][OpenPGPKey.getOrCreateRevocationCertificate] operations`, async t => {
       const stringData = 'hello';
       const data = Buf.fromUtfStr(stringData);
@@ -146,20 +109,20 @@ Something wrong with this key`),
       const expectNotRevoked = async (key: Key) => {
         expect(key.revoked).to.be.false;
         if (key.isPrivate) {
-          await MsgUtil.sign(originalPrv, stringData);
+          await MsgUtil.sign(key, stringData);
         } else {
-          await MsgUtil.encryptMessage({ pubkeys: [pubkey], data, armor: true });
+          await MsgUtil.encryptMessage({ pubkeys: [key], data, armor: true });
         }
       };
       const expectRevoked = async (key: Key) => {
         expect(key.revoked).to.be.true;
         if (key.isPrivate) {
-          await t.throwsAsync(() => MsgUtil.sign(revokedPrv, stringData), {
+          await t.throwsAsync(() => MsgUtil.sign(key, stringData), {
             instanceOf: Error,
             message: 'Error signing message: Primary key is revoked',
           });
         } else {
-          await t.throwsAsync(() => MsgUtil.encryptMessage({ pubkeys: [revokedPub], data, armor: true }), {
+          await t.throwsAsync(() => MsgUtil.encryptMessage({ pubkeys: [key], data, armor: true }), {
             instanceOf: Error,
             message: 'Error encrypting message: Primary key is revoked',
           });
@@ -2903,7 +2866,8 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       expect(PgpArmor.clip(messageWithNoise)).to.equal(validMessage);
 
       // Test multiple messages (should return first)
-      const multipleMessages = validMessage + '\n\n' + validMessage;
+      const secondMessage = '-----BEGIN PGP MESSAGE-----\n\nsecond content\n-----END PGP MESSAGE-----';
+      const multipleMessages = validMessage + '\n\n' + secondMessage;
       expect(PgpArmor.clip(multipleMessages)).to.equal(validMessage);
 
       // Test with different block types
@@ -2918,9 +2882,11 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
       const mismatchedMessage = '-----BEGIN PGP MESSAGE-----\n\ntest\n-----END PGP SIGNATURE-----';
       expect(PgpArmor.clip(mismatchedMessage)).to.be.an.undefined;
 
-      // Test with very large input (over 10MB limit)
-      const largeInput = 'a'.repeat(11 * 1024 * 1024);
-      expect(PgpArmor.clip(largeInput)).to.be.an.undefined;
+      // Test valid armor at the 10MB limit and one character over it
+      const maxLength = 10 * 1024 * 1024;
+      const inputAtLimit = 'a'.repeat(maxLength - validMessage.length - 1) + '\n' + validMessage;
+      expect(PgpArmor.clip(inputAtLimit)).to.equal(validMessage);
+      expect(PgpArmor.clip(inputAtLimit + 'a')).to.be.an.undefined;
 
       // Test with pathological input that would have caused stack overflow
       const pathologicalBase = '-----BEGIN PGP MESSAGE-----\n' + 'a'.repeat(1000);
