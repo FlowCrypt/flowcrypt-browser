@@ -311,6 +311,14 @@ outerSignatureData
       t.pass();
     });
 
+    test(`[unit][MsgBlockParser.extractFcReplyToken] avoids backtracking on malformed input`, async t => {
+      const start = Date.now();
+      const malformed = '<div class="' + 'cryptup_reply '.repeat(10000);
+      expect(MsgBlockParser.extractFcReplyToken(malformed)).to.be.undefined;
+      expect(Date.now() - start).to.be.below(100);
+      t.pass();
+    });
+
     test(`[unit][MsgBlockParser.stripFcReplyToken] removes reply marker`, async t => {
       const marker = '<div style="display: none;" class="cryptup_reply" cryptup-data="abc"></div>';
       const stripped = MsgBlockParser.stripFcReplyToken(`hello ${marker} world`);
