@@ -298,6 +298,34 @@ outerSignatureData
       t.pass();
     });
 
+    test(`[unit][MsgBlockParser.extractFcReplyToken] extracts token and ignores HTML-like markup`, async t => {
+      const replyInfoRaw = Buf.fromUtfStr(JSON.stringify({ token: 'test-value' })).toBase64UrlStr();
+      const content = `Hello <img src="https://attacker.example/track.png" width="1" height="1">\n<div style="display: none;" class="cryptup_reply" cryptup-data="${replyInfoRaw}"></div>`;
+      const token = MsgBlockParser.extractFcReplyToken(content);
+      expect(token).to.deep.equal({ token: 'test-value' });
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.extractFcReplyToken] returns undefined when no marker`, async t => {
+      expect(MsgBlockParser.extractFcReplyToken('hello <img src="x">')).to.be.undefined;
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.extractFcReplyToken] avoids backtracking on malformed input`, async t => {
+      const start = Date.now();
+      const malformed = '<div class="' + 'cryptup_reply '.repeat(10000);
+      expect(MsgBlockParser.extractFcReplyToken(malformed)).to.be.undefined;
+      expect(Date.now() - start).to.be.below(100);
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.stripFcReplyToken] removes reply marker`, async t => {
+      const marker = '<div style="display: none;" class="cryptup_reply" cryptup-data="abc"></div>';
+      const stripped = MsgBlockParser.stripFcReplyToken(`hello ${marker} world`);
+      expect(stripped).to.not.include('cryptup_reply');
+      t.pass();
+    });
+
     test(`[unit][PgpKey.usableForEncryptionButExpired] recognizes usable expired key`, async t => {
       const expiredKey = await KeyUtil.parse(testConstants.expiredPrv);
       expect(expiredKey.expiration).to.equal(1567605343000);
