@@ -152,6 +152,8 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags rejects encoded logout ima
     'https://accounts.google.com/%4Cogout',
     'https://accounts.google.com/%6Cogout',
     'https://accounts.google.com/%73ignout',
+    'https://accounts.google.com/%256cogout',
+    'https://accounts.google.com/%zzlogout',
   ];
   for (const url of urls) {
     const clean = Xss.htmlSanitizeKeepBasicTags(`<img src="${url}">`, 'IMG-KEEP');

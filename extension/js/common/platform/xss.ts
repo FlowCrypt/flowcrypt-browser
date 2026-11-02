@@ -245,15 +245,37 @@ export class Xss {
         } else if (!src) {
           img.remove(); // src that exists but is null is suspicious
         } else if (imgHandling === 'IMG-KEEP' && checkValidURL(src)) {
-          const pathname = new URL(src).pathname;
-          let decodedPathname = pathname;
+          let pathname: string;
           try {
-            decodedPathname = decodeURIComponent(pathname);
+            pathname = new URL(src).pathname;
           } catch {
-            // Keep checking raw pathname when malformed percent encoding is present.
+            img.remove();
+            return;
           }
-          const normalizedPathnames = [pathname, decodedPathname].map(path => path.toLowerCase());
-          if (normalizedPathnames.some(path => path.includes('/logout') || path.includes('/signout'))) {
+          const normalizedPathnames = [pathname];
+          let currentPathname = pathname;
+          let stabilized = false;
+          for (let i = 0; i < 10; i++) {
+            try {
+              const nextPathname = decodeURIComponent(currentPathname);
+              if (nextPathname === currentPathname) {
+                stabilized = true;
+                break;
+              }
+              currentPathname = nextPathname;
+              normalizedPathnames.push(currentPathname);
+            } catch {
+              // Malformed percent encoding cannot be verified safely.
+              img.remove();
+              return;
+            }
+          }
+          if (!stabilized) {
+            // Too many successive decodings to verify safely.
+            img.remove();
+            return;
+          }
+          if (normalizedPathnames.some(path => path.toLowerCase().includes('/logout') || path.toLowerCase().includes('/signout'))) {
             img.remove();
             return;
           }
@@ -293,7 +315,7 @@ export class Xss {
     for (const imageContainer of imageContainerList) {
       const imgUrl = imageContainer.dataset.src;
       if (imgUrl) {
-        Xss.sanitizeAppend(imageContainer, `<img src="${Xss.escape(imgUrl)}"/>`);
+        Xss.sanitizeAppend(imageContainer, `<img crossorigin="anonymous" src="${Xss.escape(imgUrl)}"/>`);
       }
     }
   };
