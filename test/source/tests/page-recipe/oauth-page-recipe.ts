@@ -14,7 +14,7 @@ export class OauthPageRecipe extends PageRecipe {
     t: AvaContext,
     oauthPage: ControllablePage,
     acctEmail: string,
-    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission'
+    action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state' | 'override_acct' | 'missing_permission' | 'missing_redirect_scope'
   ): Promise<void> => {
     let mockOauthUrl = oauthPage.target.url();
     const { login_hint } = Url.parse(['login_hint'], mockOauthUrl); // eslint-disable-line @typescript-eslint/naming-convention
@@ -29,6 +29,9 @@ export class OauthPageRecipe extends PageRecipe {
     } else if (action === 'missing_permission') {
       mockOauthUrl = Url.removeParamsFromUrl(mockOauthUrl, ['scope']);
       mockOauthUrl += '&scope=missing_scope';
+      await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&proceed=true');
+    } else if (action === 'missing_redirect_scope') {
+      mockOauthUrl += '&redirect_scope=missing_scope';
       await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&proceed=true');
     } else if (!login_hint) {
       await OauthPageRecipe.safeGoto(oauthPage, mockOauthUrl + '&login_hint=' + encodeURIComponent(acctEmail) + '&proceed=true');

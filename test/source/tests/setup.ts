@@ -735,6 +735,32 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     );
 
     test(
+      'test re-auth after updating chrome extension - redirect scope omitted',
+      testWithBrowser(async (t, browser) => {
+        const acctEmail = 'flowcrypt.compatibility@gmail.com';
+        await BrowserRecipe.setupCommonAcctWithAttester(t, browser, 'compatibility');
+        // Wipe google tokens to test re-auth popup
+        await Util.wipeGoogleTokensUsingExperimentalSettingsPage(t, browser, acctEmail);
+        const gmailPage1 = await openMockGmailPage(t, browser, acctEmail);
+        await gmailPage1.waitAndClick('@action-secure-compose');
+        // Check reconnect auth notification
+        await gmailPage1.waitForContent('@webmail-notification-setup', 'Please reconnect FlowCrypt to your Gmail Account.');
+        const oauthPopup = await browser.newPageTriggeredBy(t, () => gmailPage1.waitAndClick('@action-reconnect-account'));
+        // mock api returns full token scopes but omits scope from the redirect URL (Firefox loopback style)
+        await OauthPageRecipe.mock(t, oauthPopup, acctEmail, 'missing_redirect_scope');
+        // connection should succeed without a missing-permissions prompt
+        await gmailPage1.waitForContent('@webmail-notification-setup', 'Connected successfully. You may need to reload the tab.');
+        await gmailPage1.close();
+        // reload and test that it has no more notifications
+        const gmailPage2 = await openMockGmailPage(t, browser, acctEmail);
+        await gmailPage2.waitAndClick('@action-secure-compose');
+        await Util.sleep(2);
+        await gmailPage2.notPresent(['@webmail-notification-setup']);
+        await gmailPage2.close();
+      })
+    );
+
+    test(
       'mail.google.com - success notif after setup, click hides it, does not re-appear + offers to reauth',
       testWithBrowser(async (t, browser) => {
         const acct = 'flowcrypt.compatibility@gmail.com';

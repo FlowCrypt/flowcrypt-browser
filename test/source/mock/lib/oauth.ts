@@ -37,7 +37,7 @@ export class OauthMock {
   };
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  public successResult = (acct: string, state: string, scope: string, redirect_uri: string) => {
+  public successResult = (acct: string, state: string, scope: string, redirect_uri: string, redirect_scope?: string) => {
     const authCode = `mock-auth-code-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const refreshToken = `mock-refresh-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
     const accessToken = `mock-access-token-${Str.sloppyRandom(4)}-${acct.replace(/[^a-z0-9]+/g, '')}`;
@@ -48,7 +48,13 @@ export class OauthMock {
     this.scopesByAccessToken[accessToken] = `${this.scopesByAccessToken[accessToken] ?? ''} ${scope}`;
     const url = new URL(redirect_uri);
     url.searchParams.set('code', authCode);
-    url.searchParams.set('scope', scope);
+    if (redirect_scope === '') {
+      url.searchParams.delete('scope');
+    } else if (typeof redirect_scope !== 'undefined') {
+      url.searchParams.set('scope', redirect_scope);
+    } else {
+      url.searchParams.set('scope', scope);
+    }
     // return invalid state for test.invalid.csrf@gmail.com to check invalid csrf login
     url.searchParams.set('state', acct === 'test.invalid.csrf@gmail.com' ? 'invalid state' : state);
     return url.href;
