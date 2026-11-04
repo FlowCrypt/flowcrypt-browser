@@ -219,48 +219,38 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     test(
       'mail.google.com - Thunderbird HTML signed, plain signed, and signed + encrypted messages render correctly',
-      testWithBrowser(async (t, browser) => {
-        await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        for (const [format, path] of [
-          ['html', '/FMfcgzGkbDZKPJrNLplXZhKfWwtgjrXt'],
-          ['plain', '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB'],
-        ]) {
-          t.log(`Thunderbird signed message: ${format}`);
-          await gotoGmailPage(gmailPage, path);
-          // validate pgp_block.htm is rendered
-          const pgpBlockUrls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], {
-            sleep: 10,
-            appearIn: 25,
-          });
-          expect(pgpBlockUrls.length).to.equal(1);
-          const pgpBlockFrame = await gmailPage.getFrame([pgpBlockUrls[0]]);
-          await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
-            content: ['1234'],
-            encryption: 'not encrypted',
-            signature: 'signed',
-          });
-          await pageHasSecureReplyContainer(t, browser, gmailPage);
-          await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
-          await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
-          const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
-          await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
-          expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-        }
-
-        t.log('Thunderbird signed + encrypted message');
-        await gotoGmailPage(gmailPage, '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz');
-        const pgpBlockFrame = await gmailPage.getFrame(['pgp_block.htm'], { sleep: 10, timeout: 25 });
-        await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
-          content: ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'],
-          encryption: 'encrypted',
-          signature: 'signed',
-        });
-        await pageHasSecureReplyContainer(t, browser, gmailPage);
-        const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
-        await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
-        expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
-      })
+      testWithBrowser(
+        async (t, browser) => {
+          t.timeout(minutes(6)); // allow time for account setup and all three messages
+          await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail', { cleanUpDrafts: false });
+          for (const { format, path, encrypted } of [
+            { format: 'HTML signed', path: '/FMfcgzGkbDZKPJrNLplXZhKfWwtgjrXt', encrypted: false },
+            { format: 'plain signed', path: '/FMfcgzGkbDZKPKzSnGtGKZrPZSbTBNnB', encrypted: false },
+            { format: 'signed + encrypted', path: '/FMfcgzGkbDZKPLBqWFzbgWqCrplTQdNz', encrypted: true },
+          ]) {
+            t.log(`Thunderbird message: ${format}`);
+            const gmailPage = await openGmailPage(t, browser, path);
+            const pgpBlockFrame = await gmailPage.getFrame(['/chrome/elements/pgp_block.htm'], { sleep: 0, timeout: 35 });
+            await BrowserRecipe.pgpBlockCheck(t, pgpBlockFrame, {
+              content: encrypted ? ['Encrypted Subject: [ci.test] Thunderbird html signed + encrypted', '1234'] : ['1234'],
+              encryption: encrypted ? 'encrypted' : 'not encrypted',
+              signature: 'signed',
+            });
+            await pageHasSecureReplyContainer(t, browser, gmailPage);
+            const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
+            await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+            if (!encrypted) {
+              expect(await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 0 })).to.have.length(1);
+              await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
+              await testMinimumElementHeight(gmailPage, '.pgp_block.publicKey', 120);
+            }
+            expect(await gmailPage.isElementVisible('.aQH')).to.equal(false); // original attachment container(s) should be hidden
+            await gmailPage.close();
+          }
+        },
+        undefined,
+        minutes(6)
+      )
     );
 
     // draft-sensitive test
