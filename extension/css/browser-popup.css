@@ -9,6 +9,10 @@ body {
   padding: 0;
 }
 
+html.extension-popup {
+  width: 364px;
+}
+
 .action_open_settings {
   display: block;
   position: absolute;

@@ -95,7 +95,7 @@ export class PgpBlockViewPrintModule {
       html = policy.createHTML(html);
     }
     if (w?.document?.body) {
-      w.document.body.innerHTML = html; // xss-escaped
+      w.document.body.innerHTML = html; // xss-reinsert
     }
     // Give some time for above dom to load in print dialog
     // https://stackoverflow.com/questions/31725373/google-chrome-not-showing-image-in-print-preview

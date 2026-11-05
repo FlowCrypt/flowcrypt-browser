@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { base64encode, secureRandomBytes } from '../../../platform/util.js';
-import { Buf } from '../../buf.js';
+import { secureRandomBytes } from '../../../platform/util.js';
 
 interface PwdStrengthResult {
   word: {
@@ -106,7 +105,8 @@ export class PgpPwd {
 
   public static random = () => {
     // eg TDW6-DU5M-TANI-LJXY
-    return base64encode(Buf.fromUint8(secureRandomBytes(128)).toRawBytesStr())
+    return secureRandomBytes(128)
+      .toBase64()
       .toUpperCase()
       .replace(/[^A-Z0-9]|0|O|1/g, '')
       .replace(/(.{4})/g, '$1-')

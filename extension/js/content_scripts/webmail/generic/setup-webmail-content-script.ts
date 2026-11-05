@@ -504,7 +504,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         $('.' + win.destroyable_class).remove();
         // eslint-disable-next-line local-rules/standard-loops
         $('.' + win.reloadable_class).each((i, reloadableEl) => {
-          $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
+          $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert
         });
         wasDestroyed = true;
       })();

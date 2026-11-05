@@ -332,7 +332,7 @@ export class SmimeKey {
               this.forge.asn1.Class.UNIVERSAL,
               attr.valueTagClass,
               false,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-enum-comparison
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
               valueTagClass === this.forge.asn1.Type.UTF8 ? this.forge.util.encodeUtf8(attr.value) : attr.value
             ),
           ]),

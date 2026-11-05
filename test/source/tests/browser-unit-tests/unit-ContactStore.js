@@ -520,3 +520,71 @@ BROWSER_UNIT_TEST_NAME(`ContactStore searchPubkeys { hasPgp: true } returns all 
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`ContactStore refuses to store unverifiable revocation and revalidateStoredRevocations purges it`);
+(async () => {
+  const db = await ContactStore.dbOpen();
+  const email = 'some.revoked@localhost.com';
+  const validPubkey = await KeyUtil.parse(testConstants.somerevokedValid);
+  const validFingerprint = 'D6662C5FB9BDE9DA01F3994AAA1EF832D8CCA4F2';
+  if (validPubkey.id !== validFingerprint || validPubkey.revoked) {
+    throw new Error(`Expected a valid key ${validFingerprint} but got ${validPubkey.id} (revoked: ${validPubkey.revoked})`);
+  }
+  const listRevocations = async () => {
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction(['revocations'], 'readonly').objectStore('revocations').getAll();
+      ContactStore.setReqPipe(req, resolve, reject);
+    });
+  };
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(['revocations'], 'readwrite');
+    ContactStore.setTxHandlers(tx, resolve, reject);
+    tx.objectStore('revocations').put({ fingerprint: validFingerprint, armoredKey: KeyUtil.armor(validPubkey) });
+  });
+  if (!(await listRevocations()).some(r => r.fingerprint === validFingerprint)) {
+    throw new Error('Failed to set up an unverifiable revocation record');
+  }
+  const tampered = await KeyUtil.parse(testConstants.somerevokedValid);
+  tampered.revoked = true;
+  let rejectionMessage;
+  try {
+    await ContactStore.saveRevocation(db, tampered);
+  } catch (e) {
+    rejectionMessage = String(e);
+  }
+  if (!rejectionMessage || !rejectionMessage.includes('does not carry a verifiable revocation signature')) {
+    throw new Error(`saveRevocation was expected to reject unverifiable revocation but it returned "${rejectionMessage}"`);
+  }
+  const genuinelyRevoked = await KeyUtil.parse(testConstants.somerevokedRevoked2);
+  if (!genuinelyRevoked.revoked) {
+    throw new Error('Control key was expected to be genuinely revoked');
+  }
+  const genuineFingerprint = '3930752556D57C46A1C56B63DE8538DDA1648C76';
+  if (genuinelyRevoked.id !== genuineFingerprint) {
+    throw new Error(`Expected control fingerprint ${genuineFingerprint} but got ${genuinelyRevoked.id}`);
+  }
+  await ContactStore.saveRevocation(db, genuinelyRevoked);
+  if (!(await listRevocations()).some(r => r.fingerprint === genuineFingerprint)) {
+    throw new Error('Failed to store a genuine revocation record');
+  }
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  await GlobalStore.set({ contact_store_revocations_revalidated: false });
+  await revalidateStoredRevocations(db);
+  const records = await listRevocations();
+  if (records.some(r => r.fingerprint === validFingerprint)) {
+    throw new Error('The unverifiable revocation record was expected to be purged by revalidation');
+  }
+  if (!records.some(r => r.fingerprint === genuineFingerprint)) {
+    throw new Error('The genuine revocation record was expected to survive revalidation');
+  }
+  await ContactStore.update(db, email, { pubkey: validPubkey });
+  const { sortedPubkeys } = await ContactStore.getOneWithAllPubkeys(db, email);
+  const restoredEntry = sortedPubkeys.find(x => x.pubkey.id === validFingerprint);
+  if (!restoredEntry) {
+    throw new Error(`Expected to find pubkey ${validFingerprint} after revalidation`);
+  }
+  if (restoredEntry.revoked) {
+    throw new Error(`Pubkey ${validFingerprint} was expected to be usable after revalidation but it is still considered revoked`);
+  }
+  return 'pass';
+})();

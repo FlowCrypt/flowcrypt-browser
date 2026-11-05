@@ -184,12 +184,6 @@ export class AttachmentUI {
   };
 
   private readAttachmentDataAsUint8 = async (uploadFileId: string): Promise<Uint8Array> => {
-    return await new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting
-      };
-      reader.readAsArrayBuffer(this.attachedFiles[uploadFileId]);
-    });
+    return new Uint8Array(await this.attachedFiles[uploadFileId].arrayBuffer());
   };
 }

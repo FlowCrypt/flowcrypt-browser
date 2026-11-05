@@ -79,3 +79,87 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips url() in CSS`);
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips srcset attribute from img`);
+(async () => {
+  const dirty = `<img src="cid:test-image" srcset="https://accounts.google.com/Logout?me.png 1x, https://attacker.example/track.png 2x" width="200" height="100">`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/srcset/i.test(clean)) {
+    throw Error(`srcset was not stripped from sanitized HTML: ${clean}`);
+  }
+  if (!/src="cid:test-image"/.test(clean)) {
+    throw Error(`expected cid src to be preserved, got: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize (used for CID replacement) strips srcset attribute from img`);
+(async () => {
+  const dirty = `<img src="cid:test-image" srcset="https://accounts.google.com/Logout?me.png 1x" alt="inline">`;
+  const clean = Xss.htmlSanitize(dirty);
+  if (/srcset/i.test(clean)) {
+    throw Error(`srcset was not stripped from sanitized HTML: ${clean}`);
+  }
+  if (!/src="cid:test-image"/.test(clean)) {
+    throw Error(`expected cid src to be preserved, got: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags keeps srcset-less inline images and gates remote src`);
+(async () => {
+  const dirty = `<img src="https://attacker.example/track.png" srcset="https://attacker.example/track2.png 1x">`;
+  const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+  if (/srcset/i.test(clean)) {
+    throw Error(`srcset was not stripped from sanitized HTML: ${clean}`);
+  }
+  if (!/remote_image_container/.test(clean)) {
+    throw Error(`expected remote src to be replaced with remote_image_container, got: ${clean}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
+(async () => {
+  const stylesheet = document.createElement('link');
+  stylesheet.rel = 'stylesheet';
+  stylesheet.href = chrome.runtime.getURL('/css/cryptup.css');
+  document.head.appendChild(stylesheet);
+  await new Promise(resolve => stylesheet.addEventListener('load', () => resolve(), { once: true }));
+  const badge = document.createElement('div');
+  badge.className = 'pgp_badge';
+  document.body.appendChild(badge);
+  const style = window.getComputedStyle(badge);
+  if (style.position !== 'relative' || style.zIndex !== '1') {
+    throw Error(`pgp badge is not protected by its stacking order: position=${style.position}, z-index=${style.zIndex}`);
+  }
+  badge.remove();
+  const messageContent = document.createElement('div');
+  messageContent.id = 'pgp_block';
+  document.body.appendChild(messageContent);
+  const messageContentStyle = window.getComputedStyle(messageContent);
+  if (messageContentStyle.isolation !== 'isolate') {
+    throw Error(`pgp message content is not isolated: isolation=${messageContentStyle.isolation}`);
+  }
+  messageContent.remove();
+  stylesheet.remove();
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags rejects encoded logout image paths`);
+(async () => {
+  const urls = [
+    'https://accounts.google.com/%4Cogout',
+    'https://accounts.google.com/%6Cogout',
+    'https://accounts.google.com/%73ignout',
+    'https://accounts.google.com/%256cogout',
+    'https://accounts.google.com/%zzlogout',
+  ];
+  for (const url of urls) {
+    const clean = Xss.htmlSanitizeKeepBasicTags(`<img src="${url}">`, 'IMG-KEEP');
+    if (/remote_image_container|<img/i.test(clean)) {
+      throw Error(`encoded logout image path was not removed: ${clean}`);
+    }
+  }
+  return 'pass';
+})();

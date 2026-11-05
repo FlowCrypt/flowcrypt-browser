@@ -121,7 +121,7 @@ export class Injector {
           if (this.webmailName === 'gmail') {
             // eslint-disable-next-line local-rules/standard-loops
             $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
-              $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
+              $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert
             });
           } else {
             window.location.reload();

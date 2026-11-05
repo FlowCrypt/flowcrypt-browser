@@ -206,7 +206,7 @@ export class ApiErr {
     if (e instanceof AjaxErr && e.resDetails === internalType) {
       return true;
     }
-    if ((e as StandardError).hasOwnProperty('internal') && !!(e as StandardError).message && (e as StandardError).internal === internalType) {
+    if (Object.hasOwn(e, 'internal') && !!(e as StandardError).message && (e as StandardError).internal === internalType) {
       return true;
     }
     if ((e as StandardErrRes).error && typeof (e as StandardErrRes).error === 'object' && (e as StandardErrRes).error.internal === internalType) {

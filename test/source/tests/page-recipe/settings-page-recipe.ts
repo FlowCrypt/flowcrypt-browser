@@ -1,7 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
 import { Config, Util } from '../../util';
-import { BrowserHandle, ControllableFrame, ControllablePage } from '../../browser';
+import { BrowserHandle } from '../../browser/browser-handle';
+import { ControllableFrame, ControllablePage } from '../../browser/controllable';
 
 import { PageRecipe } from './abstract-page-recipe';
 import { assert, expect } from 'chai';

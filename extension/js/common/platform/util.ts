@@ -16,14 +16,6 @@ export const secureRandomBytes = (length: number): Uint8Array => {
   return secureRandomArray;
 };
 
-export const base64encode = (binary: string): string => {
-  return btoa(binary);
-};
-
-export const base64decode = (b64tr: string): string => {
-  return atob(b64tr);
-};
-
 export const moveElementInArray = <T>(arr: T[], oldIndex: number, newIndex: number) => {
   while (oldIndex < 0) {
     oldIndex += arr.length;

@@ -20,7 +20,7 @@ import { PgpArmor } from '../core/crypto/pgp/pgp-armor';
 import { readFileSync } from 'fs';
 import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
-import { Str } from '../core/common';
+import { Str, checkValidURL } from '../core/common';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password';
 
 use(chaiAsPromised);
@@ -88,15 +88,18 @@ Something wrong with this key`),
     test(`[unit][KeyUtil.isChecksumMismatch] detects only present checksum mismatches`, t => {
       const armoredWithValidChecksum = `-----BEGIN PGP MESSAGE-----
 
-aGVsbG8=
+aGVs
+bG8=
 =R/WK
 -----END PGP MESSAGE-----`;
       const armoredWithInvalidChecksum = armoredWithValidChecksum.replace('=R/WK', '=AAAA');
       const armoredWithoutChecksum = armoredWithValidChecksum.replace('\n=R/WK', '');
+      const armoredWithMalformedChecksum = armoredWithValidChecksum.replace('=R/WK', '=R$WK');
 
       expect(KeyUtil.isChecksumMismatch(armoredWithValidChecksum)).to.equal(false);
       expect(KeyUtil.isChecksumMismatch(armoredWithInvalidChecksum)).to.equal(true);
       expect(KeyUtil.isChecksumMismatch(armoredWithoutChecksum)).to.equal(false);
+      expect(KeyUtil.isChecksumMismatch(armoredWithMalformedChecksum)).to.equal(false);
       t.pass();
     });
     test(`[unit][OpenPGPKey.parse] throws on invalid input`, async t => {
@@ -188,6 +191,28 @@ Something wrong with this key`),
       expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPub)).to.equal(revocationCertificate);
       expect(await KeyUtil.getOrCreateRevocationCertificate(revokedPrv)).to.equal(revocationCertificate);
     });
+    test(`[unit][OpenPGPKey.parse] does not treat a foreign revocation signature packet as key revocation`, async t => {
+      const attackerPrv = await OpenPGPKey.parse(testConstants.existingPrv);
+      const attackerRevocationCertificate = await OpenPGPKey.getOrCreateRevocationCertificate(attackerPrv);
+      if (!attackerRevocationCertificate) {
+        throw new Error();
+      }
+      const attackerRevokedPub = await OpenPGPKey.applyRevocationCertificate(await KeyUtil.asPublicKey(attackerPrv), attackerRevocationCertificate);
+      expect(attackerRevokedPub.revoked).to.be.true;
+      const victimPub = await KeyUtil.parse(testConstants.somerevokedValid);
+      expect(victimPub.revoked).to.be.false;
+      const attackerOpgpPub = await opgp.readKey({ armoredKey: KeyUtil.armor(attackerRevokedPub) });
+      const victimPackets = (await opgp.readKey({ armoredKey: KeyUtil.armor(victimPub) })).toPacketList();
+      victimPackets.splice(1, 0, attackerOpgpPub.revocationSignatures[0]);
+      const forgedArmored = new opgp.PublicKey(victimPackets).armor();
+      const forgedOpgp = await opgp.readKey({ armoredKey: forgedArmored });
+      expect(forgedOpgp.revocationSignatures.length).to.equal(1);
+      expect(await forgedOpgp.isRevoked()).to.be.false;
+      const forgedParsed = await KeyUtil.parse(forgedArmored);
+      expect(forgedParsed.id).to.equal(victimPub.id);
+      expect(forgedParsed.revoked).to.be.false;
+      t.pass();
+    });
     test(`[unit][MsgBlockParser.detectBlocks] does not get tripped on blocks with unknown headers`, async t => {
       expect(
         MsgBlockParser.detectBlocks("This text breaks email and Gmail web app.\n\n-----BEGIN FOO-----\n\nEven though it's not a vaild PGP m\n\nMuhahah")
@@ -270,6 +295,34 @@ outerSignatureData
       expect(blocks[0].content).to.include('-----BEGIN PGP SIGNED MESSAGE-----');
       // Verify it ends with the outer signature, not the quoted one
       expect(blocks[0].content).to.match(/outerSignatureData\n-----END PGP SIGNATURE-----$/);
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.extractFcReplyToken] extracts token and ignores HTML-like markup`, async t => {
+      const replyInfoRaw = Buf.fromUtfStr(JSON.stringify({ token: 'test-value' })).toBase64UrlStr();
+      const content = `Hello <img src="https://attacker.example/track.png" width="1" height="1">\n<div style="display: none;" class="cryptup_reply" cryptup-data="${replyInfoRaw}"></div>`;
+      const token = MsgBlockParser.extractFcReplyToken(content);
+      expect(token).to.deep.equal({ token: 'test-value' });
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.extractFcReplyToken] returns undefined when no marker`, async t => {
+      expect(MsgBlockParser.extractFcReplyToken('hello <img src="x">')).to.be.undefined;
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.extractFcReplyToken] avoids backtracking on malformed input`, async t => {
+      const start = Date.now();
+      const malformed = '<div class="' + 'cryptup_reply '.repeat(10000);
+      expect(MsgBlockParser.extractFcReplyToken(malformed)).to.be.undefined;
+      expect(Date.now() - start).to.be.below(100);
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.stripFcReplyToken] removes reply marker`, async t => {
+      const marker = '<div style="display: none;" class="cryptup_reply" cryptup-data="abc"></div>';
+      const stripped = MsgBlockParser.stripFcReplyToken(`hello ${marker} world`);
+      expect(stripped).to.not.include('cryptup_reply');
       t.pass();
     });
 
@@ -391,6 +444,33 @@ qC2PFoU1J4aEVe5Jz2yovJnzkx/aa0Hs4g0=
       expect(Str.is7bit(UNICODE_AS_BYTES)).to.be.false;
       expect(Str.is7bit(ASCII)).to.be.true;
       expect(Str.is7bit(ASCII_AS_BYTES)).to.be.true;
+      t.pass();
+    });
+
+    test('[unit][Str.htmlAttrEncode/Decode] preserves UTF-8 Base64 compatibility', t => {
+      const value = { ascii: 'hello', unicode: 'გამარჯობა 👋' };
+      const encoded = Str.htmlAttrEncode(value);
+      expect(encoded).to.match(/^[A-Za-z0-9_-]+$/);
+      expect(Str.htmlAttrDecode(encoded)).to.eql(value);
+
+      const standardBase64 = Buf.fromUtfStr(JSON.stringify(value)).toBase64Str();
+      expect(Str.htmlAttrDecode(standardBase64)).to.eql(value);
+
+      const malformedUtf8 = Buf.fromUint8(new Uint8Array([0x22, 0xc3, 0x28, 0x22])).toBase64UrlStr();
+      expect(Str.htmlAttrDecode(malformedUtf8)).to.be.undefined;
+
+      const json = JSON.stringify(value);
+      const bomPrefixed = Buf.concat([new Uint8Array([0xef, 0xbb, 0xbf]), Buf.fromUtfStr(json)]).toBase64UrlStr();
+      expect(Str.htmlAttrDecode(bomPrefixed)).to.be.undefined;
+      expect(Str.htmlAttrDecode('not valid base64!')).to.be.undefined;
+      t.pass();
+    });
+
+    test('[unit][checkValidURL] accepts only valid HTTP(S) URLs', t => {
+      expect(checkValidURL('https://flowcrypt.com/path')).to.be.true;
+      expect(checkValidURL('http://localhost:8080')).to.be.true;
+      expect(checkValidURL('mailto:human@flowcrypt.com')).to.be.false;
+      expect(checkValidURL('not a URL')).to.be.false;
       t.pass();
     });
 
@@ -1125,7 +1205,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
       const msg: GmailMsg = data.getMessage('166147ea9bb6669d')!;
 
-      const encryptedData = /-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s.exec(Buf.fromBase64Str(msg.raw!).toUtfStr())![0];
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
+      const encryptedData = /-----BEGIN PGP MESSAGE-----.*-----END PGP MESSAGE-----/s.exec(msgText)![0];
 
       const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
       const kisWithPp = [
@@ -1165,9 +1246,8 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.decryptMessage] finds correct key to verify signature', async t => {
       const data = await GoogleData.withInitializedData('ci.tests.gmail@flowcrypt.test');
       const msg: GmailMsg = data.getMessage('1766644f13510f58')!;
-      const encryptedData = /\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s.exec(
-        Buf.fromBase64Str(msg.raw!).toUtfStr()
-      )![0];
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
+      const encryptedData = /\-\-\-\-\-BEGIN PGP SIGNED MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s.exec(msgText)![0];
       // actual key the message was signed with
       const signerPubkey = testConstants.pubkey2864E326A5BE488A;
       // better key
@@ -1219,7 +1299,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Thunderbird html signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('17daefa0eb077da6')!;
-      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
       const sigText = /\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s
         .exec(msgText)![0]
         .replace(/=\r\n/g, '')
@@ -1239,7 +1319,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Thunderbird text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('17dad75e63e47f97')!;
-      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
       const sigText = /\-\-\-\-\-BEGIN PGP SIGNATURE\-\-\-\-\-.*\-\-\-\-\-END PGP SIGNATURE\-\-\-\-\-/s
         .exec(msgText)![0]
         .replace(/=\r\n/g, '')
@@ -1259,7 +1339,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
     test('[unit][MsgUtil.verifyDetached] verifies Firefox rich text signed message', async t => {
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg: GmailMsg = data.getMessage('175ccd8755eab85f')!;
-      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
       const sigBase64 = /Content\-Type: application\/pgp\-signature;.*\r\n\r\n(.*)\r\n\-\-/s.exec(msgText)![1];
       const sigText = Buf.fromBase64Str(sigBase64).toUtfStr();
       const plaintext =
@@ -1283,7 +1363,7 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
 -----END PGP SIGNATURE-----`;
       const data = await GoogleData.withInitializedData('flowcrypt.compatibility@gmail.com');
       const msg = data.getMessage('17dad75e63e47f97')!;
-      const msgText = Buf.fromBase64Str(msg.raw!).toUtfStr();
+      const msgText = Buf.fromBase64UrlStr(msg.raw!).toUtfStr();
       {
         const pubkey = /\-\-\-\-\-BEGIN PGP PUBLIC KEY BLOCK\-\-\-\-\-.*\-\-\-\-\-END PGP PUBLIC KEY BLOCK\-\-\-\-\-/s
           .exec(msgText)![0]
@@ -1402,6 +1482,39 @@ jSB6A93JmnQGIkAem/kzGkKclmfAdGfc4FS+3Cn+6Q==Xmrz
       // cyrillic
       const cyrillicName = '\u0410\u0411\u0412';
       expect(Attachment.sanitizeName(cyrillicName)).to.equal(cyrillicName);
+      t.pass();
+    });
+
+    test('[Attachment.isExecutableFile] detects executable extensions after filename normalization', async t => {
+      const isExecutable = (name: string) => new Attachment({ name, data: new Uint8Array() }).isExecutableFile();
+      const cases: [name: string, executable: boolean][] = [
+        ['invoice.exe', true],
+        ['invoice.exe.', true],
+        ['invoice.exe..', true],
+        ['invoice.exe. .', true],
+        ['INVOICE.EXE.', true],
+        ['invoice.exe ', true],
+        ['invoice.exe\t', true],
+        ['invoice.exe\n', true],
+        ['invoice.exe\u00a0', true],
+        ['invoice.exe.\u00a0', true],
+        ['invoice.exe\u0000', true],
+        ['invoice.exe\u0085', true],
+        ['invoice.exe\u200b', true],
+        ['invoice.exe\u202e', true],
+        ['invoice.exe\u3000', true],
+        ['invoice.exe.txt', false],
+        ['invoice.exe.txt.', false],
+        ['invoice.txt', false],
+        ['invoice', false],
+        ['invoice.exe\u202e.txt', false],
+        ['', false],
+        ['.', false],
+        ['   ', false],
+      ];
+      for (const [name, executable] of cases) {
+        expect(isExecutable(name), name).to.equal(executable);
+      }
       t.pass();
     });
 
@@ -2796,7 +2909,7 @@ AAAAAAAAAAAAAAAAzzzzzzzzzzzzzzzzzzzzzzzzzzzz.....`)
 
     test(`[unit][PgpArmor.dearmor] correctly handles long string`, async t => {
       const source = Buffer.from('The test string concatenated many times to produce large output'.repeat(100000));
-      const type = 3;
+      const type = opgp.enums.armor.message;
       const armored = PgpArmor.armor(type, source);
       const dearmored = await PgpArmor.dearmor(armored);
       expect(dearmored.type).to.equal(type);

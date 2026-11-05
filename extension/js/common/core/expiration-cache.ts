@@ -9,12 +9,27 @@ import { Env } from '../browser/env.js';
  */
 type ExpirationCacheType<V> = { value: V; expiration: number };
 export class ExpirationCache<V> {
+  private readonly pendingRequests = new Map<string, Promise<V>>();
+
   public constructor(
     public prefix: string,
     public expirationTicks: number
   ) {}
 
-  public set = async (key: string, value?: V, expiration?: number) => {
+  public getOrCreate = (key: string, create: () => Promise<V>): Promise<V> => {
+    const existing = this.pendingRequests.get(key);
+    if (existing) return existing;
+    const pending = (async () => {
+      const cached = await this.get(key);
+      if (cached !== undefined) return cached;
+      const value = await create();
+      await this.set(key, value);
+      return value;
+    })();
+    return this.track(key, pending);
+  };
+
+  public set = async (key: string, value?: V, expiration?: number): Promise<void> => {
     if (Env.isContentScript()) {
       // Get chrome storage data from content script not allowed
       // Need to get data from service worker
@@ -29,8 +44,8 @@ export class ExpirationCache<V> {
       );
       return;
     }
-    if (value) {
-      const expirationVal = { value, expiration: expiration || Date.now() + this.expirationTicks };
+    if (value !== undefined) {
+      const expirationVal = { value, expiration: expiration ?? Date.now() + this.expirationTicks };
       await storageSet('session', { [this.getPrefixedKey(key)]: expirationVal });
     } else {
       await storageRemove('session', [this.getPrefixedKey(key)]);
@@ -38,6 +53,8 @@ export class ExpirationCache<V> {
   };
 
   public get = async (key: string): Promise<V | undefined> => {
+    const pending = this.pendingRequests.get(key);
+    if (pending) return await pending;
     if (Env.isContentScript()) {
       // Get chrome storage data from content script not allowed
       // Need to get data from service worker
@@ -79,6 +96,7 @@ export class ExpirationCache<V> {
     const keysToDelete: string[] = [];
     const entries = (await storageGetAll('session')) as Record<string, ExpirationCacheType<V>>;
     for (const key of Object.keys(entries)) {
+      if (!key.startsWith(`${this.prefix}_`)) continue;
       const value = entries[key];
       if (value.expiration <= Date.now() || additionalPredicate(key, value.value)) {
         keysToDelete.push(key);
@@ -89,15 +107,12 @@ export class ExpirationCache<V> {
     }
   };
 
-  // await the value if it's a promise and remove from cache in case of exception
-  // the value is provided along with the key as parameter to eliminate possibility of a missing (expired) record
-  public await = async (key: string, value: V): Promise<V> => {
-    try {
-      return value;
-    } catch (e) {
-      if ((await this.get(key)) === value) await this.set(key); // remove faulty record
-      return Promise.reject(e as Error);
-    }
+  private track = (key: string, pending: Promise<V>): Promise<V> => {
+    const tracked = pending.finally(() => {
+      if (this.pendingRequests.get(key) === tracked) this.pendingRequests.delete(key);
+    });
+    this.pendingRequests.set(key, tracked);
+    return tracked;
   };
 
   private getPrefixedKey = (key: string) => {

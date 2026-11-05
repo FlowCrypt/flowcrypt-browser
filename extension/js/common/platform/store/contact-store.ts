@@ -26,6 +26,7 @@ export type Pubkey = {
 
 type Revocation = {
   fingerprint: string;
+  armoredKey?: string;
 };
 
 type PubkeyAttributes = {
@@ -504,6 +505,9 @@ export class ContactStore extends AbstractStore {
       Catch.report(`Wrongly updating prv ${pubkey.id} as contact - converting to pubkey`);
       pubkey = await KeyUtil.asPublicKey(pubkey);
     }
+    if (pubkey?.family === 'openpgp' && pubkey.revoked && !(await KeyUtil.isRevoked(pubkey))) {
+      throw Error(`Refusing to store key ${pubkey.id} with an unverifiable revocation signature for ${validEmail}`);
+    }
     const tx = db.transaction(['emails', 'pubkeys', 'revocations'], 'readwrite');
     await new Promise((resolve, reject) => {
       ContactStore.setTxHandlers(tx, resolve, reject);
@@ -740,6 +744,9 @@ export class ContactStore extends AbstractStore {
   public static async saveRevocation(db: IDBDatabase | undefined, pubkey: Key): Promise<void> {
     if (!pubkey.revoked) {
       throw new Error('Non-revoked key is supplied to save revocation info');
+    }
+    if (!(await KeyUtil.isRevoked(pubkey))) {
+      throw new Error(`Key ${pubkey.id} does not carry a verifiable revocation signature`);
     }
     if (!db) {
       // relay op through background process

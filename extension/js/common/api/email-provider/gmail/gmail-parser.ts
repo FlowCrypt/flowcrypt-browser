@@ -135,7 +135,7 @@ export namespace GmailRes {
 
 export class GmailParser {
   public static findHeader = (apiGmailMsgObj: GmailRes.GmailMsg | GmailRes.GmailMsg$payload, headerName: string) => {
-    const node: GmailRes.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload')
+    const node: GmailRes.GmailMsg$payload = Object.hasOwn(apiGmailMsgObj, 'payload')
       ? (apiGmailMsgObj as GmailRes.GmailMsg).payload! // eslint-disable-line @typescript-eslint/no-non-null-assertion
       : (apiGmailMsgObj as GmailRes.GmailMsg$payload);
     if (typeof node.headers !== 'undefined') {
@@ -177,7 +177,7 @@ export class GmailParser {
         }
       }
     }
-    if ('body' in msgOrPayloadOrPart && msgOrPayloadOrPart.body?.hasOwnProperty('attachmentId')) {
+    if ('body' in msgOrPayloadOrPart && msgOrPayloadOrPart.body && Object.hasOwn(msgOrPayloadOrPart.body, 'attachmentId')) {
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part;
       const treatAs = Attachment.treatAsForPgpEncryptedAttachments(payload.mimeType, pgpEncryptedIndex);
       const inline = (GmailParser.findHeader(payload, 'content-disposition') || '').toLowerCase().startsWith('inline');

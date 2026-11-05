@@ -2,7 +2,8 @@
 
 import test from 'ava';
 
-import { BrowserHandle, Controllable, ControllableFrame, ControllablePage } from './../browser';
+import { BrowserHandle } from './../browser/browser-handle';
+import { Controllable, ControllableFrame, ControllablePage } from './../browser/controllable';
 import { Config, Util } from './../util';
 import { writeFileSync } from 'fs';
 import { AvaContext } from './tooling';
@@ -1459,9 +1460,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', {
           appendUrl,
           hasReplyPrompt: true,
-          skipClickPrompt: true,
         });
         await composePage.waitAndClick('@encrypted-reply');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
         await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
         await expectRecipientElements(composePage, { to: [{ email: 'sender@domain.com' }] });
@@ -1480,16 +1481,22 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
           hasReplyPrompt: true,
         });
         await composePage.waitAndClick('@action-accept-reply-all-prompt');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_reply');
+        await composePage.waitForSelTestState('ready');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.com');
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_forward');
+        await composePage.waitForContent('@input-body', 'Forwarded message');
         await composePage.waitUntilFocused('@input-to');
         await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
         await composePage.waitAndClick('@action-show-reply-options-popover');
         await composePage.waitAndClick('@action-toggle-a_reply_all');
+        await composePage.waitForSelTestState('ready');
+        await composePage.waitAndClick('@input-body');
         await composePage.waitForContent('@recipients-preview', 'sender@domain.comtest@gmail.comtest2@gmail.comtest3@gmail.comtest4@gmail.comtest5@gmail.com');
       })
     );
@@ -2093,7 +2100,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
-        const message = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
+        const message = Buf.fromBase64UrlStr(sentMsg.payload!.body!.data!).toUtfStr();
         const encryptedData = /\-\-\-\-\-BEGIN PGP MESSAGE\-\-\-\-\-.*\-\-\-\-\-END PGP MESSAGE\-\-\-\-\-/s.exec(message)![0];
         const decrypted0 = await MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] });
         // decryption without a ki should fail
@@ -2159,7 +2166,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithBrowser: Te
 
         // get sent msg from mock
         const sentMsg = (await GoogleData.withInitializedData(acct)).searchMessagesBySubject(subject)[0];
-        const message = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
+        const message = Buf.fromBase64UrlStr(sentMsg.payload!.body!.data!).toUtfStr();
         expect(message).to.include('-----BEGIN PGP MESSAGE-----');
         expect(message).to.include('-----END PGP MESSAGE-----');
         expect(message).to.not.include('Version');
@@ -3522,8 +3529,8 @@ const sendImgAndVerifyPresentInSentMsg = async (t: AvaContext, browser: BrowserH
   // get sent msg id from mock
   const sentMsg = (await GoogleData.withInitializedData(acctEmail)).searchMessagesBySubject(subject)[0];
   if (sendingType === 'plain') {
-    const data = Buf.fromBase64Str(sentMsg.payload!.body!.data!).toUtfStr();
-    expect(data).to.match(/<img src="cid:(.+)@flowcrypt">Test Sending Plain Message With Image/);
+    const data = Buf.fromBase64UrlStr(sentMsg.payload!.body!.data!).toUtfStr();
+    expect(data.replace(/\s+/g, ' ')).to.match(/<img src="cid:([^"\s]+)@flowcrypt">Test Sending Plain Message With Image/);
     return;
     // todo - this test case is a stop-gap. We need to implement rendering of such messages below,
     //   then let test plain messages with images in them (referenced by cid) just like other types of messages below

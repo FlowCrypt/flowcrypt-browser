@@ -2,7 +2,7 @@
 
 import { Config, TestKeyInfoWithFilepath, Util } from '../../util';
 
-import { ControllablePage } from '../../browser';
+import { ControllablePage } from '../../browser/controllable';
 import { PageRecipe } from './abstract-page-recipe';
 import { SavePassphraseChecks, SettingsPageRecipe } from './settings-page-recipe';
 import { expect } from 'chai';

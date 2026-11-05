@@ -1,6 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
-import { BrowserHandle, ControllablePage, TIMEOUT_PAGE_LOAD } from '../../browser';
+import { BrowserHandle } from '../../browser/browser-handle';
+import { ControllablePage } from '../../browser/controllable';
+import { TIMEOUT_PAGE_LOAD } from '../../browser';
 
 import { AvaContext } from '../tooling/';
 import { PageRecipe } from './abstract-page-recipe';

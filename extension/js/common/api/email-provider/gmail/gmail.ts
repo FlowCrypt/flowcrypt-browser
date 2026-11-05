@@ -220,17 +220,16 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             reject(new Error('Chunk response could not be parsed'));
             return;
           }
-          for (let i = 0; parsedJsonDataField && i < 50; i++) {
-            try {
-              resolve(Buf.fromBase64UrlStr(parsedJsonDataField));
-              return;
-            } catch {
-              // the chunk of data may have been cut at an inconvenient index
-              // shave off up to 50 trailing characters until it can be decoded
-              parsedJsonDataField = parsedJsonDataField.slice(0, -1);
-            }
+          const base64Remainder = parsedJsonDataField.length % 4;
+          if (base64Remainder === 1 || (base64Remainder === 3 && parsedJsonDataField.endsWith('='))) {
+            parsedJsonDataField = parsedJsonDataField.slice(0, -1);
           }
-          reject(new Error('Chunk response could not be decoded'));
+          try {
+            resolve(Buf.fromBase64UrlStr(parsedJsonDataField));
+            return;
+          } catch {
+            reject(new Error('Chunk response could not be decoded'));
+          }
         }
       };
       GoogleOAuth.googleApiAuthHeader(this.acctEmail)
