@@ -1110,8 +1110,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
         await Util.sleep(1);
         await settingsPage.notPresent(['@action-open-backup-page']);
-        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage([
-          'cryptup_haspubclientconfigurationtestflowcrypttest_keys',
+        const { 'cryptup_has~2epub~40client~2dconfiguration~2dtest~2eflowcrypt~2etest_keys': keys } = await settingsPage.getFromLocalStorage([
+          'cryptup_has~2epub~40client~2dconfiguration~2dtest~2eflowcrypt~2etest_keys',
         ]);
         const ki = keys as KeyInfoWithIdentity[];
         expect(ki.length).to.equal(1);
@@ -1148,8 +1148,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
         await Util.sleep(1);
         await settingsPage.notPresent(['@action-open-backup-page']);
-        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage([
-          'cryptup_haspubclientconfigurationtestflowcrypttest_keys',
+        const { 'cryptup_has~2epub~40client~2dconfiguration~2dtest~2eflowcrypt~2etest_keys': keys } = await settingsPage.getFromLocalStorage([
+          'cryptup_has~2epub~40client~2dconfiguration~2dtest~2eflowcrypt~2etest_keys',
         ]);
         const ki = keys as KeyInfoWithIdentity[];
         expect(ki.length).to.equal(1);
@@ -1277,8 +1277,10 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
         );
-        const { cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7: savedPassphrase } =
-          await settingsPage.getFromLocalStorage(['cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7']);
+        const { 'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_715EDCDC7939A8F7': savedPassphrase } =
+          await settingsPage.getFromLocalStorage([
+            'cryptup_user~40default~2dremember~2dpassphrase~2dclient~2dconfiguration~2eflowcrypt~2etest_passphrase_715EDCDC7939A8F7',
+          ]);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
       })
@@ -1955,13 +1957,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } },
         });
         const {
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys: keys,
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules: rules,
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75: savedPassphrase,
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2eflowcrypt~2etest_keys': keys,
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2eflowcrypt~2etest_rules': rules,
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2eflowcrypt~2etest_passphrase_00B0115807969D75': savedPassphrase,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys',
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules',
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75',
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2eflowcrypt~2etest_keys',
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2eflowcrypt~2etest_rules',
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2eflowcrypt~2etest_passphrase_00B0115807969D75',
         ]);
         expect((rules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
         expect((rules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
@@ -1993,13 +1995,13 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
         });
         const {
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keys,
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules: rules,
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75: savedPassphrase,
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2dforbid~2dstoring~2eflowcrypt~2etest_keys': keys,
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2dforbid~2dstoring~2eflowcrypt~2etest_rules': rules,
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2dforbid~2dstoring~2eflowcrypt~2etest_passphrase_00B0115807969D75': savedPassphrase,
         } = await settingsPage.getFromLocalStorage([
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys',
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules',
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75',
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2dforbid~2dstoring~2eflowcrypt~2etest_keys',
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2dforbid~2dstoring~2eflowcrypt~2etest_rules',
+          'cryptup_get~2ekey~40key~2dmanager~2dchoose~2dpassphrase~2dforbid~2dstoring~2eflowcrypt~2etest_passphrase_00B0115807969D75',
         ]);
         expect((rules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
         expect((rules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
@@ -2037,9 +2039,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             longid,
           },
         });
-        const { cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules: rules } = await settingsPage.getFromLocalStorage([
-          'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules',
-        ]);
+        const { 'cryptup_user~40passphrase~2dsession~2dlength~2dclient~2dconfiguration~2eflowcrypt~2etest_rules': rules } =
+          await settingsPage.getFromLocalStorage(['cryptup_user~40passphrase~2dsession~2dlength~2dclient~2dconfiguration~2eflowcrypt~2etest_rules']);
         let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
         expect(
           // eslint-disable-next-line @typescript-eslint/naming-convention
