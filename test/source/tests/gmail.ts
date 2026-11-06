@@ -550,28 +550,36 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       'mail.google.com - secure reply and forward in dot menu',
       testWithBrowser(async (t, browser) => {
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-        const gmailPage = await openGmailPage(t, browser);
-        await gotoGmailPage(gmailPage, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // go to encrypted convo
-        const gmailContextMenu = '.adn [aria-label="More message options"]';
-        await gmailPage.waitAndClick(gmailContextMenu);
-        await Util.sleep(1);
-        expect(await gmailPage.isElementPresent('@action-reply-message-button'));
-        await gmailPage.waitAndClick('@action-reply-message-button');
-        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
-        await replyBox.waitForContent('@input-body', '');
-        await gmailPage.waitAndClick(gmailContextMenu);
-        await Util.sleep(1);
-        expect(await gmailPage.isElementPresent('@action-reply-all-message-button'));
-        await gmailPage.waitAndClick('@action-reply-all-message-button');
-        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
-        await replyBox2.waitForContent('@input-body', '');
+        const gmailPage = await openGmailPage(t, browser, '/FMfcgzGtwgfMhWTlgRwwKWzRhqNZzwXz'); // encrypted convo
+        await gmailPage.waitAll('@action-secure-compose', { timeout: TIMEOUT_PAGE_LOAD });
+        const replyPrompt = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 0, timeout: TIMEOUT_ELEMENT_APPEAR });
+        await replyPrompt.waitAll('@action-accept-reply-prompt');
+        const gmailContextMenu = '[role="listitem"] .adn.ads [aria-label="More message options"]';
+        // Locators wait for a stable, visible target and retry if Gmail re-renders it before the click.
+        const click = async (selector: string) =>
+          await gmailPage.target
+            .locator(selector)
+            .setVisibility('visible')
+            .setTimeout(TIMEOUT_ELEMENT_APPEAR * 1000)
+            .click();
+        await click(gmailContextMenu);
+        await click('[data-test="action-reply-message-button"]');
+        const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&replyOption=a_reply', '&skipClickPrompt=___cu_true___'], { sleep: 0 });
+        await replyBox.waitUntilViewLoaded();
+        await replyBox.waitAll(['@input-body', '@action-send']);
+        await gmailPage.waitTillGone('@action-reply-message-button');
+        await click(gmailContextMenu);
+        await click('[data-test="action-reply-all-message-button"]');
+        const replyBox2 = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&replyOption=a_reply_all'], { sleep: 0 });
+        await replyBox2.waitUntilViewLoaded();
+        await replyBox2.waitForSelTestState('ready');
+        await replyBox2.waitAll(['@input-body', '@action-send']);
         const recipientsCount = await replyBox2.target.$$eval('.email_address', elements => elements.length);
         expect(recipientsCount).to.equal(2);
-        await gmailPage.waitAndClick(gmailContextMenu);
-        await Util.sleep(1);
-        expect(await gmailPage.isElementPresent('@action-forward-message-button'));
-        await gmailPage.waitAndClick('@action-forward-message-button');
-        const replyBox3 = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+        await gmailPage.waitTillGone('@action-reply-all-message-button');
+        await click(gmailContextMenu);
+        await click('[data-test="action-forward-message-button"]');
+        const replyBox3 = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&replyOption=a_forward'], { sleep: 0 });
         await replyBox3.waitForContent('@input-body', '---------- Forwarded message ---------');
       })
     );
