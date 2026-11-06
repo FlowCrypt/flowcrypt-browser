@@ -145,3 +145,21 @@ BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
   stylesheet.remove();
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags rejects encoded logout image paths`);
+(async () => {
+  const urls = [
+    'https://accounts.google.com/%4Cogout',
+    'https://accounts.google.com/%6Cogout',
+    'https://accounts.google.com/%73ignout',
+    'https://accounts.google.com/%256cogout',
+    'https://accounts.google.com/%zzlogout',
+  ];
+  for (const url of urls) {
+    const clean = Xss.htmlSanitizeKeepBasicTags(`<img src="${url}">`, 'IMG-KEEP');
+    if (/remote_image_container|<img/i.test(clean)) {
+      throw Error(`encoded logout image path was not removed: ${clean}`);
+    }
+  }
+  return 'pass';
+})();
