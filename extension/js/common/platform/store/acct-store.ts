@@ -145,7 +145,7 @@ export class AcctStore extends AbstractStore {
     let allowedScopes: string[] = [];
     try {
       const { scope } = await GoogleOAuth.getTokenInfo(accessToken);
-      allowedScopes = scope.split(' ');
+      allowedScopes = scope.split(/\s+/).filter(Boolean);
     } catch (e) {
       if (ApiErr.isAuthErr(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded('broadcast', { acctEmail });

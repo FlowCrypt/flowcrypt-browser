@@ -29,6 +29,7 @@ export type OAuthTokensResponse = {
   refresh_token?: string;
   id_token: string;
   token_type: 'Bearer';
+  scope?: string;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
 

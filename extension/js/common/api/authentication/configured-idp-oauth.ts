@@ -140,7 +140,7 @@ export class ConfiguredIdpOAuth extends OAuth {
       if (!redirectUri) {
         return { acctEmail, result: 'Denied', error: 'Invalid response url', id_token: undefined };
       }
-      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], redirectUri);
+      const uncheckedUrlParams = Url.parse(['code', 'state'], redirectUri);
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
       if (!code) {
