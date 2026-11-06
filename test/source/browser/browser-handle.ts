@@ -5,7 +5,7 @@ import { Util } from '../util';
 import { ControllablePage } from './controllable';
 import { Semaphore } from './browser-pool';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
-import { AvaContext } from '../tests/tooling';
+import { AvaContext, newTimeoutPromise } from '../tests/tooling';
 
 export class BrowserHandle {
   public pages: ControllablePage[] = [];
@@ -117,6 +117,8 @@ export class BrowserHandle {
   };
 
   public debugPagesHtml = async (t: AvaContext, alsoLogToConsole: boolean) => {
+    // Capture extension frames before collecting console messages, which can take several seconds per page.
+    const composeFramesHtmls = await Promise.all(this.pages.map(async cPage => (cPage.page.isClosed() ? '' : await this.debugComposeFramesHtml(cPage.page))));
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
@@ -127,6 +129,7 @@ export class BrowserHandle {
         .join('\n');
       html += '<div class="page">';
       html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
+      html += composeFramesHtmls[i] ?? '';
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
       html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
       if (url !== 'about:blank' && !cPage.page.isClosed()) {
@@ -144,6 +147,20 @@ export class BrowserHandle {
         }
       }
       html += '</div>';
+    }
+    return html;
+  };
+
+  private debugComposeFramesHtml = async (page: Page): Promise<string> => {
+    let html = '';
+    for (const frame of page.frames().filter(frame => frame.url().includes('/chrome/elements/compose.htm'))) {
+      html += `<pre title="compose-frame-url">${Util.htmlEscape(frame.url())} (detached: ${frame.detached})</pre>`;
+      try {
+        const frameHtml = await Promise.race([frame.content(), newTimeoutPromise('compose frame diagnostics', 5)]);
+        html += `<pre title="compose-frame-html" style="height:300px;overflow:auto;">${Util.htmlEscape(frameHtml)}</pre>`;
+      } catch (e) {
+        html += `<pre title="compose-frame-error">${Util.htmlEscape(String(e))}</pre>`;
+      }
     }
     return html;
   };

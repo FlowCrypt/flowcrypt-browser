@@ -68,10 +68,12 @@ export class OauthPageRecipe extends PageRecipe {
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
       googleConfirmAccountBtn: 'button[formaction*="confirmaccount?"], form[action*="confirmaccount?"] button[type="submit"]',
+      googleSamlConfirmAccountBtn: '[data-view-id="AZBvBc"] [jsname="Njthtb"] button',
       googleContinueAuthBtn: '.VfPpkd-LgbsSe',
       googleSignInWithGoogleContinueBtn: '//button[.//span[normalize-space(.)="Continue"]]',
     };
-    const confirmationButtons = [selectors.googleConfirmAccountBtn, selectors.googleSignInWithGoogleContinueBtn];
+    // The SAML confirmation view uses JS buttons without form actions, and its labels are localized.
+    const confirmationButtons = [selectors.googleConfirmAccountBtn, selectors.googleSamlConfirmAccountBtn, selectors.googleSignInWithGoogleContinueBtn];
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL, .yAlK0b';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
@@ -151,15 +153,9 @@ export class OauthPageRecipe extends PageRecipe {
       if (oauthPage.page.isClosed()) {
         return;
       }
-      const eStr = String(e);
-      if (
-        !eStr.includes('Execution context was destroyed') &&
-        !eStr.includes('Cannot find context with specified id') &&
-        !eStr.includes('Argument should belong to the same JavaScript world as target object')
-      ) {
+      if (!Util.isTransientPageError(e)) {
         throw e; // not a known retriable error
       }
-      // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   };

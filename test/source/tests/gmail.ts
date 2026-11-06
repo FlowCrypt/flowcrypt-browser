@@ -86,10 +86,15 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
     const pageHasSecureDraft = async (gmailPage: ControllablePage, expectedContent?: string) => {
       const secureDraftFrame = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&draftId='], { sleep: 2 });
       await Util.sleep(3);
-      // Wait for the iframe content to load - @input-body must exist first
-      await secureDraftFrame.waitAll('@input-body');
-      if (expectedContent) {
-        await secureDraftFrame.waitForContent('@input-body', expectedContent);
+      try {
+        // Wait for the iframe content to load - @input-body must exist first
+        await secureDraftFrame.waitAll('@input-body');
+        if (expectedContent) {
+          await secureDraftFrame.waitForContent('@input-body', expectedContent);
+        }
+      } catch (e) {
+        gmailPage.t.log(`Selected draft frame at failure: ${secureDraftFrame.frame.url()} (detached: ${secureDraftFrame.frame.detached})`);
+        throw e;
       }
       return secureDraftFrame;
     };
