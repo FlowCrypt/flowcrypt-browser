@@ -152,17 +152,22 @@ export class BrowserHandle {
   };
 
   private debugComposeFramesHtml = async (page: Page): Promise<string> => {
-    let html = '';
-    for (const frame of page.frames().filter(frame => frame.url().includes('/chrome/elements/compose.htm'))) {
-      html += `<pre title="compose-frame-url">${Util.htmlEscape(frame.url())} (detached: ${frame.detached})</pre>`;
-      try {
-        const frameHtml = await Promise.race([frame.content(), newTimeoutPromise('compose frame diagnostics', 5)]);
-        html += `<pre title="compose-frame-html" style="height:300px;overflow:auto;">${Util.htmlEscape(frameHtml)}</pre>`;
-      } catch (e) {
-        html += `<pre title="compose-frame-error">${Util.htmlEscape(String(e))}</pre>`;
-      }
-    }
-    return html;
+    const framesHtml = await Promise.all(
+      page
+        .frames()
+        .filter(frame => frame.url().includes('/chrome/elements/compose.htm'))
+        .map(async frame => {
+          let html = `<pre title="compose-frame-url">${Util.htmlEscape(frame.url())} (detached: ${frame.detached})</pre>`;
+          try {
+            const frameHtml = await Promise.race([frame.content(), newTimeoutPromise('compose frame diagnostics', 5)]);
+            html += `<pre title="compose-frame-html" style="height:300px;overflow:auto;">${Util.htmlEscape(frameHtml)}</pre>`;
+          } catch (e) {
+            html += `<pre title="compose-frame-error">${Util.htmlEscape(String(e))}</pre>`;
+          }
+          return html;
+        })
+    );
+    return framesHtml.join('');
   };
 
   private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page | null> => {

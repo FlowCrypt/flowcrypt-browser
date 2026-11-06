@@ -5,7 +5,7 @@ import test from 'ava';
 import { expect } from 'chai';
 import { BrowserHandle } from './../browser/browser-handle';
 import { Controllable, ControllablePage } from './../browser/controllable';
-import { TIMEOUT_PAGE_LOAD } from './../browser';
+import { TIMEOUT_ELEMENT_APPEAR, TIMEOUT_PAGE_LOAD } from './../browser';
 import { TestUrls } from './../browser/test-urls';
 import { TestWithBrowser } from './../test';
 import { TestVariant, Util } from './../util';
@@ -402,18 +402,22 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       testWithBrowser(
         async (t, browser) => {
           await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
-          const gmailPage = await openGmailPage(t, browser);
-          await gotoGmailPage(gmailPage, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
-          await Util.sleep(30);
+          const gmailPage = await openGmailPage(t, browser, '/FMfcgzGqRGfPBbNLWvfPvDbxnHBwkdGf'); // plain convo
+          await gmailPage.waitAll('@action-secure-compose', { timeout: TIMEOUT_PAGE_LOAD });
+          const messageSelector = '[role="listitem"] .adn.ads';
+          const controlWaitOptions = { visible: true, timeout: TIMEOUT_ELEMENT_APPEAR * 1000 };
           for (const switchControl of ['#switch_to_encrypted_reply', '[data-tooltip="Secure Reply"]']) {
             t.log(`Switch older-message reply using ${switchControl}`);
-            await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 }); // click first message of thread
-            await Util.sleep(3);
-            const messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
+            await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 0 }); // click first message of thread
+            await gmailPage.target.waitForFunction(
+              selector => document.querySelectorAll(selector).length === 2,
+              { timeout: TIMEOUT_ELEMENT_APPEAR * 1000 },
+              messageSelector
+            );
+            const messages = await gmailPage.target.$$(messageSelector);
             expect(messages.length).to.equal(2);
-            const plainReplyButton = await messages[0].$('[aria-label="Reply"]');
+            const plainReplyButton = await messages[0].waitForSelector('[aria-label="Reply"]', controlWaitOptions);
             expect(plainReplyButton).to.be.ok;
-            await Util.sleep(1);
             await plainReplyButton!.click();
             await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
             await gmailPage.waitForContent(
@@ -422,45 +426,52 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
             );
 
             if (switchControl === '#switch_to_encrypted_reply') {
-              await gmailPage.waitAndClick(switchControl);
+              await gmailPage.waitAndClick(switchControl, { delay: 0 });
             } else {
-              const secureReplyButton = await messages[0].$(switchControl);
+              const secureReplyButton = await messages[0].waitForSelector(switchControl, controlWaitOptions);
               expect(secureReplyButton).to.be.ok;
               await secureReplyButton!.click();
             }
-            await Util.sleep(2);
             await gmailPage.waitAll('.reply_message');
+            const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&skipClickPrompt=___cu_true___'], { sleep: 0 });
+            await replyBox.waitAll(['@input-body', '@action-send']);
+            await gmailPage.target.waitForFunction(() => document.querySelectorAll('iframe[src*="/chrome/elements/compose.htm"]').length === 2, {
+              timeout: TIMEOUT_ELEMENT_APPEAR * 1000,
+            });
             await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true, composeFrameCount: 2 });
-            const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm', '&skipClickPrompt=___cu_true___'], { sleep: 5 });
             if (switchControl === '#switch_to_encrypted_reply') {
               await replyBox.waitAll(['@action-expand-quoted-text']);
-              await replyBox.waitAndClick('@action-expand-quoted-text');
+              await replyBox.waitAndClick('@action-expand-quoted-text', { delay: 0 });
               // Check if quoted message doesn't contain last message
               expect(await replyBox.read('@input-body')).to.not.contain(`Here's reply`);
             }
 
             // Finish deleting the draft before resetting the conversation for the next scenario.
-            await replyBox.waitAndClick('.delete_draft');
+            await replyBox.waitAndClick('.delete_draft', { delay: 0 });
             await replyBox.waitAll('@action-accept-reply-prompt');
             await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' });
             await gmailPage.waitAll('[role="listitem"] .adf.ads');
           }
 
           t.log('Secure reply buttons on newest and expanded older message menus');
-          await Util.sleep(3);
-          let messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
+          await gmailPage.waitAll(`${messageSelector} [aria-label="More message options"]`);
+          let messages = await gmailPage.target.$$(messageSelector);
           const newestMessage = messages[messages.length - 1];
-          const newestMenuBtn = await newestMessage.$('[aria-label="More message options"]');
+          const newestMenuBtn = await newestMessage.waitForSelector('[aria-label="More message options"]', controlWaitOptions);
           expect(newestMenuBtn).to.be.ok;
           await newestMenuBtn!.click();
           await gmailPage.waitAll('.action_reply_message_button');
           await newestMenuBtn!.click(); // close the menu before expanding the older message
           await gmailPage.waitTillGone('.action_reply_message_button');
 
-          await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 1 });
-          await Util.sleep(2);
-          messages = await gmailPage.target.$$('[role="listitem"] .adn.ads');
-          const olderMenuBtn = await messages[0].$('[aria-label="More message options"]');
+          await gmailPage.waitAndClick('[role="listitem"] .adf.ads', { delay: 0 });
+          await gmailPage.target.waitForFunction(
+            selector => document.querySelectorAll(selector).length === 2,
+            { timeout: TIMEOUT_ELEMENT_APPEAR * 1000 },
+            messageSelector
+          );
+          messages = await gmailPage.target.$$(messageSelector);
+          const olderMenuBtn = await messages[0].waitForSelector('[aria-label="More message options"]', controlWaitOptions);
           expect(olderMenuBtn).to.be.ok;
           await olderMenuBtn!.click();
           await gmailPage.waitAll('.action_reply_message_button');
