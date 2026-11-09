@@ -17,5 +17,8 @@ if (typeof opgp !== 'undefined') {
   opgp.config.showComment = true;
   opgp.config.allowUnauthenticatedMessages = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
   opgp.config.allowInsecureDecryptionWithSigningKeys = false; // may get later over-written using ClientConfiguration for some clients
+  // Bound decompression of literal data to prevent OpenPGP decompression bombs (CWE-409/CWE-400).
+  // Default is Infinity, which lets a small ciphertext allocate an arbitrary amount of memory.
+  opgp.config.maxDecompressedMessageSize = 64 * 1024 * 1024; // 64 MiB
   // openpgp.config.require_uid_self_cert = false;
 }

@@ -66,7 +66,18 @@ export class PgpArmor {
   };
 
   public static isEncryptedMsg(msg: string): boolean {
-    return !!new RegExp(`${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.begin}.*${PgpArmor.ARMOR_HEADER_DICT.encryptedMsg.end}`).exec(msg);
+    const { begin, end } = PgpArmor.ARMOR_HEADER_DICT.encryptedMsg;
+    if (typeof end !== 'string') {
+      return false;
+    }
+    for (const line of msg.split('\n')) {
+      const beginIndex = line.indexOf(begin);
+      // eslint-disable-next-line @typescript-eslint/prefer-includes
+      if (beginIndex !== -1 && line.indexOf(end, beginIndex + begin.length) !== -1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static clip(text: string): string | undefined {
@@ -84,20 +95,24 @@ export class PgpArmor {
         PgpArmor.ARMOR_HEADER_DICT.signature,
         PgpArmor.ARMOR_HEADER_DICT.publicKey,
       ];
-
-      // Build regex patterns from headers, escaping special regex characters
-      const patterns = pgpHeaders.map(header => {
-        const escapedBegin = Str.regexEscape(header.begin);
-        // header.end can be string or RegExp, handle both cases
-        const escapedEnd = typeof header.end === 'string' ? Str.regexEscape(header.end) : header.end.source; // If it's already a RegExp, use its source
-        return `(${escapedBegin}[\\s\\S]*?${escapedEnd})`;
-      });
-
-      // Create regex with alternation, 'm' flag for multiline (no 'g' needed for single match)
-      const regex = new RegExp(patterns.join('|'), 'm');
-      const match = text.match(regex);
-
-      return match ? match[0] : undefined;
+      let bestStart = -1;
+      let bestEnd = -1;
+      for (const header of pgpHeaders) {
+        if (typeof header.end !== 'string') {
+          continue;
+        }
+        const start = text.indexOf(header.begin);
+        if (start === -1 || (bestStart !== -1 && start >= bestStart)) {
+          continue;
+        }
+        const end = text.indexOf(header.end, start + header.begin.length);
+        if (end === -1) {
+          continue;
+        }
+        bestStart = start;
+        bestEnd = end + header.end.length;
+      }
+      return bestStart === -1 ? undefined : text.substring(bestStart, bestEnd);
     }
     return undefined;
   }

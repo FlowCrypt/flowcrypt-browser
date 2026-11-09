@@ -126,15 +126,23 @@ export class MsgBlockParser {
   }
 
   public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
-    let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
+    const { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
+    let cursor = 0;
+    let result = '';
     for (const block of blocks) {
-      if (block.type === 'publicKey') {
-        const armored = Str.with(block.content);
-        foundPublicKeys.push(armored);
-        normalized = normalized.replace(armored, '');
+      if (block.type !== 'publicKey') {
+        continue;
       }
+      const armored = Str.with(block.content);
+      foundPublicKeys.push(armored);
+      const blockStart = normalized.indexOf(armored, cursor);
+      if (blockStart === -1) {
+        continue;
+      }
+      result += normalized.substring(cursor, blockStart);
+      cursor = blockStart + armored.length;
     }
-    return normalized;
+    return result + normalized.substring(cursor);
   }
 
   public static extractFcReplyToken(decryptedContent: string): unknown | undefined {
@@ -148,7 +156,21 @@ export class MsgBlockParser {
   }
 
   public static stripFcReplyToken(decryptedContent: string) {
-    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+    const classMarker = 'class="cryptup_reply"';
+    const classIndex = decryptedContent.indexOf(classMarker);
+    if (classIndex === -1) {
+      return decryptedContent;
+    }
+    const divStart = decryptedContent.lastIndexOf('<div', classIndex);
+    const tagEndBeforeClass = divStart === -1 ? -1 : decryptedContent.indexOf('>', divStart);
+    if (divStart === -1 || classIndex === divStart + 4 || (tagEndBeforeClass !== -1 && tagEndBeforeClass < classIndex)) {
+      return decryptedContent;
+    }
+    const divEnd = decryptedContent.indexOf('>', classIndex + classMarker.length);
+    if (divEnd === -1 || divEnd === classIndex + classMarker.length || !decryptedContent.startsWith('</div>', divEnd + 1)) {
+      return decryptedContent;
+    }
+    return decryptedContent.substring(0, divStart) + decryptedContent.substring(divEnd + 1 + '</div>'.length);
   }
 
   private static isFcAttachmentLinkData(o: unknown): o is FcAttachmentLinkData {
@@ -166,20 +188,56 @@ export class MsgBlockParser {
    * This is needed for signed messages that may contain quoted inner signatures.
    */
   private static findNonQuotedEndMarker(text: string, startIndex: number, endMarker: string): number {
+    let lineStart = Math.max(text.lastIndexOf('\n', startIndex - 1), text.lastIndexOf('\r', startIndex - 1)) + 1;
+    let nextLf = text.indexOf('\n', lineStart);
+    let nextCr = text.indexOf('\r', lineStart);
     let searchFrom = startIndex;
+    let cachedLineStart = -1;
+    let cachedIsQuoted = false;
     while (true) {
       const endIndex = text.indexOf(endMarker, searchFrom);
       if (endIndex === -1) {
         return -1; // No end marker found
       }
-      // Find the start of the line containing this end marker
-      const lastLf = text.lastIndexOf('\n', endIndex - 1);
-      const lastCr = text.lastIndexOf('\r', endIndex - 1);
-      const lineStart = Math.max(lastLf, lastCr) + 1;
-      const linePrefix = text.substring(lineStart, endIndex);
-      // Check if line prefix contains quote markers (ignoring whitespace)
-      // A quoted line has '>' as the first non-whitespace character or after other '>'
-      const isQuoted = /^\s*>/.test(linePrefix);
+      while (true) {
+        let nextBreak: number;
+        if (nextLf !== -1 && nextCr !== -1) {
+          nextBreak = Math.min(nextLf, nextCr);
+        } else if (nextLf !== -1) {
+          nextBreak = nextLf;
+        } else if (nextCr !== -1) {
+          nextBreak = nextCr;
+        } else {
+          break;
+        }
+        if (nextBreak >= endIndex) {
+          break;
+        }
+        if (nextBreak === nextCr && nextBreak + 1 === nextLf) {
+          // \r\n counts as a single line break
+          lineStart = nextLf + 1;
+          nextCr = text.indexOf('\r', lineStart);
+          nextLf = text.indexOf('\n', lineStart);
+        } else if (nextBreak === nextLf) {
+          lineStart = nextLf + 1;
+          nextLf = text.indexOf('\n', lineStart);
+        } else {
+          lineStart = nextCr + 1;
+          nextCr = text.indexOf('\r', lineStart);
+        }
+      }
+      let isQuoted: boolean;
+      if (cachedLineStart === lineStart) {
+        isQuoted = cachedIsQuoted;
+      } else {
+        let firstNonWs = lineStart;
+        while (firstNonWs < endIndex && /\s/.test(text[firstNonWs])) {
+          firstNonWs++;
+        }
+        isQuoted = firstNonWs < endIndex && text[firstNonWs] === '>';
+        cachedLineStart = lineStart;
+        cachedIsQuoted = isQuoted;
+      }
       if (!isQuoted) {
         return endIndex; // Found a non-quoted end marker
       }

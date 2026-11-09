@@ -41,6 +41,7 @@ type ProcessedMessage = {
 };
 
 export class MessageRenderer {
+  private static readonly MAX_SIGNED_CONTENT_REDECODE_DEPTH = 10;
   public readonly downloader: Downloader;
   private readonly processedMessages = new Map<string, Promise<ProcessedMessage>>();
   private readonly resolvedMessages = new Map<string, { value: ProcessedMessage; expiration: number }>();
@@ -81,6 +82,16 @@ export class MessageRenderer {
   private static replaceInlineImageCIDs(html: string, attachments: Attachment[]): { sanitizedHtml: string; inlineCIDAttachments: Set<Attachment> } {
     // Set to store inline CID attachments
     const inlineCIDAttachments = new Set<Attachment>();
+    const attachmentsByCid = new Map<string, Attachment>();
+    for (const attachment of attachments) {
+      if (attachment.cid) {
+        attachmentsByCid.set(attachment.cid, attachment);
+      }
+    }
+    const maxInlineImageBytes = 5 * 1024 * 1024;
+    const maxTotalInlineImageBytes = 10 * 1024 * 1024;
+    const dataUriByCid = new Map<string, string>();
+    let totalInlineImageBytes = 0;
 
     // Define the hook function for DOMPurify to process image elements after sanitizing attributes
     DOMPurify.addHook('afterSanitizeAttributes', currentNode => {
@@ -96,12 +107,25 @@ export class MessageRenderer {
       // If the src attribute contains a CID
       if (matches?.[1]) {
         const contentId = matches[1];
-        const contentIdAttachment = attachments.find(attachment => attachment.cid === `<${contentId}>`);
+        const contentIdAttachment = attachmentsByCid.get(`<${contentId}>`);
 
         // Replace the src attribute with a base64 encoded string
         if (contentIdAttachment) {
+          let dataUri = dataUriByCid.get(contentId);
+          const attachmentSize = contentIdAttachment.getData().length;
+          if (typeof dataUri === 'undefined') {
+            if (attachmentSize > maxInlineImageBytes) {
+              return;
+            }
+            dataUri = `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`;
+            dataUriByCid.set(contentId, dataUri);
+          }
+          if (totalInlineImageBytes + attachmentSize > maxTotalInlineImageBytes) {
+            return;
+          }
+          totalInlineImageBytes += attachmentSize;
           inlineCIDAttachments.add(contentIdAttachment);
-          currentNode.setAttribute('src', `data:${contentIdAttachment.type};base64,${contentIdAttachment.getData().toBase64Str()}`);
+          currentNode.setAttribute('src', dataUri);
         }
       }
     });
@@ -514,10 +538,33 @@ export class MessageRenderer {
     };
   };
 
-  private clipMessageIfLimitExceeds = (decryptedContent: string) => {
+  // eslint-disable-next-line @typescript-eslint/member-ordering
+  public static clipMessageIfLimitExceeds = (decryptedContent: string) => {
     const maxDecryptedContentLength = 100000;
-    const content = decryptedContent.replace(/<img[^>]*src="data:image[^>]*>/g, '');
-    if (content.length > maxDecryptedContentLength) {
+    if (decryptedContent.length <= maxDecryptedContentLength) {
+      return decryptedContent;
+    }
+    let cursor = 0;
+    let contentLength = 0;
+    while (contentLength <= maxDecryptedContentLength) {
+      const imageStart = decryptedContent.indexOf('<img', cursor);
+      if (imageStart === -1) {
+        contentLength += decryptedContent.length - cursor;
+        break;
+      }
+      const imageEnd = decryptedContent.indexOf('>', imageStart + 4);
+      if (imageEnd === -1) {
+        contentLength += decryptedContent.length - cursor;
+        break;
+      }
+      contentLength += imageStart - cursor;
+      const imageTag = decryptedContent.substring(imageStart, imageEnd + 1);
+      if (!imageTag.includes('src="data:image')) {
+        contentLength += imageTag.length;
+      }
+      cursor = imageEnd + 1;
+    }
+    if (contentLength > maxDecryptedContentLength) {
       return decryptedContent.substring(0, maxDecryptedContentLength) + ' [clipped - message too large]';
     }
     return decryptedContent;
@@ -532,7 +579,8 @@ export class MessageRenderer {
     renderModule: RenderInterface,
     retryVerification: (() => Promise<VerifyRes | undefined>) | undefined,
     plainSubject: string | undefined,
-    isChecksumInvalid = false
+    isChecksumInvalid = false,
+    signedContentDepth = 0
   ): Promise<{ publicKeys?: string[] }> => {
     if (isEncrypted) {
       renderModule.renderEncryptionStatus('encrypted');
@@ -599,6 +647,10 @@ export class MessageRenderer {
     }
     if (!sigResult?.match && signedContentInDecryptedData) {
       const plaintext = signedContentInDecryptedData.rawSignedContent;
+      if (signedContentDepth >= MessageRenderer.MAX_SIGNED_CONTENT_REDECODE_DEPTH) {
+        renderModule.renderAsRegularContent(MessageRenderer.clipMessageIfLimitExceeds(plaintext));
+        return isEncrypted ? { publicKeys } : {};
+      }
       const sigText = signedContentInDecryptedData.signature.getData().toUtfStr();
       const verify = (verificationPubs: string[]) => MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs });
       const newSigResult = await verify(verificationPubs);
@@ -610,10 +662,12 @@ export class MessageRenderer {
         newSigResult,
         renderModule,
         this.getRetryVerification(signerEmail, verify),
-        plainSubject
+        plainSubject,
+        false,
+        signedContentDepth + 1
       );
     }
-    decryptedContent = this.clipMessageIfLimitExceeds(decryptedContent);
+    decryptedContent = MessageRenderer.clipMessageIfLimitExceeds(decryptedContent);
     renderModule.separateQuotedContentAndRenderText(decryptedContent, isHtml, isChecksumInvalid);
     await MessageRenderer.renderPgpSignatureCheckResult(renderModule, sigResult, signerEmail, retryVerification);
     if (renderableAttachments.length) {
