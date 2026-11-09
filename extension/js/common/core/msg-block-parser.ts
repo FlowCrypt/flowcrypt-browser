@@ -147,7 +147,7 @@ export class MsgBlockParser {
     }
     const { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
     let cursor = 0;
-    let result = '';
+    const parts: string[] = [];
     for (const block of blocks) {
       if (block.type !== 'publicKey') {
         continue;
@@ -161,10 +161,10 @@ export class MsgBlockParser {
       if (blockStart === -1) {
         continue;
       }
-      result += normalized.substring(cursor, blockStart);
+      parts.push(normalized.substring(cursor, blockStart));
       cursor = blockStart + armored.length;
     }
-    return result + normalized.substring(cursor);
+    return parts.join('') + normalized.substring(cursor);
   }
 
   public static extractFcReplyToken(decryptedContent: string): unknown | undefined {

@@ -4,6 +4,7 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
+import { Mime } from '../core/mime';
 import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -313,6 +314,23 @@ outerSignatureData
       const keys2: string[] = [];
       MsgBlockParser.stripPublicKeys(`hello\n${empty}`, keys2);
       expect(keys2.length).to.equal(0);
+      t.pass();
+    });
+
+    test(`[unit][Mime.countMultipartHeaders] counts nested multiparts`, async t => {
+      const buildNested = (depth: number) => {
+        let raw = 'Content-Type: multipart/mixed; boundary="B0"\n\n';
+        for (let i = 0; i < depth; i++) raw += `--B${i}\nContent-Type: multipart/mixed; boundary="B${i + 1}"\n\n`;
+        return raw;
+      };
+      expect(Mime.countMultipartHeaders(buildNested(60))).to.be.greaterThan(50);
+      expect(Mime.countMultipartHeaders(buildNested(3))).to.equal(4);
+      t.pass();
+    });
+
+    test(`[unit][Mime.countMultipartHeaders] ignores body text, counts folded headers`, async t => {
+      expect(Mime.countMultipartHeaders('Content-Type: text/plain\n\nmultipart multipart multipart')).to.equal(0);
+      expect(Mime.countMultipartHeaders('Content-Type:\n multipart/mixed; boundary="x"\n\nbody')).to.equal(1);
       t.pass();
     });
 

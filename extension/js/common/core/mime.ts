@@ -64,6 +64,7 @@ export class Mime {
   private static readonly MAX_ATTACHMENTS_PER_MESSAGE = 50;
   private static readonly MAX_DECODED_TEXT_LEN = 1000000;
   private static readonly MAX_ARMOR_SCAN_BYTES = 1000000;
+  private static readonly MAX_NESTED_MULTIPARTS = 50;
   private static readonly MAX_SIGNED_CONTENT_DEPTH = 50;
   public static processBody(decoded: MessageBody): MsgBlock[] {
     const blocks: MsgBlock[] = [];
@@ -184,6 +185,52 @@ export class Mime {
     return contentType.index === 0;
   }
 
+  public static countMultipartHeaders(data: Uint8Array | string): number {
+    const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+    const lowerEq = (c: number | undefined, t: number): boolean => c === t || (t >= 97 && t <= 122 && c === t - 32);
+    const startsWith = (pos: number, token: string): boolean => {
+      for (let i = 0; i < token.length; i++) {
+        if (!lowerEq(bytes[pos + i], token.charCodeAt(i))) {
+          return false;
+        }
+      }
+      return true;
+    };
+    const skipSpaces = (pos: number): number => {
+      while (bytes[pos] === 32 || bytes[pos] === 9) {
+        pos++;
+      }
+      return pos;
+    };
+    let count = 0;
+    let inContentType = false;
+    let pos = 0;
+    while (pos < bytes.length && count <= Mime.MAX_NESTED_MULTIPARTS) {
+      let end = pos;
+      while (end < bytes.length && bytes[end] !== 10) {
+        end++;
+      }
+      const first = bytes[pos];
+      if (first === 32 || first === 9) {
+        if (inContentType && startsWith(skipSpaces(pos), 'multipart')) {
+          count++;
+          inContentType = false;
+        }
+      } else {
+        inContentType = false;
+        if ((first === 99 || first === 67) && startsWith(pos, 'content-type:')) {
+          if (startsWith(skipSpaces(pos + 13), 'multipart')) {
+            count++;
+          } else {
+            inContentType = true;
+          }
+        }
+      }
+      pos = end + 1;
+    }
+    return count;
+  };
+
   public static async decode(mimeMsg: Uint8Array | string): Promise<MimeContentWithHeaders> {
     let mimeContent: MimeContentWithHeaders = {
       attachments: [],
@@ -196,8 +243,15 @@ export class Mime {
       cc: [],
       bcc: [],
     };
+    if (Mime.countMultipartHeaders(mimeMsg) > Mime.MAX_NESTED_MULTIPARTS) {
+      return mimeContent;
+    }
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
+    const htmlParts: string[] = [];
+    const textParts: string[] = [];
+    let htmlLen = 0;
+    let textLen = 0;
     parser.onbody = (node: MimeParserNode) => {
       const path = node.path.join('.');
       if (typeof leafNodes[path] === 'undefined') {
@@ -219,19 +273,22 @@ export class Mime {
             for (const node of Object.values(leafNodes).slice(0, Mime.MAX_MIME_PARTS)) {
               const nodeType = Mime.getNodeType(node);
               if (nodeType === 'text/html' && !Mime.getNodeFilename(node)) {
-                // html content may be broken up into smaller pieces by attachments in between
-                // AppleMail does this with inline attachments
                 const chunk = Mime.getNodeContentAsUtfStr(node);
-                const currentLen = mimeContent.html?.length ?? 0;
-                if (currentLen < Mime.MAX_DECODED_TEXT_LEN) {
-                  mimeContent.html = (mimeContent.html || '') + chunk.substring(0, Mime.MAX_DECODED_TEXT_LEN - currentLen);
+                if (htmlLen < Mime.MAX_DECODED_TEXT_LEN) {
+                  const take = chunk.substring(0, Mime.MAX_DECODED_TEXT_LEN - htmlLen);
+                  htmlParts.push(take);
+                  htmlLen += take.length;
                 }
               } else if (nodeType === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
                 const chunk = Mime.getNodeContentAsUtfStr(node);
-                const currentLen = mimeContent.text?.length ?? 0;
-                if (currentLen < Mime.MAX_DECODED_TEXT_LEN) {
-                  const prefix = mimeContent.text ? '\n\n' : '';
-                  mimeContent.text = (mimeContent.text || '') + prefix + chunk.substring(0, Mime.MAX_DECODED_TEXT_LEN - currentLen - prefix.length);
+                if (textLen < Mime.MAX_DECODED_TEXT_LEN) {
+                  if (textLen) {
+                    textParts.push('\n\n');
+                    textLen += 2;
+                  }
+                  const take = chunk.substring(0, Mime.MAX_DECODED_TEXT_LEN - textLen);
+                  textParts.push(take);
+                  textLen += take.length;
                 }
               } else if (nodeType === 'text/rfc822-headers') {
                 /* eslint-disable no-underscore-dangle */
@@ -244,6 +301,12 @@ export class Mime {
                   mimeContent.attachments.push(Mime.getNodeAsAttachment(node));
                 }
               }
+            }
+            if (htmlParts.length) {
+              mimeContent.html = htmlParts.join('');
+            }
+            if (textParts.length) {
+              mimeContent.text = textParts.join('');
             }
             const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
             mimeContent.subject = mimeContent.subject || (mimeContent.headers.subject as string) || '';

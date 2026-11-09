@@ -152,8 +152,12 @@ export class GmailParser {
     msgOrPayloadOrPart: GmailRes.GmailMsg | GmailRes.GmailMsg$payload | GmailRes.GmailMsg$payload$part,
     internalMsgId: string,
     internalResults: Attachment[] = [],
-    { pgpEncryptedIndex }: { pgpEncryptedIndex?: number } = {}
+    { pgpEncryptedIndex }: { pgpEncryptedIndex?: number } = {},
+    depth = 0
   ) => {
+    if (depth > 50) {
+      return internalResults;
+    }
     if ('payload' in msgOrPayloadOrPart && msgOrPayloadOrPart.payload) {
       internalMsgId = msgOrPayloadOrPart.id;
       GmailParser.findAttachments(msgOrPayloadOrPart.payload, internalMsgId, internalResults);
@@ -176,7 +180,7 @@ export class GmailParser {
           }
           GmailParser.findAttachments(part, internalMsgId, internalResults, {
             pgpEncryptedIndex: pgpEncrypted ? i : undefined,
-          });
+          }, depth + 1);
         }
       }
     }
