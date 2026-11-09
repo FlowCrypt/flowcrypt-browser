@@ -111,6 +111,70 @@ test('Buf.fromUtfStr(UTF8).toRawBytesStr() = UTF8_AS_RAW_STRING', async t => {
   t.pass();
 });
 
+test('Buf.toUtfStr(inform) logs at most once on 100k invalid bytes', t => {
+  const data = Buf.fromUint8(new Uint8Array(100000).fill(0xfe));
+  let infos = 0;
+  let logs = 0;
+  const origInfo = console.info;
+  const origLog = console.log;
+  console.info = () => {
+    infos++;
+  };
+  console.log = () => {
+    logs++;
+  };
+  let out: string;
+  try {
+    out = data.toUtfStr();
+  } finally {
+    console.info = origInfo;
+    console.log = origLog;
+  }
+  t.is(out, '');
+  t.true(infos <= 1, `console.info called ${infos} times`);
+  t.true(logs <= 1, `console.log called ${logs} times`);
+});
+
+test('Buf.toUtfStr(inform) logs at most once on invalid 5-byte sequences', t => {
+  const unit = new Uint8Array([0xf8, 0x88, 0x88, 0x88, 0x88]);
+  const bytes = new Uint8Array(unit.length * 20000);
+  for (let i = 0; i < 20000; i++) {
+    bytes.set(unit, i * unit.length);
+  }
+  let logs = 0;
+  const origLog = console.log;
+  console.log = () => {
+    logs++;
+  };
+  try {
+    Buf.fromUint8(bytes).toUtfStr();
+  } finally {
+    console.log = origLog;
+  }
+  t.true(logs <= 1, `console.log called ${logs} times`);
+});
+
+test('Buf.toUtfStr(strict) throws, ignore drops invalid bytes silently', t => {
+  const data = Buf.fromUint8(new Uint8Array([0xfe, 0x41]));
+  t.throws(() => data.toUtfStr('strict'));
+  let logs = 0;
+  const origLog = console.log;
+  const origInfo = console.info;
+  console.log = () => {
+    logs++;
+  };
+  console.info = () => {
+    logs++;
+  };
+  try {
+    t.is(data.toUtfStr('ignore'), 'A');
+  } finally {
+    console.log = origLog;
+    console.info = origInfo;
+  }
+  t.is(logs, 0);
+});
+
 test('Buf.fromRawBytesStr(UTF8_AS_RAW_STRING) = UTF8_AS_BYTES', async t => {
   equals(Buf.fromRawBytesStr(UTF8_AS_RAW_STRING), UTF8_AS_BYTES);
   t.pass();
