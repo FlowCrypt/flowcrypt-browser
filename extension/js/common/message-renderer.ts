@@ -42,6 +42,16 @@ type ProcessedMessage = {
 
 export class MessageRenderer {
   private static readonly MAX_SIGNED_CONTENT_REDECODE_DEPTH = 10;
+  private static readonly MAX_BLOCKS_PER_MESSAGE = 50;
+  private static readonly MAX_PUBLIC_KEYS_PER_MESSAGE = 10;
+  private static readonly MAX_ATTACHMENTS_PER_MESSAGE = 50;
+  private static readonly MAX_INLINE_IMAGES = 20;
+  private static readonly MAX_DECRYPTED_TEXT_LEN = 1000000;
+  private static readonly MAX_PREFETCH_ATTACHMENTS = 10;
+  private static readonly MAX_PASSPHRASE_RETRIES = 60;
+  private static readonly MAX_VERIFY_RETRIES = 2;
+  private static readonly MAX_PUBKEY_BYTES = 100000;
+  private static readonly MAX_ENCRYPTED_MSG_BYTES = 10 * 1024 * 1024;
   public readonly downloader: Downloader;
   private readonly processedMessages = new Map<string, Promise<ProcessedMessage>>();
   private readonly resolvedMessages = new Map<string, { value: ProcessedMessage; expiration: number }>();
@@ -92,6 +102,7 @@ export class MessageRenderer {
     const maxTotalInlineImageBytes = 10 * 1024 * 1024;
     const dataUriByCid = new Map<string, string>();
     let totalInlineImageBytes = 0;
+    let inlineImageCount = 0;
 
     // Define the hook function for DOMPurify to process image elements after sanitizing attributes
     DOMPurify.addHook('afterSanitizeAttributes', currentNode => {
@@ -106,6 +117,10 @@ export class MessageRenderer {
 
       // If the src attribute contains a CID
       if (matches?.[1]) {
+        if (inlineImageCount >= MessageRenderer.MAX_INLINE_IMAGES) {
+          return;
+        }
+        inlineImageCount++;
         const contentId = matches[1];
         const contentIdAttachment = attachmentsByCid.get(`<${contentId}>`);
 
@@ -179,7 +194,8 @@ export class MessageRenderer {
     renderModule: RenderInterface,
     verifyRes: VerifyRes | undefined,
     senderEmail: string | undefined,
-    retryVerification?: () => Promise<VerifyRes | undefined>
+    retryVerification?: () => Promise<VerifyRes | undefined>,
+    verifyRetries = 0
   ) {
     if (verifyRes?.error) {
       renderModule.renderSignatureStatus(`error verifying signature: ${verifyRes.error}`);
@@ -189,6 +205,14 @@ export class MessageRenderer {
     } else if (verifyRes.match) {
       renderModule.renderSignatureStatus('signed');
     } else if (retryVerification) {
+      if (verifyRetries >= MessageRenderer.MAX_VERIFY_RETRIES) {
+        if (!senderEmail) {
+          renderModule.renderSignatureStatus('could not verify signature: missing pubkey, missing sender info');
+        } else {
+          await MessageRenderer.renderMissingPubkeyOrBadSignature(renderModule, verifyRes, senderEmail);
+        }
+        return;
+      }
       renderModule.renderVerificationInProgress();
       let retryVerificationAgain: (() => Promise<VerifyRes | undefined>) | undefined;
       try {
@@ -212,7 +236,7 @@ export class MessageRenderer {
           retryVerificationAgain = retryVerification;
         }
       }
-      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, verifyRes, senderEmail, retryVerificationAgain);
+      await MessageRenderer.renderPgpSignatureCheckResult(renderModule, verifyRes, senderEmail, retryVerificationAgain, verifyRetries + 1);
       return;
     } else if (!senderEmail) {
       // todo: unit-test this case?
@@ -297,7 +321,8 @@ export class MessageRenderer {
     const isOutgoing = this.isOutgoing(senderEmail);
     const blocksInFrames: Dict<MsgBlock> = {};
     let renderedXssSafe = ''; // xss-direct
-    for (const block of blocks) {
+    const visibleBlocks = blocks.slice(0, MessageRenderer.MAX_BLOCKS_PER_MESSAGE);
+    for (const block of visibleBlocks) {
       if (renderedXssSafe) renderedXssSafe += '<br><br>'; // xss-direct
       if (showOriginal) {
         renderedXssSafe += Xss.escape(Str.with(block.content)).replace(/\n/g, '<br>'); // xss-escaped
@@ -308,6 +333,9 @@ export class MessageRenderer {
       } else {
         renderedXssSafe += XssSafeFactory.renderableMsgBlock(this.factory, block, isOutgoing, senderEmail); // xss-safe-factory
       }
+    }
+    if (blocks.length > MessageRenderer.MAX_BLOCKS_PER_MESSAGE) {
+      renderedXssSafe += `<br><br>${Xss.escape(`[${blocks.length - MessageRenderer.MAX_BLOCKS_PER_MESSAGE} additional blocks were not shown.])}`)}`; // xss-escaped
     }
     return { renderedXssSafe, isOutgoing, blocksInFrames }; // xss-safe-value
   };
@@ -426,7 +454,7 @@ export class MessageRenderer {
   };
 
   public startProcessingInlineBlocks = (relayManager: RelayManager, factory: XssSafeFactory, messageInfo: MessageInfo, blocks: Dict<MsgBlock>) => {
-    for (const [frameId, block] of Object.entries(blocks)) {
+    for (const [frameId, block] of Object.entries(blocks).slice(0, MessageRenderer.MAX_BLOCKS_PER_MESSAGE)) {
       this.relayAndStartProcessing(relayManager, factory, frameId, messageInfo.printMailInfo, messageInfo.from?.email, renderModule =>
         this.renderMsgBlock(block, renderModule, messageInfo.from?.email, messageInfo.isPwdMsgBasedOnMsgSnippet, messageInfo.plainSubject)
       );
@@ -463,15 +491,19 @@ export class MessageRenderer {
     const isBodyEmpty = Mime.isBodyEmpty(body);
     // todo: start download of all attachments that are not plainFile, when the cache is implemented?
     // start chunk downloads for 'needChunk' attachments
+    let queuedChunkDownloads = 0;
     for (const a of attachments.filter(a => !a.hasData())) {
       const treatAs = a.treatAs(attachments, isBodyEmpty);
       if (treatAs === 'plainFile') continue;
+      if (queuedChunkDownloads >= MessageRenderer.MAX_PREFETCH_ATTACHMENTS) continue;
       if (treatAs === 'needChunk') {
         await this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        queuedChunkDownloads++;
       } else if (treatAs === 'publicKey') {
         // we also want a chunk before we replace the publicKey-looking attachment in the UI
         // todo: or simply queue full attachment download?
         await this.downloader.queueAttachmentChunkDownload(a, treatAs);
+        queuedChunkDownloads++;
       } else {
         // todo: queue full attachment download, when the cache is implemented?
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
@@ -598,6 +630,9 @@ export class MessageRenderer {
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttachmentBlocks: MsgBlock[] = [];
       decryptedContent = Str.with(decryptedBytes);
+      if (decryptedContent.length > MessageRenderer.MAX_DECRYPTED_TEXT_LEN) {
+        decryptedContent = `${decryptedContent.substring(0, MessageRenderer.MAX_DECRYPTED_TEXT_LEN)} [clipped - message too large]`;
+      }
       decryptedContent = MsgBlockParser.extractFcAttachments(decryptedContent, fcAttachmentBlocks);
       decryptedContent = MsgBlockParser.stripFcReplyToken(decryptedContent);
       decryptedContent = MsgBlockParser.stripPublicKeys(decryptedContent, publicKeys);
@@ -626,7 +661,11 @@ export class MessageRenderer {
         // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
         decryptedContent = MessageRenderer.getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
-      for (const attachment of decoded.attachments) {
+      const attachments = decoded.attachments.slice(0, MessageRenderer.MAX_ATTACHMENTS_PER_MESSAGE);
+      if (decoded.attachments.length > MessageRenderer.MAX_ATTACHMENTS_PER_MESSAGE) {
+        decryptedContent = `${decryptedContent} [${decoded.attachments.length - MessageRenderer.MAX_ATTACHMENTS_PER_MESSAGE} additional attachments were not shown.]`;
+      }
+      for (const attachment of attachments) {
         if (attachment.isPublicKey()) {
           publicKeys.push(attachment.getData().toUtfStr());
         } else if (decoded.rawSignedContent && attachment.treatAs(decoded.attachments) === 'signature') {
@@ -646,10 +685,13 @@ export class MessageRenderer {
       }
     }
     if (!sigResult?.match && signedContentInDecryptedData) {
-      const plaintext = signedContentInDecryptedData.rawSignedContent;
+      const plaintext =
+        signedContentInDecryptedData.rawSignedContent.length > MessageRenderer.MAX_DECRYPTED_TEXT_LEN
+          ? signedContentInDecryptedData.rawSignedContent.substring(0, MessageRenderer.MAX_DECRYPTED_TEXT_LEN)
+          : signedContentInDecryptedData.rawSignedContent;
       if (signedContentDepth >= MessageRenderer.MAX_SIGNED_CONTENT_REDECODE_DEPTH) {
         renderModule.renderAsRegularContent(MessageRenderer.clipMessageIfLimitExceeds(plaintext));
-        return isEncrypted ? { publicKeys } : {};
+        return isEncrypted ? { publicKeys: publicKeys.slice(0, MessageRenderer.MAX_PUBLIC_KEYS_PER_MESSAGE) } : {};
       }
       const sigText = signedContentInDecryptedData.signature.getData().toUtfStr();
       const verify = (verificationPubs: string[]) => MsgUtil.verifyDetached({ plaintext, sigText, verificationPubs });
@@ -674,7 +716,7 @@ export class MessageRenderer {
       renderModule.renderInnerAttachments(renderableAttachments, isEncrypted);
     }
     renderModule.resizePgpBlockFrame();
-    return isEncrypted ? { publicKeys } : {};
+    return isEncrypted ? { publicKeys: publicKeys.slice(0, MessageRenderer.MAX_PUBLIC_KEYS_PER_MESSAGE) } : {};
   };
 
   private relayAndStartProcessing = (
@@ -694,10 +736,19 @@ export class MessageRenderer {
       // we may stop here and wait until renderModule is attached (receive a signal from RelayManager based on frameData)
       const appendAfter = $(`iframe#${frameId}`);
       // todo: how publicKeys and needPassphrase interact?
-      for (const armoredPubkey of result.publicKeys ?? []) {
+      const pubkeys = (result.publicKeys ?? []).slice(0, MessageRenderer.MAX_PUBLIC_KEYS_PER_MESSAGE);
+      for (const armoredPubkey of pubkeys) {
         appendAfter.after(factory.embeddedPubkey(armoredPubkey, this.isOutgoing(senderEmail))); // xss-safe-value
       }
+      const pubkeyCount = result.publicKeys?.length ?? 0;
+      if (pubkeyCount > MessageRenderer.MAX_PUBLIC_KEYS_PER_MESSAGE) {
+        appendAfter.after(Xss.escape(`[${pubkeyCount - MessageRenderer.MAX_PUBLIC_KEYS_PER_MESSAGE} additional public keys were not shown.]`)); // xss-escaped
+      }
+      let passphraseRetries = 0;
       while (result.needPassphrase && !renderModule.cancellation.cancel) {
+        if (++passphraseRetries > MessageRenderer.MAX_PASSPHRASE_RETRIES) {
+          return;
+        }
         // wait for either passphrase or cancellation
         await PassphraseStore.waitUntilPassphraseChanged(this.acctEmail, result.needPassphrase, 1000, renderModule.cancellation);
         if (renderModule.cancellation.cancel) {
@@ -880,6 +931,10 @@ export class MessageRenderer {
       if (!attachment.hasData()) {
         // todo: implement cache similar to chunk downloads
         // note: this cache should return void or throw an exception because the data bytes are set to the Attachment object
+        if (Number.isFinite(attachment.length) && attachment.length > MessageRenderer.MAX_ENCRYPTED_MSG_BYTES) {
+          renderModule.renderErr('Problem extracting armored message', undefined);
+          return {};
+        }
         const progressFunction = renderModule.startProgressRendering('Retrieving message...');
         await this.gmail.fetchAttachment(attachment, progressFunction);
       }
@@ -899,6 +954,9 @@ export class MessageRenderer {
   };
 
   private preparePubkey = async (attachment: Attachment): Promise<{ armoredPubkey?: string; openpgpType: PgpMsgTypeResult }> => {
+    if (Number.isFinite(attachment.length) && attachment.length > MessageRenderer.MAX_PUBKEY_BYTES) {
+      return { openpgpType: undefined };
+    }
     await this.gmail.fetchAttachmentsMissingData([attachment]);
     const data = attachment.getData();
     const openpgpType = MsgUtil.type({ data });
@@ -915,6 +973,10 @@ export class MessageRenderer {
     attachmentSel: JQuery | undefined,
     fromEmail?: string
   ): Promise<'shown' | 'hidden'> => {
+    if (Number.isFinite(attachment.length) && attachment.length > MessageRenderer.MAX_PUBKEY_BYTES) {
+      loaderContext.renderPlainAttachment(attachment, attachmentSel, 'Backup file too large to display');
+      return 'shown';
+    }
     try {
       await this.gmail.fetchAttachmentsMissingData([attachment]);
       loaderContext.setMsgBody_DANGEROUSLY(this.factory.embeddedBackup(attachment.getData().toUtfStr(), fromEmail), 'append'); // xss-safe-factory

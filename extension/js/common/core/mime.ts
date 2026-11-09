@@ -60,6 +60,10 @@ export type MimeProccesedMsg = {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
+  private static readonly MAX_MIME_PARTS = 200;
+  private static readonly MAX_ATTACHMENTS_PER_MESSAGE = 50;
+  private static readonly MAX_DECODED_TEXT_LEN = 1000000;
+  private static readonly MAX_ARMOR_SCAN_BYTES = 1000000;
   private static readonly MAX_SIGNED_CONTENT_DEPTH = 50;
   public static processBody(decoded: MessageBody): MsgBlock[] {
     const blocks: MsgBlock[] = [];
@@ -88,7 +92,7 @@ export class Mime {
   public static processAttachments(bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg {
     const attachmentBlocks: MsgBlock[] = [];
     const signatureAttachments: Attachment[] = [];
-    for (const file of decoded.attachments) {
+    for (const file of decoded.attachments.slice(0, Mime.MAX_ATTACHMENTS_PER_MESSAGE)) {
       let treatAs = file.treatAs(decoded.attachments, Mime.isBodyEmpty(decoded));
       if (['needChunk', 'maybePgp'].includes(treatAs)) {
         // todo: attachments from MimeContent always have data set (so 'needChunk' should never happen),
@@ -96,6 +100,9 @@ export class Mime {
         // but we don't want to reference MsgUtil and OpenPGP.js from this class,
         // so I suggest to move this method to MessageRenderer for further refactoring
         treatAs = 'encryptedMsg'; // publicKey?
+      }
+      if (file.getData().length > Mime.MAX_ARMOR_SCAN_BYTES && ['encryptedMsg', 'signature', 'publicKey', 'privateKey'].includes(treatAs)) {
+        treatAs = 'plainFile';
       }
       if (treatAs === 'encryptedMsg') {
         const armored = PgpArmor.clip(file.getData().toUtfStr());
@@ -209,14 +216,23 @@ export class Mime {
             if (!mimeContent.subject && signedContentNode) {
               mimeContent.subject = Mime.getSubjectFromNode(signedContentNode);
             }
-            for (const node of Object.values(leafNodes)) {
+            for (const node of Object.values(leafNodes).slice(0, Mime.MAX_MIME_PARTS)) {
               const nodeType = Mime.getNodeType(node);
               if (nodeType === 'text/html' && !Mime.getNodeFilename(node)) {
                 // html content may be broken up into smaller pieces by attachments in between
                 // AppleMail does this with inline attachments
-                mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
+                const chunk = Mime.getNodeContentAsUtfStr(node);
+                const currentLen = mimeContent.html?.length ?? 0;
+                if (currentLen < Mime.MAX_DECODED_TEXT_LEN) {
+                  mimeContent.html = (mimeContent.html || '') + chunk.substring(0, Mime.MAX_DECODED_TEXT_LEN - currentLen);
+                }
               } else if (nodeType === 'text/plain' && (!Mime.getNodeFilename(node) || Mime.isNodeInline(node))) {
-                mimeContent.text = (mimeContent.text ? `${mimeContent.text}\n\n` : '') + Mime.getNodeContentAsUtfStr(node);
+                const chunk = Mime.getNodeContentAsUtfStr(node);
+                const currentLen = mimeContent.text?.length ?? 0;
+                if (currentLen < Mime.MAX_DECODED_TEXT_LEN) {
+                  const prefix = mimeContent.text ? '\n\n' : '';
+                  mimeContent.text = (mimeContent.text || '') + prefix + chunk.substring(0, Mime.MAX_DECODED_TEXT_LEN - currentLen - prefix.length);
+                }
               } else if (nodeType === 'text/rfc822-headers') {
                 /* eslint-disable no-underscore-dangle */
                 if (node._parentNode?.headers.subject) {
@@ -224,7 +240,9 @@ export class Mime {
                 }
                 /* eslint-enable no-underscore-dangle */
               } else {
-                mimeContent.attachments.push(Mime.getNodeAsAttachment(node));
+                if (mimeContent.attachments.length < Mime.MAX_ATTACHMENTS_PER_MESSAGE) {
+                  mimeContent.attachments.push(Mime.getNodeAsAttachment(node));
+                }
               }
             }
             const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);

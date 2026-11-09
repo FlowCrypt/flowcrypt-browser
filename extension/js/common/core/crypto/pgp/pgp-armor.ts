@@ -65,17 +65,26 @@ export class PgpArmor {
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
   };
 
+  private static readonly MAX_NORMALIZE_LEN = 1000000;
+
   public static isEncryptedMsg(msg: string): boolean {
     const { begin, end } = PgpArmor.ARMOR_HEADER_DICT.encryptedMsg;
     if (typeof end !== 'string') {
       return false;
     }
-    for (const line of msg.split('\n')) {
+    let start = 0;
+    while (start <= msg.length) {
+      let lineEnd = msg.indexOf('\n', start);
+      if (lineEnd === -1) {
+        lineEnd = msg.length;
+      }
+      const line = msg.substring(start, lineEnd);
       const beginIndex = line.indexOf(begin);
       // eslint-disable-next-line @typescript-eslint/prefer-includes
       if (beginIndex !== -1 && line.indexOf(end, beginIndex + begin.length) !== -1) {
         return true;
       }
+      start = lineEnd + 1;
     }
     return false;
   }
@@ -127,6 +136,9 @@ export class PgpArmor {
   }
 
   public static normalize(armored: string, type: ReplaceableMsgBlockType | 'key') {
+    if (armored.length > PgpArmor.MAX_NORMALIZE_LEN) {
+      return armored;
+    }
     armored = Str.normalize(armored).replace(/\n /g, '\n');
     if (['encryptedMsg', 'publicKey', 'privateKey', 'key'].includes(type)) {
       armored = armored.replace(/\r?\n/g, '\n').trim();

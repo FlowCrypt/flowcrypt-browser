@@ -22,6 +22,11 @@ type SanitizedBlocks = {
 
 export class MsgBlockParser {
   private static ARMOR_HEADER_MAX_LENGTH = 50;
+  private static readonly MAX_BLOCKS_PER_MESSAGE = 100;
+  private static readonly MAX_PUBLIC_KEYS_PER_MESSAGE = 10;
+  private static readonly MAX_QUOTED_END_MARKER_SKIPS = 100;
+  private static readonly MAX_PARSED_TEXT_LEN = 1000000;
+  private static readonly MAX_FC_ATTACHMENT_BLOCKS = 50;
 
   public static detectBlocks(origText: string, completeOnly?: boolean) {
     const blocks: MsgBlock[] = [];
@@ -30,7 +35,12 @@ export class MsgBlockParser {
     while (true) {
       const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt, completeOnly);
       if (found) {
-        blocks.push(...found);
+        for (const block of found) {
+          if (blocks.length >= MsgBlockParser.MAX_BLOCKS_PER_MESSAGE) {
+            return { blocks, normalized };
+          }
+          blocks.push(block);
+        }
       }
       if (typeof continueAt === 'undefined') {
         return { blocks, normalized };
@@ -50,6 +60,9 @@ export class MsgBlockParser {
     let webReplyToken: unknown | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
+      if (plain.length > MsgBlockParser.MAX_PARSED_TEXT_LEN) {
+        plain = `${plain.substring(0, MsgBlockParser.MAX_PARSED_TEXT_LEN)} [clipped - message too large]`;
+      }
       plain = MsgBlockParser.extractFcAttachments(plain, blocks);
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
@@ -103,6 +116,9 @@ export class MsgBlockParser {
       decryptedContent = decryptedContent.replace(
         /<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm,
         (_, url, fcData) => {
+          if (blocks.length >= MsgBlockParser.MAX_FC_ATTACHMENT_BLOCKS) {
+            return _;
+          }
           const fcAttachmentHost = new URL(String(url)).host;
           if (fcAttachmentHost !== 'flowcrypt.s3.amazonaws.com') {
             return '[skipped attachment due to invalid url]';
@@ -126,11 +142,17 @@ export class MsgBlockParser {
   }
 
   public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
+    if (decryptedContent.length > MsgBlockParser.MAX_PARSED_TEXT_LEN) {
+      decryptedContent = decryptedContent.substring(0, MsgBlockParser.MAX_PARSED_TEXT_LEN);
+    }
     const { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
     let cursor = 0;
     let result = '';
     for (const block of blocks) {
       if (block.type !== 'publicKey') {
+        continue;
+      }
+      if (foundPublicKeys.length >= MsgBlockParser.MAX_PUBLIC_KEYS_PER_MESSAGE) {
         continue;
       }
       const armored = Str.with(block.content);
@@ -146,7 +168,9 @@ export class MsgBlockParser {
   }
 
   public static extractFcReplyToken(decryptedContent: string): unknown | undefined {
-    const markers = decryptedContent.matchAll(/<div\b(?=[^<>]*\bclass="([^"<>]*)")[^<>]*\bcryptup-data="([^"<>]+)"[^<>]*><\/div>/gi);
+    const markers = decryptedContent
+      .substring(0, MsgBlockParser.MAX_PARSED_TEXT_LEN)
+      .matchAll(/<div\b(?=[^<>]*\bclass="([^"<>]*)")[^<>]*\bcryptup-data="([^"<>]+)"[^<>]*><\/div>/gi);
     for (const match of markers) {
       if (/\bcryptup_reply\b/i.test(match[1])) {
         return Str.htmlAttrDecode(match[2]);
@@ -194,6 +218,7 @@ export class MsgBlockParser {
     let searchFrom = startIndex;
     let cachedLineStart = -1;
     let cachedIsQuoted = false;
+    let quotedSkips = 0;
     while (true) {
       const endIndex = text.indexOf(endMarker, searchFrom);
       if (endIndex === -1) {
@@ -242,6 +267,9 @@ export class MsgBlockParser {
         return endIndex; // Found a non-quoted end marker
       }
       // Continue searching after this occurrence
+      if (++quotedSkips > MsgBlockParser.MAX_QUOTED_END_MARKER_SKIPS) {
+        return -1;
+      }
       searchFrom = endIndex + endMarker.length;
     }
   }
@@ -292,6 +320,12 @@ export class MsgBlockParser {
               }
             }
             if (endIndex !== -1 || !completeOnly) {
+              if (endIndex !== -1) {
+                const innerBody = origText.substring(begin + blockHeaderDef.begin.length, endIndex).trim();
+                if (!innerBody) {
+                  continue;
+                }
+              }
               // flush the preceding plainText
               potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
               if (potentialTextBeforeBlockBegun) {
@@ -321,7 +355,10 @@ export class MsgBlockParser {
   }
 
   private static async pushArmoredPubkeysToBlocks(armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> {
-    for (const armoredPubkey of armoredPubkeys) {
+    for (const armoredPubkey of armoredPubkeys.slice(0, MsgBlockParser.MAX_PUBLIC_KEYS_PER_MESSAGE)) {
+      if (armoredPubkey.length > MsgBlockParser.MAX_PARSED_TEXT_LEN) {
+        continue;
+      }
       const keys = await KeyUtil.parseMany(armoredPubkey);
       for (const key of keys) {
         const pub = await KeyUtil.asPublicKey(key);

@@ -49,6 +49,7 @@ export class Attachment {
     'openpgp-encrypted-message.asc',
     '.asc.pgp',
   ];
+  public static readonly MAX_COUNT_PER_MESSAGE = 100;
 
   public length = NaN;
   public type: string;

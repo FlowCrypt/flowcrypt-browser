@@ -16,6 +16,7 @@ type FrameEntry = {
 
 export class RelayManager implements RelayManagerInterface {
   private readonly frames = new Map<string, FrameEntry>();
+  private readonly lastRestart = new Map<string, number>();
 
   public constructor(private debug = false) {
     const framesObserver = new MutationObserver(async mutationsList => {
@@ -76,6 +77,11 @@ export class RelayManager implements RelayManagerInterface {
   };
 
   public restartRelay = (frameId: string) => {
+    const now = Date.now();
+    if (now - (this.lastRestart.get(frameId) ?? 0) < 5000) {
+      return;
+    }
+    this.lastRestart.set(frameId, now);
     const frameData = this.frames.get(frameId);
     if (frameData?.relay) {
       frameData.relay.cancellation.cancel = true; // cancel the old processing to prevent interference and release resources
@@ -85,9 +91,15 @@ export class RelayManager implements RelayManagerInterface {
     }
   };
 
-  private findFrameIds = (nodes: NodeList): string[] => {
+  private findFrameIds = (nodes: NodeList, depth = 0, budget = { count: 0 }): string[] => {
     const frameIds: string[] = [];
+    if (depth > 20) {
+      return frameIds;
+    }
     for (const node of nodes) {
+      if (++budget.count > 500) {
+        return frameIds;
+      }
       if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as HTMLElement;
         if (element.tagName === 'IFRAME') {
@@ -95,7 +107,7 @@ export class RelayManager implements RelayManagerInterface {
           continue;
         }
       }
-      frameIds.push(...this.findFrameIds(node.childNodes));
+      frameIds.push(...this.findFrameIds(node.childNodes, depth + 1, budget));
     }
     return frameIds;
   };
@@ -114,6 +126,10 @@ export class RelayManager implements RelayManagerInterface {
   private getOrCreate = (frameId: string): FrameEntry => {
     const frameEntry = this.frames.get(frameId);
     if (frameEntry) return frameEntry;
+    if (this.frames.size >= 500) {
+      const oldest = this.frames.keys().next().value;
+      if (typeof oldest === 'string') this.dropRemovedFrame(oldest);
+    }
     const newFrameEntry = { queue: [] };
     this.frames.set(frameId, newFrameEntry);
     return newFrameEntry;

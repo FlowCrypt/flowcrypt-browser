@@ -298,6 +298,24 @@ outerSignatureData
       t.pass();
     });
 
+    test(`[unit][MsgBlockParser.detectBlocks] caps block count on armor bomb`, async t => {
+      const unit = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const { blocks } = MsgBlockParser.detectBlocks(`hello\n${unit.repeat(5000)}`);
+      expect(blocks.length).to.be.lessThanOrEqual(100);
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.stripPublicKeys] caps keys and ignores empty armor`, async t => {
+      const empty = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const keys: string[] = [];
+      MsgBlockParser.stripPublicKeys(`hello\n${empty.repeat(5000)}`, keys);
+      expect(keys.length).to.be.lessThanOrEqual(10);
+      const keys2: string[] = [];
+      MsgBlockParser.stripPublicKeys(`hello\n${empty}`, keys2);
+      expect(keys2.length).to.equal(0);
+      t.pass();
+    });
+
     test(`[unit][MsgBlockParser.extractFcReplyToken] extracts token and ignores HTML-like markup`, async t => {
       const replyInfoRaw = Buf.fromUtfStr(JSON.stringify({ token: 'test-value' })).toBase64UrlStr();
       const content = `Hello <img src="https://attacker.example/track.png" width="1" height="1">\n<div style="display: none;" class="cryptup_reply" cryptup-data="${replyInfoRaw}"></div>`;

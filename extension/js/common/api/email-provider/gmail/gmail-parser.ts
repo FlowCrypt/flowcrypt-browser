@@ -171,6 +171,9 @@ export class GmailParser {
           (contentType.value.includes('protocol="application/pgp-encrypted"') || parts[0].mimeType === 'application/pgp-encrypted')
         );
         for (const [i, part] of parts.entries()) {
+          if (internalResults.length >= Attachment.MAX_COUNT_PER_MESSAGE) {
+            break;
+          }
           GmailParser.findAttachments(part, internalMsgId, internalResults, {
             pgpEncryptedIndex: pgpEncrypted ? i : undefined,
           });
@@ -178,6 +181,9 @@ export class GmailParser {
       }
     }
     if ('body' in msgOrPayloadOrPart && msgOrPayloadOrPart.body && Object.hasOwn(msgOrPayloadOrPart.body, 'attachmentId')) {
+      if (internalResults.length >= Attachment.MAX_COUNT_PER_MESSAGE) {
+        return internalResults;
+      }
       const payload = msgOrPayloadOrPart as GmailRes.GmailMsg$payload$part;
       const treatAs = Attachment.treatAsForPgpEncryptedAttachments(payload.mimeType, pgpEncryptedIndex);
       const inline = (GmailParser.findHeader(payload, 'content-disposition') || '').toLowerCase().startsWith('inline');

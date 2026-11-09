@@ -196,6 +196,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     let totalBytes = 0;
     const minBytes = 1000; // Define minBytes as per your requirement
+    const maxBufferedBytes = 100000;
     let processed = 0;
     return await new Promise((resolve, reject) => {
       const processChunkAndResolve = (chunk: string) => {
@@ -250,6 +251,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             const chunk = new TextDecoder().decode(value);
             totalBytes += value.length; // Update total bytes based on the Uint8Array length
             completeChunk += chunk;
+            if (totalBytes > maxBufferedBytes) {
+              break;
+            }
             if (totalBytes >= minBytes || treatAs === 'publicKey') {
               // Process and return the chunk if the conditions are met
               return processChunkAndResolve(completeChunk); // Make sure this method returns Buf
@@ -266,14 +270,15 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public fetchAttachmentsMissingData = async (attachments: Attachment[], progressCb?: ProgressCb) => {
-    const attachmentsMissingData = attachments.filter(a => !a.hasData());
+    const attachmentsMissingData = attachments.filter(a => !a.hasData()).slice(0, 10);
     if (!attachmentsMissingData.length) {
       return;
     }
     let lastProgressPercent = -1;
     const loadedAr: number[] = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
-    const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+    const rawTotal = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+    const total = Number.isFinite(rawTotal) && rawTotal > 0 ? rawTotal : 1;
     const responses = await Promise.all(
       attachmentsMissingData.map((a, index) =>
         this.attachmentGet(a, {
