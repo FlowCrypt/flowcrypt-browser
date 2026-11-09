@@ -60,8 +60,9 @@ export type MimeProccesedMsg = {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
-  private static readonly MAX_MIME_PARTS = 200;
+  private static readonly MAX_MIME_PARTS = 1000;
   private static readonly MAX_ATTACHMENTS_PER_MESSAGE = 50;
+  private static readonly MAX_DECODED_ATTACHMENTS = 1000;
   private static readonly MAX_DECODED_TEXT_LEN = 1000000;
   private static readonly MAX_ARMOR_SCAN_BYTES = 1000000;
   private static readonly MAX_NESTED_MULTIPARTS = 50;
@@ -297,7 +298,7 @@ export class Mime {
                 }
                 /* eslint-enable no-underscore-dangle */
               } else {
-                if (mimeContent.attachments.length < Mime.MAX_ATTACHMENTS_PER_MESSAGE) {
+                if (mimeContent.attachments.length < Mime.MAX_DECODED_ATTACHMENTS) {
                   mimeContent.attachments.push(Mime.getNodeAsAttachment(node));
                 }
               }
