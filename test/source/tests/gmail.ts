@@ -2,6 +2,7 @@
 
 import test from 'ava';
 
+import { connect } from 'puppeteer';
 import { expect } from 'chai';
 import { BrowserHandle } from './../browser/browser-handle';
 import { Controllable, ControllableFrame, ControllablePage } from './../browser/controllable';
@@ -63,6 +64,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       content: string,
       params: { offline: boolean } = { offline: false }
     ) => {
+      await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
       let composeBox: Controllable | undefined;
       if (params.offline) {
         // TODO(@limonte): for some reason iframe is able to save the draft to the cloud even
@@ -111,13 +113,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       if (path) {
         url = TestUrls.gmail(0, path, 'inbox');
       }
-      return await browser.newPage(t, url);
+      const gmailPage = await browser.newPage(t, url);
+      await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
+      return gmailPage;
     };
 
     const gotoGmailPage = async (gmailPage: ControllablePage, path: string, category: GmailCategory = 'inbox') => {
       const url = TestUrls.gmail(0, path, category);
       await Util.sleep(1);
       await gmailPage.goto(url);
+      await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
     };
 
     const replyAllConversation = {
@@ -128,6 +133,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.page.goto(TestUrls.gmail(0, path), { waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 });
       await gmailPage.waitForContent('h2.hP', subject, TIMEOUT_PAGE_LOAD);
       await gmailPage.waitAll('@action-secure-compose', { timeout: TIMEOUT_PAGE_LOAD });
+      await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
     };
 
     const replyIframe = 'iframe.reply_message[src*="/chrome/elements/compose.htm"]';
@@ -139,6 +145,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
 
     const messageMenu = '[aria-label="More message options"]';
     const clickGmailControl = async (gmailPage: ControllablePage, selector: string) => {
+      await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
       await gmailPage.target
         .locator(selector)
         .setVisibility('visible')
@@ -332,18 +339,32 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await gotoGmailPage(gmailPage, `/${threadId}`); // go to encrypted convo
           await GmailPageRecipe.trimConvo(gmailPage, threadId);
           await gmailPage.waitAndClick('@secure-reply-button');
-          let replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
+          const replyBox = await gmailPage.getFrame(['/chrome/elements/compose.htm'], { sleep: 5 });
           await Util.sleep(3);
           expect(await replyBox.read('@recipients-preview')).to.equal('e2e.enterprise.test@flowcrypt.com');
           await createSecureDraft(t, browser, gmailPage, 'reply draft');
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
-          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
-          // Wait for extension to re-inject iframes after reload
-          await gmailPage.waitForIframes(3, 25); // 3 attempts, 25s each
-          await Util.sleep(5); // Let Gmail settle after reload
-          replyBox = await pageHasSecureDraft(gmailPage, 'offline reply draft');
-          await Util.sleep(2);
-          await replyBox.waitAndClick('@action-send', { confirmGone: true });
+          await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'domcontentloaded' }, true);
+          await gmailPage.waitAll(`${replyIframe}[src*="&draftId="]`);
+          // Puppeteer can lose access to the extension frame's execution context during navigation.
+          // Attach after the draft iframe is present and keep all assertions and Send in the original Gmail tab.
+          const attachedBrowser = await connect({
+            browserWSEndpoint: browser.browser.wsEndpoint(),
+            defaultViewport: gmailPage.page.viewport(),
+            protocolTimeout: TIMEOUT_PAGE_LOAD * 1000,
+          });
+          try {
+            const attachedPage = (await attachedBrowser.pages()).find(page => page.url() === gmailPage.page.url());
+            if (!attachedPage) {
+              throw new Error('Could not reattach to the Gmail tab with the restored reply draft');
+            }
+            const attachedGmailPage = new ControllablePage(t, attachedPage);
+            const restoredReply = await pageHasSecureDraft(attachedGmailPage, 'offline reply draft');
+            await GmailPageRecipe.dismissMobileNotificationsPrompt(attachedGmailPage);
+            await restoredReply.waitAndClick('@action-send', { confirmGone: true });
+          } finally {
+            await attachedBrowser.disconnect();
+          }
           await Util.sleep(2);
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
@@ -484,12 +505,19 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           }
 
           t.log('Secure reply buttons on newest and expanded older message menus');
+          const checkSecureReplyMenu = async (message: string) => {
+            await gmailPage.waitAll(`${message} iframe.pgp_block.encryptedMsg`);
+            await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
+            const menu = `${message} ${messageMenu}`;
+            await gmailPage.waitAndFocus(menu);
+            await gmailPage.press('Enter');
+            await gmailPage.waitAll(`${menu}[aria-expanded="true"]`);
+            await gmailPage.waitAll('@action-reply-message-button');
+            await gmailPage.press('Escape');
+            await gmailPage.waitTillGone(`${menu}[aria-expanded="true"]`);
+          };
           await gmailPage.waitAll(`${messageSelector} ${messageMenu}`);
-          const newestMenu = `${await expandedMessage(-1)} ${messageMenu}`;
-          await clickGmailControl(gmailPage, newestMenu);
-          await gmailPage.waitAll('.action_reply_message_button');
-          await clickGmailControl(gmailPage, newestMenu); // close the menu before expanding the older message
-          await gmailPage.waitTillGone('.action_reply_message_button');
+          await checkSecureReplyMenu(await expandedMessage(-1));
 
           await clickGmailControl(gmailPage, '[role="listitem"] .adf.ads');
           await gmailPage.target.waitForFunction(
@@ -497,8 +525,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
             { timeout: TIMEOUT_ELEMENT_APPEAR * 1000 },
             messageSelector
           );
-          await clickGmailControl(gmailPage, `${await expandedMessage(0)} ${messageMenu}`);
-          await gmailPage.waitAll('.action_reply_message_button');
+          await checkSecureReplyMenu(await expandedMessage(0));
         },
         undefined,
         minutes(6)
