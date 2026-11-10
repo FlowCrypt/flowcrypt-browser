@@ -136,6 +136,24 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await GmailPageRecipe.dismissMobileNotificationsPrompt(gmailPage);
     };
 
+    const withReattachedGmailPage = async (browser: BrowserHandle, gmailPage: ControllablePage, action: (page: ControllablePage) => Promise<void>) => {
+      // Attach after the extension iframe is present so Puppeteer can see its execution context.
+      const attachedBrowser = await connect({
+        browserWSEndpoint: browser.browser.wsEndpoint(),
+        defaultViewport: gmailPage.page.viewport(),
+        protocolTimeout: TIMEOUT_PAGE_LOAD * 1000,
+      });
+      try {
+        const attachedPage = (await attachedBrowser.pages()).find(page => page.url() === gmailPage.page.url());
+        if (!attachedPage) {
+          throw new Error('Could not reattach to the Gmail tab');
+        }
+        await action(new ControllablePage(gmailPage.t, attachedPage));
+      } finally {
+        await attachedBrowser.disconnect();
+      }
+    };
+
     const replyIframe = 'iframe.reply_message[src*="/chrome/elements/compose.htm"]';
     const getEditableGmailReply = async (gmailPage: ControllablePage) => {
       const skipPrompt = '&skipClickPrompt=___cu_true___';
@@ -277,8 +295,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
               signature: 'signed',
             });
             await pageHasSecureReplyContainer(t, browser, gmailPage);
-            const pubkeyPage = await gmailPage.getFrame(['/chrome/elements/pgp_pubkey.htm']);
-            await pubkeyPage.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+            await gmailPage.waitAll('iframe.pgp_block.publicKey');
+            await withReattachedGmailPage(browser, gmailPage, async attachedPage => {
+              const pubkeyFrame = await attachedPage.getFrame(['/chrome/elements/pgp_pubkey.htm'], { sleep: 0 });
+              await pubkeyFrame.waitForContent('@container-pgp-pubkey', 'Fingerprint: 50B7 A032 B5E1 FBAB 24BA B205 B362 45FD AC2F BF3D');
+            });
             if (!encrypted) {
               expect(await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 0 })).to.have.length(1);
               await testMinimumElementHeight(gmailPage, '.pgp_block.signedDetached', 80);
@@ -346,25 +367,11 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
           await createSecureDraft(t, browser, gmailPage, 'offline reply draft', { offline: true });
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'domcontentloaded' }, true);
           await gmailPage.waitAll(`${replyIframe}[src*="&draftId="]`);
-          // Puppeteer can lose access to the extension frame's execution context during navigation.
-          // Attach after the draft iframe is present and keep all assertions and Send in the original Gmail tab.
-          const attachedBrowser = await connect({
-            browserWSEndpoint: browser.browser.wsEndpoint(),
-            defaultViewport: gmailPage.page.viewport(),
-            protocolTimeout: TIMEOUT_PAGE_LOAD * 1000,
-          });
-          try {
-            const attachedPage = (await attachedBrowser.pages()).find(page => page.url() === gmailPage.page.url());
-            if (!attachedPage) {
-              throw new Error('Could not reattach to the Gmail tab with the restored reply draft');
-            }
-            const attachedGmailPage = new ControllablePage(t, attachedPage);
-            const restoredReply = await pageHasSecureDraft(attachedGmailPage, 'offline reply draft');
-            await GmailPageRecipe.dismissMobileNotificationsPrompt(attachedGmailPage);
+          await withReattachedGmailPage(browser, gmailPage, async attachedPage => {
+            const restoredReply = await pageHasSecureDraft(attachedPage, 'offline reply draft');
+            await GmailPageRecipe.dismissMobileNotificationsPrompt(attachedPage);
             await restoredReply.waitAndClick('@action-send', { confirmGone: true });
-          } finally {
-            await attachedBrowser.disconnect();
-          }
+          });
           await Util.sleep(2);
           await gmailPage.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'load' }, true);
           await gmailPage.waitAndClick('.h7:last-child .ajz', { delay: 1 }); // the small triangle which toggles the message details
