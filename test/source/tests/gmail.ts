@@ -417,8 +417,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
         await clickGmailControl(gmailPage, '[data-tooltip="Secure Reply"]');
         await gmailPage.waitAll('.reply_message');
         await pageHasSecureReplyContainer(t, browser, gmailPage, { isReplyPromptAccepted: true });
-        await gotoGmailPage(gmailPage, '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh'); // go to signed convo
-        await clickGmailControl(gmailPage, 'div.adn [aria-label="Reply"]');
+        await gmailPage.close();
+        gmailPage = await browser.newPage(t);
+        await gotoGmailConversation(gmailPage, { path: '/FMfcgzGkbDRNpjDdNvCrwzqvXspZZxvh', subject: '[ci.test] signed email' });
+        await gmailPage.waitAll('iframe.pgp_block.signedMsg');
+        t.log('Opening Gmail Reply on the signed message');
+        await clickGmailControl(gmailPage, 'div.adn button[aria-label="Reply"]');
         await gmailPage.waitTillGone('.reply_message');
         await gmailPage.waitAll('[data-tooltip^="Send"]'); // The Send button from the Standard reply box
         await gmailPage.notPresent('.reply_message_evaluated .error_notification'); // should not show the warning about switching to encrypted reply
