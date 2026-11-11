@@ -149,6 +149,18 @@ export class Util {
     return (await element.boundingBox()) !== null;
   };
 
+  public static isTransientPageError = (e: unknown): boolean => {
+    return (
+      e instanceof Error &&
+      [
+        'Execution context was destroyed',
+        'Cannot find context with specified id',
+        'Argument should belong to the same JavaScript world as target object',
+        'Node with given id does not belong to the document',
+      ].some(message => e.message.includes(message))
+    );
+  };
+
   public static wipeGoogleTokensUsingExperimentalSettingsPage = async (t: AvaContext, browser: BrowserHandle, acct: string) => {
     for (const wipeTokenBtnSelector of ['@action-wipe-google-refresh-token', '@action-wipe-google-access-token']) {
       const settingsPage = await browser.newExtensionSettingsPage(t, acct);

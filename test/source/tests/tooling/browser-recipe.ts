@@ -100,7 +100,7 @@ export class BrowserRecipe {
     return gmailPage;
   };
 
-  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: TestAccount) => {
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, acct: TestAccount, { cleanUpDrafts = true } = {}) => {
     let acctEmail: string | undefined;
     let settingsPage: ControllablePage | undefined;
     if (acct === 'compatibility') {
@@ -129,7 +129,7 @@ export class BrowserRecipe {
     }
     const accessToken = await BrowserRecipe.getGoogleAccessToken(settingsPage, acctEmail);
     const cleanupTasks = [settingsPage.close()];
-    if (testVariant === 'CONSUMER-LIVE-GMAIL') {
+    if (testVariant === 'CONSUMER-LIVE-GMAIL' && cleanUpDrafts) {
       // clean up drafts so that broken tests from the past don't affect this test run
       cleanupTasks.push(BrowserRecipe.deleteAllDraftsInGmailAccount(accessToken));
     }

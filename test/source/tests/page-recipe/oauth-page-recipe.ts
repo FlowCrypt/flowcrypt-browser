@@ -3,7 +3,6 @@
 import { Config, Util } from '../../util';
 import { AvaContext } from '../tooling/';
 import { ControllablePage } from '../../browser/controllable';
-import { TIMEOUT_PAGE_LOAD } from '../../browser';
 import { PageRecipe } from './abstract-page-recipe';
 import { Url } from '../../core/common';
 
@@ -52,22 +51,12 @@ export class OauthPageRecipe extends PageRecipe {
     acctEmail: string,
     action: 'close' | 'deny' | 'approve' | 'login' | 'login_with_invalid_state'
   ): Promise<void> => {
-    try {
-      const isMock = oauthPage.target.url().includes('localhost');
-      if (isMock) {
-        await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
-        return;
-      } else {
-        await Promise.race([
-          oauthPage.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
-          oauthPage.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
-        ]);
-      }
-    } catch (e) {
-      if (String(e).includes('page has been closed')) {
-        // the extension may close the auth page after success before we had a chance to evaluate it
-        return; // in this case the login was already successful
-      }
+    if (oauthPage.page.isClosed()) {
+      return;
+    }
+    if (oauthPage.target.url().includes('localhost')) {
+      await OauthPageRecipe.mock(t, oauthPage, acctEmail, action);
+      return;
     }
     const auth = Config.secrets().auth.google.find(a => a.email === acctEmail);
     const acctPassword = auth?.password;
@@ -78,14 +67,21 @@ export class OauthPageRecipe extends PageRecipe {
       auth0password: '#password',
       auth0loginBtn: 'button[type=submit][name=action][value=default]',
       googleApproveBtn: '#submit_approve_access',
+      googleConfirmAccountBtn: 'button[formaction*="confirmaccount?"], form[action*="confirmaccount?"] button[type="submit"]',
+      googleSamlConfirmAccountBtn: '[data-view-id="AZBvBc"] [jsname="Njthtb"] button',
       googleContinueAuthBtn: '.VfPpkd-LgbsSe',
       googleSignInWithGoogleContinueBtn: '//button[.//span[normalize-space(.)="Continue"]]',
     };
+    // The SAML confirmation view uses JS buttons without form actions, and its labels are localized.
+    const confirmationButtons = [selectors.googleConfirmAccountBtn, selectors.googleSamlConfirmAccountBtn, selectors.googleSignInWithGoogleContinueBtn];
     try {
       const alreadyLoggedSelector = '.w6VTHd, .wLBAL, .yAlK0b';
       const alreadyLoggedChooseOtherAccountSelector = '.bLzI3e, .BHzsHc';
       await oauthPage.waitAny(
-        `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}, ${selectors.googleContinueAuthBtn}`,
+        [
+          `#Email, ${selectors.googleApproveBtn}, ${selectors.googleEmailInput}, ${alreadyLoggedSelector}, #profileIdentifier, ${selectors.auth0username}, ${selectors.googleContinueAuthBtn}`,
+          ...confirmationButtons,
+        ],
         { timeout: 45 }
       );
 
@@ -125,18 +121,7 @@ export class OauthPageRecipe extends PageRecipe {
         const actionButtons = await oauthPage.target.$$(selectors.googleContinueAuthBtn);
         await oauthPage.waitForNavigationIfAny(() => actionButtons[actionButtons.length - 1].click());
       }
-      if (await oauthPage.isElementPresent(selectors.googleSignInWithGoogleContinueBtn)) {
-        // "Sign in with Google" can show a re-auth confirmation before the OAuth approval screen.
-        await oauthPage.waitForNavigationIfAny(
-          () => oauthPage.waitAndClick(selectors.googleSignInWithGoogleContinueBtn, { delay: 1 }),
-          OauthPageRecipe.longTimeout
-        );
-        await Util.sleep(2);
-        if (oauthPage.page.isClosed()) {
-          return;
-        }
-      }
-      await oauthPage.waitAny([selectors.googleApproveBtn, selectors.auth0username]);
+      await oauthPage.waitAny([selectors.googleApproveBtn, selectors.auth0username, ...confirmationButtons]);
       if (await oauthPage.isElementPresent(selectors.auth0username)) {
         await oauthPage.waitAndType(selectors.auth0username, acctEmail);
         if (acctPassword) {
@@ -144,18 +129,17 @@ export class OauthPageRecipe extends PageRecipe {
         }
         const loginButtons = await oauthPage.target.$$(selectors.auth0loginBtn);
         await oauthPage.waitForNavigationIfAny(() => loginButtons[loginButtons.length - 1].click());
-        await oauthPage.waitAndClick(alreadyLoggedSelector, { delay: 1 });
+        const nextButton = await oauthPage.waitAny([selectors.googleApproveBtn, ...confirmationButtons, alreadyLoggedSelector]);
+        if (await nextButton.evaluate((button, selector) => button.matches(selector), alreadyLoggedSelector)) {
+          await nextButton.click();
+        }
       }
-      await Util.sleep(1);
-      const button = await oauthPage.waitAny('button');
-      const formAction = await button.evaluate(button => (button as HTMLButtonElement).formAction);
-      if (formAction?.includes('confirmaccount?')) {
-        // click on "Continue" on "Verify it's you" screen
-        await button.click();
-        await Util.sleep(2);
-        return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // it should handle the list of accounts
+      const button = await oauthPage.waitAny([selectors.googleApproveBtn, ...confirmationButtons]);
+      if (!(await button.evaluate((button, selector) => button.matches(selector), selectors.googleApproveBtn))) {
+        // Account confirmation can appear before either account selection or OAuth consent.
+        await oauthPage.waitForNavigationIfAny(() => button.click());
+        return await OauthPageRecipe.google(t, oauthPage, acctEmail, action);
       }
-      await oauthPage.waitAll(selectors.googleApproveBtn); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
       if (action === 'close') {
@@ -166,15 +150,12 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick(selectors.googleApproveBtn, { delay: 1 });
       }
     } catch (e) {
-      const eStr = String(e);
-      if (
-        !eStr.includes('Execution context was destroyed') &&
-        !eStr.includes('Cannot find context with specified id') &&
-        !eStr.includes('Argument should belong to the same JavaScript world as target object')
-      ) {
+      if (oauthPage.page.isClosed()) {
+        return;
+      }
+      if (!Util.isTransientPageError(e)) {
         throw e; // not a known retriable error
       }
-      // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   };

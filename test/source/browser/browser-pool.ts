@@ -51,6 +51,9 @@ export class BrowserPool {
     if (this.isMock) {
       args.push('--ignore-certificate-errors');
       args.push('--allow-insecure-localhost');
+    } else {
+      // Google SAML confirmation failed over both QUIC and HTTP/2.
+      args.push('--disable-quic', '--disable-http2');
     }
     const slowMo = this.isMock ? 60 : 60;
     const browser = await launch({
