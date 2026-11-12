@@ -2,14 +2,32 @@
 
 import { BrowserHandle } from '../../browser/browser-handle';
 import { ControllablePage } from '../../browser/controllable';
-import { TIMEOUT_PAGE_LOAD } from '../../browser';
+import { TIMEOUT_ELEMENT_GONE } from '../../browser';
 
 import { AvaContext } from '../tooling/';
 import { PageRecipe } from './abstract-page-recipe';
 import { expect } from 'chai';
-import { Util } from '../../util';
 
 export class GmailPageRecipe extends PageRecipe {
+  public static dismissMobileNotificationsPrompt = async (gmailPage: ControllablePage) => {
+    const selector =
+      'xpath/.//*[@role="dialog"][.//div[starts-with(normalize-space(text()), "Pause mobile notifications while")]]//button[@aria-label="Close"]';
+    const closeButton = await gmailPage.page.$(selector);
+    if (!closeButton) {
+      return;
+    }
+    try {
+      if (await closeButton.isVisible()) {
+        await closeButton.press('Enter');
+        const hiddenButton = await gmailPage.page.waitForSelector(selector, { hidden: true, timeout: TIMEOUT_ELEMENT_GONE * 1000 });
+        await hiddenButton?.dispose();
+        gmailPage.t.log('Dismissed Gmail’s pause mobile notifications prompt');
+      }
+    } finally {
+      await closeButton.dispose();
+    }
+  };
+
   public static openSecureComposeWithRichTextWorkaround = async (
     t: AvaContext,
     gmailPage: ControllablePage,
@@ -51,14 +69,17 @@ export class GmailPageRecipe extends PageRecipe {
       if (!lastMessageId || !lastMessageElement || lastMessageId === messageId) {
         break;
       }
-      await Util.sleep(3);
-      // deleting last reply - use waitAndClick for more reliable interaction with Gmail's dynamic UI
-      await gmailPage.waitAndClick(`[${messageIdAttrName}="${lastMessageId}"] [aria-label="More message options"]`, { delay: 2 });
-      await Util.sleep(3);
-      await gmailPage.press('ArrowDown', 4);
+      const lastMessage = `[${messageIdAttrName}="${lastMessageId}"]`;
+      await this.dismissMobileNotificationsPrompt(gmailPage);
+      await gmailPage.waitAndFocus(`${lastMessage} [aria-label="More message options"]`);
       await gmailPage.press('Enter');
-      await Util.sleep(3);
-      await gmailPage.page.reload({ timeout: TIMEOUT_PAGE_LOAD * 1000, waitUntil: 'networkidle2' });
+      const deleteItem = await gmailPage.waitAny('li[data-action-type="11"]'); // Delete this message
+      try {
+        await deleteItem.press('Enter');
+      } finally {
+        await deleteItem.dispose();
+      }
+      await gmailPage.waitTillGone(lastMessage);
     }
 
     if (await gmailPage.isElementPresent('//*[text()="delete forever"]')) {

@@ -10,7 +10,7 @@ import { testConstants } from './tooling/consts';
 import { BrowserRecipe } from './tooling/browser-recipe';
 import { ConfigurationProvider, HttpClientErr, Status } from '../mock/lib/api';
 import { somePubkey } from '../mock/attester/attester-key-constants';
-import { aliceKey, jackAdvancedKey, johnDoeDirectKey, johnDoeAdvancedKey } from '../mock/wkd/wkd-constants';
+import { aliceKey, jackAdvancedKey, johnDoeAdvancedKey } from '../mock/wkd/wkd-constants';
 import { johnDoeExampleComKey } from '../mock/sks/sks-constants';
 
 type UnitTest = { title: string; code: string; acct?: CommonAcct; only: boolean };
@@ -42,7 +42,7 @@ export const defineUnitBrowserTests = (testVariant: TestVariant, testWithBrowser
             t.context.mockApi!.configProvider = new ConfigurationProvider({
               wkd: {
                 directLookup: {
-                  'john.doe': { pubkeys: [johnDoeDirectKey] },
+                  'john.doe': { pubkeys: [johnDoeExampleComKey] },
                   'jack.advanced': { pubkeys: [jackAdvancedKey] },
                 },
                 advancedLookup: {
