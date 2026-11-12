@@ -270,7 +270,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
   };
 
   public fetchAttachmentsMissingData = async (attachments: Attachment[], progressCb?: ProgressCb) => {
-    const attachmentsMissingData = attachments.filter(a => !a.hasData()).slice(0, 10);
+    const attachmentsMissingData = attachments.filter(a => !a.hasData());
     if (!attachmentsMissingData.length) {
       return;
     }
@@ -279,25 +279,29 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
     const rawTotal = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
     const total = Number.isFinite(rawTotal) && rawTotal > 0 ? rawTotal : 1;
-    const responses = await Promise.all(
-      attachmentsMissingData.map((a, index) =>
-        this.attachmentGet(a, {
-          download: (_, loaded) => {
-            if (progressCb) {
-              loadedAr[index] = loaded || 0;
-              const totalLoaded = loadedAr.reduce((a, b) => a + b);
-              const progressPercent = Math.round((totalLoaded * 100) / total);
-              if (progressPercent !== lastProgressPercent) {
-                lastProgressPercent = progressPercent;
-                progressCb(progressPercent, totalLoaded, total);
+    const batchSize = 10;
+    for (let start = 0; start < attachmentsMissingData.length; start += batchSize) {
+      const batch = attachmentsMissingData.slice(start, start + batchSize);
+      const responses = await Promise.all(
+        batch.map((a, index) =>
+          this.attachmentGet(a, {
+            download: (_, loaded) => {
+              if (progressCb) {
+                loadedAr[start + index] = loaded || 0;
+                const totalLoaded = loadedAr.reduce((a, b) => a + b);
+                const progressPercent = Math.round((totalLoaded * 100) / total);
+                if (progressPercent !== lastProgressPercent) {
+                  lastProgressPercent = progressPercent;
+                  progressCb(progressPercent, totalLoaded, total);
+                }
               }
-            }
-          },
-        })
-      )
-    );
-    for (const i of responses.keys()) {
-      attachmentsMissingData[i].setData(responses[i].data);
+            },
+          })
+        )
+      );
+      for (const j of responses.keys()) {
+        batch[j].setData(responses[j].data);
+      }
     }
   };
 

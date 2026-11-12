@@ -685,10 +685,9 @@ export class MessageRenderer {
       }
     }
     if (!sigResult?.match && signedContentInDecryptedData) {
-      const plaintext =
-        signedContentInDecryptedData.rawSignedContent.length > MessageRenderer.MAX_DECRYPTED_TEXT_LEN
-          ? signedContentInDecryptedData.rawSignedContent.substring(0, MessageRenderer.MAX_DECRYPTED_TEXT_LEN)
-          : signedContentInDecryptedData.rawSignedContent;
+      // the signature covers the original content, so it has to be validated against it uncut
+      // clipping it here would report an otherwise valid signature as bad
+      const plaintext = signedContentInDecryptedData.rawSignedContent;
       if (signedContentDepth >= MessageRenderer.MAX_SIGNED_CONTENT_REDECODE_DEPTH) {
         renderModule.renderAsRegularContent(MessageRenderer.clipMessageIfLimitExceeds(plaintext));
         return isEncrypted ? { publicKeys: publicKeys.slice(0, MessageRenderer.MAX_PUBLIC_KEYS_PER_MESSAGE) } : {};

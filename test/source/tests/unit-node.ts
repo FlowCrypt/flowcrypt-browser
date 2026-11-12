@@ -4,7 +4,6 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
-import { Mime } from '../core/mime';
 import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -300,37 +299,30 @@ outerSignatureData
     });
 
     test(`[unit][MsgBlockParser.detectBlocks] caps block count on armor bomb`, async t => {
-      const unit = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const unit = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nplaceholder\n-----END PGP PUBLIC KEY BLOCK-----\n`;
       const { blocks } = MsgBlockParser.detectBlocks(`hello\n${unit.repeat(5000)}`);
-      expect(blocks.length).to.be.lessThanOrEqual(100);
+      expect(blocks.length).to.equal(100);
       t.pass();
     });
 
     test(`[unit][MsgBlockParser.stripPublicKeys] caps keys and ignores empty armor`, async t => {
-      const empty = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const block = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nplaceholder\n-----END PGP PUBLIC KEY BLOCK-----\n`;
       const keys: string[] = [];
-      MsgBlockParser.stripPublicKeys(`hello\n${empty.repeat(5000)}`, keys);
-      expect(keys.length).to.be.lessThanOrEqual(10);
+      MsgBlockParser.stripPublicKeys(`hello\n${block.repeat(20)}`, keys);
+      expect(keys.length).to.equal(10);
+      const empty = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
       const keys2: string[] = [];
       MsgBlockParser.stripPublicKeys(`hello\n${empty}`, keys2);
       expect(keys2.length).to.equal(0);
       t.pass();
     });
 
-    test(`[unit][Mime.countMultipartHeaders] counts nested multiparts`, async t => {
-      const buildNested = (depth: number) => {
-        let raw = 'Content-Type: multipart/mixed; boundary="B0"\n\n';
-        for (let i = 0; i < depth; i++) raw += `--B${i}\nContent-Type: multipart/mixed; boundary="B${i + 1}"\n\n`;
-        return raw;
-      };
-      expect(Mime.countMultipartHeaders(buildNested(60))).to.be.greaterThan(50);
-      expect(Mime.countMultipartHeaders(buildNested(3))).to.equal(4);
-      t.pass();
-    });
-
-    test(`[unit][Mime.countMultipartHeaders] ignores body text, counts folded headers`, async t => {
-      expect(Mime.countMultipartHeaders('Content-Type: text/plain\n\nmultipart multipart multipart')).to.equal(0);
-      expect(Mime.countMultipartHeaders('Content-Type:\n multipart/mixed; boundary="x"\n\nbody')).to.equal(1);
+    test(`[unit][MsgBlockParser.detectBlocks] continues scanning after an empty armor block`, async t => {
+      const empty = `-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const encrypted = `-----BEGIN PGP MESSAGE-----\n\ndata\n-----END PGP MESSAGE-----`;
+      const { blocks } = MsgBlockParser.detectBlocks(`hello\n${empty}${encrypted}`);
+      expect(blocks.map(b => b.type)).to.deep.equal(['plainText', 'encryptedMsg']);
+      expect(blocks[1].content).to.equal(encrypted);
       t.pass();
     });
 

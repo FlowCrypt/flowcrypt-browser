@@ -186,52 +186,6 @@ export class Mime {
     return contentType.index === 0;
   }
 
-  public static countMultipartHeaders(data: Uint8Array | string): number {
-    const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-    const lowerEq = (c: number | undefined, t: number): boolean => c === t || (t >= 97 && t <= 122 && c === t - 32);
-    const startsWith = (pos: number, token: string): boolean => {
-      for (let i = 0; i < token.length; i++) {
-        if (!lowerEq(bytes[pos + i], token.charCodeAt(i))) {
-          return false;
-        }
-      }
-      return true;
-    };
-    const skipSpaces = (pos: number): number => {
-      while (bytes[pos] === 32 || bytes[pos] === 9) {
-        pos++;
-      }
-      return pos;
-    };
-    let count = 0;
-    let inContentType = false;
-    let pos = 0;
-    while (pos < bytes.length && count <= Mime.MAX_NESTED_MULTIPARTS) {
-      let end = pos;
-      while (end < bytes.length && bytes[end] !== 10) {
-        end++;
-      }
-      const first = bytes[pos];
-      if (first === 32 || first === 9) {
-        if (inContentType && startsWith(skipSpaces(pos), 'multipart')) {
-          count++;
-          inContentType = false;
-        }
-      } else {
-        inContentType = false;
-        if ((first === 99 || first === 67) && startsWith(pos, 'content-type:')) {
-          if (startsWith(skipSpaces(pos + 13), 'multipart')) {
-            count++;
-          } else {
-            inContentType = true;
-          }
-        }
-      }
-      pos = end + 1;
-    }
-    return count;
-  };
-
   public static async decode(mimeMsg: Uint8Array | string): Promise<MimeContentWithHeaders> {
     let mimeContent: MimeContentWithHeaders = {
       attachments: [],
@@ -244,15 +198,20 @@ export class Mime {
       cc: [],
       bcc: [],
     };
-    if (Mime.countMultipartHeaders(mimeMsg) > Mime.MAX_NESTED_MULTIPARTS) {
-      return mimeContent;
-    }
     const parser = new MimeParser();
     const leafNodes: { [key: string]: MimeParserNode } = {};
     const htmlParts: string[] = [];
     const textParts: string[] = [];
     let htmlLen = 0;
     let textLen = 0;
+    let tooDeep = false;
+    parser.onheader = (node: MimeParserNode) => {
+      // the parser calls this before processing the node's body or descending into its children
+      if (node.path.length > Mime.MAX_NESTED_MULTIPARTS) {
+        tooDeep = true;
+        throw new Error('Mime.decode: too many nested multiparts');
+      }
+    };
     parser.onbody = (node: MimeParserNode) => {
       const path = node.path.join('.');
       if (typeof leafNodes[path] === 'undefined') {
@@ -320,6 +279,11 @@ export class Mime {
         parser.write(mimeMsg);
         parser.end();
       } catch (e) {
+        if (tooDeep) {
+          // attacker-controlled nesting depth, do not report, just return empty content
+          resolve(mimeContent);
+          return;
+        }
         // todo - on Android we may want to fail when this happens, evaluate effect on browser extension
         Catch.reportErr(e);
         resolve(mimeContent);

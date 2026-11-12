@@ -323,7 +323,14 @@ export class MsgBlockParser {
               if (endIndex !== -1) {
                 const innerBody = origText.substring(begin + blockHeaderDef.begin.length, endIndex).trim();
                 if (!innerBody) {
-                  continue;
+                  // an empty armor block carries no content: skip it, but keep scanning for the next block
+                  // so that a valid block following it is still detected
+                  potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
+                  if (potentialTextBeforeBlockBegun) {
+                    result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
+                  }
+                  result.continueAt = endIndex + foundBlockEndHeaderLength;
+                  return result;
                 }
               }
               // flush the preceding plainText
