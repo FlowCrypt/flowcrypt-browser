@@ -12,7 +12,6 @@ import { Catch } from '../common/platform/catch.js';
 import { ContactStore } from '../common/platform/store/contact-store.js';
 import { BgUtils } from './bgutils.js';
 import {
-  AccountStorageKeyCollisionError,
   migrateGlobal,
   moveContactsToEmailsAndPubkeys,
   revalidateStoredRevocations,
@@ -24,6 +23,10 @@ import { GlobalStore, GlobalStoreDict } from '../common/platform/store/global-st
 import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
+
+import { initializeAccountStorageInBackground } from '../common/platform/store/account-storage-ready.js';
+
+initializeAccountStorageInBackground();
 
 console.info('background.js service worker starting');
 
@@ -39,9 +42,6 @@ const ready = Promise.resolve().then(async () => {
     await migrateGlobal();
     storage = await GlobalStore.get(['settings_seen']);
   } catch (e) {
-    if (e instanceof AccountStorageKeyCollisionError) {
-      await BgUtils.handleStoreErr(e, 'account_storage_key_collision');
-    }
     await BgUtils.handleStoreErr(GlobalStore.errCategorize(e));
     return;
   }
@@ -63,6 +63,7 @@ const ready = Promise.resolve().then(async () => {
   }
 });
 
+BrowserMsg.bgAddListener('account_storage_ready', async () => undefined);
 BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
 BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
 BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));

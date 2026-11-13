@@ -47,7 +47,7 @@ export class BgUtils {
     });
   }
 
-  public static async handleStoreErr(e: unknown, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed' | 'account_storage_key_collision') {
+  public static async handleStoreErr(e: unknown, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') {
     if (!reason) {
       if (e instanceof StoreCorruptedError) {
         reason = 'db_corrupted';

@@ -1,5 +1,6 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 
+import { awaitAccountStorageReady } from './account-storage-ready.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { GmailRes } from '../../../common/api/email-provider/gmail/gmail-parser.js';
 import { RawStore, AbstractStore } from './abstract-store.js';
@@ -24,6 +25,7 @@ export type GlobalStoreDict = {
   contact_store_revocations_revalidated?: boolean;
   contact_store_searchable_pruned?: boolean;
   email_key_index_migrated?: boolean;
+  email_key_index_skipped_accounts?: string[];
   local_drafts?: Dict<LocalDraft>;
 };
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -41,6 +43,7 @@ export type GlobalIndex =
   | 'contact_store_revocations_revalidated'
   | 'contact_store_searchable_pruned'
   | 'email_key_index_migrated'
+  | 'email_key_index_skipped_accounts'
   | 'local_drafts'
   | 'stored_key_info_migrated';
 
@@ -82,6 +85,7 @@ export class GlobalStore extends AbstractStore {
   }
 
   public static async acctEmailsAdd(acctEmail: string): Promise<void> {
+    await awaitAccountStorageReady();
     // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
       throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
@@ -101,6 +105,7 @@ export class GlobalStore extends AbstractStore {
   }
 
   public static async acctEmailsRemove(acctEmail: string): Promise<void> {
+    await awaitAccountStorageReady();
     // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await GlobalStore.acctEmailsGet();
     await GlobalStore.set({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) }); // eslint-disable-line @typescript-eslint/naming-convention
