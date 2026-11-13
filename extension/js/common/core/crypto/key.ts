@@ -503,15 +503,40 @@ export class KeyUtil {
   }
 
   public static isChecksumMismatch(armoredText: string): boolean {
-    // Regex to capture any PGP armor block, e.g. SIGNATURE, MESSAGE, etc.
-    // It captures: the block type in group (1), and the content in group (2)
-    const pgpBlockRegex = /-----BEGIN PGP ([A-Z ]+)-----([\s\S]*?)-----END PGP \1-----/g;
-
-    let match: RegExpExecArray | null;
-
-    // Iterate over all PGP blocks in the text
-    while ((match = pgpBlockRegex.exec(armoredText))) {
-      const blockContent = match[2] || ''; // the captured block text
+    // Iterate over PGP armor blocks with indexOf instead of a lazy regex with a backreference:
+    // armor types without a matching END (such as PGP SIGNED MESSAGE) would make the regex scan
+    // to the end of the input for every BEGIN marker (quadratic).
+    const beginMarker = '-----BEGIN PGP ';
+    const missingEndTypes = new Set<string>();
+    let searchFrom = 0;
+    while (true) {
+      const beginIndex = armoredText.indexOf(beginMarker, searchFrom);
+      if (beginIndex === -1) {
+        break;
+      }
+      const typeEnd = armoredText.indexOf('-----', beginIndex + beginMarker.length);
+      if (typeEnd === -1) {
+        break;
+      }
+      const blockType = armoredText.substring(beginIndex + beginMarker.length, typeEnd);
+      const contentStart = typeEnd + '-----'.length;
+      if (!/^[A-Z ]+$/.test(blockType) || missingEndTypes.has(blockType)) {
+        searchFrom = contentStart;
+        continue;
+      }
+      const endMarker = `-----END PGP ${blockType}-----`;
+      const endIndex = armoredText.indexOf(endMarker, contentStart);
+      if (endIndex === -1) {
+        // No END of this type exists after this marker, so no later BEGIN of the same type can match either
+        missingEndTypes.add(blockType);
+        if (missingEndTypes.size > 20) {
+          break; // arbitrary armor types are not real armor; bound the number of full scans
+        }
+        searchFrom = contentStart;
+        continue;
+      }
+      const blockContent = armoredText.substring(contentStart, endIndex);
+      searchFrom = endIndex + endMarker.length;
       const lines = blockContent.split('\n').map(l => l.trim());
 
       // Filter out known non-base64 lines

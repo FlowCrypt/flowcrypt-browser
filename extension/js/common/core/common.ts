@@ -194,7 +194,7 @@ export class Str {
     if (!email) {
       return false;
     }
-    if (email.includes(' ')) {
+    if (email.length > 1000 || email.includes(' ')) {
       return false;
     }
     email = email.replace(new RegExp(`:${MOCK_PORT}$`), ''); // for MOCK tests, todo: remove from production

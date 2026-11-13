@@ -479,3 +479,27 @@ BROWSER_UNIT_TEST_NAME(`Mime.decode extracts subject from Thunderbird-style sign
   }
   return 'pass';
 })();
+
+BROWSER_UNIT_TEST_NAME(`Mime.decode rejects excessively nested multiparts`);
+(async () => {
+  const buildNested = depth => {
+    let raw = 'Content-Type: multipart/mixed; boundary="B0"\r\n\r\n';
+    for (let i = 0; i < depth - 1; i++) {
+      raw += `--B${i}\r\nContent-Type: multipart/mixed; boundary="B${i + 1}"\r\n\r\n`;
+    }
+    raw += `--B${depth - 1}\r\nContent-Type: text/plain\r\n\r\nhello\r\n`;
+    for (let i = depth - 1; i >= 0; i--) {
+      raw += `--B${i}--\r\n`;
+    }
+    return raw;
+  };
+  const shallow = await Mime.decode(buildNested(3));
+  if (shallow.text !== 'hello') {
+    throw Error(`expected nested multipart to decode to 'hello', got '${shallow.text}'`);
+  }
+  const decoded = await Mime.decode(buildNested(60));
+  if (decoded.text !== undefined || decoded.html !== undefined || decoded.attachments.length !== 0) {
+    throw Error('expected deeply nested multipart to be rejected');
+  }
+  return 'pass';
+})();

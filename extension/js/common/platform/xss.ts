@@ -74,7 +74,7 @@ export class Xss {
     'canvas',
   ];
   private static HREF_REGEX_CACHE: RegExp | undefined;
-  private static EMOJI_REGEX = /(?![*#0-9]+)[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
+  private static EMOJI_REGEX = /([*#0-9])|[\p{Emoji}\p{Emoji_Modifier}\p{Emoji_Component}\p{Emoji_Modifier_Base}\p{Emoji_Presentation}]/gu;
   private static readonly ALLOWED_EMAIL_CSS_PROPERTIES = new Set<string>([
     // Colors
     'color',
@@ -387,7 +387,7 @@ export class Xss {
   };
 
   public static stripEmojis = (str: string) => {
-    return str.replace(Xss.EMOJI_REGEX, '');
+    return str.replace(Xss.EMOJI_REGEX, (_match, asciiEmojiComponent: string | undefined) => asciiEmojiComponent ?? '');
   };
 
   public static htmlUnescape = (str: string) => {

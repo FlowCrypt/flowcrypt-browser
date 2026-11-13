@@ -22,6 +22,11 @@ type SanitizedBlocks = {
 
 export class MsgBlockParser {
   private static ARMOR_HEADER_MAX_LENGTH = 50;
+  private static readonly MAX_BLOCKS_PER_MESSAGE = 100;
+  private static readonly MAX_PUBLIC_KEYS_PER_MESSAGE = 10;
+  private static readonly MAX_QUOTED_END_MARKER_SKIPS = 100;
+  private static readonly MAX_PARSED_TEXT_LEN = 1000000;
+  private static readonly MAX_FC_ATTACHMENT_BLOCKS = 50;
 
   public static detectBlocks(origText: string, completeOnly?: boolean) {
     const blocks: MsgBlock[] = [];
@@ -30,7 +35,12 @@ export class MsgBlockParser {
     while (true) {
       const { found, continueAt } = MsgBlockParser.detectBlockNext(normalized, startAt, completeOnly);
       if (found) {
-        blocks.push(...found);
+        for (const block of found) {
+          if (blocks.length >= MsgBlockParser.MAX_BLOCKS_PER_MESSAGE) {
+            return { blocks, normalized };
+          }
+          blocks.push(block);
+        }
       }
       if (typeof continueAt === 'undefined') {
         return { blocks, normalized };
@@ -50,6 +60,9 @@ export class MsgBlockParser {
     let webReplyToken: unknown | undefined;
     if (!Mime.resemblesMsg(decryptedContent)) {
       let plain = Buf.fromUint8(decryptedContent).toUtfStr();
+      if (plain.length > MsgBlockParser.MAX_PARSED_TEXT_LEN) {
+        plain = `${plain.substring(0, MsgBlockParser.MAX_PARSED_TEXT_LEN)} [clipped - message too large]`;
+      }
       plain = MsgBlockParser.extractFcAttachments(plain, blocks);
       webReplyToken = MsgBlockParser.extractFcReplyToken(plain);
       if (webReplyToken) {
@@ -103,6 +116,9 @@ export class MsgBlockParser {
       decryptedContent = decryptedContent.replace(
         /<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm,
         (_, url, fcData) => {
+          if (blocks.length >= MsgBlockParser.MAX_FC_ATTACHMENT_BLOCKS) {
+            return _;
+          }
           const fcAttachmentHost = new URL(String(url)).host;
           if (fcAttachmentHost !== 'flowcrypt.s3.amazonaws.com') {
             return '[skipped attachment due to invalid url]';
@@ -126,19 +142,35 @@ export class MsgBlockParser {
   }
 
   public static stripPublicKeys(decryptedContent: string, foundPublicKeys: string[]) {
-    let { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
-    for (const block of blocks) {
-      if (block.type === 'publicKey') {
-        const armored = Str.with(block.content);
-        foundPublicKeys.push(armored);
-        normalized = normalized.replace(armored, '');
-      }
+    if (decryptedContent.length > MsgBlockParser.MAX_PARSED_TEXT_LEN) {
+      decryptedContent = decryptedContent.substring(0, MsgBlockParser.MAX_PARSED_TEXT_LEN);
     }
-    return normalized;
+    const { blocks, normalized } = MsgBlockParser.detectBlocks(decryptedContent);
+    let cursor = 0;
+    const parts: string[] = [];
+    for (const block of blocks) {
+      if (block.type !== 'publicKey') {
+        continue;
+      }
+      if (foundPublicKeys.length >= MsgBlockParser.MAX_PUBLIC_KEYS_PER_MESSAGE) {
+        continue;
+      }
+      const armored = Str.with(block.content);
+      foundPublicKeys.push(armored);
+      const blockStart = normalized.indexOf(armored, cursor);
+      if (blockStart === -1) {
+        continue;
+      }
+      parts.push(normalized.substring(cursor, blockStart));
+      cursor = blockStart + armored.length;
+    }
+    return parts.join('') + normalized.substring(cursor);
   }
 
   public static extractFcReplyToken(decryptedContent: string): unknown | undefined {
-    const markers = decryptedContent.matchAll(/<div\b(?=[^<>]*\bclass="([^"<>]*)")[^<>]*\bcryptup-data="([^"<>]+)"[^<>]*><\/div>/gi);
+    const markers = decryptedContent
+      .substring(0, MsgBlockParser.MAX_PARSED_TEXT_LEN)
+      .matchAll(/<div\b(?=[^<>]*\bclass="([^"<>]*)")[^<>]*\bcryptup-data="([^"<>]+)"[^<>]*><\/div>/gi);
     for (const match of markers) {
       if (/\bcryptup_reply\b/i.test(match[1])) {
         return Str.htmlAttrDecode(match[2]);
@@ -148,7 +180,21 @@ export class MsgBlockParser {
   }
 
   public static stripFcReplyToken(decryptedContent: string) {
-    return decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+    const classMarker = 'class="cryptup_reply"';
+    const classIndex = decryptedContent.indexOf(classMarker);
+    if (classIndex === -1) {
+      return decryptedContent;
+    }
+    const divStart = decryptedContent.lastIndexOf('<div', classIndex);
+    const tagEndBeforeClass = divStart === -1 ? -1 : decryptedContent.indexOf('>', divStart);
+    if (divStart === -1 || classIndex === divStart + 4 || (tagEndBeforeClass !== -1 && tagEndBeforeClass < classIndex)) {
+      return decryptedContent;
+    }
+    const divEnd = decryptedContent.indexOf('>', classIndex + classMarker.length);
+    if (divEnd === -1 || divEnd === classIndex + classMarker.length || !decryptedContent.startsWith('</div>', divEnd + 1)) {
+      return decryptedContent;
+    }
+    return decryptedContent.substring(0, divStart) + decryptedContent.substring(divEnd + 1 + '</div>'.length);
   }
 
   private static isFcAttachmentLinkData(o: unknown): o is FcAttachmentLinkData {
@@ -166,24 +212,64 @@ export class MsgBlockParser {
    * This is needed for signed messages that may contain quoted inner signatures.
    */
   private static findNonQuotedEndMarker(text: string, startIndex: number, endMarker: string): number {
+    let lineStart = Math.max(text.lastIndexOf('\n', startIndex - 1), text.lastIndexOf('\r', startIndex - 1)) + 1;
+    let nextLf = text.indexOf('\n', lineStart);
+    let nextCr = text.indexOf('\r', lineStart);
     let searchFrom = startIndex;
+    let cachedLineStart = -1;
+    let cachedIsQuoted = false;
+    let quotedSkips = 0;
     while (true) {
       const endIndex = text.indexOf(endMarker, searchFrom);
       if (endIndex === -1) {
         return -1; // No end marker found
       }
-      // Find the start of the line containing this end marker
-      const lastLf = text.lastIndexOf('\n', endIndex - 1);
-      const lastCr = text.lastIndexOf('\r', endIndex - 1);
-      const lineStart = Math.max(lastLf, lastCr) + 1;
-      const linePrefix = text.substring(lineStart, endIndex);
-      // Check if line prefix contains quote markers (ignoring whitespace)
-      // A quoted line has '>' as the first non-whitespace character or after other '>'
-      const isQuoted = /^\s*>/.test(linePrefix);
+      while (true) {
+        let nextBreak: number;
+        if (nextLf !== -1 && nextCr !== -1) {
+          nextBreak = Math.min(nextLf, nextCr);
+        } else if (nextLf !== -1) {
+          nextBreak = nextLf;
+        } else if (nextCr !== -1) {
+          nextBreak = nextCr;
+        } else {
+          break;
+        }
+        if (nextBreak >= endIndex) {
+          break;
+        }
+        if (nextBreak === nextCr && nextBreak + 1 === nextLf) {
+          // \r\n counts as a single line break
+          lineStart = nextLf + 1;
+          nextCr = text.indexOf('\r', lineStart);
+          nextLf = text.indexOf('\n', lineStart);
+        } else if (nextBreak === nextLf) {
+          lineStart = nextLf + 1;
+          nextLf = text.indexOf('\n', lineStart);
+        } else {
+          lineStart = nextCr + 1;
+          nextCr = text.indexOf('\r', lineStart);
+        }
+      }
+      let isQuoted: boolean;
+      if (cachedLineStart === lineStart) {
+        isQuoted = cachedIsQuoted;
+      } else {
+        let firstNonWs = lineStart;
+        while (firstNonWs < endIndex && /\s/.test(text[firstNonWs])) {
+          firstNonWs++;
+        }
+        isQuoted = firstNonWs < endIndex && text[firstNonWs] === '>';
+        cachedLineStart = lineStart;
+        cachedIsQuoted = isQuoted;
+      }
       if (!isQuoted) {
         return endIndex; // Found a non-quoted end marker
       }
       // Continue searching after this occurrence
+      if (++quotedSkips > MsgBlockParser.MAX_QUOTED_END_MARKER_SKIPS) {
+        return -1;
+      }
       searchFrom = endIndex + endMarker.length;
     }
   }
@@ -234,6 +320,19 @@ export class MsgBlockParser {
               }
             }
             if (endIndex !== -1 || !completeOnly) {
+              if (endIndex !== -1) {
+                const innerBody = origText.substring(begin + blockHeaderDef.begin.length, endIndex).trim();
+                if (!innerBody) {
+                  // an empty armor block carries no content: skip it, but keep scanning for the next block
+                  // so that a valid block following it is still detected
+                  potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
+                  if (potentialTextBeforeBlockBegun) {
+                    result.found.push(MsgBlock.fromContent('plainText', potentialTextBeforeBlockBegun));
+                  }
+                  result.continueAt = endIndex + foundBlockEndHeaderLength;
+                  return result;
+                }
+              }
               // flush the preceding plainText
               potentialTextBeforeBlockBegun = potentialTextBeforeBlockBegun.trim();
               if (potentialTextBeforeBlockBegun) {
@@ -263,7 +362,10 @@ export class MsgBlockParser {
   }
 
   private static async pushArmoredPubkeysToBlocks(armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> {
-    for (const armoredPubkey of armoredPubkeys) {
+    for (const armoredPubkey of armoredPubkeys.slice(0, MsgBlockParser.MAX_PUBLIC_KEYS_PER_MESSAGE)) {
+      if (armoredPubkey.length > MsgBlockParser.MAX_PARSED_TEXT_LEN) {
+        continue;
+      }
       const keys = await KeyUtil.parseMany(armoredPubkey);
       for (const key of keys) {
         const pub = await KeyUtil.asPublicKey(key);

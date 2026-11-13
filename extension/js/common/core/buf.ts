@@ -62,6 +62,8 @@ export class Buf extends Uint8Array {
     let bytesLeftInChar = 0;
     let utf8string = '';
     let binaryChar = '';
+    let invalidBytes = 0;
+    let invalidSequences = 0;
     for (let i = 0; i < length; i++) {
       if (this[i] < 128) {
         if (bytesLeftInChar) {
@@ -98,13 +100,10 @@ export class Buf extends Uint8Array {
             bytesLeftInChar = 5;
             binaryChar = this[i].toString(2).substring(7);
           } else {
-            if (mode === 'strict' || mode === 'inform') {
-              const e = new Error('Buf.toUtfStr: invalid utf-8 character beginning byte: ' + this[i]);
-              if (mode === 'strict') {
-                throw e;
-              }
-              console.info(e);
+            if (mode === 'strict') {
+              throw new Error('Buf.toUtfStr: invalid utf-8 character beginning byte: ' + this[i]);
             }
+            invalidBytes++;
           }
         } else {
           // continuation of a multi-byte character
@@ -116,14 +115,21 @@ export class Buf extends Uint8Array {
             const codePoint = parseInt(binaryChar, 2);
             utf8string += codePoint >= 0x10000 ? String.fromCodePoint(codePoint) : String.fromCharCode(codePoint);
           } catch (e) {
-            if (mode === 'inform') {
-              console.log(e);
-            } else if (mode === 'strict') {
+            if (mode === 'strict') {
               throw e;
             }
+            invalidSequences++;
           }
           binaryChar = '';
         }
+      }
+    }
+    if (mode === 'inform') {
+      if (invalidBytes) {
+        console.info(`Buf.toUtfStr: skipped ${invalidBytes} invalid utf-8 character beginning bytes`);
+      }
+      if (invalidSequences) {
+        console.log(`Buf.toUtfStr: skipped ${invalidSequences} invalid utf-8 character sequences`);
       }
     }
     return utf8string;

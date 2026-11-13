@@ -104,10 +104,7 @@ View.run(
           this.setBtnText().catch(Catch.reportErr);
         }
       } else {
-        let fixed = this.armoredPubkey;
-        while (/\n> |\n>\n/.test(fixed)) {
-          fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
-        }
+        const fixed = this.armoredPubkey.replace(/\n(?:> )+/g, '\n').replace(/\n>(?=\n|$)/g, '\n');
         if (fixed !== this.armoredPubkey) {
           // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
           window.location.href = Url.create('pgp_pubkey.htm', {
