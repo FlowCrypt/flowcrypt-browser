@@ -673,7 +673,7 @@ abstract class ControllableBase {
           }
         }
       } catch (e) {
-        if (e instanceof Error && !e.message.includes('Cannot find context with specified id undefined')) {
+        if (!Util.isTransientPageError(e)) {
           throw e;
         }
       }

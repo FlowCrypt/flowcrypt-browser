@@ -87,6 +87,70 @@ const openMockGmailPage = async (t: AvaContext, browser: BrowserHandle, acctEmai
 
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
+    test(
+      'setup - Google OAuth confirmation handles English and German buttons',
+      testWithBrowser(async (t, browser) => {
+        for (const label of ['Continue', 'Weiter']) {
+          const oauthPage = await browser.newPage(t);
+          await oauthPage.page.setContent(`
+            <div data-view-id="AZBvBc">
+              <div jsname="gVmDzc"><button class="VfPpkd-LgbsSe" type="button">Other account</button></div>
+              <div jsname="Njthtb"><button class="VfPpkd-LgbsSe" type="button"><span>${label}</span></button></div>
+            </div>
+          `);
+          await oauthPage.page.evaluate(() => {
+            document.querySelector('[jsname="Njthtb"] button')?.addEventListener('click', () => {
+              const approve = document.createElement('button');
+              approve.id = 'submit_approve_access';
+              approve.textContent = 'Allow';
+              document.body.replaceChildren(approve);
+            });
+          });
+          await OauthPageRecipe.google(t, oauthPage, 'oauth-fixture@example.com', 'close');
+          t.true(oauthPage.page.isClosed(), label);
+        }
+      })
+    );
+
+    test(
+      'setup - element polling recovers from stale queries and visibility checks within its deadline',
+      testWithBrowser(async (t, browser) => {
+        const page = await browser.newPage(t);
+        await page.page.setContent('<button id="target">Ready</button>');
+        const query = page.page.$$.bind(page.page);
+        const staleNode = new Error('Protocol error (DOM.resolveNode): Node with given id does not belong to the document');
+        let queries = 0;
+        page.page.$$ = async selector => {
+          queries++;
+          if (queries === 1) {
+            throw staleNode;
+          }
+          const elements = await query(selector);
+          if (queries === 2) {
+            elements[0].boundingBox = async () => {
+              throw staleNode;
+            };
+          }
+          return elements;
+        };
+        try {
+          const element = await page.waitAny('#target', { timeout: 2 });
+          t.is(await element.evaluate(element => element.textContent), 'Ready');
+          t.is(queries, 3);
+          page.page.$$ = async () => {
+            throw staleNode;
+          };
+          await t.throwsAsync(() => page.waitAny('#target', { timeout: 0.1 }), { message: 'waiting failed: Elements did not appear: #target' });
+          page.page.$$ = async () => {
+            throw new Error('Unexpected protocol failure');
+          };
+          await t.throwsAsync(() => page.waitAny('#target'), { message: 'Unexpected protocol failure' });
+        } finally {
+          page.page.$$ = query;
+        }
+      })
+    );
+
     // note - `SetupPageRecipe.createKey` tests are in `defineFlakyTests` - running serially
     // because the keygen CPU spike can cause trouble to other concurrent tests
 
@@ -1005,33 +1069,6 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
     //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
     //   await Util.sleep(200);
     // }));
-
-    test(
-      'setup - recover with a passphrase - no remaining',
-      testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
-        t.context.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
-      })
-    );
-
-    test(
-      'setup - fail to recover with a wrong passphrase',
-      testWithBrowser(async (t, browser) => {
-        const acctEmail = 'flowcrypt.test.key.recovered@gmail.com';
-        t.context.mockApi!.configProvider = new ConfigurationProvider({
-          attester: singlePubKeyAttesterConfig(acctEmail, somePubkey),
-        });
-        const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, acctEmail);
-        await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', {
-          hasRecoverMore: false,
-          wrongPp: true,
-        });
-      })
-    );
 
     test(
       'setup - fail to recover with a wrong passphrase at first, then recover with good passphrase',

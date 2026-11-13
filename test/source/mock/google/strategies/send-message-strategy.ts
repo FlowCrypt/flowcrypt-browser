@@ -112,11 +112,13 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
   };
 }
 class PwdEncryptedMessageWithFlowCryptComApiTestStrategy implements ITestMsgStrategy {
+  public constructor(private expectedSenderEmail: string) {}
+
   public test = async (parseResult: ParseMsgResult) => {
     await check7bitEncodedPgpMimeParts(parseResult, ['flowcrypt.compatibility.1pp1', 'ci.tests.gmail'], true);
     const mimeMsg = parseResult.mimeMsg;
-    const senderEmail = Str.parseEmail(mimeMsg.from!.text).email;
-    if (!mimeMsg.text?.includes(`${senderEmail} has sent you a password-encrypted email`)) {
+    expect(Str.parseEmail(mimeMsg.from!.text).email).to.equal(this.expectedSenderEmail);
+    if (!mimeMsg.text?.includes(`${this.expectedSenderEmail} has sent you a password-encrypted email`)) {
       throw new HttpClientErr(`Error checking sent text in:\n\n${mimeMsg.text}`);
     }
     checkPwdEncryptedMessage(mimeMsg.text);
@@ -318,7 +320,6 @@ class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   };
 }
 
-
 class NoopTestStrategy implements ITestMsgStrategy {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   public test = async () => {};
@@ -468,7 +469,8 @@ export class TestBySubjectStrategyContext {
     } else if (subject.includes('Test Footer (Mock Test)')) {
       this.strategy = new MessageWithFooterTestStrategy();
     } else if (subject.includes('PWD encrypted message with flowcrypt.com/shared-tenant-fes')) {
-      this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy();
+      // The attachment test uses the original subject and the primary compatibility address.
+      this.strategy = new PwdEncryptedMessageWithFlowCryptComApiTestStrategy(/ - from: (.+)$/.exec(subject)?.[1] ?? 'flowcrypt.compatibility@gmail.com');
     } else if (subject.includes('PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes')) {
       this.strategy = new PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy();
     } else if (subject.includes('PWD encrypted message with FES - ID TOKEN')) {

@@ -11,8 +11,30 @@ execution_time_limit:
   hours: 1
 
 blocks:
-  - name: Mock UI Tests
+  - name: Build
     dependencies: []
+    execution_time_limit:
+      minutes: 20
+    task:
+      env_vars:
+        - &flowcrypt_git_dir
+          name: SEMAPHORE_GIT_DIR
+          value: /home/semaphore/git/flowcrypt-browser
+      jobs:
+        - name: Build extension and tests
+          commands:
+            - mkdir ~/git && checkout
+            - cd ~/git/flowcrypt-browser
+            - cache restore flowcrypt-browser-npm-$(checksum package-lock.json) || true
+            - cache restore flowcrypt-browser-puppeteer-ubuntu2404-$(uname -m)-$(checksum package-lock.json) || true
+            # postinstall builds the extension variants and compiles the tests.
+            - npm ci --cache ~/.npm --prefer-offline
+            - cache store flowcrypt-browser-npm-$(checksum package-lock.json) ~/.npm || true
+            - cache store flowcrypt-browser-puppeteer-ubuntu2404-$(uname -m)-$(checksum package-lock.json) ~/.cache/puppeteer || true
+            - cache store flowcrypt-browser-build-$SEMAPHORE_PIPELINE_ID build || true
+
+  - name: Mock UI Tests
+    dependencies: [Build]
     execution_time_limit:
       minutes: 45
     task:
@@ -20,16 +42,20 @@ blocks:
         - &flowcrypt_ci_secrets
           name: flowcrypt-browser-ci-secrets
       env_vars:
-        - &flowcrypt_git_dir
-          name: SEMAPHORE_GIT_DIR
-          value: /home/semaphore/git/flowcrypt-browser
+        - *flowcrypt_git_dir
       prologue:
         commands: &flowcrypt_ci_prologue
           - mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
           - cd ~/git/flowcrypt-browser
           - cache restore flowcrypt-browser-npm-$(checksum package-lock.json) || true
-          - npm ci --cache ~/.npm --prefer-offline
-          - cache store flowcrypt-browser-npm-$(checksum package-lock.json) ~/.npm || true
+          - cache restore flowcrypt-browser-puppeteer-ubuntu2404-$(uname -m)-$(checksum package-lock.json) || true
+          # Install dependencies without rebuilding the extension in postinstall.
+          - npm ci --ignore-scripts --cache ~/.npm --prefer-offline
+          - npm rebuild puppeteer
+          - npm run symlink-core
+          - cache restore flowcrypt-browser-build-$SEMAPHORE_PIPELINE_ID || true
+          # Cache misses (including fork PRs and job reruns) must still run a full build.
+          - 'if [[ ! -f build/test/test/source/test.js ]]; then npm run pretest; fi'
           - 'echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"'
       jobs:
         - name: consumer mock - standard test group
@@ -63,7 +89,7 @@ blocks:
               done
 
   - name: Live UI Gmail tests
-    dependencies: []
+    dependencies: [Build]
     run:
       when: branch = 'master' OR branch =~ 'live-test'  OR branch =~ 'gmail-test'
     execution_time_limit:
@@ -84,7 +110,7 @@ blocks:
         on_fail: *flowcrypt_ci_epilogue_on_fail
 
   - name: Other tests
-    dependencies: []
+    dependencies: [Build]
     execution_time_limit:
       minutes: 20
     task:
@@ -124,4 +150,5 @@ after_pipeline:
     jobs:
       - name: Publish Results
         commands:
+          - cache delete flowcrypt-browser-build-$SEMAPHORE_PIPELINE_ID || true
           - test-results gen-pipeline-report
