@@ -98,7 +98,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             const before = await storagePage.target.evaluate(async () => await chrome.storage.local.get());
             t.is(before.cryptup_global_email_key_index_migrated, false);
             t.is(before.cryptup_aliceexamplecom_passphrase_AABB, 'test passphrase');
-            t.is(before['cryptup_alice~40example~2ecom_passphrase_AABB'], restartDuringMigration ? 'test passphrase' : undefined);
+            t.is(before['cryptup_alice~0040example~002ecom_passphrase_AABB'], restartDuringMigration ? 'test passphrase' : undefined);
             const write = storagePage.target.evaluate(async email => {
               const store = (window as Window & { ['AcctStore']?: { set: (email: string, values: Record<string, unknown>) => Promise<void> } }).AcctStore;
               if (!store) throw new Error('Missing account store on the test page');
@@ -107,7 +107,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             // Keep a handler attached while the worker is paused or restarting.
             void write.catch(() => undefined);
             t.is(await settingsPage.target.evaluate(() => document.body.dataset.testViewState), undefined);
-            t.false('cryptup_alice~40example~2ecom_full_name' in (await storagePage.target.evaluate(async () => await chrome.storage.local.get())));
+            t.false('cryptup_alice~0040example~002ecom_full_name' in (await storagePage.target.evaluate(async () => await chrome.storage.local.get())));
             if (restartDuringMigration) {
               const stopped = new Promise<void>(resolve => {
                 browser.browser.on('targetdestroyed', target => {
@@ -127,8 +127,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             const after = await storagePage.target.evaluate(async () => await chrome.storage.local.get());
             t.is(after.cryptup_global_email_key_index_migrated, true);
             t.is(after.cryptup_aliceexamplecom_passphrase_AABB, undefined);
-            t.is(after['cryptup_alice~40example~2ecom_passphrase_AABB'], 'test passphrase');
-            t.is(after['cryptup_alice~40example~2ecom_full_name'], 'Alice');
+            t.is(after['cryptup_alice~0040example~002ecom_passphrase_AABB'], 'test passphrase');
+            t.is(after['cryptup_alice~0040example~002ecom_full_name'], 'Alice');
           } finally {
             if (!controller.detached) await controller.detach();
           }

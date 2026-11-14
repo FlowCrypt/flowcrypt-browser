@@ -44,6 +44,8 @@ export const defineUnitNodeTests = (testVariant: TestVariant) => {
       t.not(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('ab@corp.test', 'keys'));
       t.is(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('A-B@corp.test', 'keys'));
       t.not(emailKeyIndex('İ@example.com', 'keys'), emailKeyIndex('i\u0307@example.com', 'keys'));
+      // fixed-width escapes: the ASCII two-character sequence must not equal one higher code point
+      t.not(emailKeyIndex('a!1@b.com', 'keys'), emailKeyIndex('aȑ@b.com', 'keys'));
       t.pass();
     });
     test(`[unit][KeyUtil.parse] throw if parse methods expecting exactly one key find more than one`, async t => {

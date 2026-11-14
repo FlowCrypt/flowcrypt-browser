@@ -6,9 +6,9 @@ BROWSER_UNIT_TEST_NAME(`[unit][migrateAccountStorageKeys] preserves colliding le
   const migrationMarkerKey = 'cryptup_global_email_key_index_migrated';
   const skippedAccountsKey = 'cryptup_global_email_key_index_skipped_accounts';
   const legacyStorageKey = 'cryptup_abcorptest_keys';
-  const sharedDestinations = ['cryptup_a~2db~40corp~2etest_keys', 'cryptup_ab~40corp~2etest_keys'];
+  const sharedDestinations = ['cryptup_a~002db~0040corp~002etest_keys', 'cryptup_ab~0040corp~002etest_keys'];
   const unaffectedLegacyKey = 'cryptup_othercorptest_keys';
-  const unaffectedNewKey = 'cryptup_other~40corp~2etest_keys';
+  const unaffectedNewKey = 'cryptup_other~0040corp~002etest_keys';
   const keys = [accountEmailsKey, migrationMarkerKey, skippedAccountsKey, legacyStorageKey, ...sharedDestinations, unaffectedLegacyKey, unaffectedNewKey];
   const get = keys => new Promise(resolve => chrome.storage.local.get(keys, resolve));
   const set = values => new Promise(resolve => chrome.storage.local.set(values, resolve));
@@ -49,7 +49,7 @@ BROWSER_UNIT_TEST_NAME(`[unit][migrateAccountStorageKeys] preserves legacy data 
   const migrationMarkerKey = 'cryptup_global_email_key_index_migrated';
   const skippedAccountsKey = 'cryptup_global_email_key_index_skipped_accounts';
   const legacyKey = 'cryptup_aliceexamplecom_keys';
-  const destinationKey = 'cryptup_alice~40example~2ecom_keys';
+  const destinationKey = 'cryptup_alice~0040example~002ecom_keys';
   const keys = [accountEmailsKey, migrationMarkerKey, skippedAccountsKey, legacyKey, destinationKey];
   const get = keys => new Promise(resolve => chrome.storage.local.get(keys, resolve));
   const set = values => new Promise(resolve => chrome.storage.local.set(values, resolve));
@@ -112,7 +112,7 @@ BROWSER_UNIT_TEST_NAME(`[unit][migrateAccountStorageKeys] retries failed reads, 
   const marker = 'cryptup_global_email_key_index_migrated';
   const skipped = 'cryptup_global_email_key_index_skipped_accounts';
   const legacy = 'cryptup_aliceexamplecom_keys';
-  const destination = 'cryptup_alice~40example~2ecom_keys';
+  const destination = 'cryptup_alice~0040example~002ecom_keys';
   const storage = chrome.storage.local;
   const { get, set, remove } = storage;
   const keys = [accountList, marker, skipped, legacy, destination];
@@ -180,7 +180,7 @@ BROWSER_UNIT_TEST_NAME(`[unit][migrateAccountStorageKeys] preserves all values i
   const legacyKeys = [];
   for (const [i, email] of accounts.entries()) {
     const oldPrefix = `cryptup_account${i}examplecom_`;
-    const newPrefix = `cryptup_account${i}~40example~2ecom_`;
+    const newPrefix = `cryptup_account${i}~0040example~002ecom_`;
     const values = {
       keys: [{ private: 'k'.repeat(800 * 1024) + email }],
       passphrase_AABB: `passphrase${i}`,
@@ -208,12 +208,18 @@ BROWSER_UNIT_TEST_NAME(`[unit][migrateAccountStorageKeys] preserves all values i
   for (const key of ['unrelated', 'cryptup_abctest_keys', 'cryptup_account0examplecomextra_keys', 'cryptup_global_account_emails']) {
     if (result[key] !== fixture[key]) throw Error(`Unexpected change to ${key}`);
   }
-  if ('cryptup_a~40bc~2etest_keys' in result || 'cryptup_ab~40c~2etest_keys' in result) throw Error('Ambiguous key was copied');
+  if ('cryptup_a~0040bc~002etest_keys' in result || 'cryptup_ab~0040c~002etest_keys' in result) throw Error('Ambiguous key was copied');
   if (JSON.stringify(result.cryptup_global_email_key_index_skipped_accounts) !== JSON.stringify(colliding)) {
     throw Error('Boundary collision was not recorded');
   }
   await migrateAccountStorageKeys();
-  if (JSON.stringify(await storage.get()) !== JSON.stringify(result)) throw Error('Completed migration changed storage');
+  const stable = store =>
+    JSON.stringify(
+      Object.keys(store)
+        .sort()
+        .map(key => [key, store[key]])
+    );
+  if (stable(await storage.get()) !== stable(result)) throw Error('Completed migration changed storage');
   console.info(`Migrated large fixture in ${elapsed} ms`);
   return 'pass';
 })();
@@ -267,7 +273,7 @@ BROWSER_UNIT_TEST_NAME(`[unit][accountStorageReady] shares readiness, retries tr
   const { BrowserMsg, BgNotReadyErr } = await import('/js/common/browser/browser-msg.js');
   const { Time } = await import('/js/common/browser/time.js');
   const marker = 'cryptup_global_email_key_index_migrated';
-  const key = 'cryptup_alice~40example~2ecom_setup_done';
+  const key = 'cryptup_alice~0040example~002ecom_setup_done';
   const storage = chrome.storage.local;
   await storage.remove([marker, key]);
 
