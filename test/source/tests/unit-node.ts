@@ -267,6 +267,34 @@ outerSignatureData
       t.pass();
     });
 
+    test(`[unit][MsgBlockParser.detectBlocks] caps block count on armor bomb`, async t => {
+      const unit = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nplaceholder\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const { blocks } = MsgBlockParser.detectBlocks(`hello\n${unit.repeat(5000)}`);
+      expect(blocks.length).to.equal(100);
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.stripPublicKeys] caps keys and ignores empty armor`, async t => {
+      const block = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nplaceholder\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const keys: string[] = [];
+      MsgBlockParser.stripPublicKeys(`hello\n${block.repeat(20)}`, keys);
+      expect(keys.length).to.equal(10);
+      const empty = `\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const keys2: string[] = [];
+      MsgBlockParser.stripPublicKeys(`hello\n${empty}`, keys2);
+      expect(keys2.length).to.equal(0);
+      t.pass();
+    });
+
+    test(`[unit][MsgBlockParser.detectBlocks] continues scanning after an empty armor block`, async t => {
+      const empty = `-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n-----END PGP PUBLIC KEY BLOCK-----\n`;
+      const encrypted = `-----BEGIN PGP MESSAGE-----\n\ndata\n-----END PGP MESSAGE-----`;
+      const { blocks } = MsgBlockParser.detectBlocks(`hello\n${empty}${encrypted}`);
+      expect(blocks.map(b => b.type)).to.deep.equal(['plainText', 'encryptedMsg']);
+      expect(blocks[1].content).to.equal(encrypted);
+      t.pass();
+    });
+
     test(`[unit][MsgBlockParser.extractFcReplyToken] extracts token and ignores HTML-like markup`, async t => {
       const replyInfoRaw = Buf.fromUtfStr(JSON.stringify({ token: 'test-value' })).toBase64UrlStr();
       const content = `Hello <img src="https://attacker.example/track.png" width="1" height="1">\n<div style="display: none;" class="cryptup_reply" cryptup-data="${replyInfoRaw}"></div>`;

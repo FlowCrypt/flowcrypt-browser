@@ -226,10 +226,16 @@ export class XssSafeFactory {
   };
 
   public embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
+    if (armoredPubkey.length > 100000) {
+      return Xss.escape('[Public key too large to display]');
+    }
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block', 'publicKey']);
   };
 
   public embeddedBackup = (armoredPrvBackup: string, fromEmail?: string) => {
+    if (armoredPrvBackup.length > 100000) {
+      return Xss.escape('[Backup too large to display]');
+    }
     return this.iframe(this.srcBackupIframe(armoredPrvBackup, fromEmail), ['backup_block']);
   };
 

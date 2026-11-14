@@ -45,12 +45,12 @@ export class PgpBlockViewQuoteModule {
         const lastLine = lines.pop()!; // lines.length above ensures there is a line
         if (lastLine.startsWith('>') || !lastLine.length) {
           // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
-          linesQuotedPart.unshift(lastLine);
+          linesQuotedPart.push(lastLine);
         } else {
           // found first non-quoted part from the bottom
           if (lastLine.startsWith('On ') && lastLine.endsWith(' wrote:')) {
             // on the very top of quoted content, looks like qote header
-            linesQuotedPart.unshift(lastLine);
+            linesQuotedPart.push(lastLine);
           } else {
             // no quote header, just regular content from here onwards
             lines.push(lastLine);
@@ -58,9 +58,12 @@ export class PgpBlockViewQuoteModule {
           break;
         }
       }
+      linesQuotedPart.reverse();
       if (linesQuotedPart.length && !lines.length) {
-        // only got quoted part, no real text -> show everything as real text, without quoting
-        lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
+        for (const line of linesQuotedPart) {
+          lines.push(line);
+        }
+        linesQuotedPart.length = 0;
       }
       this.view.renderModule.renderContent(Str.escapeTextAsRenderableHtml(lines.join('\n')), false, isChecksumInvalid);
       if (linesQuotedPart.join('').trim()) {

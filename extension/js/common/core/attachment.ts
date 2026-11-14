@@ -49,6 +49,7 @@ export class Attachment {
     'openpgp-encrypted-message.asc',
     '.asc.pgp',
   ];
+  public static readonly MAX_COUNT_PER_MESSAGE = 100;
 
   public length = NaN;
   public type: string;
@@ -143,7 +144,7 @@ export class Attachment {
     return (
       (this.type === 'application/pgp-keys' && !this.isPrivateKey()) ||
       /^(0|0x)?([A-F0-9]{16}|[A-F0-9]{8}([A-F0-9]{8})?)\.asc(\.pgp)?$/i.test(this.name) || // Key ID (8 or 16 characters) with .asc extension (optional .pgp)
-      (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}.*\.asc$/g.test(this.name)) || // name contains the word "public", any key id and ends with .asc
+      (this.name.toLowerCase().includes('public') && /[A-F0-9]{8}/.test(this.name) && this.name.endsWith('.asc')) || // name contains the word "public", any key id and ends with .asc
       (this.name.endsWith('.asc') && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----'))
     );
   };
@@ -240,7 +241,22 @@ export class Attachment {
   };
 
   public isExecutableFile = () => {
-    const name = this.name.replace(/[\s.\p{C}]+$/gu, '').toLowerCase();
+    let nameEnd = this.name.length;
+    while (nameEnd > 0) {
+      let charStart = nameEnd - 1;
+      const lastCode = this.name.charCodeAt(charStart);
+      if (lastCode >= 0xdc00 && lastCode <= 0xdfff && charStart > 0) {
+        const highCode = this.name.charCodeAt(charStart - 1);
+        if (highCode >= 0xd800 && highCode <= 0xdbff) {
+          charStart--;
+        }
+      }
+      if (!/[\s.\p{C}]/u.test(this.name.substring(charStart, nameEnd))) {
+        break;
+      }
+      nameEnd = charStart;
+    }
+    const name = this.name.substring(0, nameEnd).toLowerCase();
     return [
       'ade',
       'adp',

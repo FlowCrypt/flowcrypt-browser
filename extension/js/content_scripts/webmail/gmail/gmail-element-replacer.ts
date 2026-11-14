@@ -39,6 +39,8 @@ export class GmailElementReplacer extends WebmailElementReplacer {
   private webmailCommon: WebmailCommon;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
   private currentlyReplacingAttachments = false;
+  private replacingArmoredBlocks = false;
+  private menuObserverDebounce: number | undefined;
   private switchToEncryptedReply = false;
   private removeNextReplyBoxBorders = false;
   private lastSwitchToEncryptedReply = false;
@@ -157,10 +159,16 @@ export class GmailElementReplacer extends WebmailElementReplacer {
 
   public setupSecureActionsOnGmailMenu = () => {
     const observer = new MutationObserver(() => {
-      const gmailActionsMenu = document.querySelector(this.sel.msgActionsMenu);
-      if (gmailActionsMenu && window.getComputedStyle(gmailActionsMenu).display !== 'none' && (gmailActionsMenu as HTMLElement).offsetParent !== undefined) {
-        void this.addSecureActionsToMessageMenu();
+      if (this.menuObserverDebounce) {
+        return;
       }
+      this.menuObserverDebounce = Catch.setHandledTimeout(() => {
+        this.menuObserverDebounce = undefined;
+        const gmailActionsMenu = document.querySelector(this.sel.msgActionsMenu);
+        if (gmailActionsMenu && window.getComputedStyle(gmailActionsMenu).display !== 'none' && (gmailActionsMenu as HTMLElement).offsetParent !== undefined) {
+          void this.addSecureActionsToMessageMenu();
+        }
+      }, 300);
     });
     observer.observe(document.body, { childList: true, subtree: true });
   };
@@ -176,8 +184,18 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     this.renderLocalDrafts().catch(Catch.reportErr);
   };
 
-  private replaceArmoredBlocks = async () => {
-    const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
+  private replaceArmoredBlocks = () => {
+    if (this.replacingArmoredBlocks) {
+      return Promise.resolve();
+    }
+    this.replacingArmoredBlocks = true;
+    return this.replaceArmoredBlocksInner().finally(() => {
+      this.replacingArmoredBlocks = false;
+    });
+  };
+
+  private replaceArmoredBlocksInner = async () => {
+    const emailsContainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated').slice(0, 10);
     for (const emailContainer of emailsContainingPgpBlock) {
       if (this.debug) {
         console.debug('replaceArmoredBlocks() for of emailsContainingPgpBlock -> emailContainer', emailContainer);
@@ -501,7 +519,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     if (this.debug) {
       console.debug('processNewPgpAttachments()');
     }
-    const newPgpAttachments = this.filterAttachments(pgpAttachments, Attachment.webmailNamePattern);
+    const newPgpAttachments = this.filterAttachments(pgpAttachments, Attachment.webmailNamePattern).slice(0, 25);
     newPgpAttachments.addClass('evaluated');
     if (newPgpAttachments.length) {
       const msgId = this.determineMsgId(attachmentsContainer);
@@ -543,8 +561,9 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const loaderContext = new GmailLoaderContext(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
-    let nRenderedAttachments = attachments.length;
-    for (const a of attachments.reverse()) {
+    const visibleAttachments = attachments.slice(0, 25);
+    let nRenderedAttachments = visibleAttachments.length;
+    for (const a of visibleAttachments.reverse()) {
       const attachmentSel = this.filterAttachments(
         attachmentsContainerInner.children().not('.attachment_processed'),
         new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)
@@ -563,7 +582,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
         nRenderedAttachments--;
       }
     }
-    if (nRenderedAttachments !== attachments.length) {
+    if (nRenderedAttachments !== visibleAttachments.length) {
       // according to #4200, no point in showing "download all" button if at least one attachment is encrypted etc.
       $(this.sel.downloadAllAttachmentsButton).hide();
     }

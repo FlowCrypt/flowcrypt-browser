@@ -196,6 +196,7 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     }
     let totalBytes = 0;
     const minBytes = 1000; // Define minBytes as per your requirement
+    const maxBufferedBytes = 100000;
     let processed = 0;
     return await new Promise((resolve, reject) => {
       const processChunkAndResolve = (chunk: string) => {
@@ -250,6 +251,9 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
             const chunk = new TextDecoder().decode(value);
             totalBytes += value.length; // Update total bytes based on the Uint8Array length
             completeChunk += chunk;
+            if (totalBytes > maxBufferedBytes) {
+              break;
+            }
             if (totalBytes >= minBytes || treatAs === 'publicKey') {
               // Process and return the chunk if the conditions are met
               return processChunkAndResolve(completeChunk); // Make sure this method returns Buf
@@ -273,26 +277,31 @@ export class Gmail extends EmailProviderApi implements EmailProviderInterface {
     let lastProgressPercent = -1;
     const loadedAr: number[] = [];
     // 1.33 is approximate ratio of downloaded data to what we expected, likely due to encoding
-    const total = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-    const responses = await Promise.all(
-      attachmentsMissingData.map((a, index) =>
-        this.attachmentGet(a, {
-          download: (_, loaded) => {
-            if (progressCb) {
-              loadedAr[index] = loaded || 0;
-              const totalLoaded = loadedAr.reduce((a, b) => a + b);
-              const progressPercent = Math.round((totalLoaded * 100) / total);
-              if (progressPercent !== lastProgressPercent) {
-                lastProgressPercent = progressPercent;
-                progressCb(progressPercent, totalLoaded, total);
+    const rawTotal = attachmentsMissingData.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+    const total = Number.isFinite(rawTotal) && rawTotal > 0 ? rawTotal : 1;
+    const batchSize = 10;
+    for (let start = 0; start < attachmentsMissingData.length; start += batchSize) {
+      const batch = attachmentsMissingData.slice(start, start + batchSize);
+      const responses = await Promise.all(
+        batch.map((a, index) =>
+          this.attachmentGet(a, {
+            download: (_, loaded) => {
+              if (progressCb) {
+                loadedAr[start + index] = loaded || 0;
+                const totalLoaded = loadedAr.reduce((a, b) => a + b);
+                const progressPercent = Math.round((totalLoaded * 100) / total);
+                if (progressPercent !== lastProgressPercent) {
+                  lastProgressPercent = progressPercent;
+                  progressCb(progressPercent, totalLoaded, total);
+                }
               }
-            }
-          },
-        })
-      )
-    );
-    for (const i of responses.keys()) {
-      attachmentsMissingData[i].setData(responses[i].data);
+            },
+          })
+        )
+      );
+      for (const j of responses.keys()) {
+        batch[j].setData(responses[j].data);
+      }
     }
   };
 

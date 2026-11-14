@@ -77,7 +77,7 @@ export class ComposeSenderModule extends ViewModule<ComposeView> {
     let htmlWithUpdatedFooter = inputHtml;
     if (inputHtml.includes('---------- Forwarded message ---------')) {
       // Update signature for forwarded messages
-      const forwardSignaturePattern = /(--<br>[\s\S]*?)(?=<br>--<br>[\s\S]*?$|$)/gm;
+      const forwardSignaturePattern = /(--<br>[\s\S]*?)(?=<br>--<br>|$)/gm;
       const matches = inputHtml.match(forwardSignaturePattern);
 
       if (matches?.length) {
