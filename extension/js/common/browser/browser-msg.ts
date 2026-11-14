@@ -221,6 +221,9 @@ export class BrowserMsg {
         BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {});
       },
       await: {
+        accountStorageReady: async (): Promise<void> => {
+          await BrowserMsg.sendAwait(undefined, 'account_storage_ready', undefined, true);
+        },
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) =>
           BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         reconnectCustomIDPAcctAuthPopup: (bm: Bm.ReconnectCustomIDPAcctAuthPopup) =>
@@ -677,7 +680,10 @@ export class BrowserMsg {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
             } else if (
               lastError === 'Could not establish connection. Receiving end does not exist.' ||
-              lastError === 'The message port closed before a response was received.'
+              lastError === 'The message port closed before a response was received.' ||
+              lastError.startsWith(
+                'A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received'
+              )
             ) {
               // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
               //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.

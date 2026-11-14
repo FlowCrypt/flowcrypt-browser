@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { storageGetAll, storageRemove } from '../common/browser/chrome.js';
+import { storageGetAll, storageRemove, storageSet } from '../common/browser/chrome.js';
 import { KeyInfoWithIdentity, KeyUtil } from '../common/core/crypto/key.js';
 import { SmimeKey } from '../common/core/crypto/smime/smime-key.js';
 import { Str } from '../common/core/common.js';
 import { ContactStore, Email, Pubkey } from '../common/platform/store/contact-store.js';
 import { GlobalStore, LocalDraft } from '../common/platform/store/global-store.js';
 import { KeyStore } from '../common/platform/store/key-store.js';
+import { AbstractStore } from '../common/platform/store/abstract-store.js';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 // contact entity prior to version 4
@@ -41,7 +42,64 @@ const addKeyInfoFingerprints = async () => {
   }
 };
 
+// Account storage keys used to be derived from the account email by stripping all non-alphanumeric
+// characters, which made distinct emails (eg `a-b@corp.test` and `ab@corp.test`) share one namespace.
+// Keys are now collision-free (see emailKeyIndex in core/common.ts), so re-index existing data.
+export const migrateAccountStorageKeys = async () => {
+  const globalStore = await GlobalStore.get(['email_key_index_migrated']);
+  if (globalStore.email_key_index_migrated) {
+    return;
+  }
+  console.info('migrating account storage keys to a collision-free format...');
+  const acctEmails = await GlobalStore.acctEmailsGet();
+  const acctEmailsByLegacyPrefix = new Map<string, string[]>();
+  for (const acctEmail of acctEmails) {
+    const oldPrefix = `cryptup_${acctEmail.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_`;
+    const accounts = acctEmailsByLegacyPrefix.get(oldPrefix) ?? [];
+    accounts.push(acctEmail);
+    acctEmailsByLegacyPrefix.set(oldPrefix, accounts);
+  }
+  const destinations = new Map<string, string>();
+  const skippedAccounts: string[] = [];
+  for (const [oldPrefix, accounts] of acctEmailsByLegacyPrefix) {
+    if (accounts.length > 1) {
+      // Leave shared legacy data untouched because its owner cannot be determined.
+      skippedAccounts.push(...accounts);
+      continue;
+    }
+    const [acctEmail] = accounts;
+    const newPrefix = AbstractStore.singleScopeRawIndex(acctEmail, '');
+    if (oldPrefix !== newPrefix && oldPrefix !== 'cryptup_global_') {
+      destinations.set(oldPrefix, newPrefix);
+    }
+  }
+  const storage = destinations.size ? await storageGetAll('local') : {};
+  const updates: { [key: string]: unknown } = {};
+  const removals: string[] = [];
+  for (const storageKey of Object.keys(storage)) {
+    const oldPrefix = /^cryptup_[a-z0-9]*_/.exec(storageKey)?.[0];
+    const newPrefix = oldPrefix && destinations.get(oldPrefix);
+    if (oldPrefix && newPrefix) {
+      const newKey = `${newPrefix}${storageKey.substring(oldPrefix.length)}`;
+      if (!Object.hasOwn(storage, newKey)) {
+        updates[newKey] = storage[storageKey];
+      }
+      removals.push(storageKey);
+    }
+  }
+  if (Object.keys(updates).length) {
+    await storageSet('local', updates);
+  }
+  if (removals.length) {
+    await storageRemove('local', removals);
+  }
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  await GlobalStore.set({ email_key_index_migrated: true, email_key_index_skipped_accounts: skippedAccounts });
+  console.info('done migrating account storage keys');
+};
+
 export const migrateGlobal = async () => {
+  await migrateAccountStorageKeys();
   const globalStore = await GlobalStore.get(['key_info_store_fingerprints_added', 'local_drafts', 'stored_key_info_migrated']);
   if (!globalStore.key_info_store_fingerprints_added) {
     console.info('migrating KeyStorage to add fingerprints and emails of each key...');

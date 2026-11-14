@@ -4,6 +4,7 @@ import { OAuth } from '../../api/authentication/generic/oauth.js';
 import { GoogleOAuth } from '../../api/authentication/google/google-oauth.js';
 import { ApiErr } from '../../api/shared/api-error.js';
 import { AuthenticationConfiguration } from '../../authentication-configuration.js';
+import { awaitAccountStorageReady } from './account-storage-ready.js';
 import { BrowserMsg } from '../../browser/browser-msg.js';
 import { storageGet, storageRemove, storageSet } from '../../browser/chrome.js';
 import { ClientConfigurationJson } from '../../client-configuration.js';
@@ -89,12 +90,19 @@ export type AcctStoreDict = {
  */
 export class AcctStore extends AbstractStore {
   public static async get(acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> {
+    await awaitAccountStorageReady();
+    return await AcctStore.getForDiagnostics(acctEmail, keys);
+  }
+
+  // Read the current namespace without waiting so diagnostics also work when migration fails.
+  public static async getForDiagnostics(acctEmail: string, keys: AccountIndex[]): Promise<AcctStoreDict> {
     const storageObj = (await storageGet('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys))) as RawStore;
     const result = AcctStore.buildSingleAccountStoreFromRawResults(acctEmail, storageObj);
     return AcctStore.fixAcctStorageResult(acctEmail, result, keys);
   }
 
   public static async getAccounts(acctEmails: string[], keys: string[]): Promise<Dict<AcctStoreDict>> {
+    await awaitAccountStorageReady();
     const storageObj = (await storageGet('local', AcctStore.manyScopesRawIndexArr(acctEmails, keys))) as RawStore;
     const resultsByAcct: Dict<AcctStoreDict> = {};
     for (const account of acctEmails) {
@@ -104,6 +112,7 @@ export class AcctStore extends AbstractStore {
   }
 
   public static async set(acctEmail: string, values: AcctStoreDict): Promise<void> {
+    await awaitAccountStorageReady();
     const indexedUpdateFields: RawStore = {};
     const indexedRemoveFields: string[] = [];
     for (const key of Object.keys(values)) {
@@ -123,6 +132,7 @@ export class AcctStore extends AbstractStore {
   }
 
   public static async remove(acctEmail: string, keys: AccountIndex[]) {
+    await awaitAccountStorageReady();
     await storageRemove('local', AcctStore.singleScopeRawIndexArr(acctEmail, keys));
   }
 
