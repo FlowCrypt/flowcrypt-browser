@@ -31,9 +31,137 @@ import { getKeyManagerAutogenRules } from '../mock/fes/fes-constants';
 import { FesClientConfiguration } from '../mock/fes/shared-tenant-fes-endpoints';
 import { flowcryptCompatibilityAliasList } from '../mock/google/google-endpoints';
 import { Key } from 'openpgp';
+import { CDPSession, TargetType } from 'puppeteer';
+
+const pauseMigration = async (t: AvaContext, browser: BrowserHandle, statement: string) => {
+  const workerUrl = t.context.urls!.extension('js/service_worker/background.js');
+  const migrationUrl = t.context.urls!.extension('js/service_worker/migrations.js');
+  const source = fs.readFileSync(`${t.context.extensionDir?.trim()}/js/service_worker/migrations.js`, 'utf8');
+  const lineNumber = source.split('\n').findIndex(line => line.includes(statement));
+  if (lineNumber < 0) throw new Error(`Migration breakpoint not found: ${statement}`);
+  const controller = await browser.browser.target().createCDPSession();
+  const { promise: paused, resolve, reject } = Promise.withResolvers<{ worker: CDPSession; targetId: string }>();
+  const onAttach = async ({ sessionId, targetInfo }: { sessionId: string; targetInfo: { url: string; targetId: string } }) => {
+    const worker = controller.connection()?.session(sessionId);
+    if (!worker) throw new Error('Missing service worker debugger session');
+    if (targetInfo.url === workerUrl) {
+      await worker.send('Debugger.enable');
+      const { breakpointId } = await worker.send('Debugger.setBreakpointByUrl', { url: migrationUrl, lineNumber });
+      worker.on('Debugger.paused', event => {
+        if (event.hitBreakpoints?.includes(breakpointId) && event.callFrames[0]) {
+          resolve({ worker, targetId: targetInfo.targetId });
+        }
+      });
+    }
+    await worker.send('Runtime.runIfWaitingForDebugger');
+  };
+  controller.on('Target.attachedToTarget', event => {
+    onAttach(event).catch(reject);
+  });
+  await controller.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true, filter: [{ type: 'service_worker' }] });
+  return { controller, paused };
+};
+
+const stopMigrationWorker = async (t: AvaContext, browser: BrowserHandle) => {
+  const workerUrl = t.context.urls!.extension('js/service_worker/background.js');
+  const target = browser.browser.targets().find(target => target.type() === TargetType.SERVICE_WORKER && target.url() === workerUrl);
+  if (target) {
+    const worker = await target.worker();
+    await worker?.close();
+  }
+};
 
 export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
+    for (const restartDuringMigration of [false, true]) {
+      test(
+        restartDuringMigration
+          ? 'settings - resumes an interrupted account storage upgrade after copying'
+          : 'settings - waits for account storage upgrade before reading or writing',
+        testWithBrowser(async (t, browser) => {
+          const acctEmail = 'alice@example.com';
+          const storagePage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+          await storagePage.target.evaluate(async email => {
+            await chrome.storage.local.set({
+              ['cryptup_global_account_emails']: JSON.stringify([email]),
+              ['cryptup_global_email_key_index_migrated']: false,
+              ['cryptup_aliceexamplecom_setup_done']: true,
+              ['cryptup_aliceexamplecom_passphrase_AABB']: 'test passphrase',
+            });
+          }, acctEmail);
+          await stopMigrationWorker(t, browser);
+          const { controller, paused } = await pauseMigration(t, browser, restartDuringMigration ? 'await storageRemove(' : 'await storageSet(');
+          const settingsPage = await browser.newPage(t);
+          try {
+            await settingsPage.goto(t.context.urls!.extensionSettings(acctEmail));
+            const { worker, targetId } = await paused;
+            const before = await storagePage.target.evaluate(async () => await chrome.storage.local.get());
+            t.is(before.cryptup_global_email_key_index_migrated, false);
+            t.is(before.cryptup_aliceexamplecom_passphrase_AABB, 'test passphrase');
+            t.is(before['cryptup_alice~0040example~002ecom_passphrase_AABB'], restartDuringMigration ? 'test passphrase' : undefined);
+            const write = storagePage.target.evaluate(async email => {
+              const store = (window as Window & { ['AcctStore']?: { set: (email: string, values: Record<string, unknown>) => Promise<void> } }).AcctStore;
+              if (!store) throw new Error('Missing account store on the test page');
+              await store.set(email, { ['full_name']: 'Alice' });
+            }, acctEmail);
+            // Keep a handler attached while the worker is paused or restarting.
+            void write.catch(() => undefined);
+            t.is(await settingsPage.target.evaluate(() => document.body.dataset.testViewState), undefined);
+            t.false('cryptup_alice~0040example~002ecom_full_name' in (await storagePage.target.evaluate(async () => await chrome.storage.local.get())));
+            if (restartDuringMigration) {
+              const stopped = new Promise<void>(resolve => {
+                browser.browser.on('targetdestroyed', target => {
+                  if (target.url() === t.context.urls!.extension('js/service_worker/background.js')) resolve();
+                });
+              });
+              await controller.send('Target.closeTarget', { targetId });
+              await controller.detach();
+              await stopped;
+            } else {
+              await worker.send('Debugger.resume');
+            }
+            await write;
+            await settingsPage.waitUntilViewLoaded();
+            t.is(await settingsPage.target.$eval('.hide_if_setup_not_done h1', element => element.textContent), 'FlowCrypt Settings');
+            t.false(await settingsPage.target.$eval('#account-storage-recovery-notice', element => Boolean(element.getClientRects().length)));
+            const after = await storagePage.target.evaluate(async () => await chrome.storage.local.get());
+            t.is(after.cryptup_global_email_key_index_migrated, true);
+            t.is(after.cryptup_aliceexamplecom_passphrase_AABB, undefined);
+            t.is(after['cryptup_alice~0040example~002ecom_passphrase_AABB'], 'test passphrase');
+            t.is(after['cryptup_alice~0040example~002ecom_full_name'], 'Alice');
+          } finally {
+            if (!controller.detached) await controller.detach();
+          }
+        })
+      );
+    }
+    test(
+      'settings - prompts an account with shared legacy storage to set up again after an upgrade',
+      testWithBrowser(async (t, browser) => {
+        const affectedAccount = 'a-b@corp.test';
+        const storagePage = await browser.newExtensionPage(t, 'chrome/dev/ci_unit_test.htm');
+        await storagePage.target.evaluate(async acctEmail => {
+          await chrome.storage.local.set({
+            ['cryptup_global_account_emails']: JSON.stringify([acctEmail, 'ab@corp.test', 'other@corp.test']),
+            ['cryptup_global_email_key_index_migrated']: false,
+            ['cryptup_abcorptest_setup_done']: true,
+            ['cryptup_othercorptest_setup_done']: true,
+          });
+        }, affectedAccount);
+
+        await storagePage.close();
+        await stopMigrationWorker(t, browser);
+
+        // The popup wakes the worker and shows Settings once the unaffected account has migrated.
+        const popup = await browser.newExtensionPage(t, 'chrome/popups/default.htm');
+        await popup.waitAll('.action_open_settings');
+
+        const settingsPage = await browser.newExtensionSettingsPage(t, affectedAccount);
+        await settingsPage.waitForContent('#account-storage-recovery-notice', 'Set up this account again.');
+        t.is(await settingsPage.attr('#account-storage-recovery-notice a', 'href'), 'mailto:human@flowcrypt.com');
+        await settingsPage.waitAll('@action-connect-to-gmail');
+      })
+    );
     test(
       'settings - my own emails show as contacts',
       testWithBrowser(async (t, browser) => {
@@ -758,13 +886,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
         });
         const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
-        ]);
+        const passphraseKey = `cryptup_${emailKeyIndex(acctEmail, 'passphrase_B8F687BCDE14435A')}`;
+        const keysKey = `cryptup_${emailKeyIndex(acctEmail, 'keys')}`;
+        const { [passphraseKey]: savedPassphrase1, [keysKey]: keys } = await settingsPage.getFromLocalStorage([passphraseKey, keysKey]);
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
         expect(savedPassphrase1).to.be.an('undefined');
         const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
@@ -776,13 +900,11 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           enterPp: { passphrase, isForgetPpHidden: true, isForgetPpChecked: true },
           content: ['changed correctly if this can be decrypted'],
         });
-        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
-          await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
+        const { [passphraseKey]: savedPassphrase2 } = await settingsPage.getFromLocalStorage([passphraseKey]);
         expect(savedPassphrase2).to.be.an('undefined');
         // change pp - should not ask for pp because already in session
         await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
-        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase3 } =
-          await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
+        const { [passphraseKey]: savedPassphrase3 } = await settingsPage.getFromLocalStorage([passphraseKey]);
         expect(savedPassphrase3).to.be.an('undefined');
         // test decrypt - should not ask for pp because already in session
         await InboxPageRecipe.checkDecryptMsg(t, browser, {
@@ -881,7 +1003,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await myKeyPage.selectOption('@input-compatibility-fix-expire-years', '1');
         await myKeyPage.waitAndClick('@action-fix-and-import-key');
         await Util.sleep(4); // wait for navigation to complete
-        const { cryptup_flowcryptcompatibilitygmailcom_keys: keys } = await settingsPage.getFromLocalStorage(['cryptup_flowcryptcompatibilitygmailcom_keys']);
+        const keysKey = `cryptup_${emailKeyIndex(acct, 'keys')}`;
+        const { [keysKey]: keys } = await settingsPage.getFromLocalStorage([keysKey]);
         const pubkey = await KeyUtil.parse((keys as KeyInfoWithIdentity[])[0].public);
         const expectedExpiration = new Date().getFullYear() + 1;
         const pubkeyExpiration = new Date(pubkey.expiration!).getFullYear();
@@ -1176,9 +1299,8 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           contentToCheck: 'Public and private key updated locally',
           clickOn: 'cancel',
         });
-        const { cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92: savedPassphrase } = await settingsPage.getFromLocalStorage([
-          'cryptup_flowcrypttestkeymultiplegmailcom_passphrase_98ACFA1EADAB5B92',
-        ]);
+        const passphraseKey = `cryptup_${emailKeyIndex(acctEmail, 'passphrase_98ACFA1EADAB5B92')}`;
+        const { [passphraseKey]: savedPassphrase } = await settingsPage.getFromLocalStorage([passphraseKey]);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
       })
@@ -1817,14 +1939,10 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
             },
           },
         });
-        const { settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
-        ]);
+        const { acctEmail, settingsPage, passphrase } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
+        const passphraseKey = `cryptup_${emailKeyIndex(acctEmail, 'passphrase_B8F687BCDE14435A')}`;
+        const keysKey = `cryptup_${emailKeyIndex(acctEmail, 'keys')}`;
+        const { [passphraseKey]: savedPassphrase1, [keysKey]: keys } = await settingsPage.getFromLocalStorage([passphraseKey, keysKey]);
         expect(savedPassphrase1).to.be.an('undefined');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -1841,8 +1959,7 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           contentToCheck: 'Public and private key updated locally',
           clickOn: 'cancel',
         });
-        const { cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase2 } =
-          await settingsPage.getFromLocalStorage(['cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A']);
+        const { [passphraseKey]: savedPassphrase2 } = await settingsPage.getFromLocalStorage([passphraseKey]);
         expect(savedPassphrase2).to.be.an('undefined');
         await settingsPage.close();
       })
@@ -1868,8 +1985,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         });
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
-        const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
-          await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
+        const oldRulesKey = `cryptup_${emailKeyIndex(acct1, 'rules')}`;
+        const oldPassphraseKey = `cryptup_${emailKeyIndex(acct1, 'passphrase_07481C8ACF9D49FE')}`;
+        const { [oldRulesKey]: oldRules, [oldPassphraseKey]: savedPassphrase1 } = await settingsPage.getFromLocalStorage([oldRulesKey, oldPassphraseKey]);
         expect(savedPassphrase1).not.to.be.an('undefined');
         expect((oldRules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -1898,15 +2016,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await Util.sleep(2);
         // await PageRecipe.waitForModalAndRespond(?, 'confirm',
         //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
+        const newRulesKey = `cryptup_${emailKeyIndex(acct2, 'rules')}`;
+        const newPassphraseKey = `cryptup_${emailKeyIndex(acct2, 'passphrase_07481C8ACF9D49FE')}`;
+        const keysKey = `cryptup_${emailKeyIndex(acct2, 'keys')}`;
         const {
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules: newRules,
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
-          cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys: keys,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_rules',
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE',
-          'cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_keys',
-        ]);
+          [newRulesKey]: newRules,
+          [newPassphraseKey]: savedPassphrase2,
+          [keysKey]: keys,
+        } = await settingsPage.getFromLocalStorage([newRulesKey, newPassphraseKey, keysKey]);
         expect((newRules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
         expect(savedPassphrase2).not.to.be.an('undefined');
@@ -2123,8 +2240,9 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await BrowserRecipe.setUpCommonAcct(t, browser, 'ci.tests.gmail');
         const acct2 = 'user@forbid-storing-passphrase-client-configuration.flowcrypt.test';
         const settingsPage = await browser.newExtensionSettingsPage(t, acct1);
-        const { cryptup_citestsgmailflowcrypttest_rules: oldRules, cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase1 } =
-          await settingsPage.getFromLocalStorage(['cryptup_citestsgmailflowcrypttest_rules', 'cryptup_citestsgmailflowcrypttest_passphrase_07481C8ACF9D49FE']);
+        const oldRulesKey = `cryptup_${emailKeyIndex(acct1, 'rules')}`;
+        const oldPassphraseKey = `cryptup_${emailKeyIndex(acct1, 'passphrase_07481C8ACF9D49FE')}`;
+        const { [oldRulesKey]: oldRules, [oldPassphraseKey]: savedPassphrase1 } = await settingsPage.getFromLocalStorage([oldRulesKey, oldPassphraseKey]);
         expect(savedPassphrase1).not.to.be.an('undefined');
         expect((oldRules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
         await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
@@ -2153,15 +2271,14 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
         await Util.sleep(2);
         // await PageRecipe.waitForModalAndRespond(?, 'confirm',
         //   { contentToCheck: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt', clickOn: 'confirm' });
+        const newRulesKey = `cryptup_${emailKeyIndex(acct2, 'rules')}`;
+        const newPassphraseKey = `cryptup_${emailKeyIndex(acct2, 'passphrase_07481C8ACF9D49FE')}`;
+        const keysKey = `cryptup_${emailKeyIndex(acct2, 'keys')}`;
         const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules: newRules,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE: savedPassphrase2,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_rules',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_07481C8ACF9D49FE',
-        ]);
+          [newRulesKey]: newRules,
+          [keysKey]: keys,
+          [newPassphraseKey]: savedPassphrase2,
+        } = await settingsPage.getFromLocalStorage([newRulesKey, keysKey, newPassphraseKey]);
         expect((newRules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('07481C8ACF9D49FE');
         expect(savedPassphrase2).to.be.an('undefined');
@@ -2183,26 +2300,17 @@ export const defineSettingsTests = (testVariant: TestVariant, testWithBrowser: T
           },
         });
         const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcForbidPpStoringAcct(t, browser);
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A: savedPassphrase1,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys1,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_B8F687BCDE14435A',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
-        ]);
+        const keysKey = `cryptup_${emailKeyIndex(acctEmail, 'keys')}`;
+        const firstPassphraseKey = `cryptup_${emailKeyIndex(acctEmail, 'passphrase_B8F687BCDE14435A')}`;
+        const { [firstPassphraseKey]: savedPassphrase1, [keysKey]: keys1 } = await settingsPage.getFromLocalStorage([firstPassphraseKey, keysKey]);
         expect((keys1 as KeyInfoWithIdentity[])[0].longid).to.equal('B8F687BCDE14435A');
         expect(savedPassphrase1).to.be.an('undefined');
         await SettingsPageRecipe.addKeyTest(t, browser, acctEmail, testConstants.testKeyMultiple98acfa1eadab5b92, '1234', {
           isSavePassphraseChecked: false,
           isSavePassphraseHidden: true,
         });
-        const {
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92: savedPassphrase2,
-          cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys: keys2,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_passphrase_98ACFA1EADAB5B92',
-          'cryptup_userforbidstoringpassphraseclientconfigurationflowcrypttest_keys',
-        ]);
+        const addedPassphraseKey = `cryptup_${emailKeyIndex(acctEmail, 'passphrase_98ACFA1EADAB5B92')}`;
+        const { [addedPassphraseKey]: savedPassphrase2, [keysKey]: keys2 } = await settingsPage.getFromLocalStorage([addedPassphraseKey, keysKey]);
         expect((keys2 as KeyInfoWithIdentity[]).map(ki => ki.longid)).to.include.members(['B8F687BCDE14435A', '98ACFA1EADAB5B92']);
         expect(savedPassphrase2).to.be.an('undefined');
       })

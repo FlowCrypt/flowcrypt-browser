@@ -1147,9 +1147,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
         await Util.sleep(1);
         await settingsPage.notPresent(['@action-open-backup-page']);
-        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage([
-          'cryptup_haspubclientconfigurationtestflowcrypttest_keys',
-        ]);
+        const keysKey = `cryptup_${emailKeyIndex(acct, 'keys')}`;
+        const { [keysKey]: keys } = await settingsPage.getFromLocalStorage([keysKey]);
         const ki = keys as KeyInfoWithIdentity[];
         expect(ki.length).to.equal(1);
         expect(ki[0].private).to.include('PGP PRIVATE KEY');
@@ -1185,9 +1184,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await settingsPage.waitAll(['@action-show-encrypted-inbox', '@action-open-security-page']);
         await Util.sleep(1);
         await settingsPage.notPresent(['@action-open-backup-page']);
-        const { cryptup_haspubclientconfigurationtestflowcrypttest_keys: keys } = await settingsPage.getFromLocalStorage([
-          'cryptup_haspubclientconfigurationtestflowcrypttest_keys',
-        ]);
+        const keysKey = `cryptup_${emailKeyIndex(acct, 'keys')}`;
+        const { [keysKey]: keys } = await settingsPage.getFromLocalStorage([keysKey]);
         const ki = keys as KeyInfoWithIdentity[];
         expect(ki.length).to.equal(1);
         expect(ki[0].private).to.include('PGP PRIVATE KEY');
@@ -1314,8 +1312,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           },
           { isSavePassphraseChecked: true, isSavePassphraseHidden: false }
         );
-        const { cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7: savedPassphrase } =
-          await settingsPage.getFromLocalStorage(['cryptup_userdefaultrememberpassphraseclientconfigurationflowcrypttest_passphrase_715EDCDC7939A8F7']);
+        const passphraseKey = `cryptup_${emailKeyIndex(acctEmail, 'passphrase_715EDCDC7939A8F7')}`;
+        const { [passphraseKey]: savedPassphrase } = await settingsPage.getFromLocalStorage([passphraseKey]);
         expect(savedPassphrase).to.equal('1234');
         await settingsPage.close();
       })
@@ -1991,15 +1989,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
         await SetupPageRecipe.autoSetupWithEKM(settingsPage, {
           enterPp: { passphrase, checks: { isSavePassphraseChecked: true, isSavePassphraseHidden: false } },
         });
+        const keysKey = `cryptup_${emailKeyIndex(acct, 'keys')}`;
+        const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
+        const passphraseKey = `cryptup_${emailKeyIndex(acct, 'passphrase_00B0115807969D75')}`;
         const {
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys: keys,
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules: rules,
-          cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75: savedPassphrase,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_keys',
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_rules',
-          'cryptup_getkeykeymanagerchoosepassphraseflowcrypttest_passphrase_00B0115807969D75',
-        ]);
+          [keysKey]: keys,
+          [rulesKey]: rules,
+          [passphraseKey]: savedPassphrase,
+        } = await settingsPage.getFromLocalStorage([keysKey, rulesKey, passphraseKey]);
         expect((rules as { flags: string[] }).flags).not.to.include('FORBID_STORING_PASS_PHRASE');
         expect((rules as { flags: string[] }).flags).to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('00B0115807969D75');
@@ -2029,15 +2026,14 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             checks: { isSavePassphraseChecked: false, isSavePassphraseHidden: true },
           },
         });
+        const keysKey = `cryptup_${emailKeyIndex(acct, 'keys')}`;
+        const rulesKey = `cryptup_${emailKeyIndex(acct, 'rules')}`;
+        const passphraseKey = `cryptup_${emailKeyIndex(acct, 'passphrase_00B0115807969D75')}`;
         const {
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys: keys,
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules: rules,
-          cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75: savedPassphrase,
-        } = await settingsPage.getFromLocalStorage([
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_keys',
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_rules',
-          'cryptup_getkeykeymanagerchoosepassphraseforbidstoringflowcrypttest_passphrase_00B0115807969D75',
-        ]);
+          [keysKey]: keys,
+          [rulesKey]: rules,
+          [passphraseKey]: savedPassphrase,
+        } = await settingsPage.getFromLocalStorage([keysKey, rulesKey, passphraseKey]);
         expect((rules as { flags: string[] }).flags).to.include('FORBID_STORING_PASS_PHRASE');
         expect((rules as { flags: string[] }).flags).not.to.include('DEFAULT_REMEMBER_PASS_PHRASE');
         expect((keys as KeyInfoWithIdentity[])[0].longid).to.equal('00B0115807969D75');
@@ -2074,9 +2070,8 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
             longid,
           },
         });
-        const { cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules: rules } = await settingsPage.getFromLocalStorage([
-          'cryptup_userpassphrasesessionlengthclientconfigurationflowcrypttest_rules',
-        ]);
+        const rulesKey = `cryptup_${emailKeyIndex(acctEmail, 'rules')}`;
+        const { [rulesKey]: rules } = await settingsPage.getFromLocalStorage([rulesKey]);
         let savedPassphrase = await BrowserRecipe.getPassphraseFromInMemoryStore(settingsPage, acctEmail, longid);
         expect(
           // eslint-disable-next-line @typescript-eslint/naming-convention

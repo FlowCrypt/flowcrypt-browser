@@ -24,6 +24,10 @@ import { VERSION } from '../common/core/const.js';
 import { injectFcIntoWebmail } from './inject.js';
 import { ConfiguredIdpOAuth } from '../common/api/authentication/configured-idp-oauth.js';
 
+import { initializeAccountStorageInBackground } from '../common/platform/store/account-storage-ready.js';
+
+initializeAccountStorageInBackground();
+
 console.info('background.js service worker starting');
 
 let db: IDBDatabase;
@@ -59,6 +63,7 @@ const ready = Promise.resolve().then(async () => {
   }
 });
 
+BrowserMsg.bgAddListener('account_storage_ready', async () => undefined);
 BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
 BrowserMsg.bgAddListener('inMemoryStoreSet', async (r: Bm.InMemoryStoreSet) => inMemoryStore.set(emailKeyIndex(r.acctEmail, r.key), r.value, r.expiration));
 BrowserMsg.bgAddListener('inMemoryStoreGet', async (r: Bm.InMemoryStoreGet) => inMemoryStore.get(emailKeyIndex(r.acctEmail, r.key)));

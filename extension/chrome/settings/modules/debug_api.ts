@@ -34,7 +34,7 @@ View.run(
       } else if (this.which === 'flowcrypt_account') {
         Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(this.which)} (not implemented)`);
       } else if (this.which === 'local_store') {
-        const storage = await AcctStore.get(this.acctEmail, [
+        const storage = await AcctStore.getForDiagnostics(this.acctEmail, [
           'authentication',
           'notification_setup_needed_dismissed',
           'email_provider',

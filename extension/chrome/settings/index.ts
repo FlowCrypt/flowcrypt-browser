@@ -322,6 +322,10 @@ View.run(
           }
           await this.addKeyRowsHtml(privateKeys);
         } else {
+          const globalStorage = await GlobalStore.get(['email_key_index_skipped_accounts']);
+          if (globalStorage.email_key_index_skipped_accounts?.includes(this.acctEmail)) {
+            $('#account-storage-recovery-notice').removeClass('hidden');
+          }
           this.displayOrig('.show_if_setup_not_done');
           $('.hide_if_setup_not_done').css('display', 'none');
         }

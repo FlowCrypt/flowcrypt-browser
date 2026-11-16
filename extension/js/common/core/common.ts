@@ -515,8 +515,12 @@ export class Url {
   };
 }
 
+// Derives the per-account storage key prefix. Scope (an account email) lowercases ASCII letters,
+// keeps ASCII alphanumerics, and escapes every other character as `~<hex>`. Hex is fixed-width,
+// so the encoding is prefix-free: emails that differ only in punctuation (eg `a-b@corp.test` and
+// `ab@corp.test`) must not share a storage namespace, and `a!1@b.com` must not collide with `aȑ@b.com`.
 export const emailKeyIndex = (scope: string, key: string): string => {
-  return `${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+  return `${scope.replace(/[A-Z]/g, char => char.toLowerCase()).replace(/[^a-z0-9]/g, char => `~${char.charCodeAt(0).toString(16).padStart(4, '0')}`)}_${key}`;
 };
 
 export const asyncSome = async <T>(arr: T[], predicate: (e: T) => Promise<boolean>) => {
