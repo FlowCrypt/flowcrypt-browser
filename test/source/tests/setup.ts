@@ -2500,7 +2500,7 @@ AN8G3r5Htj8olot+jm9mIa5XLXWzMNUZgg==
           encryptedData: encryptedAttachmentContent,
           verificationPubs: [pubkey],
         });
-        const armoredPrivateKey = decryptedAttachmentContent.content!.toUtfStr();
+        const armoredPrivateKey = decryptedAttachmentContent.success ? decryptedAttachmentContent.content.toUtfStr() : '';
         const key = await KeyUtil.parse(armoredPrivateKey);
         expect(key.isPrivate).to.equal(true);
         expect(key.fullyDecrypted).to.equal(true);

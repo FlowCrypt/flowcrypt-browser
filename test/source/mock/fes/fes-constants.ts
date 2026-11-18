@@ -54,7 +54,7 @@ export const processMessageFromUser = async (body: string, fesUrl: string) => {
   })) as DecryptSuccess;
   expect(decrypted.success).to.equal(true);
   expect(decrypted.signature?.signerLongids.length).to.equal(1);
-  const decryptedMimeMsg = decrypted.content?.toUtfStr();
+  const decryptedMimeMsg = decrypted.success ? decrypted.content.toUtfStr() : undefined;
   expect(decryptedMimeMsg).to.contain(
     'Content-Type: text/plain\r\n' + 'Content-Transfer-Encoding: quoted-printable\r\n\r\n' + 'PWD encrypted message with FES - ID TOKEN'
   );
@@ -93,7 +93,7 @@ export const processMessageFromUser2 = async (body: string, fesUrl: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  const decryptedMimeMsg = decrypted.content?.toUtfStr();
+  const decryptedMimeMsg = decrypted.success ? decrypted.content.toUtfStr() : undefined;
   // small.txt
   expect(decryptedMimeMsg).to.contain('Content-Type: text/plain; name=small.txt\r\n' + 'Content-Disposition: attachment; filename=small.txt');
   expect(decryptedMimeMsg).to.contain('Content-Transfer-Encoding: base64\r\n\r\n' + 'c21hbGwgdGV4dCBmaWxlCm5vdCBtdWNoIGhlcmUKdGhpcyB3b3JrZWQK');
@@ -142,7 +142,7 @@ export const processMessageFromUser3 = async (body: string, fesUrl: string) => {
     verificationPubs: [],
   });
   expect(decrypted.success).to.equal(true);
-  const decryptedMimeMsg = decrypted.content?.toUtfStr();
+  const decryptedMimeMsg = decrypted.success ? decrypted.content.toUtfStr() : undefined;
   const cryptupDataRegex = /cryptup-data="([^"]*)"/;
   const cryptupDataMatch = decryptedMimeMsg?.match(cryptupDataRegex);
   expect(cryptupDataMatch).to.not.be.undefined;

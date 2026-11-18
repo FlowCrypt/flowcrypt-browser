@@ -11,7 +11,7 @@ import { KeyUtil, KeyInfoWithIdentityAndOptionalPp, Key } from '../core/crypto/k
 import { UnreportableError } from '../platform/error-report.js';
 import { Buf } from '../core/buf';
 import { OpenPGPKey } from '../core/crypto/pgp/openpgp-key';
-import { DecryptError, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
+import { DecryptError, DecryptErrTypes, DecryptResult, DecryptSuccess, MsgUtil } from '../core/crypto/pgp/msg-util';
 import { opgp } from '../core/crypto/pgp/openpgpjs-custom';
 import { Attachment } from '../core/attachment.js';
 import { GoogleData, GmailMsg } from '../mock/google/google-data';
@@ -1196,6 +1196,42 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
             'Security threat!\n\nMessage is missing integrity checks (MDC).  The sender should update their outdated software.\n\nDisplay the message at your own risk.',
         });
       }
+      t.pass();
+    });
+
+    test('[unit][MsgUtil.decryptMessage] no-MDC plaintext is not exposed as decrypt content', async t => {
+      const encryptedData = decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded);
+      const compatibilityKey1 = Config.key('flowcrypt.compatibility.1pp1');
+      const kisWithPp = [
+        {
+          ...(await KeyUtil.keyInfoObj(await KeyUtil.parse(compatibilityKey1.armored!))),
+          passphrase: compatibilityKey1.passphrase,
+        },
+      ];
+      const result = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
+      expect(result.success).to.equal(false);
+      // the cast used by the old preview gate must never yield plaintext on a failed integrity check
+      expect((result as DecryptSuccess).content).to.equal(undefined);
+      if (!result.success) {
+        expect(result.error.type).to.equal(DecryptErrTypes.noMdc);
+        expect(result.unauthenticatedContent?.toUtfStr()).to.include('Shall not decrypt automatically');
+      }
+      t.pass();
+    });
+
+    test('[unit][DecryptResult] other failed decryptions never expose content, success does', async t => {
+      const encryptedData = decodeURIComponent(testConstants.encryptedMessageMissingMdcUriEncoded);
+      const failures = await Promise.all([
+        MsgUtil.decryptMessage({ kisWithPp: [], encryptedData: 'not a pgp message', verificationPubs: [] }),
+        MsgUtil.decryptMessage({ kisWithPp: [], encryptedData, verificationPubs: [] }),
+      ]);
+      for (const failure of failures) {
+        expect(failure.success).to.equal(false);
+        expect('content' in failure).to.equal(false);
+      }
+      const content = Buf.fromUtfStr('content');
+      const succeeded: DecryptResult = { success: true, content, isEncrypted: true, isCleartext: false };
+      expect(succeeded.content).to.equal(content);
       t.pass();
     });
 
