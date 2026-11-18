@@ -144,8 +144,10 @@ export class Xss {
     'direction',
     'unicode-bidi',
   ]);
-  private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip']); // xss-none
-  private static readonly NEGATIVE_CSS_LENGTH = /-\s*(?:\d|\.)/;
+  // prettier-ignore
+  private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip', 'top', 'right', 'bottom', 'left', 'inset', 'inset-block-start', 'inset-block-end', 'inset-inline-start', 'inset-inline-end']); // xss-none
+  private static readonly NEGATIVE_CSS_LENGTH = /(?:^|\s|\()-(?:\d|\.)/;
+  private static readonly CSS_FUNCTION_VALUE = /\b(?:var|attr|env)\(/i;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -419,6 +421,9 @@ export class Xss {
     }
   };
 
+  private static isUnsafeMargin = (property: string, value: string): boolean =>
+    property.toLowerCase().startsWith('margin') && (Xss.NEGATIVE_CSS_LENGTH.test(value) || Xss.CSS_FUNCTION_VALUE.test(value));
+
   /**
    * Sanitize a CSS style string by keeping only explicitly allowed properties.
    * Uses the browser's native CSS parser for robustness (handles comments,
@@ -433,7 +438,7 @@ export class Xss {
     for (const property of Array.from(style)) {
       const lower = property.toLowerCase();
       const value = style.getPropertyValue(property).trim();
-      if (!this.ALLOWED_EMAIL_CSS_PROPERTIES.has(lower) || !value || (lower.startsWith('margin') && this.NEGATIVE_CSS_LENGTH.test(value))) {
+      if (!this.ALLOWED_EMAIL_CSS_PROPERTIES.has(lower) || !value || this.isUnsafeMargin(property, value)) {
         style.removeProperty(property);
       }
     }
@@ -453,7 +458,7 @@ export class Xss {
       if (lower === 'position' && (['fixed', 'absolute', 'sticky'].includes(value) || value.includes('var('))) {
         style.removeProperty(property);
       } else if (
-        (lower.startsWith('margin') && this.NEGATIVE_CSS_LENGTH.test(value)) ||
+        this.isUnsafeMargin(property, value) ||
         this.DANGEROUS_CSS_PROPERTIES.has(lower) || // xss-none
         lower === 'backdrop-filter' ||
         lower.startsWith('mask') ||

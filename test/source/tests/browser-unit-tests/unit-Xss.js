@@ -148,34 +148,54 @@ BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
 
 BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips negative margins`);
 (async () => {
+  const hasNegativeMargin = html => {
+    for (const [, style] of html.matchAll(/style="([^"]*)"/g)) {
+      for (const decl of style.split(';')) {
+        const parts = decl.split(':');
+        if (parts[0].trim().toLowerCase().startsWith('margin') && /(?:^|\s|\()-[\d.]/.test(parts.slice(1).join(':'))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
   const payloads = [
     `<div style="margin-top:-33px;margin-bottom:0"><b style="margin-left:72px;background-color:#31a217">signed</b></div>`,
     `<b style="margin:-1px 0 0 72px">signed</b>`,
     `<b style="margin-top:-2em!important">signed</b>`,
-    `<b style="margin-top:calc(10px - 33px)">signed</b>`,
+    `<b style="margin-top:calc(-33px + 1px)">signed</b>`,
+    `<b style="margin-top:var(--m, -33px)">signed</b>`,
     `<b style="margin-block-start:-33px">signed</b>`,
   ];
   for (const dirty of payloads) {
     const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
-    if (/margin[^;"]*-\s*[\d.]/.test(clean)) {
+    if (hasNegativeMargin(clean)) {
       throw Error(`negative margin survived sanitization: ${clean}`);
     }
   }
-  const safe = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-top:12px;color:green">safe</b>`, 'IMG-KEEP');
-  if (!/margin-top:\s*12px/.test(safe)) {
-    throw Error(`positive margin was removed: ${safe}`);
+  const safe = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-top:12px;margin-left:calc(100% - 40px);margin-right:2em">safe</b>`, 'IMG-KEEP');
+  if (!/margin-top:\s*12px/.test(safe) || !/margin-left:\s*calc\(100% - 40px\)/.test(safe) || hasNegativeMargin(safe)) {
+    throw Error(`valid margins were altered: ${safe}`);
   }
   return 'pass';
 })();
 
-BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize strips negative margins`);
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize strips negative margins and displacement offsets`);
 (async () => {
-  const clean = Xss.htmlSanitize(`<b style="position:relative;z-index:-1;margin-top:-33px;color:green">signed</b>`);
-  if (/-\s*33px/.test(clean)) {
-    throw Error(`negative margin survived sanitization: ${clean}`);
+  const negative = Xss.htmlSanitize(`<b style="position:relative;z-index:-1;margin-top:-33px;color:green">signed</b>`);
+  if (/margin-top/.test(negative)) {
+    throw Error(`negative margin survived sanitization: ${negative}`);
   }
-  if (!/color:\s*green/.test(clean)) {
-    throw Error(`safe color was removed: ${clean}`);
+  const customProp = Xss.htmlSanitize(`<b style="margin-top:var(--m);--m:-33px;color:green">signed</b>`);
+  if (/margin-top|var\(--m\)/.test(customProp)) {
+    throw Error(`var() margin survived sanitization: ${customProp}`);
+  }
+  const offsets = Xss.htmlSanitize(`<b style="position:relative;top:-100px;left:72px;color:green">signed</b>`);
+  if (/(?:^|[;\s])(?:top|right|bottom|left|inset)\s*:/.test(offsets)) {
+    throw Error(`displacement offset survived sanitization: ${offsets}`);
+  }
+  if (!/color:\s*green/.test(negative) || !/color:\s*green/.test(customProp) || !/color:\s*green/.test(offsets)) {
+    throw Error(`safe color was removed`);
   }
   return 'pass';
 })();
