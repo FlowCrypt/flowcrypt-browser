@@ -146,6 +146,40 @@ BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips negative margins`);
+(async () => {
+  const payloads = [
+    `<div style="margin-top:-33px;margin-bottom:0"><b style="margin-left:72px;background-color:#31a217">signed</b></div>`,
+    `<b style="margin:-1px 0 0 72px">signed</b>`,
+    `<b style="margin-top:-2em!important">signed</b>`,
+    `<b style="margin-top:calc(10px - 33px)">signed</b>`,
+    `<b style="margin-block-start:-33px">signed</b>`,
+  ];
+  for (const dirty of payloads) {
+    const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+    if (/margin[^;"]*-\s*[\d.]/.test(clean)) {
+      throw Error(`negative margin survived sanitization: ${clean}`);
+    }
+  }
+  const safe = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-top:12px;color:green">safe</b>`, 'IMG-KEEP');
+  if (!/margin-top:\s*12px/.test(safe)) {
+    throw Error(`positive margin was removed: ${safe}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize strips negative margins`);
+(async () => {
+  const clean = Xss.htmlSanitize(`<b style="position:relative;z-index:-1;margin-top:-33px;color:green">signed</b>`);
+  if (/-\s*33px/.test(clean)) {
+    throw Error(`negative margin survived sanitization: ${clean}`);
+  }
+  if (!/color:\s*green/.test(clean)) {
+    throw Error(`safe color was removed: ${clean}`);
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags rejects encoded logout image paths`);
 (async () => {
   const urls = [
