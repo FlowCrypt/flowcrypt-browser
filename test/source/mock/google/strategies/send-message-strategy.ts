@@ -100,7 +100,7 @@ class PwdAndPubkeyEncryptedMessagesWithFlowCryptComApiTestStrategy implements IT
       const encryptedData = mimeMsg.text!;
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted.success).to.be.true;
-      expect(decrypted.content!.toUtfStr()).to.contain('PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes');
+      expect(decrypted.success ? decrypted.content.toUtfStr() : '').to.contain('PWD and pubkey encrypted messages with flowcrypt.com/shared-tenant-fes');
       expect(mimeMsg.bcc).to.be.an.undefined;
       expect(mimeMsg.to).to.be.an.undefined;
       expect((mimeMsg.headers.get('reply-to') as AddressObject).text).to.equal('"First Last" <flowcrypt.compatibility@gmail.com>, test@email.com');
@@ -172,7 +172,7 @@ class PwdEncryptedMessageWithFesPubkeyRecipientInBccTestStrategy implements ITes
       const encryptedData = Buf.fromUtfStr(mimeMsg.text!);
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted.success).to.be.true;
-      expect(decrypted.content!.toUtfStr()).to.equal('PWD encrypted message with FES - pubkey recipient in bcc');
+      expect(decrypted.success ? decrypted.content.toUtfStr() : '').to.equal('PWD encrypted message with FES - pubkey recipient in bcc');
       expect((mimeMsg.bcc as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.to).to.be.an.undefined;
@@ -233,7 +233,7 @@ class PwdEncryptedMessageWithFesReplyRenderingTestStrategy implements ITestMsgSt
       const encryptedData = mimeMsg.text!;
       const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
       expect(decrypted.success).to.be.true;
-      expect(decrypted.content!.toUtfStr()).to.include('> some dummy text');
+      expect(decrypted.success ? decrypted.content.toUtfStr() : '').to.include('> some dummy text');
       expect((mimeMsg.to as AddressObject).text).to.equal('flowcrypt.compatibility@gmail.com, mock.only.pubkey@flowcrypt.com');
       expect(mimeMsg.cc).to.be.an.undefined;
       expect(mimeMsg.bcc).to.be.an.undefined;
@@ -335,7 +335,7 @@ class SignatureRemovalTestStrategy implements ITestMsgStrategy {
     const decrypted = await MsgUtil.decryptMessage({ kisWithPp, encryptedData, verificationPubs: [] });
     expect(decrypted.success).to.be.true;
     // We expect the body to contain the message text but NOT the signature
-    const body = decrypted.content?.toUtfStr() || '';
+    const body = decrypted.success ? decrypted.content.toUtfStr() : '';
     if (!body.includes('Message without signature')) {
       throw new HttpClientErr(`Error: Msg Text doesn't contain expected body. Current: '${body}'`);
     }

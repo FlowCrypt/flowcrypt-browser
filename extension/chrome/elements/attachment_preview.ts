@@ -7,7 +7,7 @@ import { Attachment } from '../../js/common/core/attachment.js';
 import { AttachmentDownloadView } from './attachment.js';
 import { BrowserMsg } from '../../js/common/browser/browser-msg.js';
 import { KeyStore } from '../../js/common/platform/store/key-store.js';
-import { MsgUtil, DecryptError, DecryptErrTypes, DecryptSuccess, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
+import { MsgUtil, DecryptErrTypes, DecryptionError } from '../../js/common/core/crypto/pgp/msg-util.js';
 import { View } from '../../js/common/view.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Ui } from '../../js/common/browser/ui.js';
@@ -107,17 +107,17 @@ View.run(
         encryptedData: this.attachment.getData(),
         verificationPubs: [], // todo: #4158 signature verification of attachments
       });
-      if ((result as DecryptSuccess).content) {
+      if (result.success) {
         return result.content;
-      } else if ((result as DecryptError).error.type === DecryptErrTypes.needPassphrase) {
+      } else if (result.error.type === DecryptErrTypes.needPassphrase) {
         BrowserMsg.send.passphraseDialog(this.parentTabId, {
           type: 'attachment',
-          longids: (result as DecryptError).longids.needPassphrase,
+          longids: result.longids.needPassphrase,
           initiatorFrameId: this.initiatorFrameId,
         });
         return;
       }
-      throw new DecryptionError(result as DecryptError);
+      throw new DecryptionError(result);
     };
 
     private renderPdf = async (data: Uint8Array, password?: string) => {
