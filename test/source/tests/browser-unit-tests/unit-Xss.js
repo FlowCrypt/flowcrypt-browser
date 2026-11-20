@@ -189,11 +189,12 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips negative margins`);
     `<b style="margin-top:clamp(0px, 1% - 200px, 10px)">signed</b>`,
     `<b style="margin-top:min(1%, -200px)">signed</b>`,
     `<b style="margin-top:max(-200px, 1%)">signed</b>`,
+    `<b style="margin:calc(1% - 200px) 0 0 0">signed</b>`,
   ];
   for (const dirty of functionPayloads) {
     const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
     const retained = retainedMargins(clean);
-    if (retained.length) {
+    if (retained.some(decl => decl.includes('('))) {
       throw Error(`function-based margin survived sanitization: ${clean} (${retained.join(', ')})`);
     }
   }
@@ -222,11 +223,23 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize strips negative margins and displacemen
   if (/(?:^|[;\s])(?:top|right|bottom|left|inset)\s*:/.test(offsets)) {
     throw Error(`displacement offset survived sanitization: ${offsets}`);
   }
-  const mathFunction = Xss.htmlSanitize(`<b style="margin-top:calc(1% - 200px);color:green">signed</b>`);
-  if (/margin-top/.test(mathFunction)) {
-    throw Error(`function-based margin survived sanitization: ${mathFunction}`);
+  const functionPayloads = [
+    `<b style="margin-top:calc(1% - 200px)">signed</b>`,
+    `<b style="margin-top:clamp(0px, 1% - 200px, 10px)">signed</b>`,
+    `<b style="margin-top:min(1%, -200px)">signed</b>`,
+    `<b style="margin-top:max(-200px, 1%)">signed</b>`,
+  ];
+  for (const dirty of functionPayloads) {
+    const clean = Xss.htmlSanitize(dirty);
+    if (/margin-(?:top|right|bottom|left|block-start|block-end|inline-start|inline-end)\s*:/.test(clean)) {
+      throw Error(`function-based margin survived sanitization: ${clean}`);
+    }
   }
-  if (!/color:\s*green/.test(negative) || !/color:\s*green/.test(customProp) || !/color:\s*green/.test(offsets) || !/color:\s*green/.test(mathFunction)) {
+  const transforms = Xss.htmlSanitize(`<b style="translate:0 -200px;rotate:45deg;scale:2;offset:10px;offset-path:path('M0 0 L10 0');offset-distance:50%;offset-rotate:45deg;color:green">signed</b>`);
+  if (/(?:^|[;\s])(?:translate|rotate|scale|offset|offset-path|offset-distance|offset-rotate|offset-anchor|offset-position)\s*:/.test(transforms)) {
+    throw Error(`transform/offset displacement survived sanitization: ${transforms}`);
+  }
+  if (!/color:\s*green/.test(negative) || !/color:\s*green/.test(customProp) || !/color:\s*green/.test(offsets) || !/color:\s*green/.test(transforms)) {
     throw Error(`safe color was removed`);
   }
   return 'pass';

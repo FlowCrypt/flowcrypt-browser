@@ -145,7 +145,7 @@ export class Xss {
     'unicode-bidi',
   ]);
   // prettier-ignore
-  private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip', 'top', 'right', 'bottom', 'left', 'inset', 'inset-block-start', 'inset-block-end', 'inset-inline-start', 'inset-inline-end']); // xss-none
+  private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'translate', 'rotate', 'scale', 'offset', 'offset-path', 'offset-distance', 'offset-rotate', 'offset-anchor', 'offset-position', 'filter', 'clip-path', 'clip', 'top', 'right', 'bottom', 'left', 'inset', 'inset-block-start', 'inset-block-end', 'inset-inline-start', 'inset-inline-end']); // xss-none
   private static readonly NEGATIVE_CSS_LENGTH = /(?:^|\s|\()-(?:\d|\.)/;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
