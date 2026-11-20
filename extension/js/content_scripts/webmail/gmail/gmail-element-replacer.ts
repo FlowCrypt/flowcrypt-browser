@@ -519,7 +519,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     if (this.debug) {
       console.debug('processNewPgpAttachments()');
     }
-    const newPgpAttachments = this.filterAttachments(pgpAttachments, Attachment.webmailNamePattern).slice(0, 25);
+    const newPgpAttachments = this.filterAttachments(pgpAttachments, Attachment.webmailNamePattern).slice(0, Attachment.MAX_COUNT_PER_MESSAGE);
     newPgpAttachments.addClass('evaluated');
     if (newPgpAttachments.length) {
       const msgId = this.determineMsgId(attachmentsContainer);
@@ -561,7 +561,7 @@ export class GmailElementReplacer extends WebmailElementReplacer {
     const loaderContext = new GmailLoaderContext(this.factory, msgEl, attachmentsContainerInner);
     attachmentsContainerInner = $(attachmentsContainerInner);
     attachmentsContainerInner.parent().find(this.sel.numberOfAttachments).hide();
-    const visibleAttachments = attachments.slice(0, 25);
+    const visibleAttachments = attachments.slice(0, Attachment.MAX_COUNT_PER_MESSAGE);
     let nRenderedAttachments = visibleAttachments.length;
     for (const a of visibleAttachments.reverse()) {
       const attachmentSel = this.filterAttachments(

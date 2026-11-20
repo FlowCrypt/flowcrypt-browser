@@ -83,7 +83,7 @@ export type DecryptError = {
   success: false;
   error: DecryptError$error;
   longids: DecryptError$longids;
-  content?: Buf;
+  unauthenticatedContent?: Buf; // present only for noMdc, must never be treated as successful decrypt content
   isEncrypted?: boolean;
 };
 
@@ -262,7 +262,7 @@ export class MsgUtil {
           ' The sender should update their outdated software.\n\nDisplay the message at your own risk.';
         return {
           success: false,
-          content,
+          unauthenticatedContent: content,
           error: { type: DecryptErrTypes.noMdc, message: noMdc },
           longids,
           isEncrypted,

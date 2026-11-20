@@ -884,8 +884,7 @@ export class MessageRenderer {
       } else if (result.error.type === DecryptErrTypes.wrongPwd || result.error.type === DecryptErrTypes.usePassword) {
         renderModule.renderErr(Lang.pgpBlock.pwdMsgAskSenderUsePubkey, undefined);
       } else if (result.error.type === DecryptErrTypes.noMdc) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        renderModule.renderErr(Xss.escape(result.error.message), result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
+        renderModule.renderErr(Xss.escape(result.error.message), result.unauthenticatedContent?.toUtfStr()); // missing mdc - only render the result after user confirmation
       } else if (result.error) {
         renderModule.renderErr(
           `${Lang.pgpBlock.cantOpen}\n\n<em>${Xss.escape(result.error.type)}: ${Xss.escape(result.error.message)}</em>`,
