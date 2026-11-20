@@ -159,7 +159,18 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips negative margins`);
     }
     return false;
   };
-  const payloads = [
+  const retainedMargins = html => {
+    const retained = [];
+    for (const [, style] of html.matchAll(/style="([^"]*)"/g)) {
+      for (const decl of style.split(';')) {
+        if (decl.split(':')[0].trim().toLowerCase().startsWith('margin')) {
+          retained.push(decl.trim());
+        }
+      }
+    }
+    return retained;
+  };
+  const negativePayloads = [
     `<div style="margin-top:-33px;margin-bottom:0"><b style="margin-left:72px;background-color:#31a217">signed</b></div>`,
     `<b style="margin:-1px 0 0 72px">signed</b>`,
     `<b style="margin-top:-2em!important">signed</b>`,
@@ -167,15 +178,32 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips negative margins`);
     `<b style="margin-top:var(--m, -33px)">signed</b>`,
     `<b style="margin-block-start:-33px">signed</b>`,
   ];
-  for (const dirty of payloads) {
+  for (const dirty of negativePayloads) {
     const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
     if (hasNegativeMargin(clean)) {
       throw Error(`negative margin survived sanitization: ${clean}`);
     }
   }
-  const safe = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-top:12px;margin-left:calc(100% - 40px);margin-right:2em">safe</b>`, 'IMG-KEEP');
-  if (!/margin-top:\s*12px/.test(safe) || !/margin-left:\s*calc\(100% - 40px\)/.test(safe) || hasNegativeMargin(safe)) {
+  const functionPayloads = [
+    `<b style="margin-top:calc(1% - 200px)">signed</b>`,
+    `<b style="margin-top:clamp(0px, 1% - 200px, 10px)">signed</b>`,
+    `<b style="margin-top:min(1%, -200px)">signed</b>`,
+    `<b style="margin-top:max(-200px, 1%)">signed</b>`,
+  ];
+  for (const dirty of functionPayloads) {
+    const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+    const retained = retainedMargins(clean);
+    if (retained.length) {
+      throw Error(`function-based margin survived sanitization: ${clean} (${retained.join(', ')})`);
+    }
+  }
+  const safe = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-top:12px;margin-left:40px;margin-right:2em">safe</b>`, 'IMG-KEEP');
+  if (!/margin-top:\s*12px/.test(safe) || !/margin-left:\s*40px/.test(safe) || !/margin-right:\s*2em/.test(safe) || hasNegativeMargin(safe)) {
     throw Error(`valid margins were altered: ${safe}`);
+  }
+  const positiveCalc = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-left:calc(100% - 40px);color:green">safe</b>`, 'IMG-KEEP');
+  if (retainedMargins(positiveCalc).length) {
+    throw Error(`function-based margin survived sanitization: ${positiveCalc}`);
   }
   return 'pass';
 })();
@@ -194,7 +222,11 @@ BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize strips negative margins and displacemen
   if (/(?:^|[;\s])(?:top|right|bottom|left|inset)\s*:/.test(offsets)) {
     throw Error(`displacement offset survived sanitization: ${offsets}`);
   }
-  if (!/color:\s*green/.test(negative) || !/color:\s*green/.test(customProp) || !/color:\s*green/.test(offsets)) {
+  const mathFunction = Xss.htmlSanitize(`<b style="margin-top:calc(1% - 200px);color:green">signed</b>`);
+  if (/margin-top/.test(mathFunction)) {
+    throw Error(`function-based margin survived sanitization: ${mathFunction}`);
+  }
+  if (!/color:\s*green/.test(negative) || !/color:\s*green/.test(customProp) || !/color:\s*green/.test(offsets) || !/color:\s*green/.test(mathFunction)) {
     throw Error(`safe color was removed`);
   }
   return 'pass';

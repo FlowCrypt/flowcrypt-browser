@@ -147,7 +147,6 @@ export class Xss {
   // prettier-ignore
   private static readonly DANGEROUS_CSS_PROPERTIES = new Set<string>(['z-index', 'pointer-events', 'transform', 'filter', 'clip-path', 'clip', 'top', 'right', 'bottom', 'left', 'inset', 'inset-block-start', 'inset-block-end', 'inset-inline-start', 'inset-inline-end']); // xss-none
   private static readonly NEGATIVE_CSS_LENGTH = /(?:^|\s|\()-(?:\d|\.)/;
-  private static readonly CSS_FUNCTION_VALUE = /\b(?:var|attr|env)\(/i;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery, dirtyHtml: string) => {
     // browser-only (not on node)
@@ -421,8 +420,10 @@ export class Xss {
     }
   };
 
+  // Function-based margins (calc/min/max/clamp/var/...) can resolve to a negative
+  // length depending on layout, e.g. calc(1% - 200px), so none of them are safe to keep.
   private static isUnsafeMargin = (property: string, value: string): boolean =>
-    property.toLowerCase().startsWith('margin') && (Xss.NEGATIVE_CSS_LENGTH.test(value) || Xss.CSS_FUNCTION_VALUE.test(value));
+    property.toLowerCase().startsWith('margin') && (Xss.NEGATIVE_CSS_LENGTH.test(value) || value.includes('('));
 
   /**
    * Sanitize a CSS style string by keeping only explicitly allowed properties.
