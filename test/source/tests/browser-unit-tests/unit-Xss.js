@@ -146,6 +146,105 @@ BROWSER_UNIT_TEST_NAME(`pgp badges stay above message content`);
   return 'pass';
 })();
 
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags strips negative margins`);
+(async () => {
+  const hasNegativeMargin = html => {
+    for (const [, style] of html.matchAll(/style="([^"]*)"/g)) {
+      for (const decl of style.split(';')) {
+        const parts = decl.split(':');
+        if (parts[0].trim().toLowerCase().startsWith('margin') && /(?:^|\s|\()-[\d.]/.test(parts.slice(1).join(':'))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  const retainedMargins = html => {
+    const retained = [];
+    for (const [, style] of html.matchAll(/style="([^"]*)"/g)) {
+      for (const decl of style.split(';')) {
+        if (decl.split(':')[0].trim().toLowerCase().startsWith('margin')) {
+          retained.push(decl.trim());
+        }
+      }
+    }
+    return retained;
+  };
+  const negativePayloads = [
+    `<div style="margin-top:-33px;margin-bottom:0"><b style="margin-left:72px;background-color:#31a217">signed</b></div>`,
+    `<b style="margin:-1px 0 0 72px">signed</b>`,
+    `<b style="margin-top:-2em!important">signed</b>`,
+    `<b style="margin-top:calc(-33px + 1px)">signed</b>`,
+    `<b style="margin-top:var(--m, -33px)">signed</b>`,
+    `<b style="margin-block-start:-33px">signed</b>`,
+  ];
+  for (const dirty of negativePayloads) {
+    const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+    if (hasNegativeMargin(clean)) {
+      throw Error(`negative margin survived sanitization: ${clean}`);
+    }
+  }
+  const functionPayloads = [
+    `<b style="margin-top:calc(1% - 200px)">signed</b>`,
+    `<b style="margin-top:clamp(0px, 1% - 200px, 10px)">signed</b>`,
+    `<b style="margin-top:min(1%, -200px)">signed</b>`,
+    `<b style="margin-top:max(-200px, 1%)">signed</b>`,
+    `<b style="margin:calc(1% - 200px) 0 0 0">signed</b>`,
+  ];
+  for (const dirty of functionPayloads) {
+    const clean = Xss.htmlSanitizeKeepBasicTags(dirty, 'IMG-KEEP');
+    const retained = retainedMargins(clean);
+    if (retained.some(decl => decl.includes('('))) {
+      throw Error(`function-based margin survived sanitization: ${clean} (${retained.join(', ')})`);
+    }
+  }
+  const safe = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-top:12px;margin-left:40px;margin-right:2em">safe</b>`, 'IMG-KEEP');
+  if (!/margin-top:\s*12px/.test(safe) || !/margin-left:\s*40px/.test(safe) || !/margin-right:\s*2em/.test(safe) || hasNegativeMargin(safe)) {
+    throw Error(`valid margins were altered: ${safe}`);
+  }
+  const positiveCalc = Xss.htmlSanitizeKeepBasicTags(`<b style="margin-left:calc(100% - 40px);color:green">safe</b>`, 'IMG-KEEP');
+  if (retainedMargins(positiveCalc).length) {
+    throw Error(`function-based margin survived sanitization: ${positiveCalc}`);
+  }
+  return 'pass';
+})();
+
+BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitize strips negative margins and displacement offsets`);
+(async () => {
+  const negative = Xss.htmlSanitize(`<b style="position:relative;z-index:-1;margin-top:-33px;color:green">signed</b>`);
+  if (/margin-top/.test(negative)) {
+    throw Error(`negative margin survived sanitization: ${negative}`);
+  }
+  const customProp = Xss.htmlSanitize(`<b style="margin-top:var(--m);--m:-33px;color:green">signed</b>`);
+  if (/margin-top|var\(--m\)/.test(customProp)) {
+    throw Error(`var() margin survived sanitization: ${customProp}`);
+  }
+  const offsets = Xss.htmlSanitize(`<b style="position:relative;top:-100px;left:72px;color:green">signed</b>`);
+  if (/(?:^|[;\s])(?:top|right|bottom|left|inset)\s*:/.test(offsets)) {
+    throw Error(`displacement offset survived sanitization: ${offsets}`);
+  }
+  const functionPayloads = [
+    `<b style="margin-top:calc(1% - 200px)">signed</b>`,
+    `<b style="margin-top:clamp(0px, 1% - 200px, 10px)">signed</b>`,
+    `<b style="margin-top:min(1%, -200px)">signed</b>`,
+    `<b style="margin-top:max(-200px, 1%)">signed</b>`,
+  ];
+  for (const dirty of functionPayloads) {
+    const clean = Xss.htmlSanitize(dirty);
+    if (/margin-(?:top|right|bottom|left|block-start|block-end|inline-start|inline-end)\s*:/.test(clean)) {
+      throw Error(`function-based margin survived sanitization: ${clean}`);
+    }
+  }
+  const transforms = Xss.htmlSanitize(`<b style="translate:0 -200px;rotate:45deg;scale:2;offset:10px;offset-path:path('M0 0 L10 0');offset-distance:50%;offset-rotate:45deg;color:green">signed</b>`);
+  if (/(?:^|[;\s])(?:translate|rotate|scale|offset|offset-path|offset-distance|offset-rotate|offset-anchor|offset-position)\s*:/.test(transforms)) {
+    throw Error(`transform/offset displacement survived sanitization: ${transforms}`);
+  }
+  if (!/color:\s*green/.test(negative) || !/color:\s*green/.test(customProp) || !/color:\s*green/.test(offsets) || !/color:\s*green/.test(transforms)) {
+    throw Error(`safe color was removed`);
+  }
+  return 'pass';
+})();
+
 BROWSER_UNIT_TEST_NAME(`Xss.htmlSanitizeKeepBasicTags rejects encoded logout image paths`);
 (async () => {
   const urls = [
