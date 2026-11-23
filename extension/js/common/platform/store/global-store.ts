@@ -64,7 +64,7 @@ export class GlobalStore extends AbstractStore {
 
   public static async get(keys: GlobalIndex[]): Promise<GlobalStoreDict> {
     const storageObj = (await storageGet('local', GlobalStore.singleScopeRawIndexArr(GlobalStore.globalStorageScope, keys))) as RawStore;
-    return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStore;
+    return GlobalStore.buildSingleAccountStoreFromRawResults(GlobalStore.globalStorageScope, storageObj) as GlobalStoreDict;
   }
 
   public static async remove(keys: string[]) {

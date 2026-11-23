@@ -1,9 +1,9 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
 /// <reference types="@types/chrome" />
 
-import { copySync } from 'fs-extra';
-import { readFileSync, writeFileSync } from 'fs';
+import { cpSync, readFileSync, writeFileSync } from 'node:fs';
 const MOCK_PORT = '[TEST_REPLACEABLE_MOCK_PORT]';
+const directoryCopyOptions = { recursive: true, verbatimSymlinks: true };
 
 /**
  * This file was originally two files: one that edited manifests, and one that copied build folders and edited mock versions
@@ -162,7 +162,7 @@ const makeMockBuild = (sourceBuildType: string) => {
   const mockBuildType = `${sourceBuildType}-mock`;
   const mockGmailPageHost = `gmail.localhost:${MOCK_PORT}`;
   const mockGmailPage = `https://${mockGmailPageHost}`;
-  copySync(buildDir(sourceBuildType), buildDir(mockBuildType));
+  cpSync(buildDir(sourceBuildType), buildDir(mockBuildType), directoryCopyOptions);
   const editor = (code: string) => {
     return code
       .replace(
@@ -184,7 +184,7 @@ const makeMockBuild = (sourceBuildType: string) => {
 
 const makeLocalFesBuild = (sourceBuildType: string) => {
   const localFesBuildType = `${sourceBuildType}-local-fes`;
-  copySync(buildDir(sourceBuildType), buildDir(localFesBuildType));
+  cpSync(buildDir(sourceBuildType), buildDir(localFesBuildType), directoryCopyOptions);
   edit(`${buildDir(localFesBuildType)}/js/common/api/account-servers/external-service.js`, code =>
     code.replace('https://fes.${this.domain}', 'http://localhost:32667')
   );
@@ -195,7 +195,7 @@ const makeContentScriptTestsBuild = (sourceBuildType: string) => {
   const testBuildType = sourceBuildType.endsWith('-mock')
     ? sourceBuildType.slice(0, -5) + '-content-script-tests-mock'
     : sourceBuildType + '-content-script-tests';
-  copySync(buildDir(sourceBuildType), buildDir(testBuildType));
+  cpSync(buildDir(sourceBuildType), buildDir(testBuildType), directoryCopyOptions);
   edit(`${buildDir(testBuildType)}/js/content_scripts/webmail_bundle.js`, code =>
     code.replace(/\/\* ----- [^\r\n]*\/content_scripts\/webmail\/.*}\)\(\);/s, `${testCode}\r\n\r\n})();`)
   );
@@ -205,7 +205,7 @@ const makeConsumerLocalBuild = () => {
   const localBuildType = 'chrome-consumer-local';
   const publicKey =
     'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArV4mhxGkdt2FcJoWJhZrzNUftI0S7i55jMooL+FLjRSyK1hh6G4so7KLYhY/Tc327luMwWFkCAcdsamjbhOfJneBMZ0IT7swAS3zsC87vLE5YeWO2CX02FvHjgXm60T1Fk4gJh/zqCp4OLjyawoJRyuovvVN0LwH4j6DjHn3nodl2YeY+4K7jzFGHj6+68tlok9BtI6k8tntIbnFToRr9gVR85UT+W8rKXqx20Kne14k2my5fjrGZjEpK74YU6QNlKRzprVqpNEE989sxNk1tL6xKYgoDO9m8JZtuFKFsoQY/fV8xhNkXB19KLVJEW8aqPG/0ZTTMg9llZI8c6Yx+QIDAQAB';
-  copySync(buildDir(CHROME_CONSUMER), buildDir(localBuildType));
+  cpSync(buildDir(CHROME_CONSUMER), buildDir(localBuildType), directoryCopyOptions);
   edit(`${buildDir(localBuildType)}/manifest.json`, code => {
     const manifest = JSON.parse(code) as chrome.runtime.ManifestV3;
     manifest.key = publicKey;
