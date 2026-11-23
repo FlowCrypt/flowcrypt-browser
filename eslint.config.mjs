@@ -2,8 +2,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
 import noOnlyTestsPlugin from 'eslint-plugin-no-only-tests';
-import headerPlugin from '@tony.ganchev/eslint-plugin-header';
-import jsdocPlugin from 'eslint-plugin-jsdoc';
 import preferArrowPlugin from 'eslint-plugin-prefer-arrow';
 import noNullPlugin from 'eslint-plugin-no-null';
 import localRulesPlugin from 'eslint-plugin-local-rules';
@@ -24,12 +22,8 @@ const jsConfigRules = {
   'dot-notation': 'error',
   eqeqeq: ['error', 'smart'],
   'guard-for-in': 'error',
-  'header/header': ['error', 'block', ' ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com '],
   'id-denylist': 'error',
   'id-match': 'error',
-  'jsdoc/check-alignment': 'off',
-  'jsdoc/check-indentation': 'off',
-  'jsdoc/newline-after-description': 'off',
   'max-classes-per-file': 'off',
   'no-bitwise': 'off',
   'no-caller': 'error',
@@ -70,12 +64,11 @@ const jsConfigRules = {
   radix: 'off',
   'require-atomic-updates': 0,
   'sort-imports': 'off',
+  'local-rules/copyright-header': 'error',
   'local-rules/standard-loops': 'error',
 };
 
 const basePlugins = {
-  header: headerPlugin,
-  jsdoc: jsdocPlugin,
   'prefer-arrow': preferArrowPlugin,
   'no-null': noNullPlugin,
   'local-rules': localRulesPlugin,

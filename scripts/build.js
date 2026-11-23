@@ -1,7 +1,8 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-const fs = require('fs-extra');
+const fs = require('node:fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const { cp, glob } = require('node:fs/promises');
 
 const ROOT_DIR = process.cwd();
 const OUTPUT_DIRECTORY = path.resolve(ROOT_DIR, './build/generic-extension-wip');
@@ -32,10 +33,16 @@ const runCmd = (cmd, cwdName = 'default') => {
  * Synchronize specified file types from source to output directories
  */
 const synchronizeFiles = async destDir => {
-  const { globby } = await import('globby');
-  const patterns = ['**/*.{js,mjs,htm,css,woff2,png,svg,txt}'];
-  const files = await globby(patterns, { cwd: SOURCE_DIRECTORY });
-  await Promise.all(files.map(file => fs.copy(path.join(SOURCE_DIRECTORY, file), path.join(destDir, file))));
+  const pattern = '**/*.{js,mjs,htm,css,woff2,png,svg,txt}';
+  const entries = await Array.fromAsync(glob(pattern, { cwd: SOURCE_DIRECTORY, withFileTypes: true }));
+  await Promise.all(
+    entries.map(async entry => {
+      const source = path.join(entry.parentPath, entry.name);
+      if (entry.isFile() || (entry.isSymbolicLink() && fs.statSync(source, { throwIfNoEntry: false })?.isFile())) {
+        await cp(source, path.join(destDir, path.relative(SOURCE_DIRECTORY, source)), { verbatimSymlinks: true });
+      }
+    })
+  );
 };
 
 /**
@@ -78,9 +85,12 @@ const copyDependencies = async () => {
     ['bootstrap/dist/css/bootstrap.min.css', 'lib/bootstrap/bootstrap.min.css'],
   ];
 
-  await Promise.all(deps.map(([src, dest]) => fs.copy(path.join(ROOT_DIR, 'node_modules', src), path.join(OUTPUT_DIRECTORY, dest))));
+  await Promise.all(deps.map(([src, dest]) => cp(path.join(ROOT_DIR, 'node_modules', src), path.join(OUTPUT_DIRECTORY, dest), { verbatimSymlinks: true })));
 
-  fs.copySync(path.join(ROOT_DIR, 'node_modules/@openpgp/web-stream-tools/lib/'), path.join(OUTPUT_DIRECTORY, 'lib/streams'));
+  fs.cpSync(path.join(ROOT_DIR, 'node_modules/@openpgp/web-stream-tools/lib/'), path.join(OUTPUT_DIRECTORY, 'lib/streams'), {
+    recursive: true,
+    verbatimSymlinks: true,
+  });
 };
 
 // Perform regex replacements for compatibility patches
@@ -106,14 +116,14 @@ const main = async () => {
   if (args.includes('--incremental')) {
     // Remove specific directories for incremental build
     for (const dir of ['firefox-consumer', 'thunderbird-consumer', 'chrome-consumer', 'chrome-enterprise', 'generic-extension-wip/js/content_scripts']) {
-      fs.removeSync(path.join(BUILD_DIRECTORY, dir));
+      fs.rmSync(path.join(BUILD_DIRECTORY, dir), { recursive: true, force: true });
     }
 
-    fs.ensureDirSync(BUILD_DIRECTORY);
+    fs.mkdirSync(BUILD_DIRECTORY, { recursive: true });
   } else {
-    fs.removeSync(BUILD_DIRECTORY);
+    fs.rmSync(BUILD_DIRECTORY, { recursive: true, force: true });
     await runCmd('npx tsc --project ./conf/tsconfig.tooling.json');
-    fs.ensureDirSync(OUTPUT_DIRECTORY);
+    fs.mkdirSync(OUTPUT_DIRECTORY, { recursive: true });
   }
 
   // These projects write to separate directories. Wait for every compiler before
@@ -151,7 +161,7 @@ const main = async () => {
   // remaining build steps sequentially
   await synchronizeFiles(OUTPUT_DIRECTORY);
   for (const file of ['manifest.json', '.web-extension-id']) {
-    fs.copySync(path.join(SOURCE_DIRECTORY, file), path.join(OUTPUT_DIRECTORY, file));
+    fs.cpSync(path.join(SOURCE_DIRECTORY, file), path.join(OUTPUT_DIRECTORY, file), { verbatimSymlinks: true });
   }
 
   for (const cmd of ['resolve-modules --project ./tsconfig.json', 'fill-values', 'bundle-content-scripts']) {
@@ -159,7 +169,7 @@ const main = async () => {
   }
 
   for (const dir of ['chrome-enterprise', 'chrome-consumer', 'firefox-consumer', 'thunderbird-consumer']) {
-    fs.copySync(OUTPUT_DIRECTORY, path.join(BUILD_DIRECTORY, dir));
+    fs.cpSync(OUTPUT_DIRECTORY, path.join(BUILD_DIRECTORY, dir), { recursive: true, verbatimSymlinks: true });
   }
 
   await runCmd(`node ${path.join(BUILD_DIRECTORY, 'tooling', 'build-types-and-manifests')}`);

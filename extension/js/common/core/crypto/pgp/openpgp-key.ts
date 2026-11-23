@@ -171,7 +171,10 @@ export class OpenPGPKey {
     userIDs: { email: string | undefined; name: string }[],
     expireSeconds: number
   ) {
-    const opgpPrv = (await OpenPGPKey.extractExternalLibraryObjFromKey(privateKey)) as OpenPGP.PrivateKey; // todo: check isPrivate()?
+    const opgpPrv = await OpenPGPKey.extractExternalLibraryObjFromKey(privateKey);
+    if (!opgpPrv.isPrivate()) {
+      throw new UnexpectedKeyTypeError('Cannot reformat a public key');
+    }
     const keyPair = await opgp.reformatKey({
       privateKey: opgpPrv,
       passphrase,
@@ -248,7 +251,10 @@ export class OpenPGPKey {
    * Returns signature if detached=true, armored
    */
   public static async sign(signingPrivate: Key, text: string, detached = false): Promise<string> {
-    const signingPrv = (await OpenPGPKey.extractExternalLibraryObjFromKey(signingPrivate)) as OpenPGP.PrivateKey; // todo: throw?
+    const signingPrv = await OpenPGPKey.extractExternalLibraryObjFromKey(signingPrivate);
+    if (!signingPrv.isPrivate()) {
+      throw new UnexpectedKeyTypeError('Cannot sign with a public key');
+    }
     if (detached) {
       const message = await opgp.createMessage({ text });
       return await opgp.sign({ message, format: 'armored', signingKeys: [signingPrv], detached });
@@ -692,7 +698,7 @@ export class OpenPGPKey {
     throw new Error('No valid signature found in key');
   }
 
-  private static async extractExternalLibraryObjFromKey(key: Key): Promise<OpenPGP.Key> {
+  private static async extractExternalLibraryObjFromKey(key: Key): Promise<OpenPGP.PublicKey> {
     if (key.family !== 'openpgp') {
       throw new UnexpectedKeyTypeError(`Key type is ${key.family}, expecting OpenPGP`);
     }
@@ -700,11 +706,15 @@ export class OpenPGPKey {
     const internal = keyWithPrivateFields.internal;
     if (!internal) {
       throw new Error('Object has type == "openpgp" but no internal key.');
-    } else if (typeof internal === 'string') {
-      keyWithPrivateFields.internal = await opgp.readKey({ binaryKey: Buf.fromRawBytesStr(internal) });
-      return keyWithPrivateFields.internal;
     }
-    return internal;
+    const parsed = typeof internal === 'string' ? await opgp.readKey({ binaryKey: Buf.fromRawBytesStr(internal) }) : internal;
+    if (!(parsed instanceof opgp.PublicKey)) {
+      throw new UnexpectedKeyTypeError('Expected an OpenPGP key instance');
+    }
+    if (typeof internal === 'string') {
+      keyWithPrivateFields.internal = parsed;
+    }
+    return parsed;
   }
 
   private static getSigningAndEncryptionKeys = async (key: OpenPGP.Key) => {
