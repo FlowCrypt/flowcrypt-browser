@@ -48,64 +48,63 @@ type ExportedMsg = {
   attachments: { [id: string]: { data: string; size: number } };
 };
 
-export class GmailMsg {
-  public id: string;
-  public historyId: string;
-  public sizeEstimate?: number;
-  public threadId: string | null;
-  public payload?: GmailMsg$payload;
-  public internalDate?: number | string;
-  public labelIds?: GmailMsg$labelId[];
-  public snippet?: string;
-  public raw?: string;
+export type GmailMsg = {
+  id: string;
+  historyId: string;
+  sizeEstimate?: number;
+  threadId: string | null;
+  payload?: GmailMsg$payload;
+  internalDate?: number | string;
+  labelIds?: GmailMsg$labelId[];
+  snippet?: string;
+  raw?: string;
+};
 
-  public constructor(msg: { id: string; labelId: GmailMsg$labelId; raw: string; mimeMsg: ParsedMail }) {
-    this.id = msg.id;
-    this.historyId = msg.id;
-    this.threadId = msg.id;
-    this.labelIds = [msg.labelId];
-    this.raw = msg.raw;
-    const contentTypeHeader = msg.mimeMsg.headers.get('content-type') as StructuredHeader;
-    const toHeader = msg.mimeMsg.headers.get('to') as AddressObject;
-    const fromHeader = msg.mimeMsg.headers.get('from') as AddressObject;
-    const subjectHeader = msg.mimeMsg.headers.get('subject') as string;
-    const dateHeader = msg.mimeMsg.headers.get('date') as Date;
-    const messageIdHeader = msg.mimeMsg.headers.get('message-id') as string;
-    const mimeVersionHeader = msg.mimeMsg.headers.get('mime-version') as string;
-    let body: GmailMsg$payload$body | undefined;
-    if (msg.mimeMsg.text) {
-      const textBase64 = Buffer.from(msg.mimeMsg.text, 'utf-8').toString('base64');
-      body = { attachmentId: '', size: textBase64.length, data: textBase64 };
-    } else if (typeof msg.mimeMsg.html === 'string') {
-      const htmlBase64 = Buffer.from(msg.mimeMsg.html, 'utf-8').toString('base64');
-      body = { attachmentId: '', size: htmlBase64.length, data: htmlBase64 };
-    }
-    this.payload = {
-      mimeType: contentTypeHeader.value,
-      headers: [
-        {
-          name: 'Content-Type',
-          value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"`,
-        },
-        { name: 'Message-Id', value: messageIdHeader },
-        { name: 'Mime-Version', value: mimeVersionHeader },
-      ],
-      body,
-    };
-    if (toHeader) {
-      this.payload.headers?.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
-    }
-    if (fromHeader?.value[0].address) {
-      this.payload.headers?.push({ name: 'From', value: fromHeader.value[0].address });
-    }
-    if (subjectHeader) {
-      this.payload.headers?.push({ name: 'Subject', value: subjectHeader });
-    }
-    if (dateHeader) {
-      this.payload.headers?.push({ name: 'Date', value: dateHeader.toString() });
-    }
+const createGmailMsg = ({ id, labelId, raw, mimeMsg }: { id: string; labelId: GmailMsg$labelId; raw: string; mimeMsg: ParsedMail }): GmailMsg => {
+  const contentTypeHeader = mimeMsg.headers.get('content-type') as StructuredHeader;
+  const toHeader = mimeMsg.headers.get('to') as AddressObject;
+  const fromHeader = mimeMsg.headers.get('from') as AddressObject;
+  const subjectHeader = mimeMsg.headers.get('subject') as string;
+  const dateHeader = mimeMsg.headers.get('date') as Date;
+  const messageIdHeader = mimeMsg.headers.get('message-id') as string;
+  const mimeVersionHeader = mimeMsg.headers.get('mime-version') as string;
+  let body: GmailMsg$payload$body | undefined;
+  if (mimeMsg.text) {
+    const textBase64 = Buffer.from(mimeMsg.text, 'utf-8').toString('base64');
+    body = { attachmentId: '', size: textBase64.length, data: textBase64 };
+  } else if (typeof mimeMsg.html === 'string') {
+    const htmlBase64 = Buffer.from(mimeMsg.html, 'utf-8').toString('base64');
+    body = { attachmentId: '', size: htmlBase64.length, data: htmlBase64 };
   }
-}
+  const headers = [
+    {
+      name: 'Content-Type',
+      value: `${contentTypeHeader.value}; boundary=\"${contentTypeHeader.params.boundary}\"`,
+    },
+    { name: 'Message-Id', value: messageIdHeader },
+    { name: 'Mime-Version', value: mimeVersionHeader },
+  ];
+  if (toHeader) {
+    headers.push({ name: 'To', value: toHeader.value.map(a => a.address).join(',') });
+  }
+  if (fromHeader?.value[0].address) {
+    headers.push({ name: 'From', value: fromHeader.value[0].address });
+  }
+  if (subjectHeader) {
+    headers.push({ name: 'Subject', value: subjectHeader });
+  }
+  if (dateHeader) {
+    headers.push({ name: 'Date', value: dateHeader.toString() });
+  }
+  return {
+    id,
+    historyId: id,
+    threadId: id,
+    labelIds: [labelId],
+    raw,
+    payload: { mimeType: contentTypeHeader.value, headers, body },
+  };
+};
 
 export class GmailParser {
   public static findHeader = (apiGmailMsgObj: GmailMsg | GmailMsg$payload, headerName: string) => {
@@ -441,7 +440,7 @@ export class GoogleData {
   };
 
   public addDraft = (id: string, raw: string, mimeMsg: ParsedMail) => {
-    const draft = new GmailMsg({ labelId: 'DRAFT', id, raw, mimeMsg });
+    const draft = createGmailMsg({ labelId: 'DRAFT', id, raw, mimeMsg });
     const index = DATA[this.acct].drafts.findIndex(d => d.id === draft.id);
     if (index === -1) {
       DATA[this.acct].drafts.push(draft);

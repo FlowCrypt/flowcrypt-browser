@@ -1,5 +1,5 @@
 /* ©️ 2016 - present FlowCrypt a.s. Limitations apply. Contact human@flowcrypt.com */
-const fs = require('fs-extra');
+const fs = require('node:fs');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -17,11 +17,7 @@ const randomHex = crypto.randomBytes(12).toString('hex');
 // Build the new folder path
 const buildPath = path.join(process.cwd(), 'build', 'test', 'mock-builds', `port-${mockPort}-${randomHex}`);
 
-// Ensure the target directory exists.
-fs.ensureDirSync(buildPath);
-
-// Recursively copy all files from srcDir to buildPath using fs-extra's copySync.
-fs.copySync(srcDir, buildPath);
+fs.cpSync(srcDir, buildPath, { recursive: true, verbatimSymlinks: true });
 
 // Function to recursively search and replace the token in all files.
 const replaceTokenInFiles = (dir, token, replacement) => {
