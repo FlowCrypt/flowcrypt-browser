@@ -1286,8 +1286,7 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
 
     test('[unit][MsgUtil.decryptMessage] compressed message over the decompression limit is rejected', async t => {
       // OpenPGP.js defaults to Infinity: the cap must stay finite or a tiny armored message can allocate unbounded RAM.
-      expect(Number.isFinite(opgp.config.maxDecompressedMessageSize)).to.equal(true);
-      expect(opgp.config.maxDecompressedMessageSize).to.be.greaterThan(0);
+      expect(opgp.config.maxDecompressedMessageSize).to.be.within(1, 64 * 1024 * 1024);
       const oversized = Buf.fromUtfStr('A'.repeat(opgp.config.maxDecompressedMessageSize + 1));
       const passphrase = 'decompression-limit-test';
       for (const compression of [opgp.enums.compression.zlib, opgp.enums.compression.zip]) {
