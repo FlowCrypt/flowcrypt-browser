@@ -91,6 +91,11 @@ export class Mime {
     return !(text && !/^(\r)?(\n)?$/.test(text));
   }
 
+  public static isOnlySigned(rawSignedContent: string | undefined, blocks: MsgBlock[]): boolean {
+    const hasEncryptedContent = blocks.some(block => ['encryptedMsg', 'encryptedAttachment'].includes(block.type));
+    return !hasEncryptedContent && !!(rawSignedContent || (blocks.length > 0 && blocks[0].type === 'signedMsg'));
+  }
+
   public static processAttachments(bodyBlocks: MsgBlock[], decoded: MimeContent): MimeProccesedMsg {
     const attachmentBlocks: MsgBlock[] = [];
     const signatureAttachments: Attachment[] = [];
