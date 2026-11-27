@@ -23,8 +23,14 @@ import * as forge from 'node-forge';
 import { ENVELOPED_DATA_OID, SmimeKey } from '../core/crypto/smime/smime-key';
 import { Str, checkValidURL, emailKeyIndex } from '../core/common';
 import { PgpPwd } from '../core/crypto/pgp/pgp-password';
+import type { enums } from 'openpgp';
 
 use(chaiAsPromised);
+
+// OpenPGP.js exposes Message.compress() at runtime but omits it from its type definitions.
+type CompressibleMessage = Awaited<ReturnType<typeof opgp.createMessage>> & {
+  compress: (algo: enums.compression) => Awaited<ReturnType<typeof opgp.createMessage>>;
+};
 
 export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
   expect(typeof a).to.equal(typeof b, `types dont match`);
@@ -1316,6 +1322,37 @@ jLwe8W9IMt765T5x5oux9MmPDXF05xHfm4qfH/BMO3a802x5u2gJjJjuknrFdgXY
       });
       expect(decrypted.success).to.equal(true);
       expect((decrypted as DecryptSuccess).content.length).to.equal(data.length);
+      t.pass();
+    });
+
+    test('[unit][MsgUtil.decryptMessage] compressed message over the decompression limit is rejected', async t => {
+      // OpenPGP.js defaults to Infinity: the cap must stay finite or a tiny armored message can allocate unbounded RAM.
+      expect(opgp.config.maxDecompressedMessageSize).to.be.within(1, 64 * 1024 * 1024);
+      const oversized = Buf.fromUtfStr('A'.repeat(opgp.config.maxDecompressedMessageSize + 1));
+      const passphrase = 'decompression-limit-test';
+      for (const compression of [opgp.enums.compression.zlib, opgp.enums.compression.zip]) {
+        const message = ((await opgp.createMessage({ binary: oversized })) as CompressibleMessage).compress(compression);
+        const encryptedData = (await opgp.encrypt({ message, passwords: [passphrase], format: 'armored' })) as string;
+        expect(Buf.fromUtfStr(encryptedData).length).to.be.lessThan(oversized.length); // tiny wire, oversized plaintext
+        const result = await MsgUtil.decryptMessage({ kisWithPp: [], msgPwd: passphrase, encryptedData, verificationPubs: [] });
+        expect(result.success).to.equal(false);
+        expect('content' in result).to.equal(false);
+        if (!result.success) {
+          expect(result.error.type).to.equal(DecryptErrTypes.other);
+          expect(result.error.message).to.include('Maximum decompressed message size exceeded');
+        }
+      }
+      t.pass();
+    });
+
+    test('[unit][MsgUtil.decryptMessage] compressed message under the decompression limit still decrypts', async t => {
+      const data = Buf.fromUtfStr('compressed content that stays well under the limit '.repeat(1000));
+      const passphrase = 'decompression-limit-test';
+      const message = ((await opgp.createMessage({ binary: data })) as CompressibleMessage).compress(opgp.enums.compression.zlib);
+      const encryptedData = (await opgp.encrypt({ message, passwords: [passphrase], format: 'armored' })) as string;
+      const result = await MsgUtil.decryptMessage({ kisWithPp: [], msgPwd: passphrase, encryptedData, verificationPubs: [] });
+      expect(result.success).to.equal(true);
+      expect((result as DecryptSuccess).content.toUtfStr()).to.equal(data.toUtfStr());
       t.pass();
     });
 
