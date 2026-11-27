@@ -166,7 +166,7 @@ export class ComposeQuoteModule extends ViewModule<ComposeView> {
       return {
         headers,
         text: decryptedAndFormatedContent.join('\n'),
-        isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
+        isOnlySigned: Mime.isOnlySigned(decoded.rawSignedContent, message.blocks),
         decryptedFiles,
       };
     } catch (e) {

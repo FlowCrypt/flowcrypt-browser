@@ -4,6 +4,7 @@ import test from 'ava';
 
 import { MsgBlock } from '../core/msg-block';
 import { MsgBlockParser } from '../core/msg-block-parser';
+import { Mime } from '../core/mime';
 import { Config, TestVariant } from '../util';
 import { use, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -40,6 +41,46 @@ export const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
 
 export const defineUnitNodeTests = (testVariant: TestVariant) => {
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
+    test(`[unit][Mime.isOnlySigned] signed-only message stays signed-only`, t => {
+      t.true(Mime.isOnlySigned('signed content', [new MsgBlock('signedMsg', 'signed content', true)]));
+    });
+
+    test(`[unit][Mime.isOnlySigned] outer signed wrapper with encrypted body is not signed-only`, t => {
+      t.false(Mime.isOnlySigned('signed content', [new MsgBlock('encryptedMsg', 'encrypted content', true)]));
+    });
+
+    test(`[unit][Mime.isOnlySigned] outer signed wrapper with encrypted attachment is not signed-only`, t => {
+      t.false(
+        Mime.isOnlySigned('signed content', [MsgBlock.fromAttachment('encryptedAttachment', '', { data: new Uint8Array(0), name: 'statement.pdf.pgp' })])
+      );
+    });
+
+    test(`[unit][Mime.isOnlySigned] leading signedMsg block with later encrypted body is not signed-only`, t => {
+      t.false(Mime.isOnlySigned(undefined, [new MsgBlock('signedMsg', 'signed content', true), new MsgBlock('encryptedMsg', 'encrypted content', true)]));
+    });
+
+    test(`[unit][Mime.isOnlySigned] leading signedMsg block with later encrypted attachment is not signed-only`, t => {
+      t.false(
+        Mime.isOnlySigned(undefined, [
+          new MsgBlock('signedMsg', 'signed content', true),
+          MsgBlock.fromAttachment('encryptedAttachment', '', { data: new Uint8Array(0), name: 'statement.pdf.pgp' }),
+        ])
+      );
+    });
+
+    test(`[unit][Mime.isOnlySigned] plain attachment does not disqualify signed-only`, t => {
+      t.true(
+        Mime.isOnlySigned('signed content', [
+          new MsgBlock('signedMsg', 'signed content', true),
+          MsgBlock.fromAttachment('plainAttachment', '', { data: new Uint8Array(0), name: 'notes.txt' }),
+        ])
+      );
+    });
+
+    test(`[unit][Mime.isOnlySigned] unsigned message is not signed-only`, t => {
+      t.false(Mime.isOnlySigned(undefined, [new MsgBlock('plainText', 'hello', true)]));
+    });
+
     test(`[unit][emailKeyIndex] gives distinct keys to emails that differ only in punctuation`, async t => {
       t.not(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('ab@corp.test', 'keys'));
       t.is(emailKeyIndex('a-b@corp.test', 'keys'), emailKeyIndex('A-B@corp.test', 'keys'));
