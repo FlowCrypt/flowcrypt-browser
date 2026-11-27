@@ -211,21 +211,9 @@ export class GoogleOAuth extends OAuth {
         }
         return { acctEmail, result: 'Denied', error: `Failed to launch web auth flow: ${errorMsg}`, id_token: undefined };
       }
-      const uncheckedUrlParams = Url.parse(['scope', 'code', 'state'], redirectUri);
-      const allowedScopes = Assert.urlParamRequire.string(uncheckedUrlParams, 'scope');
+      const uncheckedUrlParams = Url.parse(['code', 'state'], redirectUri);
       const code = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'code');
       const receivedState = Assert.urlParamRequire.string(uncheckedUrlParams, 'state');
-      const scopesToCheck = [
-        this.GOOGLE_OAUTH_CONFIG.scopes.compose,
-        this.GOOGLE_OAUTH_CONFIG.scopes.modify,
-        this.GOOGLE_OAUTH_CONFIG.scopes.readContacts,
-        this.GOOGLE_OAUTH_CONFIG.scopes.readOtherContacts,
-      ];
-      for (const scopeToCheck of scopesToCheck) {
-        if (requestedScopes.includes(scopeToCheck) && !allowedScopes?.includes(scopeToCheck)) {
-          return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
-        }
-      }
       if (!code) {
         return {
           acctEmail,
@@ -237,12 +225,29 @@ export class GoogleOAuth extends OAuth {
       if (receivedState !== expectedState) {
         return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
       }
-      const { id_token } = save ? await GoogleOAuth.retrieveAndSaveAuthToken(code) : await GoogleOAuth.googleAuthGetTokens(code);
-      const { email } = GoogleOAuth.parseIdToken(id_token);
+      const tokensObj = await GoogleOAuth.googleAuthGetTokens(code);
+      const grantedScopes = tokensObj.scope
+        ? tokensObj.scope.split(/\s+/).filter(Boolean)
+        : (await GoogleOAuth.getTokenInfo(tokensObj.access_token)).scope.split(/\s+/).filter(Boolean);
+      const scopesToCheck = [
+        this.GOOGLE_OAUTH_CONFIG.scopes.compose,
+        this.GOOGLE_OAUTH_CONFIG.scopes.modify,
+        this.GOOGLE_OAUTH_CONFIG.scopes.readContacts,
+        this.GOOGLE_OAUTH_CONFIG.scopes.readOtherContacts,
+      ];
+      for (const scopeToCheck of scopesToCheck) {
+        if (requestedScopes.includes(scopeToCheck) && !grantedScopes.includes(scopeToCheck)) {
+          return { acctEmail, result: 'Denied', error: 'Missing permissions', id_token: undefined };
+        }
+      }
+      const { email } = GoogleOAuth.parseIdToken(tokensObj.id_token);
       if (!email) {
         throw new Error('Missing email address in id_token');
       }
-      return { acctEmail: email, result: 'Success', id_token };
+      if (save) {
+        await GoogleOAuth.googleAuthSaveTokens(email, tokensObj);
+      }
+      return { acctEmail: email, result: 'Success', id_token: tokensObj.id_token };
     } catch (err) {
       if (err instanceof AssertError) {
         return { acctEmail, result: 'Error', error: 'Could not parse URL returned from Google', id_token: undefined };
@@ -300,17 +305,6 @@ export class GoogleOAuth extends OAuth {
       },
       'json'
     );
-  }
-
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  private static async retrieveAndSaveAuthToken(authCode: string): Promise<{ id_token: string }> {
-    const tokensObj = await GoogleOAuth.googleAuthGetTokens(authCode);
-    const claims = GoogleOAuth.parseIdToken(tokensObj.id_token);
-    if (!claims.email) {
-      throw new Error('Missing email address in id_token');
-    }
-    await GoogleOAuth.googleAuthSaveTokens(claims.email, tokensObj);
-    return { id_token: tokensObj.id_token }; // eslint-disable-line @typescript-eslint/naming-convention
   }
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes(addScopes: string[]): string[] {
